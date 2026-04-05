@@ -2050,7 +2050,7 @@ Query:
 
 Response:
 
-WIP
+- `profiles` - array of [Profile](#profile), always with exactly one element
 
 #### Get multiple profiles by ID
 
