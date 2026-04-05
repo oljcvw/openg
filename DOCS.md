@@ -186,7 +186,11 @@ Licensed under [MIT](./LICENSE). You must credit author and reference this proje
     - [Social events](#social-events)
     - [Entitlements](#entitlements)
     - [Links](#links)
-    - [Travels, WIP](#travels-wip)
+    - [Travels](#travels)
+      - [Get travel plans](#get-travel-plans)
+      - [Create travel plans](#create-travel-plans)
+      - [Update travel plans](#update-travel-plans)
+      - [Delete travel plans](#delete-travel-plans)
     - [Roam, WIP](#roam-wip)
     - [Age verification, WIP](#age-verification-wip)
     - [Blocks](#blocks)
@@ -2782,12 +2786,66 @@ Response:
 
 - `destination` — string
 
-### Travels, WIP
+### Travels
 
-- POST /v6/profiles/travel AddTravelPlanApiRequest
-- POST /v6/profiles/travel/update UpdateTravelPlanApiRequest
-- DELETE /v6/profiles/travel/{travelPlanId} . PlacesResponse
-- GET /v6/profiles/travel/{profileId} . TravelPlansApiResponse
+#### Get travel plans
+Requires [Authorization](#api-authorization).
+
+```
+GET /v6/profiles/travel/{profileId}
+```
+
+Response:
+- `travelPlans` — array of objects
+  - `travelPlanId` — long integer, required for update, ignored for create
+  - `profileId` — long integer
+  - `geohash` — string
+  - `startDate` — long integer, unix timestamp in milliseconds
+  - `endDate` — long integer, unix timestamp in milliseconds
+  - `showOnProfile` — boolean
+  - `notes` — string
+  
+#### Create travel plans
+Requires [Authorization](#api-authorization).
+
+```
+POST /v6/profiles/travel
+```
+
+Body:
+- `profileId` — long integer
+- `geohash` — string
+- `startDate` — long integer, unix timestamp in milliseconds
+- `endDate` — long integer, unix timestamp in milliseconds
+- `showOnProfile` — boolean
+- `notes` — string
+
+#### Update travel plans
+
+Requires [Authorization](#api-authorization).
+
+```
+POST /v6/profiles/travel/update
+```
+
+Body:
+- `travelPlanId` — long integer
+- `profileId` — long integer
+- `geohash` — string
+- `startDate` — long integer, unix timestamp in milliseconds
+- `endDate` — long integer, unix timestamp in milliseconds
+- `showOnProfile` — boolean
+- `notes` — string
+
+#### Delete travel plans
+
+Requires [Authorization](#api-authorization).
+
+Deletes travel plan with specified `travelPlanId`.
+
+```
+DELETE /v6/profiles/travel/{travelPlanId}
+```
 
 ### Roam, WIP
 
