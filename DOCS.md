@@ -1085,7 +1085,7 @@ GET /v5/chat/conversation/{conversationId}/message
 
 Query (optional):
 
-- `pageKey` — optional, unknown string
+- `pageKey` — optional, This is the last `messageId` from the previous response, the %3A character is also know as : which then matches the `messageId` format of `timestamp:uuid`. This will then return messages before this provided id, if not provided it will return the most recent messages.
 - `profile` — boolean (`profile=true` | `profile=` + any other value), optional
 
 Response:
