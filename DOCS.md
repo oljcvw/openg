@@ -110,7 +110,7 @@ Licensed under [MIT](./LICENSE). You must credit author and reference this proje
       - [Get album limits](#get-album-limits)
       - [Albums red dot, WIP](#albums-red-dot-wip)
       - [Pressie albums feed](#pressie-albums-feed)
-      - [Pressie albums feed paywall, WIP](#pressie-albums-feed-paywall-wip)
+      - [Pressie albums feed paywall](#pressie-albums-feed-paywall)
       - [Pressie albums feed profile ID, WIP](#pressie-albums-feed-profile-id-wip)
       - [Pressie albums feed update read, WIP](#pressie-albums-feed-update-read-wip)
     - [Misc](#misc)
@@ -1742,13 +1742,27 @@ Response:
 - `nonEmptyPersonalAlbumCount` - number
 - `emptyAlbumId` - `null`
 
-#### Pressie albums feed paywall, WIP
-
-WIP
+#### Pressie albums feed paywall
 
 ```
 POST /v3/pressie-albums/feed/paywall/
 ```
+
+Request:
+- nothing found so far
+
+Response:
+- `albumPaywallContent` - array of objects
+  - `albumId` — long integer
+  - `profile` — object
+    - `profileId` — long integer
+    - `name` — string, may be empty
+    - `profileUrl` — string or `null`
+    - `onlineUntil` — unknown or `null`
+    - `distanceKm` — float or `null`
+  - `paywallCoverUrl` — string, see [Media -> Signed CDN files](#signed-cdn-files)
+  - `paywallUrls` — array of strings, see [Media -> Signed CDN files](#signed-cdn-files)
+  - `albumsItemCount` — integer
 
 #### Pressie albums feed profile ID, WIP
 
