@@ -464,7 +464,7 @@ See also: [WebSocket](#websocket)
 
 #### Conversation ID
 
-String with numbers separated by `:`, e.g. `"12345678:23456789"`
+String with numbers separated by `:`, e.g. `"12345678:23456789"`, also known as `${profileId1}:${profileId2}`. The order of these is the smaller user id is first then the larger one is second, regardless of who started the chat.
 
 #### Conversation
 
