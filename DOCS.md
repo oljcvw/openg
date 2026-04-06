@@ -2808,6 +2808,8 @@ Response:
 #### Create travel plans
 Requires [Authorization](#api-authorization).
 
+Returns 200
+
 ```
 POST /v6/profiles/travel
 ```
@@ -2820,9 +2822,14 @@ Body:
 - `showOnProfile` — boolean
 - `notes` — string
 
+Response:
+Empty
+
 #### Update travel plans
 
 Requires [Authorization](#api-authorization).
+
+Returns 200
 
 ```
 POST /v6/profiles/travel/update
@@ -2836,6 +2843,9 @@ Body:
 - `endDate` — long integer, unix timestamp in milliseconds
 - `showOnProfile` — boolean
 - `notes` — string
+
+Response:
+Empty
 
 #### Delete travel plans
 
