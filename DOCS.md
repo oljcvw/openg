@@ -2852,7 +2852,7 @@ Empty
 Requires [Authorization](#api-authorization).
 
 Deletes travel plan with specified `travelPlanId`.
-Repeated deletion returns 200, same as first deletion.
+Repeated deletion returns 200, same as first deletion
 
 ```
 DELETE /v6/profiles/travel/{travelPlanId}
