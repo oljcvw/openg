@@ -1089,7 +1089,7 @@ GET /v5/chat/conversation/{conversationId}/message
 
 Query (optional):
 
-- `pageKey` — optional, This is the last `messageId` from the previous response, the %3A character is also know as : which then matches the `messageId` format of `timestamp:uuid`. This will then return messages before this provided id, if not provided it will return the most recent messages.
+- `pageKey` — optional, This is the last `messageId` from the previous response encodded as URL encoding. This will then return messages before this provided id, if not provided it will return the most recent messages.
 - `profile` — boolean (`profile=true` | `profile=` + any other value), optional
 
 Response:
@@ -1894,7 +1894,7 @@ When used in query, stringified as follows: `y2,x1,x2,y1`.
 - `isVisiting` — boolean
 - `travelPlans` — array of objects
   - `endDateUtc` — long or `null`
-  - `geohash` — string
+  - `geohash` — [Geohash](#geohash)
   - `id` — long number or `null`
   - `locationName` — string
   - `showOnProfile` — boolean or `null`
@@ -2799,7 +2799,7 @@ Response:
 - `travelPlans` — array of objects
   - `travelPlanId` — long integer, required for update, ignored for create
   - `profileId` — long integer
-  - `geohash` — string
+  - `geohash` — [Geohash](#geohash)
   - `startDate` — long integer, unix timestamp in milliseconds
   - `endDate` — long integer, unix timestamp in milliseconds
   - `showOnProfile` — boolean
@@ -2814,7 +2814,7 @@ POST /v6/profiles/travel
 
 Body:
 - `profileId` — long integer
-- `geohash` — string
+- `geohash` — [Geohash](#geohash)
 - `startDate` — long integer, unix timestamp in milliseconds
 - `endDate` — long integer, unix timestamp in milliseconds
 - `showOnProfile` — boolean
@@ -2831,7 +2831,7 @@ POST /v6/profiles/travel/update
 Body:
 - `travelPlanId` — long integer
 - `profileId` — long integer
-- `geohash` — string
+- `geohash` — [Geohash](#geohash)
 - `startDate` — long integer, unix timestamp in milliseconds
 - `endDate` — long integer, unix timestamp in milliseconds
 - `showOnProfile` — boolean
