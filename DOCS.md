@@ -109,7 +109,7 @@ Licensed under [MIT](./LICENSE). You must credit author and reference this proje
       - [Albums content chat list-by-id, WIP](#albums-content-chat-list-by-id-wip)
       - [Get album limits](#get-album-limits)
       - [Albums red dot, WIP](#albums-red-dot-wip)
-      - [Pressie albums feed, WIP](#pressie-albums-feed-wip)
+      - [Pressie albums feed](#pressie-albums-feed)
       - [Pressie albums feed paywall, WIP](#pressie-albums-feed-paywall-wip)
       - [Pressie albums feed profile ID, WIP](#pressie-albums-feed-profile-id-wip)
       - [Pressie albums feed update read, WIP](#pressie-albums-feed-update-read-wip)
@@ -1679,19 +1679,68 @@ Response:
 
 #### Albums red dot, WIP
 
-WIP
+This may just be tracking but could also be related to something else 
 
 ```
 PUT /v1/albums/red-dot
 ```
 
-#### Pressie albums feed, WIP
+Response: 
+Empty
 
-WIP
+#### Pressie albums feed
+
+Gets albums shared with the user.
 
 ```
 POST /v3/pressie-albums/feed
 ```
+
+Request:
+- `isFavorite` — boolean, optional, filters albums shared by people marked as favorite
+- `isOnline` — boolean, optional, filters albums shared by people that are currently online
+- `onlyVideo` — boolean, optional, filters albums to those that include at least one video
+- `blur` — boolean, optional, if `true`, all media urls in response are blurred
+
+Response:
+- `profileFeeds` - array of objects
+  - `profileId` — integer
+  - `paywallStatus` — string, e.g. `ALLOW`
+  - `seen` - boolean
+  - `content` — object
+    - Similar to [AlbumContentMin](#albumcontentmin), but without `statusId`
+  - `profile` — object
+    - Similar to [ProfileMin](#profilemin), but with additional fields and naming differences
+    - `profileId` — long integer
+    - `name` — string, may be empty
+    - `profileUrl` — string or `null`
+    - `onlineUntil` — unknown or `null`
+    - `distanceKm` — float or `null`
+- `sharedAlbums` - array of objects
+  - *everything from [AlbumPreview](#albumpreview)*
+  - `albumViewable` — boolean
+  - `albumVersion` — integer
+  - `expiresat` — unix timestamp in milliseconds or `null` (observed key spelling; may also appear as `expiresAt`)
+  - `name` — [Album name](#album-name)
+  - `ownerProfileId` — integer
+  - `imageCount` — integer
+  - `videoCount` — integer
+  - `coverContent` — object
+    - Similar to [AlbumContentMin](#albumcontentmin), but with different field names
+    - `id` — long integer
+    - `contentType` — string
+    - `coverContent` — [AlbumCoverUrl](#albumcoverurl)
+    - `status` — string, e.g. `ACTIVE`
+  - `profile` — object
+    - Similar to [ProfileMin](#profilemin), but with additional fields and naming differences
+    - `profileId` — long integer
+    - `name` — string, may be empty
+    - `profileUrl` — string or `null`
+    - `onlineUntil` — unknown or `null`
+    - `distanceKm` — float or `null`
+- `experimentStatus` - number
+- `nonEmptyPersonalAlbumCount` - number
+- `emptyAlbumId` - `null`
 
 #### Pressie albums feed paywall, WIP
 
