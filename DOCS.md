@@ -1690,7 +1690,7 @@ Empty
 
 #### Pressie albums feed
 
-Gets albums shared with the user.
+Gets albums shared with us.
 
 ```
 POST /v3/pressie-albums/feed
@@ -1708,9 +1708,7 @@ Response:
   - `paywallStatus` — string, e.g. `ALLOW`
   - `seen` - boolean
   - `content` — object
-    - Similar to [AlbumContentMin](#albumcontentmin), but without `statusId`
   - `profile` — object
-    - Similar to [ProfileMin](#profilemin), but with additional fields and naming differences
     - `profileId` — long integer
     - `name` — string, may be empty
     - `profileUrl` — string or `null`
@@ -1726,13 +1724,11 @@ Response:
   - `imageCount` — integer
   - `videoCount` — integer
   - `coverContent` — object
-    - Similar to [AlbumContentMin](#albumcontentmin), but with different field names
     - `id` — long integer
     - `contentType` — string
     - `coverContent` — [AlbumCoverUrl](#albumcoverurl)
     - `status` — string, e.g. `ACTIVE`
   - `profile` — object
-    - Similar to [ProfileMin](#profilemin), but with additional fields and naming differences
     - `profileId` — long integer
     - `name` — string, may be empty
     - `profileUrl` — string or `null`
@@ -1748,8 +1744,7 @@ Response:
 POST /v3/pressie-albums/feed/paywall/
 ```
 
-Request:
-- nothing found so far
+No body.
 
 Response:
 - `albumPaywallContent` - array of objects
@@ -2871,8 +2866,6 @@ Response:
 #### Create travel plans
 Requires [Authorization](#api-authorization).
 
-Returns 200
-
 ```
 POST /v6/profiles/travel
 ```
@@ -2891,8 +2884,6 @@ Empty
 #### Update travel plans
 
 Requires [Authorization](#api-authorization).
-
-Returns 200
 
 ```
 POST /v6/profiles/travel/update
