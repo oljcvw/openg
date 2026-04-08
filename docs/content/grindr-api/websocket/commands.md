@@ -20,7 +20,7 @@ Used to identify responses to concurrent requests.
 
 ## WebSocket command response
 
-Command response is an [event](/grindr-api/websocket/events#events) sent with `type` property value being `[command].response`.
+Command response is an [event](/grindr-api/websocket/events) sent with `type` property value being `[command].response`.
 
 Additionally, responses have the following fields:
 

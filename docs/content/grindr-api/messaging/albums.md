@@ -47,8 +47,8 @@ Previously shared [albums in chat](/grindr-api/messaging/messages#album) inherit
 ## AlbumContent
 
 - *everything from [AlbumContentMin](#AlbumContentMin)*
-- `thumbUrl` — string, unblurred preview, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files#signed-cdn-files)
-- `url` — string, original file, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files#signed-cdn-files), may be `""` if `remainingViews` is 0
+- `thumbUrl` — string, unblurred preview, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files)
+- `url` — string, original file, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files), may be `""` if `remainingViews` is 0
 - `processing` — boolean
 - `rejectionId` - unknown or `null`
 
@@ -60,7 +60,7 @@ JPEG photo with the first frame of video in case of video files.
 
 Becomes unavailable (`AccessDenied`) after album has expired.
 
-See [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files#signed-cdn-files).
+See [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files).
 
 ## Album name
 
@@ -117,8 +117,8 @@ GET /v1/albums/{albumId}/content/{contentId}/poster
 
 Response:
 
-- `blurredPosterUrl` — string, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files#signed-cdn-files)
-- `posterUrl` — string, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files#signed-cdn-files)
+- `blurredPosterUrl` — string, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files)
+- `posterUrl` — string, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files)
 
 ## Record view of an album
 
@@ -446,7 +446,7 @@ POST /v3/pressie-albums/feed
 
 Body:
 
-- `isFavorite` — boolean, optional, only albums shared by [favorite](/grindr-api/users/favorites#favorites) users
+- `isFavorite` — boolean, optional, only albums shared by [favorite](/grindr-api/users/favorites) users
 - `isOnline` — boolean, optional, only albums shared by currently online users
 - `onlyVideo` — boolean, optional, only albums with at least one video
 - `blur` — boolean, optional, blur media urls in response
@@ -506,8 +506,8 @@ Response:
     - `profileUrl` — string or `null`
     - `onlineUntil` — unknown or `null`
     - `distanceKm` — float or `null`
-  - `paywallCoverUrl` — string, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files#signed-cdn-files)
-  - `paywallUrls` — array of strings, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files#signed-cdn-files)
+  - `paywallCoverUrl` — string, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files)
+  - `paywallUrls` — array of strings, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files)
   - `albumsItemCount` — integer
 
 ## Pressie albums feed profile ID, WIP

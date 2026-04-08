@@ -1,6 +1,6 @@
 # Media
 
-Media files in Grindr are stored on cdns.grindr.com:443 hosted by Amazon CloudFront powered by AmazonS3. All CDN files are accessible without [authorization](/grindr-api/api-authorization) but some are protected with signed URLs. No [security headers](/grindr-api/security-headers#security-headers) or `Authorization` need to be present in reuqest to CDN.
+Media files in Grindr are stored on cdns.grindr.com:443 hosted by Amazon CloudFront powered by AmazonS3. All CDN files are accessible without [authorization](/grindr-api/api-authorization) but some are protected with signed URLs. No [security headers](/grindr-api/security-headers) or `Authorization` need to be present in reuqest to CDN.
 
 Caching is supported via [ETag header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/ETag) — MD5 hash of image file. Image files might have `image/jpeg`, `image/png` or `image/webp` type, based on original.
 

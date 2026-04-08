@@ -12,7 +12,7 @@ String with two long integers separated by `:`, e.g. `"12345678:23456789"`. Long
   - `name` — string, profile name, may be an empty string, e.g. `""`
   - `participants` — array of objects
     - `profileId` — integer, [Profile ID](/grindr-api/users/profiles#profilemin)
-    - `primaryMediaHash` — string or `null`, see [Media -> Public CDN files](/grindr-api/media/public-cdn-files#public-cdn-files)
+    - `primaryMediaHash` — string or `null`, see [Media -> Public CDN files](/grindr-api/media/public-cdn-files)
     - `lastOnline` — unix timestamp in milliseconds
     - `onlineUntil` — unix timestamp in milliseconds or `null`
     - `distanceMetres` — float number or `null`

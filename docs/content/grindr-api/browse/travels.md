@@ -1,6 +1,6 @@
-## Travels
+# Travels
 
-### Get travel plans
+## Get travel plans
 
 Requires [Authorization](/grindr-api/api-authorization).
 
@@ -19,7 +19,7 @@ Response:
   - `showOnProfile` — boolean
   - `notes` — string
   
-### Create travel plans
+## Create travel plans
 
 Requires [Authorization](/grindr-api/api-authorization).
 
@@ -40,7 +40,7 @@ Response:
 
 Empty.
 
-### Update travel plans
+## Update travel plans
 
 Requires [Authorization](/grindr-api/api-authorization).
 
@@ -62,7 +62,7 @@ Response:
 
 Empty.
 
-### Delete travel plans
+## Delete travel plans
 
 Requires [Authorization](/grindr-api/api-authorization).
 

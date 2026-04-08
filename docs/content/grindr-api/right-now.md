@@ -2,13 +2,13 @@
 
 WIP
 
-### RightNowStatus
+## RightNowStatus
 
 - `NOT_ACTIVE`
 - `HOSTING`
 - `NOT_HOSTING`
 
-### Right Now methods, WIP
+## Right Now methods, WIP
 
 - GET /v3/rightnow/active-post . RightNowGetActivePostResponse
 - GET /v3/rightnow/profiles/{profileId} . RightNowGetOtherUserPostResponse

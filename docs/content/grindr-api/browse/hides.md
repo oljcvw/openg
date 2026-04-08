@@ -1,6 +1,6 @@
 # Hides
 
-Unknown how it's different from [blocks](/grindr-api/browse/blocks#blocks), WIP. Blocks API is preferred until this is figured out.
+Unknown how it's different from [blocks](/grindr-api/browse/blocks), WIP. Blocks API is preferred until this is figured out.
 
 ## Get hidden users
 

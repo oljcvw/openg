@@ -344,7 +344,7 @@ Correct request's `Content-Type` header is required.
 Response:
 
 - `mediaId` — long integer
-- `mediaHash` — string, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files#signed-cdn-files)
+- `mediaHash` — string, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files)
 - `url` — string, URL
 
 ## Upload media (legacy)
@@ -376,7 +376,7 @@ Response:
   - `fullUrl` — string
   - `thumbnail` — boolean or `null`
   - `state` — string, [MediaState](/grindr-api/media/signed-cdn-files#mediastate)
-  - `mediaHash` — string, see [Media -> Public CDN files](/grindr-api/media/public-cdn-files#public-cdn-files)
+  - `mediaHash` — string, see [Media -> Public CDN files](/grindr-api/media/public-cdn-files)
   - `rejectionReason` — string or `null`
 - `mediaId` — integer
 
@@ -391,7 +391,7 @@ GET /v3.1/me/profile/images
 Response:
 
 - `medias` — array of objects
-  - `mediaHash` — string, see [Media -> Public CDN files](/grindr-api/media/public-cdn-files#public-cdn-files)
+  - `mediaHash` — string, see [Media -> Public CDN files](/grindr-api/media/public-cdn-files)
   - `type` — unknown integer
   - `state` — integer, [MediaState](/grindr-api/media/signed-cdn-files#mediastate), WIP
 
@@ -405,8 +405,8 @@ PUT /v3/me/profile/images
 
 Body:
 
-- `primaryImageHash` — string or `null`, see [Media -> Public CDN file](/grindr-api/media/public-cdn-files#public-cdn-files)
-- `secondaryImageHashes` — array (max. length: 5) of strings or `null` (note: see below), see [Media -> Public CDN file](/grindr-api/media/public-cdn-files#public-cdn-files)
+- `primaryImageHash` — string or `null`, see [Media -> Public CDN file](/grindr-api/media/public-cdn-files)
+- `secondaryImageHashes` — array (max. length: 5) of strings or `null` (note: see below), see [Media -> Public CDN file](/grindr-api/media/public-cdn-files)
 
 Setting both `primaryImageHash` and `secondaryImageHashes` to `null` works. But setting `primaryImageHash` to a hash value while setting `secondaryImageHashes` to null causes HTTP status 400 Bad Request error. It's recommended to just use `[]` for `secondaryImageHashes` rather than `null`.
 
