@@ -5,7 +5,6 @@ Last update: 2026.04.02 / v25.20.0 (147239)
 Licensed under [MIT](./LICENSE). You must credit author and reference this project if you're going to use any parts of this document.
 
 - [Grindr API specification](#grindr-api-specification)
-  - [Getting started](#getting-started)
   - [Security headers](#security-headers)
     - [`L-Device-Info`](#l-device-info)
     - [`User-Agent`](#user-agent)
@@ -313,12 +312,6 @@ Licensed under [MIT](./LICENSE). You must credit author and reference this proje
       - [WebSocket command response](#websocket-command-response)
       - [Send a message to a conversation via WS](#send-a-message-to-a-conversation-via-ws)
   - [Appendix](#appendix)
-
-## Getting started
-
-- API URI: `https://grindr.mobi`, should be appended to all requests below
-- Query — the parameters part in URL after path (`?example=foo&bar=baz`)
-- Body — JSON payload passed in request's body
 
 ## Security headers
 
