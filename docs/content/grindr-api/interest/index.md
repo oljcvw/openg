@@ -1,3 +1,7 @@
+<script setup>
+import { grindrApiReferenceInterest as subpages } from '$lib'
+</script>
+
 # Interest
 
-TODO: WIP toc
+<Subpages :items="subpages" />

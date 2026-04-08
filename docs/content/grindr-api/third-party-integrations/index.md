@@ -1,3 +1,7 @@
+<script setup>
+import { grindrApiReferenceThirdPartyIntegrations as subpages } from '$lib'
+</script>
+
 # Third party integrations
 
-TODO: WIP toc
+<Subpages :items="subpages" />

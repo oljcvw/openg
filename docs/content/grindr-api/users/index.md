@@ -1,3 +1,7 @@
+<script setup>
+import { grindrApiReferenceUsers as subpages } from '$lib'
+</script>
+
 # Users
 
-TODO: WIP toc
+<Subpages :items="subpages" />

@@ -1,3 +1,7 @@
+<script setup>
+import { grindrApiReferenceBrowse as subpages } from '$lib'
+</script>
+
 # Browse
 
-TODO: WIP toc
+<Subpages :items="subpages" />
