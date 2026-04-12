@@ -148,9 +148,13 @@ impl GrindrClient {
     }
 
     pub async fn authorization_header(&self) -> Option<String> {
-        self.session
-            .read()
-            .await
+        let mut session = self.session.read().await;
+        let expires_at = session.as_ref().map(|s| s.expires_at).unwrap_or(0);
+        if expires_at < (chrono::Utc::now().timestamp() as u64 + 60) {
+            let _ = self.refresh_token().await;
+            session = self.session.read().await;
+        }
+        session
             .as_ref()
             .map(|s| format!("Grindr3 {}", s.session_id))
     }
