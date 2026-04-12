@@ -1,4 +1,4 @@
-pub mod client;
 pub mod auth;
-pub mod headers;
+pub mod client;
 pub mod error;
+pub mod headers;

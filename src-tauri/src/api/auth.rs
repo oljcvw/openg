@@ -1,15 +1,17 @@
+use keyring_core::Entry;
 use serde::{Deserialize, Serialize};
 
 use super::client::GrindrClient;
 use super::client::BASE_URL;
 use super::error::ApiError;
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Session {
     pub email: String,
     pub expires_at: u64,
     pub profile_id: String,
     pub session_id: String,
+    pub auth_token: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -93,6 +95,31 @@ fn decode_session_jwt(token: &str) -> Result<JwtClaims, ApiError> {
     Ok(data.claims)
 }
 
+pub struct AuthStorage;
+
+impl AuthStorage {
+    fn get_session_entry() -> Result<Entry, ApiError> {
+        Entry::new("open-grind", "session").map_err(|e| ApiError::Auth(e.to_string()))
+    }
+    pub fn get_session() -> Result<Option<Session>, ApiError> {
+        let entry = Self::get_session_entry()?;
+        let session_bytes = match entry.get_secret() {
+            Ok(bytes) => bytes,
+            Err(keyring_core::Error::NoEntry) => return Ok(None),
+            Err(e) => return Err(ApiError::Auth(e.to_string())),
+        };
+        rmp_serde::decode::from_slice(&session_bytes)
+            .map_err(|e| ApiError::Auth(e.to_string()))
+            .map(Some)
+    }
+    pub fn set_session(session: &Session) -> Result<(), ApiError> {
+        let session_bytes = rmp_serde::encode::to_vec(session).unwrap();
+        Self::get_session_entry()?
+            .set_secret(&session_bytes)
+            .map_err(|e| ApiError::Auth(e.to_string()))
+    }
+}
+
 impl GrindrClient {
     async fn create_session(&self, body: &impl AuthRequest) -> Result<Session, ApiError> {
         let resp = self
@@ -114,8 +141,11 @@ impl GrindrClient {
             email: body.email().to_owned(),
             profile_id: session_resp.profile_id.clone(),
             session_id: session_resp.session_id,
+            auth_token: session_resp.auth_token,
             expires_at: claims.exp,
         };
+
+        AuthStorage::set_session(&session)?;
 
         Ok(session)
     }
@@ -136,7 +166,7 @@ impl GrindrClient {
             .as_ref()
             .ok_or_else(|| ApiError::Auth("Not logged in".to_owned()))?;
 
-        let body = RefreshRequest::new(session.email.clone(), session.session_id.clone());
+        let body = RefreshRequest::new(session.email.clone(), session.auth_token.clone());
 
         drop(current);
 

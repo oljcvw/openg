@@ -27,5 +27,8 @@
 		"editor.indentSize": 2,
 		"editor.detectIndentation": false,
 		"editor.insertSpaces": true
+	},
+	"[xml]": {
+		"editor.defaultFormatter": "redhat.vscode-xml"
 	}
 }
