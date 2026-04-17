@@ -30,5 +30,11 @@
 	},
 	"[xml]": {
 		"editor.defaultFormatter": "redhat.vscode-xml"
+	},
+	"files.associations": {
+		"layout.css": "tailwindcss"
+	},
+	"editor.quickSuggestions": {
+		"strings": "on"
 	}
 }

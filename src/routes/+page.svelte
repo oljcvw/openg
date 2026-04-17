@@ -4,6 +4,9 @@
 	let password = $state("");
 </script>
 
+<svelte:head>
+	<title>Open Grind</title>
+</svelte:head>
 <main>
 	<form
 		class="row"
