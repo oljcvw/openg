@@ -1,21 +1,25 @@
 mod api;
+mod error;
+mod state;
 mod storage;
 
+use crate::state::AppState;
 use api::client::GrindrClient;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     storage::init_keyring();
 
-    let client = GrindrClient::new().expect("failed to create API client");
+    let client = GrindrClient::new().ok();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
-        .manage(client)
+        .manage(AppState { client })
         .invoke_handler(tauri::generate_handler![
             api::auth::login,
             api::auth::refresh_token,
+            api::auth::logout,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

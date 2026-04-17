@@ -1,9 +1,11 @@
 use keyring_core::Entry;
 use serde::{Deserialize, Serialize};
 
+use crate::error::AppError;
+use crate::state::AppState;
+
 use super::client::GrindrClient;
 use super::client::BASE_URL;
-use super::error::ApiError;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Session {
@@ -88,9 +90,9 @@ impl RefreshRequest {
     }
 }
 
-fn decode_session_jwt(token: &str) -> Result<JwtClaims, ApiError> {
+fn decode_session_jwt(token: &str) -> Result<JwtClaims, AppError> {
     let data = jsonwebtoken::dangerous::insecure_decode::<JwtClaims>(token)
-        .map_err(|e| ApiError::Auth(format!("JWT decode failed: {e}")))?;
+        .map_err(|e| AppError::Auth(format!("JWT decode failed: {e}")))?;
 
     Ok(data.claims)
 }
@@ -98,30 +100,30 @@ fn decode_session_jwt(token: &str) -> Result<JwtClaims, ApiError> {
 pub struct AuthStorage;
 
 impl AuthStorage {
-    fn get_session_entry() -> Result<Entry, ApiError> {
-        Entry::new("open-grind", "session").map_err(|e| ApiError::Auth(e.to_string()))
+    fn get_session_entry() -> Result<Entry, AppError> {
+        Entry::new("open-grind", "session").map_err(|e| AppError::Auth(e.to_string()))
     }
-    pub fn get_session() -> Result<Option<Session>, ApiError> {
+    pub fn get_session() -> Result<Option<Session>, AppError> {
         let entry = Self::get_session_entry()?;
         let session_bytes = match entry.get_secret() {
             Ok(bytes) => bytes,
             Err(keyring_core::Error::NoEntry) => return Ok(None),
-            Err(e) => return Err(ApiError::Auth(e.to_string())),
+            Err(e) => return Err(AppError::Auth(e.to_string())),
         };
         rmp_serde::decode::from_slice(&session_bytes)
-            .map_err(|e| ApiError::Auth(e.to_string()))
+            .map_err(|e| AppError::Auth(e.to_string()))
             .map(Some)
     }
-    pub fn set_session(session: &Session) -> Result<(), ApiError> {
+    pub fn set_session(session: &Session) -> Result<(), AppError> {
         let session_bytes = rmp_serde::encode::to_vec(session).unwrap();
         Self::get_session_entry()?
             .set_secret(&session_bytes)
-            .map_err(|e| ApiError::Auth(e.to_string()))
+            .map_err(|e| AppError::Auth(e.to_string()))
     }
 }
 
 impl GrindrClient {
-    async fn create_session(&self, body: &impl AuthRequest) -> Result<Session, ApiError> {
+    async fn create_session(&self, body: &impl AuthRequest) -> Result<Session, AppError> {
         let resp = self
             .http
             .post(format!("{BASE_URL}/v8/sessions"))
@@ -131,7 +133,7 @@ impl GrindrClient {
 
         if !resp.status().is_success() {
             let text = resp.text().await.unwrap_or_default();
-            return Err(ApiError::Auth(text));
+            return Err(AppError::Auth(text));
         }
 
         let session_resp: SessionResponse = resp.json().await?;
@@ -150,7 +152,7 @@ impl GrindrClient {
         Ok(session)
     }
 
-    pub async fn login(&self, email: &str, password: &str) -> Result<LoginResult, ApiError> {
+    pub async fn login(&self, email: &str, password: &str) -> Result<LoginResult, AppError> {
         let body = LoginRequest::new(email.to_owned(), password.to_owned());
         let session = self.create_session(&body).await?;
         let profile_id = session.profile_id.clone();
@@ -160,11 +162,11 @@ impl GrindrClient {
         Ok(LoginResult { profile_id })
     }
 
-    pub async fn refresh_token(&self) -> Result<LoginResult, ApiError> {
+    pub async fn refresh_token(&self) -> Result<LoginResult, AppError> {
         let current = self.session.read().await;
         let session = current
             .as_ref()
-            .ok_or_else(|| ApiError::Auth("Not logged in".to_owned()))?;
+            .ok_or_else(|| AppError::Auth("Not logged in".to_owned()))?;
 
         let body = RefreshRequest::new(session.email.clone(), session.auth_token.clone());
 
@@ -192,17 +194,34 @@ impl GrindrClient {
 
 #[tauri::command]
 pub async fn login(
-    client: tauri::State<'_, GrindrClient>,
+    state: tauri::State<'_, AppState>,
     email: String,
     password: String,
 ) -> Result<LoginResult, String> {
-    client
+    state
+        .client()?
         .login(&email, &password)
         .await
         .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn refresh_token(client: tauri::State<'_, GrindrClient>) -> Result<LoginResult, String> {
-    client.refresh_token().await.map_err(|e| e.to_string())
+pub async fn refresh_token(state: tauri::State<'_, AppState>) -> Result<LoginResult, String> {
+    state
+        .client()?
+        .refresh_token()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn logout(state: tauri::State<'_, AppState>) -> Result<(), String> {
+    state
+        .client()?
+        .session
+        .write()
+        .await
+        .take()
+        .ok_or_else(|| "Not logged in".to_owned())
+        .map(|_| ())
 }
