@@ -5,7 +5,6 @@ use crate::error::AppError;
 use crate::state::AppState;
 
 use super::client::GrindrClient;
-use super::client::BASE_URL;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Session {
@@ -59,6 +58,7 @@ pub struct RefreshRequest {
 }
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginResult {
     pub profile_id: String,
 }
@@ -124,19 +124,9 @@ impl AuthStorage {
 
 impl GrindrClient {
     async fn create_session(&self, body: &impl AuthRequest) -> Result<Session, AppError> {
-        let resp = self
-            .http
-            .post(format!("{BASE_URL}/v8/sessions"))
-            .json(body)
-            .send()
+        let session_resp: SessionResponse = self
+            .request_json(reqwest::Method::POST, "/v8/sessions", Some(body))
             .await?;
-
-        if !resp.status().is_success() {
-            let text = resp.text().await.unwrap_or_default();
-            return Err(AppError::Auth(text));
-        }
-
-        let session_resp: SessionResponse = resp.json().await?;
         let claims = decode_session_jwt(&session_resp.session_id)?;
 
         let session = Session {
@@ -197,31 +187,31 @@ pub async fn login(
     state: tauri::State<'_, AppState>,
     email: String,
     password: String,
-) -> Result<LoginResult, String> {
-    state
-        .client()?
-        .login(&email, &password)
-        .await
-        .map_err(|e| e.to_string())
+) -> Result<LoginResult, AppError> {
+    state.client()?.login(&email, &password).await
 }
 
 #[tauri::command]
-pub async fn refresh_token(state: tauri::State<'_, AppState>) -> Result<LoginResult, String> {
-    state
-        .client()?
-        .refresh_token()
-        .await
-        .map_err(|e| e.to_string())
+pub async fn refresh_token(state: tauri::State<'_, AppState>) -> Result<LoginResult, AppError> {
+    state.client()?.refresh_token().await
 }
 
 #[tauri::command]
-pub async fn logout(state: tauri::State<'_, AppState>) -> Result<(), String> {
+pub async fn logout(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
     state
         .client()?
         .session
         .write()
         .await
         .take()
-        .ok_or_else(|| "Not logged in".to_owned())
+        .ok_or_else(|| AppError::Auth("Not logged in".to_owned()))
         .map(|_| ())
+}
+
+#[tauri::command]
+pub async fn auth_state(state: tauri::State<'_, AppState>) -> Result<Option<u64>, AppError> {
+    let session = state.client()?.session.read().await;
+    Ok(session
+        .as_ref()
+        .and_then(|s| s.profile_id.parse::<u64>().ok()))
 }

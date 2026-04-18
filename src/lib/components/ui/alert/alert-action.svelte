@@ -12,8 +12,8 @@
 
 <div
 	bind:this={ref}
-	data-slot="card-content"
-	class={cn("px-6 group-data-[size=sm]/card:px-4", className)}
+	data-slot="alert-action"
+	class={cn("absolute top-2.5 right-3", className)}
 	{...restProps}
 >
 	{@render children?.()}

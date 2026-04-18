@@ -133,5 +133,8 @@
 
 :root,
 body {
-	height: 100dvh;
+	min-height: 100dvh;
+	overscroll-behavior: none;
+	user-select: none;
+	-webkit-user-select: none;
 }

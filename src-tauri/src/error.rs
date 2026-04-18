@@ -1,8 +1,11 @@
 use std::fmt;
 
-#[derive(Debug)]
+use serde::Serialize;
+
+#[derive(Debug, Serialize)]
+#[serde(tag = "kind", content = "message")]
 pub enum AppError {
-    Http(reqwest::Error),
+    Http(String),
     Auth(String),
     Api { code: i32, message: String },
     NotInitialized,
@@ -11,7 +14,7 @@ pub enum AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AppError::Http(e) => write!(f, "HTTP error: {e}"),
+            AppError::Http(msg) => write!(f, "HTTP error: {msg}"),
             AppError::Auth(msg) => write!(f, "Auth error: {msg}"),
             AppError::Api { code, message } => write!(f, "API error {code}: {message}"),
             AppError::NotInitialized => write!(f, "GrindrClient not initialized"),
@@ -23,7 +26,7 @@ impl std::error::Error for AppError {}
 
 impl From<reqwest::Error> for AppError {
     fn from(e: reqwest::Error) -> Self {
-        AppError::Http(e)
+        AppError::Http(e.to_string())
     }
 }
 

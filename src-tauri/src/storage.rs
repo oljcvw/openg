@@ -10,8 +10,13 @@ pub fn init_keyring() {
     #[cfg(target_os = "macos")]
     {
         let cfg = std::collections::HashMap::new();
-        if keyring::use_apple_protected_store(&cfg).is_err() {
-            keyring::use_apple_keychain_store(&cfg).expect("failed to init macOS keyring");
+        #[cfg(debug_assertions)]
+        keyring::use_sqlite_store(&cfg).expect("failed to init macOS sqlite keyring");
+        #[cfg(not(debug_assertions))]
+        {
+            if keyring::use_apple_protected_store(&cfg).is_err() {
+                keyring::use_apple_keychain_store(&cfg).expect("failed to init macOS keyring");
+            }
         }
     }
 

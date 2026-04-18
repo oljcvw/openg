@@ -54,3 +54,7 @@ process.stdout.write("Grindr3 " + (await req.json().then((t) => t.sessionId)));
 ## Contribution guidelines
 
 AI-generated pull requests are not allowed. AI-assisted code is allowed.
+
+## Notes
+
+- API Authorization, security headers and transport layer are handled by Rust lib; this way the token can be stored securely without ever being exposed to frontend

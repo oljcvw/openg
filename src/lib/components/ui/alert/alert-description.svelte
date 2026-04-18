@@ -12,8 +12,11 @@
 
 <div
 	bind:this={ref}
-	data-slot="card-content"
-	class={cn("px-6 group-data-[size=sm]/card:px-4", className)}
+	data-slot="alert-description"
+	class={cn(
+		"text-muted-foreground text-sm text-balance md:text-pretty [&_p:not(:last-child)]:mb-4 [&_a]:hover:text-foreground [&_a]:underline [&_a]:underline-offset-3",
+		className
+	)}
 	{...restProps}
 >
 	{@render children?.()}
