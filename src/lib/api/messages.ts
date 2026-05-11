@@ -2,6 +2,10 @@ import z from "zod";
 import { fetchRest } from "$lib/api";
 import { apiResponseMessageSchema, messageSchema } from "$lib/model/message";
 
+const conversationMessageSchema = z.object({
+	message: apiResponseMessageSchema,
+});
+
 const conversationMessagesSchema = z.object({
 	messages: z.array(apiResponseMessageSchema),
 	profile: z.object({
@@ -30,6 +34,37 @@ export async function getConversationMessages({
 	return messages;
 }
 
+export async function getConversationMessage({
+	conversationId,
+	messageId,
+}: {
+	conversationId: string;
+	messageId: string;
+}) {
+	return await fetchRest(
+		`/v4/chat/conversation/${encodeURIComponent(conversationId)}/message/${encodeURIComponent(messageId)}`,
+		{ method: "GET" },
+	).then((res) => res.jsonParsed(conversationMessageSchema));
+}
+
+export async function refreshMessages({
+	conversationId,
+	messageIds,
+}: {
+	conversationId: string;
+	messageIds: string[];
+}) {
+	return await fetchRest(
+		`/v4/chat/conversation/${encodeURIComponent(conversationId)}/message-by-id`,
+		{
+			method: "POST",
+			body: { messageIds },
+		},
+	).then((res) =>
+		res.jsonParsed(z.object({ messages: z.array(apiResponseMessageSchema) })),
+	);
+}
+
 export async function sendMessage({
 	toUserId,
 	message,
@@ -47,6 +82,58 @@ export async function sendMessage({
 			},
 			body: message.body,
 		},
+	});
+}
+
+export async function markConversationRead({
+	conversationId,
+	messageId,
+}: {
+	conversationId: string;
+	messageId: string;
+}) {
+	return await fetchRest(
+		`/v4/chat/conversation/${encodeURIComponent(conversationId)}/read/${encodeURIComponent(messageId)}`,
+		{ method: "POST" },
+	);
+}
+
+export async function unsendMessage({
+	conversationId,
+	messageId,
+}: {
+	conversationId: string;
+	messageId: string;
+}) {
+	return await fetchRest("/v4/chat/message/unsend", {
+		method: "POST",
+		body: { conversationId, messageId },
+	});
+}
+
+export async function deleteMessage({
+	conversationId,
+	messageId,
+}: {
+	conversationId: string;
+	messageId: string;
+}) {
+	return await fetchRest("/v4/chat/message/delete", {
+		method: "POST",
+		body: { conversationId, messageId },
+	});
+}
+
+export async function sendTypingStatus({
+	conversationId,
+	status,
+}: {
+	conversationId: string;
+	status: "Typing" | "Cleared";
+}) {
+	return await fetchRest("/v4/chatstatus/typing", {
+		method: "POST",
+		body: { conversationId, status },
 	});
 }
 
