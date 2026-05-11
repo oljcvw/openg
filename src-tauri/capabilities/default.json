@@ -26,10 +26,51 @@
 			]
 		},
 		{
+			"identifier": "fs:allow-read-text-file",
+			"allow": [
+				{
+					"path": "$APPCACHE/json-cache/**"
+				}
+			]
+		},
+		{
+			"identifier": "fs:allow-mkdir",
+			"allow": [
+				{
+					"path": "$APPCACHE/json-cache"
+				},
+				{
+					"path": "$APPCACHE/json-cache/**"
+				}
+			]
+		},
+		{
+			"identifier": "fs:allow-write-text-file",
+			"allow": [
+				{
+					"path": "$APPCACHE/json-cache/**"
+				}
+			]
+		},
+		{
+			"identifier": "fs:allow-remove",
+			"allow": [
+				{
+					"path": "$APPCACHE/json-cache/**"
+				}
+			]
+		},
+		{
 			"identifier": "fs:allow-exists",
 			"allow": [
 				{
 					"path": "$APPDATA/preferences.json"
+				},
+				{
+					"path": "$APPCACHE/json-cache"
+				},
+				{
+					"path": "$APPCACHE/json-cache/**"
 				}
 			]
 		},
