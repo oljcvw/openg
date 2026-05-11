@@ -64,7 +64,7 @@ Response: `AuthResponse`
 
 ## Create account with email
 
-Does not require [Authorization](/grindr-api/api-authorization). The app calls this through a dynamic Retrofit `@Url`.
+Does not require [Authorization](/grindr-api/api-authorization).
 
 ```
 POST /v8/users
@@ -77,7 +77,7 @@ Body: `CreateAccountEmailRequest`
 - `birthday` — integer timestamp
 - `captchaToken` — string or `null`
 - `token` — FCM token string
-- `optIn` — boolean; serialized name comes from an obfuscated constant, getter is `getOptIn()`
+- `optIn` — boolean
 - `sessionId` — cognition session ID string or `null`
 
 Response: `FirstPartyCreateAccountResponse`
@@ -86,7 +86,7 @@ Response: `FirstPartyCreateAccountResponse`
 
 ## Create account with third party
 
-Does not require [Authorization](/grindr-api/api-authorization). Production and legacy paths are both visible in the decompiled app.
+Does not require [Authorization](/grindr-api/api-authorization). Production and legacy paths are both visible in the client.
 
 ```
 POST /v8/users/thirdparty
@@ -199,7 +199,7 @@ GET /v1/visiting/settings
 
 Response: `VisitingStatusSettings`
 
-- `setting` — string, e.g. `"AUTO"`
+- `setting` — visiting-mode string. Observed value `AUTO` appears to let the service choose the visiting state automatically.
 
 ## Set visiting settings
 
@@ -211,7 +211,7 @@ PUT /v1/visiting/settings
 
 Body: `VisitingStatusRequest`
 
-- `setting` — string, e.g. `"AUTO"`
+- `setting` — visiting-mode string. Observed value `AUTO` appears to let the service choose the visiting state automatically.
 
 Response: `Unit`.
 

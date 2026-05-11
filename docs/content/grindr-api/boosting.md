@@ -1,8 +1,8 @@
 # Boosting
 
-Boost endpoints require [Authorization](/grindr-api/api-authorization).
-
 ## Get boost sessions
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 GET /v2/boost/sessions
@@ -15,6 +15,8 @@ Response:
 - `boostSessions` — array of `BoostSessionApiResponse`
 
 ## Redeem boost consumable
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 POST /v1/consumables/redeem/boost
@@ -32,6 +34,8 @@ Response:
 
 ## Set standard boost preferences
 
+Requires [Authorization](/grindr-api/api-authorization).
+
 ```
 POST /v1/boost/preferences/standard
 ```
@@ -43,12 +47,33 @@ Body (`BoostPreferencesRequest`):
 
 Response:
 
-Raw `ResponseBody`.
+Empty raw body.
 
-## Set super or mega boost preferences
+## Set super boost preferences
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 POST /v1/boost/preferences/super
+```
+
+Body (`SuperBoostPreferencesRequest`):
+
+- `minAge` — integer or `null`
+- `maxAge` — integer or `null`
+- `positionPreferences` — array of integers
+- `isCurrentLocation` — boolean
+- `geohash` — string
+
+Response:
+
+Empty raw body.
+
+## Set mega boost preferences
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
 POST /v1/boost/preferences/mega
 ```
 
@@ -62,9 +87,11 @@ Body (`SuperBoostPreferencesRequest`):
 
 Response:
 
-Raw `ResponseBody`.
+Empty raw body.
 
 ## Pause boost session
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 POST /v1/boost/sessions/pause
@@ -76,6 +103,8 @@ Empty.
 
 ## Unpause boost session
 
+Requires [Authorization](/grindr-api/api-authorization).
+
 ```
 POST /v1/boost/sessions/unpause
 ```
@@ -85,6 +114,8 @@ Response:
 Empty.
 
 ## Get consumable inventory
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 GET /v1/consumables/inventory

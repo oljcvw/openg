@@ -1,8 +1,10 @@
 # Alist
 
-A-list endpoints require [Authorization](/grindr-api/api-authorization).
+The A-list feature is a recommendations surface. It returns suggested profiles, update feeds, and feedback endpoints used to tune the recommendations.
 
 ## Get A-list profiles
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 GET /v6/alist/profiles
@@ -21,6 +23,8 @@ Response: `AListProfilesResponse`
 - `updatesProfilePicturesUrls` — array of strings
 
 ## Get A-list full profile
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 GET /v2/alist/profiles/{profileId}
@@ -48,6 +52,8 @@ Response: `AListFullProfileApiResponse`
 
 ## Get A-list updates
 
+Requires [Authorization](/grindr-api/api-authorization).
+
 ```
 GET /v3/alist/updates
 ```
@@ -58,6 +64,8 @@ Response: `AListUpdatesApiResponse`
 - `oldUpdates` — array of `AListUpdateApiResponse`
 
 ## Send A-list feedback
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 POST /v1/alist/feedback/{conversationId}
@@ -77,6 +85,8 @@ Response: Empty.
 
 ## Remove A-list profile
 
+Requires [Authorization](/grindr-api/api-authorization).
+
 ```
 DELETE /v1/alist/profiles/{profileId}
 ```
@@ -88,6 +98,8 @@ Path:
 Response: Empty.
 
 ## Trigger A-list generation
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 POST /v1/alist/trigger-generation

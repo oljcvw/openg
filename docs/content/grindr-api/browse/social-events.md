@@ -1,8 +1,8 @@
 # Social events
 
-Social events endpoints require [Authorization](/grindr-api/api-authorization).
-
 ## Get social events
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 GET /v1/social-events
@@ -11,7 +11,7 @@ GET /v1/social-events
 Query:
 
 - `geohash` — string, optional
-- `sortBy` — string, optional
+- `sortBy` — string, optional; client enum values are `DISTANCE`, `UPCOMING`, and `POPULARITY`
 - `region` — string, optional
 
 Response: `EventsListResponse`
@@ -19,6 +19,8 @@ Response: `EventsListResponse`
 - `events` — array of `EventItemResponse`, see [Social event](#social-event)
 
 ## Get social event
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 GET /v1/social-events/{socialEventId}
@@ -32,6 +34,8 @@ Response: `EventItemResponse`, see [Social event](#social-event).
 
 ## Attend social event
 
+Requires [Authorization](/grindr-api/api-authorization).
+
 ```
 POST /v1/social-events/{socialEventId}/attendees
 ```
@@ -43,6 +47,8 @@ Path:
 Response: Empty.
 
 ## Unattend social event
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 DELETE /v1/social-events/{socialEventId}/attendees
