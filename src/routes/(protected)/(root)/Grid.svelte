@@ -4,6 +4,7 @@
 	import { uniqBy } from "lodash-es";
 	import {
 		getGrid,
+		mergeResolvedGridProfiles,
 		resolvePartialBatch,
 		type GridProfile,
 	} from "./grid";
@@ -83,17 +84,11 @@
 				(p) => p.profileId,
 			);
 			const resolved = await resolvePartialBatch(profileIds);
-			for (const profile of resolved) {
-				const idx = items.findIndex((i) => i.id === profile.id);
-				if (idx !== -1) items[idx] = profile;
-			}
-			const unresolved = profileIds.filter(
-				(id) => !resolved.some((profile) => profile.id === id),
-			);
-			for (const unresolvedProfileId of unresolved) {
-				const idx = items.findIndex((i) => i.id === unresolvedProfileId);
-				if (idx !== -1) items.splice(idx, 1);
-			}
+			items = mergeResolvedGridProfiles({
+				items,
+				requestedIds: profileIds,
+				resolvedProfiles: resolved,
+			});
 		} catch (error) {
 			console.error(batchIndex, error);
 			toast.error("Failed to load profiles");

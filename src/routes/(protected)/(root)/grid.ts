@@ -61,15 +61,41 @@ export async function getGrid(query: Parameters<typeof getCascadeV3>[0]) {
 	};
 }
 
+export function mergeResolvedGridProfiles({
+	items,
+	requestedIds,
+	resolvedProfiles,
+}: {
+	items: GridProfile[];
+	requestedIds: number[];
+	resolvedProfiles: FullGridProfile[];
+}) {
+	const requested = new Set(requestedIds);
+	const resolved = new Map(
+		resolvedProfiles.map((profile) => [profile.id, profile]),
+	);
+
+	return items.flatMap((item) => {
+		const profile = resolved.get(item.id);
+		if (profile) return [profile];
+		if (requested.has(item.id)) return [];
+		return [item];
+	});
+}
 export async function resolvePartialBatch(
 	profileIds: number[],
 ): Promise<FullGridProfile[]> {
-	const profiles = await getProfiles(profileIds);
+	const orderedIds = [...new Set(profileIds)];
+	if (orderedIds.length === 0) return [];
+
+	const profileOrder = new Map(
+		orderedIds.map((profileId, index) => [profileId, index]),
+	);
+	const profiles = await getProfiles(orderedIds);
 	return profiles
-		.filter(({ profileId }) => profileIds.includes(profileId))
+		.filter(({ profileId }) => profileOrder.has(profileId))
 		.sort(
-			(a, b) =>
-				profileIds.indexOf(a.profileId) - profileIds.indexOf(b.profileId),
+			(a, b) => profileOrder.get(a.profileId)! - profileOrder.get(b.profileId)!,
 		)
 		.map((profile) => ({
 			type: "full" as const,
