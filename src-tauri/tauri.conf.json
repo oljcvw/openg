@@ -24,7 +24,7 @@
 			}
 		],
 		"security": {
-			"csp": null
+			"csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: https://asset.localhost https://cdns.grindr.com https://media*.giphy.com data: blob:; font-src 'self' data:; connect-src 'self' ipc: https://*.grindr.com wss://*.grindr.com"
 		}
 	},
 	"bundle": {

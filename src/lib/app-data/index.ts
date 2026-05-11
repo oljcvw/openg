@@ -1,4 +1,3 @@
-import { appDataDir } from "@tauri-apps/api/path";
 import {
 	BaseDirectory,
 	exists,
@@ -18,7 +17,8 @@ export async function readAppDataFile(path: string) {
 }
 
 export async function writeAppDataFile(path: string, content: Uint8Array) {
-	await mkdir(await appDataDir(), {
+	await mkdir("", {
+		baseDir: BaseDirectory.AppData,
 		recursive: true,
 	});
 	await writeFile(path, content, {
