@@ -86,7 +86,7 @@
 			const uncachedIds: number[] = [];
 
 			for (const id of profileIds) {
-				const cached = profileCache.get(id);
+				const cached = await profileCache.get(String(id));
 				if (cached) {
 					const idx = items.findIndex((i) => i.id === id);
 					if (idx !== -1) items[idx] = cached;
@@ -97,7 +97,7 @@
 
 			const resolved = await resolvePartialBatch(uncachedIds);
 			for (const profile of resolved) {
-				profileCache.set(profile.id, profile);
+				await profileCache.set(String(profile.id), profile);
 				const idx = items.findIndex((i) => i.id === profile.id);
 				if (idx !== -1) items[idx] = profile;
 			}

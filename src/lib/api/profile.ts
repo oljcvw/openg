@@ -1,6 +1,10 @@
 import z from "zod";
 import { fetchRest } from "$lib/api";
 import {
+	createJsonCache,
+	createLocalStorageCacheStorage,
+} from "$lib/cache/json-cache";
+import {
 	profileRightNowSchema,
 	profileSchema,
 	profileShortSchema,
@@ -12,21 +16,25 @@ const profileResponseSchema = z.object({
 	profiles: z.array(profileSchema).length(1),
 });
 
-const profilesCache = new Map<
-	number,
-	{ profile: Profile; updatedAt: number }
->();
+const profilesCache = createJsonCache({
+	namespace: "profiles:v1",
+	schema: profileSchema,
+	storage: createLocalStorageCacheStorage(),
+	ttlMs: 1000 * 60,
+});
+
 export async function getProfile(profileId: number) {
-	const cached = profilesCache.get(profileId);
-	if (cached && Date.now() - cached.updatedAt < 1000 * 60) {
-		return cached.profile;
-	}
+	const cacheKey = String(profileId);
+	const cached = await profilesCache.get(cacheKey);
+	if (cached) return cached;
+
 	const profile = (
 		await fetchRest(`/v7/profiles/${profileId}`, {
 			method: "GET",
 		}).then((res) => res.jsonParsed(profileResponseSchema))
 	).profiles[0];
-	profilesCache.set(profileId, { profile, updatedAt: Date.now() });
+
+	await profilesCache.set(cacheKey, profile);
 	return profile;
 }
 
