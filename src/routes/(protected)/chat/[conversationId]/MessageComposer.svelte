@@ -32,7 +32,10 @@
 	}}
 >
 	<Textarea
-		placeholder="Say something..."
+		aria-label="Message text"
+		name="message"
+		autocomplete="off"
+		placeholder="Say something…"
 		class="min-h-9.5 rounded-[20px] shrink-0 max-h-31.5 py-2 pr-9.5 h-fit! leading-5 placeholder-shown:truncate"
 		onkeydown={(event) => {
 			if (event.key === "Enter" && !event.shiftKey) {

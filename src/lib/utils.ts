@@ -90,3 +90,22 @@ export function formatDistanceCustom(date: number) {
 	else if (diff < 7 * 24 * 60 * 60 * 1000) return format(date, "EEEE");
 	else return format(date, "MMM d");
 }
+
+const metersFormatter = new Intl.NumberFormat(undefined, {
+	maximumFractionDigits: 0,
+	style: "unit",
+	unit: "meter",
+	unitDisplay: "short",
+});
+
+const kilometersFormatter = new Intl.NumberFormat(undefined, {
+	maximumFractionDigits: 1,
+	style: "unit",
+	unit: "kilometer",
+	unitDisplay: "short",
+});
+
+export function formatMetricDistance(distanceMeters: number): string {
+	if (distanceMeters < 1000) return metersFormatter.format(Math.round(distanceMeters));
+	return kilometersFormatter.format(distanceMeters / 1000);
+}

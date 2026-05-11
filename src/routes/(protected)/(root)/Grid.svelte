@@ -12,6 +12,7 @@
 	import ProfileMiniCard from "./ProfileMiniCard.svelte";
 	import type { cascadeV3QuerySchema } from "$lib/model/grid/cascade";
 	import { Button } from "$lib/components/ui/button";
+	import { onMount } from "svelte";
 
 	let {
 		geohash,
@@ -19,12 +20,18 @@
 		geohash: string;
 	} = $props();
 
-	// TODO: virtual list
+	const VIRTUAL_OVERSCAN_ROWS = 4;
+
 	let items = $state<GridProfile[]>([]);
 	let partialBatches: { batch: { profileId: number }[] }[] = [];
 	let nextPage: number | null = $state(0);
 	let loadingMore = $state(false);
 	let currentQuery: z.infer<typeof cascadeV3QuerySchema> | null = null;
+	let gridEl: HTMLDivElement | null = $state(null);
+	let columnCount = $state(1);
+	let rowHeight = $state(160);
+	let viewportTop = $state(0);
+	let viewportHeight = $state(0);
 
 	export function refresh() {
 		items = [];
@@ -193,17 +200,83 @@
 	}
 
 	const gridProfiles = $derived(uniqBy(items, "id"));
+
+	function updateVirtualGrid() {
+		if (!gridEl) return;
+
+		const rect = gridEl.getBoundingClientRect();
+		const styles = getComputedStyle(gridEl);
+		const columns = styles.gridTemplateColumns
+			.split(" ")
+			.filter((column) => column.trim() !== "").length;
+		const rowGap = Number.parseFloat(styles.rowGap) || 0;
+
+		columnCount = Math.max(1, columns);
+		rowHeight = gridEl.clientWidth / columnCount + rowGap;
+		viewportTop = Math.max(0, -rect.top);
+		viewportHeight = window.innerHeight;
+	}
+
+	onMount(() => {
+		updateVirtualGrid();
+
+		const observer = new ResizeObserver(updateVirtualGrid);
+		if (gridEl) observer.observe(gridEl);
+		window.addEventListener("scroll", updateVirtualGrid, { passive: true });
+		window.addEventListener("resize", updateVirtualGrid);
+
+		return () => {
+			observer.disconnect();
+			window.removeEventListener("scroll", updateVirtualGrid);
+			window.removeEventListener("resize", updateVirtualGrid);
+		};
+	});
+
+	$effect(() => {
+		gridProfiles.length;
+		queueMicrotask(updateVirtualGrid);
+	});
+
+	const totalVirtualRows = $derived(
+		Math.ceil(gridProfiles.length / Math.max(1, columnCount)),
+	);
+	const startVirtualRow = $derived(
+		Math.max(0, Math.floor(viewportTop / rowHeight) - VIRTUAL_OVERSCAN_ROWS),
+	);
+	const endVirtualRow = $derived(
+		Math.min(
+			totalVirtualRows,
+			Math.ceil((viewportTop + viewportHeight) / rowHeight) +
+				VIRTUAL_OVERSCAN_ROWS,
+		),
+	);
+	const topVirtualRows = $derived(startVirtualRow);
+	const bottomVirtualRows = $derived(Math.max(0, totalVirtualRows - endVirtualRow));
+	const visibleGridProfiles = $derived(
+		gridProfiles.slice(startVirtualRow * columnCount, endVirtualRow * columnCount),
+	);
+
+	function virtualSpacerHeight(rows: number) {
+		return `${Math.max(0, rows * rowHeight)}px`;
+	}
 </script>
 
 <div
 	class="grid grid-cols-2 xxs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 w-full gap-0.5 px-1 flex-1"
+	bind:this={gridEl}
 >
 	{#await profiles}
 		{#each Array.from({ length: 20 })}
 			<div class="aspect-square bg-stone-700 animate-pulse"></div>
 		{/each}
 	{:then}
-		{#each gridProfiles as item (item.id)}
+		{#if topVirtualRows > 0}
+			<div
+				class="col-span-full"
+				style:height={virtualSpacerHeight(topVirtualRows)}
+			></div>
+		{/if}
+		{#each visibleGridProfiles as item (item.id)}
 			{#if item.type === "full"}
 				<ProfileMiniCard
 					id={item.id}
@@ -220,6 +293,12 @@
 				></div>
 			{/if}
 		{/each}
+		{#if bottomVirtualRows > 0}
+			<div
+				class="col-span-full"
+				style:height={virtualSpacerHeight(bottomVirtualRows)}
+			></div>
+		{/if}
 		{#if loadingMore}
 			{#each Array.from({ length: 20 })}
 				<div class="aspect-square bg-stone-700 animate-pulse"></div>

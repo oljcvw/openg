@@ -32,8 +32,10 @@
 	<Empty.Root>
 		<Empty.Header>
 			{#if page.status === 404}
-				<div
-					class="perspective-near size-10 cursor-help hover:scale-105 transition-transform rounded-full no-touch-callout select-none"
+				<button
+					type="button"
+					aria-label="Reveal Clippy help"
+					class="perspective-near size-10 cursor-help hover:scale-105 transition-transform rounded-full no-touch-callout select-none border-0 bg-transparent p-0"
 					onpointerdown={() => {
 						flip = true;
 						flipProgress.target = 1;
@@ -46,8 +48,6 @@
 							{ once: true },
 						);
 					}}
-					role="button"
-					tabindex="-1"
 					bind:this={anchor}
 				>
 					<div
@@ -90,7 +90,7 @@
 							</Tooltip.Root>
 						</Tooltip.Provider>
 					</div>
-				</div>
+				</button>
 			{:else}
 				<Empty.Media variant="icon" class="mb-0">
 					<ExclamationMarkIcon />
@@ -131,14 +131,15 @@
 				{/if}
 			</div>
 		</Empty.Content>
-		<Button variant="link" class="text-muted-foreground" size="sm">
-			<a
-				href="https://git.opengrind.org/open-grind/open-grind/issues/new?title=%5BBUG%5D+Short+description+of+the+issue"
-				target="_blank"
-				rel="noopener noreferrer"
-			>
-				Report an issue <ArrowUpRightIcon class="inline" />
-			</a>
+		<Button
+			variant="link"
+			class="text-muted-foreground"
+			size="sm"
+			href="https://git.opengrind.org/open-grind/open-grind/issues/new?title=%5BBUG%5D+Short+description+of+the+issue"
+			target="_blank"
+			rel="noopener noreferrer"
+		>
+			Report an issue <ArrowUpRightIcon class="inline" />
 		</Button>
 	</Empty.Root>
 </main>

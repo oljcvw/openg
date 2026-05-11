@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Badge } from "$lib/components/ui/badge";
 	import { UserIcon } from "phosphor-svelte";
+	import { formatMetricDistance } from "$lib/utils";
 
 	let {
 		id,
@@ -27,7 +28,9 @@
 			<img
 				src="https://cdns.grindr.com/images/thumb/320x320/{profilePicture.mediaHash}"
 				alt="Profile avatar"
-				class="w-full h-full"
+				width="320"
+				height="320"
+				class="w-full h-full object-cover"
 				loading="lazy"
 				draggable="false"
 			/>
@@ -43,7 +46,7 @@
 		<span
 			class="absolute top-1 right-1 border-transparent bg-transparent text-[11px] px-1 h-4 tracking-tight font-medium text-white/80 text-shadow-stroke"
 		>
-			{(distance / 1000).toFixed(1)} km
+			{formatMetricDistance(distance)}
 		</span>
 	{/if}
 	<div class="w-full z-1 flex p-0.5 gap-0.5">

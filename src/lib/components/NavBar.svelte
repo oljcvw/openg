@@ -24,6 +24,7 @@
 	tag="nav"
 	class={[
 		"fixed bottom-0 z-50 w-full py-2",
+		"md:hidden",
 		{
 			"max-xs:hidden": pathname.startsWith("/chat/"),
 		},

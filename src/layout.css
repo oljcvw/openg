@@ -112,6 +112,13 @@
 body {
 	min-height: 100dvh;
 	overscroll-behavior: none;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: color-mix(in oklch, var(--primary) 24%, transparent);
+}
+
+button,
+nav,
+[role="button"] {
 	user-select: none;
 	-webkit-user-select: none;
 }

@@ -69,8 +69,11 @@
 					<Label for="email">Email</Label>
 					<Input
 						id="email"
+						name="email"
 						type="email"
 						placeholder="m@example.com"
+						autocomplete="email"
+						spellcheck={false}
 						required
 						bind:value={email}
 						disabled={submitting}
