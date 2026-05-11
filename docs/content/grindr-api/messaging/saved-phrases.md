@@ -14,6 +14,8 @@ Requires [Authorization](/grindr-api/api-authorization).
 GET /v1/chat/phrases
 ```
 
+Response model: `ChatPhrasesResponse`.
+
 Response:
 
 - `phrases` — array of [Saved phrases](#saved-phrase)
@@ -26,9 +28,13 @@ Requires [Authorization](/grindr-api/api-authorization).
 POST /v1/chat/phrases
 ```
 
+Body model: `AddChatPhraseRequest`.
+
 Body:
 
 - `text` — string
+
+Response model: `AddChatPhraseResponse`.
 
 Response:
 
@@ -41,6 +47,8 @@ Requires [Authorization](/grindr-api/api-authorization).
 ```
 GET /v3/me/prefs
 ```
+
+Response model: `PhrasesResponse`.
 
 Response:
 
@@ -61,9 +69,13 @@ This endpoint is somewhat broken and sometimes throws 500 ISE error or .
 POST /v3/me/prefs/phrases
 ```
 
+Body model: `AddSavedPhraseRequest`.
+
 Body:
 
 - `phrase` — string
+
+Response model: `AddSavedPhraseResponse`.
 
 Response:
 
@@ -76,6 +88,8 @@ Requires [Authorization](/grindr-api/api-authorization).
 ```
 DELETE /v3/me/prefs/phrases/{id}
 ```
+
+Response model: `Unit`.
 
 Response:
 
@@ -92,6 +106,8 @@ POST /v4/phrases/frequency/{id}
 ```
 
 No body.
+
+Response model: `Unit`.
 
 Response:
 

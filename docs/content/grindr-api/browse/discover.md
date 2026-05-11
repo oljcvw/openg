@@ -1,10 +1,29 @@
-# Discover, WIP
+# Discover
 
-Help needed.
+Discover endpoints require [Authorization](/grindr-api/api-authorization).
 
 ## Get discover profiles
 
-WIP
+```
+GET /v4/discover
+```
+
+Query:
+
+- `geohash` — [Geohash](/grindr-api/browse/location#geohash), optional in Retrofit
+- `previewedProfile` — long integer profile ID, optional
+
+Response: `DiscoverResponseV4`
+
+- `status` — `DiscoverStatus`
+- `body` — `DiscoverFeedDataV4`
+  - `types` — string
+  - `items` — array of `DiscoverFeedTypeV4`
+  - `profiles` — array of `UpsellProfileDto`
+  - `metadata` — `DiscoverMetadataV4`
+  - `storedPreferences` — `DiscoverProfilePreferences`
+
+## Get discover profiles (legacy)
 
 ```
 GET /v3/discover
@@ -12,50 +31,41 @@ GET /v3/discover
 
 Query:
 
-- `geohash` — [Geohash](/grindr-api/browse/location#geohash)
-- `previewedProfiles` — array of long integers
+- `geohash` — [Geohash](/grindr-api/browse/location#geohash), optional in Retrofit
+- `previewedProfile` — long integer profile ID, optional
 
-Response:
+Response: `DiscoverResponse`
 
-If subscription is purchased,
+- `status` — `DiscoverStatus`
+- `body` — `DiscoverFeedData`
+  - `type` — string
+  - `items` — array of `DiscoverFeedType`
+  - `profiles` — array of `UpsellProfileDto`
+  - `sessionId` — string
+  - `hadRecentRefresh` — boolean
 
-Unknown, WIP.
-
-If subscription is not purchased,
-
-- `status` — string, `"SubscriptionRequired"`
-- `body` — object
-  - `upsell` — string, `"Unknown"`
-  - `profiles` — array, unknown
-
-## Get discover profiles (legacy)
-
-WIP
+## Update discover preferences
 
 ```
-GET /v2/discover
+PUT /v1/discover/preferences
 ```
 
-Query:
+Body:
 
-- `geohash` — [Geohash](/grindr-api/browse/location#geohash)
+- `preferences` — object
+  - `lastOnline` — integer
+  - `maxDistance` — integer
 
-Response:
-
-If subscription is purchased,
-
-Unknown, WIP.
-
-If subscription is not purchased,
-
-- `status` — string, `"SubscriptionRequired"`
-- `body` — object
-  - `upsell` — string, `"Unknown"`
+Response: Empty.
 
 ## Post a pass
-
-WIP
 
 ```
 POST /v1/me/pass/{profileId}
 ```
+
+Path:
+
+- `profileId` — string with numeric profile ID
+
+Response: Empty.

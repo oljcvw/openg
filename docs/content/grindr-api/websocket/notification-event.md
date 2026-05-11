@@ -2,8 +2,10 @@
 
 All notifications include the following fields:
 
+- `type` — string, notification type
 - `notificationId` — UUIDv4 or `null`
 - `ref` — always `null` for notifications
+- `payload` — object, shape depends on `type`
 
 ## `chat.v1.message_sent`
 
@@ -11,6 +13,13 @@ Message received, sent, unsent or got reaction.
 
 - *everything from [Notification Event](#notification-event)*
 - `payload` — [Message](/grindr-api/messaging/messages#message)
+
+## `wingman.v1.message_sent`
+
+Handled by the same decompiled notification path as `chat.v1.message_sent`.
+
+- *everything from [Notification Event](#notification-event)*
+- `payload` — message-like object; exact model was not separated from the chat message handler
 
 ## `chat.v1.refresh_dynamic`
 
@@ -35,6 +44,13 @@ Tap received or sent.
   - `senderDisplayName`
   - `isMutual`
 
+## `tap.v2.tap_sent`
+
+Handled by the same decompiled notification path as `tap.v1.tap_sent`.
+
+- *everything from [Notification Event](#notification-event)*
+- `payload` — tap object; fields appear to match [`tap.v1.tap_sent`](#tapv1tap_sent)
+
 ## `chat.v1.conversation.delete`
 
 Conversation deleted, e.g. when another profile blocked you. Also fires for unlock events.
@@ -45,19 +61,19 @@ Conversation deleted, e.g. when another profile blocked you. Also fires for unlo
 
 ## `chat.v1.message.ack`
 
-WIP
+Seen in traffic, but no exact literal or payload model was found in the current decompiled handlers. Treat payload shape as not confirmed.
 
 ## `notification.undelivered`
 
-WIP
+Seen in traffic, but no exact literal or payload model was found in the current decompiled handlers. Treat payload shape as not confirmed.
 
 ## `chat.v1.typing.start`
 
-WIP
+Seen in traffic, but no exact literal or payload model was found in the current decompiled handlers. Treat payload shape as not confirmed.
 
 ## `chat.v1.typing.stop`
 
-WIP
+Seen in traffic, but no exact literal or payload model was found in the current decompiled handlers. Treat payload shape as not confirmed.
 
 ## `viewed_me.v1.new_view_received`
 
@@ -70,4 +86,3 @@ New view received, e.g. when another profile views your profile.
     - `profileId` — ID of the profile that viewed
     - `photoHash` — hash of the profile photo, if available
     - `timestamp` — unix timestamp in milliseconds of the view
-

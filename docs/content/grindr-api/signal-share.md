@@ -8,8 +8,9 @@ Requires [Authorization](/grindr-api/api-authorization).
 GET /v1/signalshare
 ```
 
-Response:
+Response (`SignalShareInfoResponse`):
 
-- `profileId` — long integer
-- `sevenDayRevenue` — float, unknown, WIP
-- `thirtyDayRevenue` — float, unknown, WIP
+- `sevenDayRevenue` — float or `null`
+- `thirtyDayRevenue` — float or `null`
+
+The current decompiled response model does not include a `profileId` field.

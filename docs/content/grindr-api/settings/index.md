@@ -4,4 +4,6 @@ import { grindrApiReferenceSettings as subpages } from '$lib'
 
 # Settings
 
+Account, preference, visiting, and SMS verification endpoints visible in the decompiled app.
+
 <Subpages :items="subpages" />

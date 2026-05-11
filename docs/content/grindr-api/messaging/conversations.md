@@ -72,6 +72,8 @@ Body (optional):
 - `distanceMeters` — "double" number value or `null`
 - `positions` — array of integers, [sexual position IDs](/grindr-api/users/profiles#sexual-position-id)
 
+Response model: `ConversationsResponse.ConversationsResponseV3`.
+
 Response:
 
 - `entries` — array of [Conversation](#conversation)
@@ -83,12 +85,16 @@ Response:
 
 ## Get conversations by IDs
 
+Requires [Authorization](/grindr-api/api-authorization).
+
 ```
 POST /v1/inbox/conversation
 ```
 
 Body: 
 - Array of [Conversation IDs](#conversation-id)
+
+Response model: `List<ConversationResponse>`.
 
 Response (array):
 - `conversationId` — string, e.g. `647135273:771038429`
@@ -140,6 +146,8 @@ Repeated requests are completed without errors.
 DELETE /v4/chat/conversation/{conversationId}
 ```
 
+Response model: `Unit`.
+
 Response:
 
 Empty.
@@ -158,6 +166,8 @@ POST /v4/chat/conversation/{conversationId}/pin
 
 No body.
 
+Response model: `Unit`.
+
 Response:
 
 Empty.
@@ -175,6 +185,8 @@ POST /v4/chat/conversation/{conversationId}/unpin
 ```
 
 No body.
+
+Response model: `Unit`.
 
 Response:
 
@@ -195,6 +207,8 @@ POST /v1/push/conversation/{conversationId}/mute
 
 No body.
 
+Response model: `Unit`.
+
 Response:
 
 Empty
@@ -213,6 +227,8 @@ POST /v1/push/conversation/{conversationId}/unmute
 
 No body.
 
+Response model: `Unit`.
+
 Response:
 
 Empty
@@ -224,6 +240,8 @@ Requires [Authorization](/grindr-api/api-authorization).
 ```
 GET /v5/chat/media/shared/images/with-me/{conversationId}
 ```
+
+Response model: `ReceivedImageList`.
 
 Response:
 
@@ -242,6 +260,8 @@ POST /v4/chat/conversation/{conversationId}/message-by-id
 Body:
 
 - `messageIds` — array of strings
+
+Response model: `MessagesResponse`.
 
 Response:
 
@@ -263,6 +283,8 @@ Invalid messageIds will cause HTTP status 400 Bad Request errors.
 
 No body.
 
+Response model: `Unit`.
+
 Response:
 
 Empty.
@@ -279,6 +301,8 @@ Query:
 
 - `conversationId` — string
 
+Response model: `ChatSuggestionsResponse`.
+
 Response:
 
 - `suggestions` — array of objects
@@ -286,7 +310,27 @@ Response:
   - `text` — string
   - `type` — `SAVED_PHRASE` | `SMART_PHRASE`
 
-## Chat AI summary feedback, WIP
+## Chat AI summary feedback
 
-POST /v1/chat/summary/feedback WingmanSummaryFeedbackDto 
+Requires [Authorization](/grindr-api/api-authorization).
 
+Observed in decompiled app; behavior not yet verified.
+
+```
+POST /v1/chat/summary/feedback
+```
+
+Body model: `WingmanSummaryFeedbackDto`.
+
+Body:
+
+- `conversationId` — string
+- `reaction` — `FeedbackReaction` enum value
+- `category` — `NegativeFeedbackCategory` enum value or `null`
+- `text` — string or `null`
+
+Response model: `Unit`.
+
+Response:
+
+Empty.

@@ -1,11 +1,17 @@
 # Links
 
-Unknown, WIP
+## Resolve link
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 GET /v4/links/{key}
 ```
 
-Response:
+Path:
+
+- `key` — string
+
+Response: `LinkResolveResponse`
 
 - `destination` — string

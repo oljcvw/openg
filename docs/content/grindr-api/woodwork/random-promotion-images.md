@@ -19,3 +19,4 @@ Response:
   - `id` — string, e.g. `"WoodworkImage1"`
 - `collection` — string, always `foryou`
 
+This endpoint was documented from prior evidence. The current decompiled endpoint index for this pass did not contain `random-images`; it did contain [Woodwork placement](/grindr-api/woodwork/#placement).

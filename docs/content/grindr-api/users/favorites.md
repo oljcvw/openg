@@ -1,84 +1,84 @@
 # Favorites
 
+Favorites endpoints require [Authorization](/grindr-api/api-authorization).
+
 ## Add favorite
 
-Requires [Authorization](/grindr-api/api-authorization).
-
 ```
-POST /v3/me/favorites/{profileId}
+POST /v3/me/favorites/{id}
 ```
 
-Response:
+Path:
 
-Empty object (`{}`).
+- `id` — string with numeric profile ID
+
+Response: Raw `ResponseBody`.
 
 ## Remove favorite
 
-Requires [Authorization](/grindr-api/api-authorization).
-
 ```
-DELETE /v3/me/favorites/{profileId}
+DELETE /v3/me/favorites/{id}
 ```
 
-Response:
+Path:
 
-Empty object (`{}`).
+- `id` — string with numeric profile ID
+
+Response: Raw `ResponseBody`.
 
 ## Get all notes
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 GET /v1/favorites/notes
 ```
 
-Response:
+Response: array of `ProfileNoteResponse`
 
-Array of objects:
+- `counterpartyId` — long integer profile ID
+- `notes` — string or `null`
+- `phoneNumber` — string or `null`
 
-- `notes` — string
-- `phoneNumber` — string, might be empty
-- `counterpartyId` — profile ID
-
-## Get note
-
-Requires [Authorization](/grindr-api/api-authorization).
+## Replace notes list
 
 ```
-GET /v1/favorites/notes/{targetProfileId}
+PUT /v1/favorites/notes
 ```
 
-Response:
+Body: `ProfileNoteListRequest`
 
-- `notes` — string, empty for nonexistent notes
-- `phoneNumber` — string, might be empty
+- `notes` — array of `ProfileNoteRequest`
+  - `counterpartyId` — long integer profile ID or `null`
+  - `notes` — string or `null`
+  - `phoneNumber` — string or `null`
 
-## Add note
+Response: Empty.
 
-Requires [Authorization](/grindr-api/api-authorization).
+## Add or update note
 
 ```
 PUT /v1/favorites/notes/{targetProfileId}
 ```
 
-Body:
+Path:
 
-- `notes` — string, required
-- `phoneNumber` — string, required
+- `targetProfileId` — string with numeric profile ID
 
-*The `counterpartyId` parameter seems to be ignored, it's unknown what its purpose is.*
+Body: `ProfileNoteRequest`
 
-Response:
+- `counterpartyId` — long integer profile ID or `null`
+- `notes` — string or `null`
+- `phoneNumber` — string or `null`
 
-Empty, HTTP status 204.
+Response: Empty.
 
 ## Delete note
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 DELETE /v1/favorites/notes/{targetProfileId}
 ```
 
-*Essentially equivalent to [Add note](#add-note) with `notes` set to `""`.*
+Path:
 
+- `targetProfileId` — string with numeric profile ID
+
+Response: Empty.

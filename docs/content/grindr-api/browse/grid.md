@@ -49,7 +49,7 @@
 - `isVisiting` — boolean
 - `isPopular` — boolean
 
-Only for [v3/cascade](#get-cascade-legacy):
+Only for [v3/cascade](#get-cascade):
 
 - `lastOnline` — unix timestamp in milliseconds
 - `photoMediaHashes` — array of strings, see [Media](/grindr-api/media/index#media)
@@ -90,8 +90,8 @@ Only for [v4/cascade](#get-cascade):
     - *[`xtra_mpu_v1`](#xtra_mpu_v1)*
 - `nextPage` — integer
 - `shuffled` — boolean
-- `hiddenProfiles` — unknown
-- `hiddenProfileInfo` — unknown
+- `hiddenProfiles` — field present in cascade payloads; shape not documented here
+- `hiddenProfileInfo` — field present in cascade payloads; shape not documented here
 
 
 ### `partial_profile_v1`
@@ -99,7 +99,7 @@ Only for [v4/cascade](#get-cascade):
 - *everything from [CascadeResponseProfile](#cascaderesponseprofile)*
 - `upsellItemType` — string, e.g. `"xtra_mpu_v1"`
 
-Only for [v3/cascade](#get-cascade-legacy):
+Only for [v3/cascade](#get-cascade):
 
 - `@type` — string, `"CascadeItemData$PartialProfileV1"`
 
@@ -107,7 +107,7 @@ Only for [v3/cascade](#get-cascade-legacy):
 
 - *everything from [CascadeResponseProfile](#cascaderesponseprofile)*
 
-Only for [v3/cascade](#get-cascade-legacy):
+Only for [v3/cascade](#get-cascade):
 
 - *everything from [ProfileFields](/grindr-api/users/profiles#profilefields)*
 - `@type` — string, `"CascadeItemData$FullProfileV1"`
@@ -147,7 +147,7 @@ Only for [v4/cascade](#get-cascade):
   - *`"ExploreAggregationItem$Cta"` type*:
   - *empty*
 
-Only for [v3/cascade](#get-cascade-legacy):
+Only for [v3/cascade](#get-cascade):
 
 - `@type` — string, always `"CascadeItemData$ExploreAggregationV1"`
 
@@ -155,13 +155,13 @@ Only for [v3/cascade](#get-cascade-legacy):
 
 - `cascadePlacementName` — string, e.g. `"mrec-cascade-first"`
 
-Only for [v3/cascade](#get-cascade-legacy):
+Only for [v3/cascade](#get-cascade):
 
 - `@type` — string, always `"CascadeItemData$Advert"`
 
 ### `boost_upsell_v1`
 
-Only for [v3/cascade](#get-cascade-legacy):
+Only for [v3/cascade](#get-cascade):
 
 - `@type` — string, always `"CascadeItemData$BoostUpsellV1"`
 
@@ -169,7 +169,7 @@ Empty for [v4/cascade](#get-cascade).
 
 ### `unlimited_mpu_v1`
 
-Only for [v3/cascade](#get-cascade-legacy):
+Only for [v3/cascade](#get-cascade):
 
 - `@type` — string, always `"CascadeItemData$UnlimitedMpuV1"`
 
@@ -177,7 +177,7 @@ Empty for [v4/cascade](#get-cascade).
 
 ### `xtra_mpu_v1`
 
-Only for [v3/cascade](#get-cascade-legacy):
+Only for [v3/cascade](#get-cascade):
 
 - `@type` — string, always `"CascadeItemData$XtraMpuV1"`
 
@@ -187,21 +187,7 @@ Empty for [v4/cascade](#get-cascade).
 
 Requires [Authorization](/grindr-api/api-authorization).
 
-```
-GET /v4/cascade
-```
-
-Query:
-
-[CascadeQuery](#cascadequery)
-
-Response:
-
-[CascadeResponse](#cascaderesponse)
-
-## Get Cascade (legacy)
-
-Requires [Authorization](/grindr-api/api-authorization).
+The decompiled `ServerDrivenCascadeService` exposes `GET /v3/cascade`; no `v4/cascade` Retrofit annotation was found in this decompile.
 
 ```
 GET /v3/cascade
@@ -210,12 +196,13 @@ GET /v3/cascade
 Query:
 
 - *everything from [CascadeQuery](#cascadequery)*
-- `exploreUuid` — string, unknown, WIP, optional
+- `exploreUuid` — string, Explore aggregation UUID, optional
 - `sexualHealth` — string, see [Sexual health](/grindr-api/users/profiles#sexual-health), optional
+- `eventId` — long integer, optional
 
 Response:
 
-[CascadeResponse](#cascaderesponse)
+Raw `ResponseBody`, decoded by the client into cascade items such as [CascadeResponse](#cascaderesponse).
 
 ## Search
 
@@ -261,8 +248,8 @@ Response:
   - `lastUpdatedTime` — unix timestamp in milliseconds
   - `medias` — array of objects or `null`:
     - `mediaHash` — [Media hash](/grindr-api/media/index#media)
-    - `type` — integer, WIP
-    - `state` — integer, WIP
+    - `type` — integer
+    - `state` — integer
   - `profileId` — integer
   - `profileImageMediaHash` — [Media hash](/grindr-api/media/index#media) or `null`
   - `profileTags` — array of [Profile tags](/grindr-api/users/profiles#profile-tags)

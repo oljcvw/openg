@@ -1,9 +1,11 @@
 # Entitlements
 
+Requires [Authorization](/grindr-api/api-authorization).
+
 ```
 GET /v1/entitlements
 ```
 
-Response:
+Response: `EntitlementCounts`
 
 - `rightNow` — integer

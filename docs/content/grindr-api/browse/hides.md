@@ -1,25 +1,23 @@
 # Hides
 
-Unknown how it's different from [blocks](/grindr-api/browse/blocks), WIP. Blocks API is preferred until this is figured out.
+Hides endpoints require [Authorization](/grindr-api/api-authorization).
+
+The decompiled app exposes hides separately from [blocks](/grindr-api/browse/blocks) through `ca0/b.java`; behavior differences are not evident from Retrofit annotations.
 
 ## Get hidden users
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 GET /v1/hides
 ```
 
-Response:
+Response: `GetHiddenProfilesResponse`
 
-- `hides` — array of objects
-  - `profileId` — integer
+- `hides` — array of `HiddenProfile`
+  - `profileId` — long integer
   - `displayName` — string
-  - `mediaHash` — string, appears to be just `"hash"`
+  - `mediaHash` — string
 
 ## Hide a user
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 Repeated requests are completed without errors.
 
@@ -27,13 +25,13 @@ Repeated requests are completed without errors.
 POST /v1/me/hides/{profileId}
 ```
 
-Response:
+Path:
 
-- `updateTime` — integer, appears to be `0`
+- `profileId` — long integer
+
+Response: Raw `ResponseBody`.
 
 ## Unhide a user
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 Repeated requests are completed without errors.
 
@@ -41,13 +39,13 @@ Repeated requests are completed without errors.
 DELETE /v1/hides/{profileId}
 ```
 
-Response:
+Path:
 
-Emtpy.
+- `profileId` — long integer
+
+Response: Empty.
 
 ## Unhide all hidden users
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 Repeated requests are completed without errors.
 
@@ -55,6 +53,4 @@ Repeated requests are completed without errors.
 DELETE /v1/hides
 ```
 
-Response:
-
-Emtpy.
+Response: Empty.

@@ -1,25 +1,160 @@
-# Legal agreements, WIP
+# Legal agreements
 
-- DELETE /v5/legal-agreements/subscriber-sponsored-content SponsoredContentAcceptConsentRequest (yes, with body)
-- POST /v5/legal-agreements/subscriber-sponsored-content SponsoredContentAcceptConsentRequest
-- GET /v5/legal-agreements/subscriber-sponsored-content . SponsoredContentConsentAgreementResponse
-- POST /v1/agreements/ban BanAgreementRequest
+Legal agreement endpoints require [Authorization](/grindr-api/api-authorization).
 
-- GET /v3/me/legal-agreements . AcceptedLegalAgreementsResponse
-- DELETE /v5/legal-agreements/vip-matchmaker VipMatchmakerAcceptConsentRequest
-- GET /v5/legal-agreements/vip-matchmaker . VipMatchmakerConsentAgreementResponse
-- POST /v5/legal-agreements/vip-matchmaker VipMatchmakerAcceptConsentRequest
-- DELETE /v4/legal-agreements/top-picks
-- GET /v5/legal-agreements/top-picks . TopPicksConsentAgreementResponse
-- GET /v4/legal-agreements/right-now . RightNowConsentAgreementResponse
-- DELETE /v5/legal-agreements/top-picks TopPicksAcceptConsentRequest
-- PUT /v3/me/legal-agreements AcceptLegalAgreementsRequest
-- POST /v4/legal-agreements/right-now RightNowAcceptConsentRequest
-- POST /v4/legal-agreements/top-picks TopPicksAcceptConsentRequest
-- GET /v4/legal-agreements/top-picks . TopPicksConsentAgreementResponse
-- GET /v3/legal-agreements . LegalAgreementsInfo
+## Get legal agreement info
 
-- PUT /v1/opt-out ConsentRequest
-- DELETE /v1/opt-out ConsentRequest (body)
-- POST /v1/opt-out ConsentRequest ConsentOptStatusResponse
+```
+GET /v3/legal-agreements
+```
 
+Response:
+
+`LegalAgreementsInfo`:
+
+- `legalAgreements` — `LegalAgreementDetails`
+
+## Get accepted legal agreements
+
+```
+GET /v3/me/legal-agreements
+```
+
+Response:
+
+`AcceptedLegalAgreementsResponse`:
+
+- `privacyPolicyVersion` — integer
+- `termsOfServiceVersion` — integer
+- `userConsentList` — array of strings
+
+## Accept legal agreements
+
+```
+PUT /v3/me/legal-agreements
+```
+
+Body (`AcceptLegalAgreementsRequest`):
+
+- `privacyPolicyVersion` — integer
+- `termsOfServiceVersion` — integer
+- `userConsentList` — array of strings
+
+Response:
+
+Empty.
+
+## Ban agreement
+
+```
+POST /v1/agreements/ban
+```
+
+Body (`BanAgreementRequest`):
+
+- `version` — integer
+- `locale` — string
+
+Response:
+
+Empty.
+
+## Top Picks agreement
+
+```
+GET /v5/legal-agreements/top-picks
+POST /v4/legal-agreements/top-picks
+DELETE /v5/legal-agreements/top-picks
+```
+
+POST and DELETE use body (`TopPicksAcceptConsentRequest`):
+
+- `version` — integer
+- `locale` — string
+
+GET response:
+
+`TopPicksConsentAgreementResponse`.
+
+POST and DELETE response:
+
+Empty.
+
+## Right Now agreement
+
+```
+GET /v4/legal-agreements/right-now
+POST /v4/legal-agreements/right-now
+```
+
+POST body (`RightNowAcceptConsentRequest`):
+
+- `version` — integer
+- `locale` — string
+
+GET response:
+
+`RightNowConsentAgreementResponse`.
+
+POST response:
+
+Empty.
+
+## VIP Matchmaker agreement
+
+```
+GET /v5/legal-agreements/vip-matchmaker
+POST /v5/legal-agreements/vip-matchmaker
+DELETE /v5/legal-agreements/vip-matchmaker
+```
+
+POST and DELETE use body (`VipMatchmakerAcceptConsentRequest`):
+
+- `version` — integer
+- `locale` — string
+
+GET response:
+
+`VipMatchmakerConsentAgreementResponse`.
+
+POST and DELETE response:
+
+Empty.
+
+## Subscriber sponsored content agreement
+
+```
+GET /v5/legal-agreements/subscriber-sponsored-content
+POST /v5/legal-agreements/subscriber-sponsored-content
+DELETE /v5/legal-agreements/subscriber-sponsored-content
+```
+
+POST and DELETE use body (`SponsoredContentAcceptConsentRequest`):
+
+- `version` — integer
+- `locale` — string
+
+GET response:
+
+`SponsoredContentConsentAgreementResponse`.
+
+POST and DELETE response:
+
+Empty.
+
+## Consent opt-out
+
+```
+POST /v1/opt-out
+PUT /v1/opt-out
+DELETE /v1/opt-out
+```
+
+Body (`ConsentRequest`):
+
+- `optOutType` — string
+
+Responses:
+
+- `POST` returns `ConsentOptStatusResponse` with `isOptedOut` boolean
+- `PUT` and `DELETE` return empty responses

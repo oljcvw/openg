@@ -13,7 +13,7 @@
 - `type` — string, see [Message type](#message-type)
 - `body` — object with [Message contents](#message-contents)
 - `replyToMessage` — unknown or `null`
-- `dynamic` — boolean, unknown purpose, WIP
+- `dynamic` — boolean, observed in decompiled response model; purpose not yet verified
 - `chat1Type` — string, see [Message type](#message-type)
 - `replyPreview` — unknown or `null`
 
@@ -138,7 +138,7 @@ Additionally, for expiring videos:
 
 ### `"NonExpiringVideo"`
 
-Unknown, WIP
+Observed in decompiled app; behavior not yet verified.
 
 ### `"Gaymoji"`
 
@@ -146,7 +146,7 @@ Unknown, WIP
 
 ### `"Generative"`
 
-Unknown, WIP
+Observed in decompiled app; behavior not yet verified.
 
 ### `"Giphy"`
 
@@ -193,18 +193,18 @@ Additionally, only for regular images:
 
 ### `"ProfileLink"`
 
-Unknown, WIP
+Observed in decompiled app; behavior not yet verified.
 
 ### `"ProfilePhotoReply"`
 
-Unknown, WIP
+Observed in decompiled app; behavior not yet verified.
 
 - `imageHash` — string
 - `photoContentReply` — string
 
 ### `"Retract"`
 
-Unknown, WIP
+Observed in decompiled app; behavior not yet verified.
 
 - `targetMessageId` — string
 
@@ -214,9 +214,7 @@ Unknown, WIP
 
 ### `"VideoCall"`
 
-WIP
-
-Only for "status" messages:
+Observed in decompiled app. Only for "status" messages:
 
 - `result` — string or `null`, appears to have the following values: `SUCCESSFUL`, `Duration:`, `Busy`, `BUSY`, `Cancelled`, `Declined`, `DECLINED`, `Missed`, `AB_Unsupported`, `No_Answer`, `UNANSWERED`, `Lite_Unsupport`
 - `videoCallDuration` — number or `null`
@@ -239,6 +237,8 @@ Query (optional):
 
 - `pageKey` — optional, return messages with IDs before specified value
 - `profile` — boolean (`profile=true` | `profile=` + any other value), optional
+
+Response model: `MessagesResponse`.
 
 Response:
 
@@ -264,6 +264,8 @@ Requires [Authorization](/grindr-api/api-authorization).
 GET /v4/chat/conversation/{conversationId}/message/{messageId}
 ```
 
+Response model: `SingleMessageResponse`.
+
 Response:
 
 - `message` — [Message](#message)
@@ -280,6 +282,8 @@ See also: [Send a message to a conversation via WS](/grindr-api/websocket/comman
 POST /v4/chat/message/send
 ```
 
+Body models: `OutboundMessagePayload` or `OutboundMessagePayloadV2`.
+
 Body:
 
 - `type` — string, see [Message type](#message-type)
@@ -287,12 +291,12 @@ Body:
   - `type` — `Direct`, `Group`, `HumanWingman`
   - `targetId` — integer
 - `body` — object with [Message contents](#message-contents) or `null`
+- `ref` — string request reference, optional in decompiled payload models
+- `replyToMessageId` — string or `null`, optional in decompiled payload models
 
-Additional body fields for [websocket](/grindr-api/websocket/commands#send-a-message-to-a-conversation-via-ws) only:
+When `replyToMessageId` is used in HTTP API appears to cause 400 Bad Request error. See also [Send a message to a conversation via WS](/grindr-api/websocket/commands#send-a-message-to-a-conversation-via-ws).
 
-- `replyToMessageId` — string or `null`, optional
-
-When `replyToMessageId` is used in HTTP API appears to cause 400 Bad Request error.
+Response model: `MessageResponse`.
 
 Response:
 
@@ -312,10 +316,14 @@ Repeated requests are completed without errors.
 POST /v4/chat/message/unsend
 ```
 
+Body model: `ChatUnsendRequest`.
+
 Body:
 
 - `conversationId` — string
 - `messageId` — string, must be sent by you
+
+Response model: `Unit`.
 
 Response:
 
@@ -337,10 +345,14 @@ Repeated requests are completed without errors.
 POST /v4/chat/message/delete
 ```
 
+Body model: `DeleteMessageRequest`.
+
 Body:
 
 - `conversationId` — string
 - `messageId` — string
+
+Response model: `Unit`.
 
 Response:
 
@@ -354,16 +366,20 @@ Errors:
 
 Requires [Authorization](/grindr-api/api-authorization).
 
-WIP, does not seem to work.
+Observed in decompiled app; behavior not yet verified.
 
 ```
 POST /v4/chatstatus/typing
 ```
 
+Body model: `ChatStatusRequest`.
+
 Body:
 
 - `conversationId` — string
 - `status` — either `"Typing"` or `"Cleared"`
+
+Response model: `Unit`.
 
 Response:
 
@@ -385,11 +401,15 @@ Repeated requests are completed without errors.
 POST /v4/chat/message/reaction
 ```
 
+Body model: `ChatReactionRequest`.
+
 Body:
 
 - `conversationId` — string
 - `messageId` — string
 - `reactionType` — integer, (`1` is "🔥")
+
+Response model: `Unit`.
 
 Response:
 

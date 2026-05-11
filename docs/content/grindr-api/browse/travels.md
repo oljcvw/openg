@@ -1,33 +1,39 @@
 # Travels
 
-## Get travel plans
+Travel plan endpoints require [Authorization](/grindr-api/api-authorization).
 
-Requires [Authorization](/grindr-api/api-authorization).
+## Get travel plans
 
 ```
 GET /v6/profiles/travel/{profileId}
 ```
 
-Response:
+Path:
 
-- `travelPlans` — array of objects
-  - `travelPlanId` — long integer, required for update, ignored for create
-  - `profileId` — long integer
-  - `geohash` — [Geohash](/grindr-api/browse/location#geohash)
-  - `startDate` — long integer, unix timestamp in milliseconds
-  - `endDate` — long integer, unix timestamp in milliseconds
-  - `showOnProfile` — boolean
-  - `notes` — string
-  
+- `profileId` — long integer
+
+Response: `TravelPlansApiResponse`
+
+- `travelPlans` — array of [TravelPlanApiResponse](#travelplanapiresponse)
+
+## TravelPlanApiResponse
+
+- `travelPlanId` — long integer or `null`, required for update, ignored for create
+- `profileId` — long integer
+- `geohash` — [Geohash](/grindr-api/browse/location#geohash)
+- `locationName` — string
+- `startDate` — long integer, unix timestamp in milliseconds
+- `endDate` — long integer, unix timestamp in milliseconds
+- `showOnProfile` — boolean
+- `notes` — string
+
 ## Create travel plans
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 POST /v6/profiles/travel
 ```
 
-Body:
+Body: `AddTravelPlanApiRequest`
 
 - `profileId` — long integer
 - `geohash` — [Geohash](/grindr-api/browse/location#geohash)
@@ -36,21 +42,17 @@ Body:
 - `showOnProfile` — boolean
 - `notes` — string
 
-Response:
-
-Empty.
+Response: Empty.
 
 ## Update travel plans
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 POST /v6/profiles/travel/update
 ```
 
-Body:
+Body: `UpdateTravelPlanApiRequest`
 
-- `travelPlanId` — long integer
+- `travelPlanId` — long integer or `null`
 - `profileId` — long integer
 - `geohash` — [Geohash](/grindr-api/browse/location#geohash)
 - `startDate` — long integer, unix timestamp in milliseconds
@@ -58,13 +60,9 @@ Body:
 - `showOnProfile` — boolean
 - `notes` — string
 
-Response:
-
-Empty.
+Response: Empty.
 
 ## Delete travel plans
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 Repeated requests are completed without errors.
 
@@ -72,7 +70,8 @@ Repeated requests are completed without errors.
 DELETE /v6/profiles/travel/{travelPlanId}
 ```
 
-Response:
+Path:
 
-Empty.
+- `travelPlanId` — long integer
 
+Response: Empty.

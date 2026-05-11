@@ -42,3 +42,6 @@ chat.v1.message.send
 
 See: [HTTP API -> Send a message to a conversation](/grindr-api/messaging/messages#send-a-message-to-a-conversation)
 
+## Wingman send message response
+
+The current decompiled client also handles `wingman.v1.message.send.response`. Request shape was not identified as a public command in the WebSocket request model; only the response event handler string was visible.

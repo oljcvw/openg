@@ -97,8 +97,8 @@ When used in query, stringified as follows: `y2,x1,x2,y1`.
     - `userId` — string or `null`
   - `instagram` — object, may be absent
     - `userId` — string or `null`
-- `identity` — identity (unknown, wip) or `null`
-- `hashtags` — unknown array
+- `identity` — identity object or `null`, shape not documented here
+- `hashtags` — array, element schema not documented here
 - `profileTags` — array of strings, see [Profile tags](#profile-tags)
 - `tapped` — boolean
 - `tapType` — boolean or `null`
@@ -107,7 +107,7 @@ When used in query, stringified as follows: `y2,x1,x2,y1`.
 - `isRoaming` — boolean
 - `arrivalDays` — number or `null`
 - `unreadCount` — number, may be absent
-- `lastThrobTimestamp` — unknown
+- `lastThrobTimestamp` — value type not documented here
 - `sexualHealth` — array of integers, see [Sexual health](#sexual-health)
 - `isVisiting` — boolean
 - `travelPlans` — array of objects
@@ -271,7 +271,7 @@ Requires [Authorization](/grindr-api/api-authorization).
 GET /v7/profiles/{id}
 ```
 
-Query:
+Path:
 
 - `id` — profile ID
 
@@ -299,21 +299,47 @@ Response:
 
 ## Update own profile (full)
 
-WIP
-
 Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 PUT /v3.1/me/profile
 ```
 
-Body:
+Body: `UpdateProfileRequest`, based on `BaseProfile` fields.
 
-[Profile](#profile) object, fully replaces current version.
+- `displayName` — string or `null`
+- `profileImageMediaHash` — string or `null`
+- `age` — integer
+- `showDistance` — boolean
+- `approximateDistance` — boolean
+- `showAge` — boolean
+- `showPosition` — boolean
+- `showTribes` — boolean
+- `aboutMe` — string or `null`
+- `ethnicity` — integer
+- `lookingFor` — array of integers or `null`
+- `relationshipStatus` — integer
+- `grindrTribes` — array of integers or `null`
+- `tribesImInto` — array of integers or `null`
+- `bodyType` — integer
+- `sexualPosition` — integer
+- `height` — number
+- `weight` — number
+- `socialNetworks` — [SocialNetwork](#socialnetwork) container or `null`
+- `hivStatus` — integer
+- `lastTestedDate` — long integer
+- `meetAt` — array of integers or `null`
+- `nsfw` — integer
+- `profileTags` — array of strings or `null`
+- `genders` — array of integers or `null`
+- `pronouns` — array of integers or `null`
+- `vaccines` — array of integers or `null`
+- `sexualHealth` — array of integers or `null`
+- `arrivalDays` — integer or `null`
+
+Response: Empty.
 
 ## Update own profile (partial)
-
-WIP
 
 Requires [Authorization](/grindr-api/api-authorization).
 
@@ -321,9 +347,18 @@ Requires [Authorization](/grindr-api/api-authorization).
 PATCH /v4/me/profile
 ```
 
-Body:
+Body: `UpdateProfileV4Request`, only updates specified keys.
 
-[Profile](#profile) object, only updates specified keys.
+- `profileTags` — array of strings or `null`
+- `genders` — array of integers or `null`
+- `pronouns` — array of integers or `null`
+- `grindrTribes` — array of integers or `null`
+- `tribesImInto` — array of integers or `null`
+- `sexualPosition` — integer or `null`
+- `showTribes` — boolean or `null`
+- `showPosition` — boolean or `null`
+
+Response: Empty.
 
 ## Profile tags suggestions
 
@@ -402,8 +437,8 @@ Response:
 
 - `medias` — array of objects
   - `mediaHash` — string, see [Media -> Public CDN files](/grindr-api/media/public-cdn-files)
-  - `type` — unknown integer
-  - `state` — integer, [MediaState](/grindr-api/media/signed-cdn-files#mediastate), WIP
+  - `type` — integer
+  - `state` — integer, [MediaState](/grindr-api/media/signed-cdn-files#mediastate)
 
 ## Edit profile photos
 
@@ -448,8 +483,6 @@ Empty.
 
 ## Check if profiles are reachable
 
-WIP
-
 Requires [Authorization](/grindr-api/api-authorization).
 
 ```
@@ -460,23 +493,44 @@ Body:
 
 - `profileIds` — array of strings with numeric ids
 
-Response:
+Response: `ReachableProfiles`
 
 - `profileIds` — array of strings with numeric ids
 
+## Delete own profile
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+DELETE /v3/me/profile
+```
+
+Response: Empty.
+
 ## Get profile insights
 
-```
-GET /v1/profile-insights/{profileId}
-```
-
-Response: ProfileInsightsResponse, WIP
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
+GET /v3/profile-insights/{profileId}
 GET /v2/profile-insights/{profileId}
 ```
 
-Response: ProfileInsightsV2Response, WIP
+Path:
+
+- `profileId` — long integer
+
+Response: `ProfileInsightsResponse`.
+
+## Get own profile insight settings
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+GET /v3/profile-insights/me/settings
+```
+
+Response: `ProfileInsightsInferencesResponse`.
 
 
 ## Get pronouns

@@ -1,8 +1,10 @@
-# Drawer, WIP
+# Drawer
 
 ## DrawerMedia
 
-- `id` — long integer
+Decompiled response model: `MediaItem`.
+
+- `id` — long integer, exposed in app as `mediaId`
 - `url` — string, URL
 - `contentType` — string
 - `createdTs` — unix timestamp in milliseconds
@@ -29,19 +31,29 @@ Requires [Authorization](/grindr-api/api-authorization).
 GET /v4/chat/media/drawer/{conversationId}
 ```
 
+Path:
+
+- `conversationId` — [Conversation ID](/grindr-api/messaging/conversations#conversation-id)
+
+Response:
+
 Array of [DrawerMedia](/grindr-api/drawer#drawermedia).
 
 ## Add media to drawer
 
 Requires [Authorization](/grindr-api/api-authorization).
 
-MediaId must be obtained through [uploading](/grindr-api/users/profiles#upload-media).
+MediaId must be obtained through uploading media.
 
 Repeated requests cause 500 HTTP status "Internal Error".
 
 ```
 PUT /v4/chat/media/drawer/{mediaId}
 ```
+
+Path:
+
+- `mediaId` — long integer
 
 Response:
 
@@ -57,6 +69,40 @@ Repeated requests are completed without errors.
 DELETE /v4/chat/media/drawer/{mediaId}
 ```
 
+Path:
+
+- `mediaId` — long integer
+
 Response:
 
-Empty with HTTP status 202.
+Empty.
+
+## Upload chat media
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+POST /v5/chat/media/upload
+```
+
+Headers:
+
+- `Content-type` — string
+
+Query:
+
+- `length` — long integer, optional
+- `looping` — boolean, optional
+- `takenOnGrindr` — boolean, optional
+
+Body:
+
+Binary media data.
+
+Response:
+
+`MediaUploadResponse`:
+
+- `mediaId` — long integer
+- `url` — signed CDN URL
+- `mediaHash` — string

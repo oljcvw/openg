@@ -1,20 +1,158 @@
 # Account
 
-## Account settings, WIP
+## Validate password complexity
 
-- POST /v3/users/password-validation ValidatePasswordComplexityRequest
-- POST /v3/gcm-push-tokens FcmPushRequest
-- POST /v3/users/update-password ChangePasswordRequest ChangePasswordResponse
-- POST /v3/users/email UpdateEmailRequest AuthResponse
-- POST (dynamic, WIP) LoginEmailRequest AuthResponse
-- POST /v4/sms/users/update-password ChangePasswordPhoneRequest ChangePasswordResponse
-- POST (dynamic, WIP) CreateAccountEmailRequest FirstPartyCreateAccountResponse
-- POST /v7/users/thirdparty CreateThirdPartyAccountRequest ThirdPartyCreateAccountResponse
-- POST /v3/users/forgot-password ForgotPwdEmailRequest ForgotPwdEmailResponse
-- POST /v3/users/thirdparty/exchange GoogleAccessTokenRequest GoogleAccessTokenResponse
-- POST /v4/sms/sessions LoginPhoneRequest AuthResponse
-- POST (dynamic, WIP) ThirdPartyRequest ThirdPartyAuthResponse
-- POST (dynamic, WIP) ThirdPartySessionRequest ThirdPartyAuthResponse
+Does not require [Authorization](/grindr-api/api-authorization).
+
+```
+POST /v3/users/password-validation
+```
+
+Body: `ValidatePasswordComplexityRequest`
+
+- `password` — string
+
+Response: `Unit`.
+
+## Register push token
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+POST /v3/gcm-push-tokens
+```
+
+Body: `FcmPushRequest`
+
+- `vendorProvidedIdentifier` — string
+- `token` — string
+
+Response: `Unit`.
+
+## Update password
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+POST /v3/users/update-password
+```
+
+Body: `ChangePasswordRequest`
+
+- `oldPassword` — string
+- `newPassword` — string
+
+Response: `ChangePasswordResponse`
+
+- `sessionId` — string
+- `authToken` — string
+
+## Update email
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+POST /v3/users/email
+```
+
+Body: `UpdateEmailRequest`
+
+- `newEmail` — string
+- `password` — string
+
+Response: `AuthResponse`
+
+## Create account with email
+
+Does not require [Authorization](/grindr-api/api-authorization). The app calls this through a dynamic Retrofit `@Url`.
+
+```
+POST /v8/users
+```
+
+Body: `CreateAccountEmailRequest`
+
+- `email` — string
+- `password` — string
+- `birthday` — integer timestamp
+- `captchaToken` — string or `null`
+- `token` — FCM token string
+- `optIn` — boolean; serialized name comes from an obfuscated constant, getter is `getOptIn()`
+- `sessionId` — cognition session ID string or `null`
+
+Response: `FirstPartyCreateAccountResponse`
+
+- `profileId` — string
+
+## Create account with third party
+
+Does not require [Authorization](/grindr-api/api-authorization). Production and legacy paths are both visible in the decompiled app.
+
+```
+POST /v8/users/thirdparty
+POST /v7/users/thirdparty
+```
+
+Body: `CreateThirdPartyAccountRequest`
+
+- `thirdPartyVendor` — integer
+- `thirdPartyToken` — string
+- `thirdPartyUserId` — string
+- `age` — integer
+- `email` — string
+- `captchaToken` — string
+
+Response: `ThirdPartyCreateAccountResponse`
+
+- `profileId` — string
+- `thirdPartyUserId` — string
+
+## Forgot password
+
+Does not require [Authorization](/grindr-api/api-authorization).
+
+```
+POST /v3/users/forgot-password
+```
+
+Body: `ForgotPwdEmailRequest`
+
+- `email` — string
+
+Response: `ForgotPwdEmailResponse`
+
+- `code` — integer
+- `message` — string
+- `resetToken` — string
+
+## Exchange Google authorization code
+
+Does not require [Authorization](/grindr-api/api-authorization).
+
+```
+POST /v3/users/thirdparty/exchange
+```
+
+Body: `GoogleAccessTokenRequest`
+
+- `code` — string
+
+Response: `GoogleAccessTokenResponse`
+
+- `access_token` — string
+- `token_type` — string
+- `id_token` — string
+- `expires_in` — integer
+
+## Delete account
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+DELETE /v3/me/profile
+```
+
+Response: `Unit`.
 
 ## Get preferences
 
@@ -24,9 +162,8 @@ Requires [Authorization](/grindr-api/api-authorization).
 GET /v3/me/prefs/settings
 ```
 
-Response:
+Response: `GrindrSettings`
 
-- `profileId` — integer
 - `locationSearchOptOut` — boolean
 - `incognito` — boolean
 - `hideViewedMe` — boolean
@@ -41,17 +178,16 @@ Requires [Authorization](/grindr-api/api-authorization).
 PUT /v3/me/prefs/settings
 ```
 
-Body:
+Body: `UpdateSettingsRequest`
 
-- `locationSearchOptOut` — boolean
-- `incognito` — boolean
-- `hideViewedMe` — boolean
-- `approximateDistance` — boolean
-- `viewRightNowNsfw` — boolean
+- `settings` — `GrindrSettings` object:
+  - `locationSearchOptOut` — boolean
+  - `incognito` — boolean
+  - `hideViewedMe` — boolean
+  - `approximateDistance` — boolean
+  - `viewRightNowNsfw` — boolean
 
-Response:
-
-Empty.
+Response: `Unit`.
 
 ## Get visiting settings
 
@@ -61,7 +197,7 @@ Requires [Authorization](/grindr-api/api-authorization).
 GET /v1/visiting/settings
 ```
 
-Response:
+Response: `VisitingStatusSettings`
 
 - `setting` — string, e.g. `"AUTO"`
 
@@ -73,13 +209,11 @@ Requires [Authorization](/grindr-api/api-authorization).
 PUT /v1/visiting/settings
 ```
 
-Body:
+Body: `VisitingStatusRequest`
 
-- `setting` — string, e.g. `"AUTO"`, WIP
+- `setting` — string, e.g. `"AUTO"`
 
-Resonse:
-
-Empty.
+Response: `Unit`.
 
 ## Get home location
 
@@ -89,7 +223,7 @@ Requires [Authorization](/grindr-api/api-authorization).
 GET /v1/visiting/home
 ```
 
-Response:
+Response: `HomeLocationResponse`
 
 - `name` — string, [human-readable name](/grindr-api/browse/location#search-places-by-name) of location
 - `lat` — float
@@ -103,14 +237,13 @@ Requires [Authorization](/grindr-api/api-authorization).
 PUT /v1/visiting/home
 ```
 
-Body:
+Body: `HomeLocationRequest`
 
 - `lat` — float
 - `lon` — float
 
-Response:
+Response: `HomeLocationResponse`
 
 - `name` — string, [human-readable name](/grindr-api/browse/location#search-places-by-name) of location
 - `lat` — float
 - `lon` — float
-

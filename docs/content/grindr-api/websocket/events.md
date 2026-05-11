@@ -14,3 +14,13 @@ Response to a command, generic error.
 
 - `message` — e.g. `"Could not convert frame to command"`
 
+## Command response events
+
+Command responses use the `[command].response` event type and include the fields documented in [commands](/grindr-api/websocket/commands#websocket-command-response). Decompiled handlers include:
+
+- `chat.v1.message.send.response`
+- `wingman.v1.message.send.response`
+
+## Notification events
+
+Server push notifications are documented in [Notification Event](/grindr-api/websocket/notification-event). Decompiled handlers include chat, tap, and viewed-me notification types.

@@ -6,15 +6,15 @@
 - `FOR_YOU`
 - `UNKNOWN` (fallback)
 
-## Get views number
+Views endpoints require [Authorization](/grindr-api/api-authorization).
 
-Requires [Authorization](/grindr-api/api-authorization).
+## Get views number
 
 ```
 GET /v6/views/eyeball
 ```
 
-Response:
+Response: `V5Views`
 
 - `viewedCount` — number or `null`
 - `mostRecent` — object or `null`
@@ -24,13 +24,11 @@ Response:
 
 ## Get viewers list
 
-Requires [Authorization](/grindr-api/api-authorization).
-
 ```
 GET /v7/views/list
 ```
 
-Response:
+Response: `ViewedMeListResponseDto`
 
 - `totalViewers` — integer
 - `previews` — array of objects
@@ -51,43 +49,21 @@ Response:
   - `unreadMessageCount` — integer
   - `hasChatted` — boolean
 
-## Record profile views (batch)
-
-WIP
-
-Requires [Authorization](/grindr-api/api-authorization).
-
-```
-POST /v4/views
-```
-
-Body:
-
-- `viewedProfileIds` — array of strings with numeric ids
-- `foundVia` — unknown or `null`
-
-## Record single profile view
-
-WIP
-
-Requires [Authorization](/grindr-api/api-authorization).
-
-```
-POST /v4/views/{profileId}
-```
-
-## Record profile view v2
-
-WIP
-
-Requires [Authorization](/grindr-api/api-authorization).
+## Record profile view
 
 ```
 POST /v5/views/{profileId}
 ```
 
-Body:
+Path:
 
-- `foundVia` — unknown or `null`
+- `profileId` — string with numeric profile ID
+
+Body: `ProfileViewsRequestV2`
+
+- `foundVia` — string or `null`
 - `source` — [ViewSourceEnum](#viewsourceenum)
 
+Response: Empty.
+
+No Retrofit annotation for the older `POST /v4/views` or `POST /v4/views/{profileId}` endpoints was found in this decompile.

@@ -42,10 +42,8 @@ Requires [Authorization](/grindr-api/api-authorization).
 PUT /v4/location
 ```
 
-Body: 
+Body: `UpdateLocationRequest`
 
 - `geohash` — string, exactly 12 characters, see [geohash](#geohash)
 
-Response:
-
-Empty.
+Response: Empty.

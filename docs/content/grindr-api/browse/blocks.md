@@ -2,23 +2,22 @@
 
 Blocking a user automatically deletes the conversation for both of you.
 
-## Get blocked users
+Blocks endpoints require [Authorization](/grindr-api/api-authorization).
 
-Requires [Authorization](/grindr-api/api-authorization).
+## Get blocked users
 
 ```
 GET /v3.1/me/blocks
 ```
 
-Response:
+Response: `GetBlocksResponse`
 
-- `blocking` — array of objects
-  - `profileId` — integer
-  - `blockedTime` — integer, appears to be `0`
+- `blockedBy` — array of strings
+- `blocking` — array of `BlockedProfile`
+  - `profileId` — string with numeric profile ID
+  - `order` — integer or `null`
 
 ## Block a user
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 Repeated requests are completed without errors.
 
@@ -26,13 +25,13 @@ Repeated requests are completed without errors.
 POST /v3/me/blocks/{profileId}
 ```
 
-Response:
+Path:
 
-- `updateTime` — integer, appears to be `0`
+- `profileId` — string with numeric profile ID
+
+Response: Raw `ResponseBody`.
 
 ## Unblock a user
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 Repeated requests are completed without errors.
 
@@ -40,13 +39,13 @@ Repeated requests are completed without errors.
 DELETE /v3/me/blocks/{targetProfileId}
 ```
 
-Response:
+Path:
 
-Empty.
+- `targetProfileId` — string with numeric profile ID
+
+Response: Raw `ResponseBody`.
 
 ## Unblock all users
-
-Requires [Authorization](/grindr-api/api-authorization).
 
 Repeated requests are completed without errors.
 
@@ -54,6 +53,4 @@ Repeated requests are completed without errors.
 DELETE /v3/me/blocks
 ```
 
-Response:
-
-Emtpy.
+Response: Raw `ResponseBody`.

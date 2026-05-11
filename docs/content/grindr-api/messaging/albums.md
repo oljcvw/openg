@@ -1,6 +1,38 @@
 # Albums
 
-WIP. No idea what SpankBank, pressie albums and paywalled albums are.
+Album, pressie album, and paywalled album endpoints below are observed in the decompiled app. Pressie/SpankBank semantics are not fully verified.
+
+
+## Decompiled Retrofit model index
+
+Observed response/request models from `cm/a.java` and `ik/a.java`:
+
+- `GET v1/albums` — response `AlbumsList`; albums module also uses `OwnAlbumsResponse`
+- `GET v2/albums/{albumId}` — response `Album`
+- `POST v2/albums` — body/response `AlbumNameRequestResponse` / `CreateAlbumResponse`
+- `PUT v2/albums/{albumId}` — body/response `AlbumNameRequestResponse`
+- `DELETE v1/albums/{albumId}` — response `Unit`
+- `POST v1/albums/{albumId}/content` — multipart `content`, query `width`, `height`, `isFresh`; response `UploadAlbumContentResponse`
+- `POST v1/albums/{albumId}/content/order` — body `AlbumsOrderRequest`; response `Unit`
+- `DELETE v1/albums/{albumId}/content/{contentId}` — response `Unit`
+- `GET v1/albums/{albumId}/content/{contentId}/processing` — response `AlbumsVideoProcessingResponse`
+- `GET v1/albums/{albumId}/content/{contentId}/poster` — response `AlbumsPosterResponse`
+- `GET v3/albums/{albumId}/view` — response `Unit`
+- `POST v1/albums/{albumId}/view/content/{contentId}` — response `AlbumsRemainingViewsResponse`
+- `GET v1/albums/{albumId}/shares` — response `AlbumsSharedWithResponse`
+- `POST v4/albums/{albumId}/shares` — body `AlbumShareRequest`; response `Unit`
+- `PUT v1/albums/{albumId}/unshares` — body `ShareOrUnshareAlbumRequest`; response `Unit`
+- `PUT v1/albums/{albumId}/shares/remove` — response `Unit`
+- `POST v1/albums/{albumId}/content/chat/list-by-id` — body `ContentMediaIdList`, query `isFresh`; response `Unit`
+- `GET v1/albums/storage` — response `AlbumsContentLimits`
+- `PUT v1/albums/red-dot` — response `Unit`
+- `POST v2/albums/shares` — body `ProfileAlbumsStatusRequest`; response `ProfileAlbumStatus`
+- `GET v2/albums/shares/{profileId}` — response `SharedAlbumsBrief`
+- `POST v3/pressie-albums/feed` — body `AlbumsFeedPilterData`; response `AlbumsFeedResponse`
+- `POST v3/pressie-albums/fresh-feed` — body `AlbumsFeedPilterData`; response `AlbumsFeedResponse`
+- `POST v3/pressie-albums/feed/paywall/` — body `FreshPaywallContentRequest` or `SpankBankPaywallContentRequest`; response `FreshPaywallContentResponse` or `SpankBankPaywallContentResponse`
+- `GET v3/pressie-albums/feed/{profileId}` — response `SpankBankAlbumForProfileResponse`
+- `POST v3/pressie-albums/feed/update/read` — body `SpankBankAlbumViewedRequest`; response `Unit`
 
 ## AlbumExpirationType
 
@@ -42,7 +74,7 @@ Previously shared [albums in chat](/grindr-api/messaging/messages#album) inherit
 - `contentId` — long integer
 - `contentType` — string
 - `coverUrl` — [AlbumCoverUrl](#AlbumCoverUrl)
-- `statusId` — unknown integer, WIP
+- `statusId` — integer observed in decompiled album content model; behavior not yet verified
 
 ## AlbumContent
 
@@ -247,7 +279,7 @@ Query:
 
 - `width` — number, optional, doesn't affect the resulting image
 - `height` — number, optional, doesn't affect the resulting image
-- `isFresh` — boolean, optional, unknown how it affects the resulting image, WIP
+- `isFresh` — boolean, optional; observed in decompiled Retrofit query, behavior not yet verified
 
 Body:
 
@@ -286,9 +318,9 @@ Response:
 
 Empty
 
-## Albums content processing, WIP
+## Album content processing status
 
-WIP
+Observed in decompiled app; behavior not yet verified.
 
 ```
 GET /v1/albums/{albumId}/content/{contentId}/processing
@@ -298,26 +330,58 @@ Response:
 
 - `processing` — boolean
 
-## Pics, WIP
+## Limited photo status
 
-- GET /v1/pics/limited/status . UnlimitedPhotoStatusResponse
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+GET /v1/pics/limited/status
+```
+
+Response model: `UnlimitedPhotoStatusResponse`.
 
 Response:
 
-- available — integer
-- total — integer
+- `available` — integer
+- `total` — integer
 
-## Pics expiring, WIP
+## Report expiring photo sent
 
-- POST /v4/pics/expiring ExpiringPhotoReportSentRequest ExpiringPhotoStatusResponse
+Requires [Authorization](/grindr-api/api-authorization).
 
-## Pics expiring status, WIP
+Observed in decompiled app; behavior not yet verified.
 
-- GET /v4/pics/expiring/status . ExpiringPhotoStatusResponse
+```
+POST /v4/pics/expiring
+```
 
-## Videos expiring status, WIP
+Body model: `ExpiringPhotoReportSentRequest`.
 
-- GET /v4/videos/expiring/status . PrivateVideoStatusResponse
+Body:
+
+- `count` — integer
+
+Response model: `ExpiringPhotoStatusResponse`.
+
+## Expiring photo status
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+GET /v4/pics/expiring/status
+```
+
+Response model: `ExpiringPhotoStatusResponse`.
+
+## Expiring video status
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+```
+GET /v4/videos/expiring/status
+```
+
+Response model: `PrivateVideoStatusResponse`
 
 ## Get album shares
 
@@ -373,19 +437,15 @@ Empty
 
 ## Unshare an album from everybody
 
-WIP
-
-Unknown, returns 403
+Observed in decompiled app; behavior not yet verified. Previously observed requests returned 403.
 
 ```
 PUT /v1/albums/{albumId}/shares/remove
 ```
 
-## Albums content chat list-by-id, WIP
+## Albums content chat list-by-id
 
-WIP
-
-Unknown, `{"ids":[852120758]}` returns 400
+Observed in decompiled app; behavior not yet verified. Previously observed `{"ids":[852120758]}` returned 400.
 
 ```
 POST /v1/albums/{albumId}/content/chat/list-by-id
@@ -424,9 +484,9 @@ Response:
 - `maxShareableAlbums` — integer
 - `maxVideosPerAlbum` — integer
 
-## Albums red dot, WIP
+## Albums red dot
 
-This may just be tracking but could also be related to something else 
+Observed in decompiled app; behavior not yet verified. This may just be tracking but could also be related to something else.
 
 ```
 PUT /v1/albums/red-dot
@@ -488,13 +548,42 @@ Response:
 - `nonEmptyPersonalAlbumCount` — number
 - `emptyAlbumId` — `null`
 
+## Fresh pressie albums feed
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+Observed in decompiled app; behavior not yet verified.
+
+```
+POST /v3/pressie-albums/fresh-feed
+```
+
+Body model: `AlbumsFeedPilterData`.
+
+Body:
+
+- `isFavorite` — boolean, optional
+- `isOnline` — boolean, optional
+- `onlyVideo` — boolean, optional
+- `blur` — boolean, optional
+
+Response model: `AlbumsFeedResponse`.
+
 ## Pressie albums feed paywall
+
+Requires [Authorization](/grindr-api/api-authorization).
 
 ```
 POST /v3/pressie-albums/feed/paywall/
 ```
 
-No body.
+Body models: `FreshPaywallContentRequest` or `SpankBankPaywallContentRequest`.
+
+Body:
+
+- `counterpartyId` — long integer or `null`, optional
+
+Response models: `FreshPaywallContentResponse` or `SpankBankPaywallContentResponse`.
 
 Response:
 
@@ -510,19 +599,38 @@ Response:
   - `paywallUrls` — array of strings, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files)
   - `albumsItemCount` — integer
 
-## Pressie albums feed profile ID, WIP
+## Pressie albums feed profile
 
-WIP
+Requires [Authorization](/grindr-api/api-authorization).
+
+Observed in decompiled app; behavior not yet verified.
 
 ```
 GET /v3/pressie-albums/feed/{profileId}
 ```
 
-## Pressie albums feed update read, WIP
+Response model: `SpankBankAlbumForProfileResponse`.
 
-WIP
+## Pressie albums feed update read
+
+Requires [Authorization](/grindr-api/api-authorization).
+
+Observed in decompiled app; behavior not yet verified.
 
 ```
 POST /v3/pressie-albums/feed/update/read
 ```
 
+Body model: `SpankBankAlbumViewedRequest`.
+
+Body:
+
+- `itemId` — long integer
+- `itemType` — long integer
+- `targetProfileId` — long integer
+
+Response model: `Unit`.
+
+Response:
+
+Empty.
