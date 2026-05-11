@@ -14,12 +14,12 @@
 {#await preferences then { geohash }}
 	{#if geohash === null}
 		<main class="min-h-dvh">
-			<div class="m-auto flex min-h-dvh pb-16">
+			<div class="m-auto flex min-h-dvh pb-safe">
 				<LocationChooser onUpdate={() => (preferences = getPreferences())} />
 			</div>
 		</main>
 	{:else}
-		<main class="min-h-dvh flex flex-col p-4 gap-4 pb-24">
+		<main class="min-h-dvh flex flex-col gap-4 px-safe pt-safe pb-24">
 			<TopBar
 				onUpdatePreferences={() => (preferences = getPreferences())}
 				onRefreshGrid={() => grid?.refresh()}

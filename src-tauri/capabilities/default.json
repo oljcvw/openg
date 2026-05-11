@@ -13,7 +13,7 @@
 			"identifier": "fs:allow-app-read",
 			"allow": [
 				{
-					"path": "$APPDATA/preferences.json"
+					"path": "$APPDATA/preferences.data"
 				}
 			]
 		},
@@ -21,7 +21,7 @@
 			"identifier": "fs:allow-app-write",
 			"allow": [
 				{
-					"path": "$APPDATA/preferences.json"
+					"path": "$APPDATA/preferences.data"
 				}
 			]
 		},
@@ -64,7 +64,7 @@
 			"identifier": "fs:allow-exists",
 			"allow": [
 				{
-					"path": "$APPDATA/preferences.json"
+					"path": "$APPDATA/preferences.data"
 				},
 				{
 					"path": "$APPCACHE/json-cache"

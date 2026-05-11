@@ -8,6 +8,7 @@
 	import { encodeGeohash } from "$lib/model/geohash";
 	import { setPreferences } from "$lib/app-data/preferences.svelte";
 	import { platform } from "@tauri-apps/plugin-os";
+	import { getPlatformFlags } from "$lib/platform/mobile";
 	import {
 		checkPermissions,
 		getCurrentPosition,
@@ -23,7 +24,7 @@
 
 	let geoMapPickerOpen = $state(false);
 
-	const geoApiSupported = $derived(["android", "ios"].includes(platform()));
+	const geoApiSupported = $derived(getPlatformFlags(platform()).isMobile);
 	let disabled = $state(false);
 
 	async function handleDetectLocation() {

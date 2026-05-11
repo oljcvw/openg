@@ -4,6 +4,10 @@ import { decode, encode } from "@msgpack/msgpack";
 import { geohashSchema } from "$lib/model/geohash";
 import { gridSearchFiltersSchema } from "$lib/components/filters/filters";
 
+export const APP_DATA_FILES = {
+	preferences: "preferences.data",
+} as const;
+
 const preferencesSchema = z.object({
 	geohash: geohashSchema.nullable(),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
@@ -12,8 +16,8 @@ const preferencesSchema = z.object({
 export async function getPreferences(): Promise<
 	z.infer<typeof preferencesSchema>
 > {
-	if (await existsAppDataFile("preferences.data")) {
-		return await readAppDataFile("preferences.data")
+	if (await existsAppDataFile(APP_DATA_FILES.preferences)) {
+		return await readAppDataFile(APP_DATA_FILES.preferences)
 			.then(decode)
 			.then((data) => preferencesSchema.parse(data));
 	} else {
@@ -32,5 +36,5 @@ export async function setPreferences(
 		...newValues,
 	};
 	preferencesSchema.parse(preferences);
-	await writeAppDataFile("preferences.data", encode(preferences));
+	await writeAppDataFile(APP_DATA_FILES.preferences, encode(preferences));
 }

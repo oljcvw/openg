@@ -21,6 +21,7 @@
 		{
 			"max-xs:hidden": page.route.id === "/(protected)/chat/[conversationId]",
 		},
+		"pb-safe",
 	]}
 	bgClass="bg-linear-to-t from-background to-transparent"
 	contentClass="overflow-auto no-scrollbar left-1/2 -translate-x-1/2 m-auto flex justify-center gap-2 px-2"
