@@ -38,7 +38,10 @@ export default defineConfig({
 			"/guide/": [
 				{
 					text: "User guide",
-					items: [{ text: "Download", link: "/guide/download" }],
+					items: [
+						{ text: "Download", link: "/guide/download" },
+						{ text: "Android", link: "/guide/android" },
+					],
 				},
 			],
 			"/grindr-api/": [

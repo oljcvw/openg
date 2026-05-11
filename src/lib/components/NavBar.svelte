@@ -11,6 +11,12 @@
 	const myProfilePhotos = $derived(
 		getMyProfile().then((profile) => profile.medias),
 	);
+
+	const pathname = $derived(page.url.pathname);
+
+	function isPath(currentPathname: string, expectedPathname: string) {
+		return currentPathname === expectedPathname;
+	}
 </script>
 
 <ProgressiveBlur
@@ -19,7 +25,7 @@
 	class={[
 		"fixed bottom-0 z-50 w-full py-2",
 		{
-			"max-xs:hidden": page.route.id === "/(protected)/chat/[conversationId]",
+			"max-xs:hidden": pathname.startsWith("/chat/"),
 		},
 		"pb-safe",
 	]}
@@ -32,22 +38,19 @@
 			"links shrink-0 [&>a>svg]:size-5!",
 		]}
 	>
-		<a href="/" data-active={page.route.id === "/(protected)/(root)"}>
+		<a href="/" data-active={isPath(pathname, "/")}>
 			<DotsNineIcon weight="fill" />
 			Browse
 		</a>
-		<a
-			href="/right-now"
-			data-active={page.route.id === "/(protected)/right-now"}
-		>
+		<a href="/right-now" data-active={isPath(pathname, "/right-now")}>
 			<DropIcon weight="fill" />
 			Right Now
 		</a>
-		<a href="/interest" data-active={page.route.id === "/(protected)/interest"}>
+		<a href="/interest" data-active={isPath(pathname, "/interest")}>
 			<FireIcon weight="fill" />
 			Interest
 		</a>
-		<a href="/chat" data-active={page.route.id === "/(protected)/chat"}>
+		<a href="/chat" data-active={isPath(pathname, "/chat")}>
 			<ChatCircleIcon weight="fill" />
 			Inbox
 		</a>

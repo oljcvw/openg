@@ -2,7 +2,6 @@ import {
 	isPermissionGranted,
 	requestPermission,
 	sendNotification,
-	type PermissionState,
 } from "@tauri-apps/plugin-notification";
 import type { RealtimeEvent } from "$lib/realtime";
 
@@ -13,7 +12,7 @@ export type NativeNotification = {
 
 export type NotificationAdapter = {
 	isPermissionGranted: () => Promise<boolean>;
-	requestPermission: () => Promise<PermissionState>;
+	requestPermission: () => Promise<NotificationPermission>;
 	sendNotification: (notification: NativeNotification) => void;
 };
 

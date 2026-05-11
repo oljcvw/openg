@@ -1,16 +1,35 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 
+type TauriConfig = {
+	app: {
+		security: {
+			csp: string;
+		};
+	};
+};
+
+type CapabilityPermission =
+	| string
+	| {
+			identifier?: string;
+			allow?: Array<{ path?: string }>;
+	  };
+
+type CapabilityConfig = {
+	permissions: CapabilityPermission[];
+};
+
 const tauriConfig = JSON.parse(
 	readFileSync(new URL("../../../src-tauri/tauri.conf.json", import.meta.url), "utf8"),
-);
+) as TauriConfig;
 
 const defaultCapability = JSON.parse(
 	readFileSync(
 		new URL("../../../src-tauri/capabilities/default.json", import.meta.url),
 		"utf8",
 	),
-);
+) as CapabilityConfig;
 
 describe("privacy and security release gates", () => {
 	it("keeps Tauri content security policy enabled", () => {
@@ -27,8 +46,9 @@ describe("privacy and security release gates", () => {
 
 	it("limits filesystem access to app data and cache scopes", () => {
 		const scopedFsPermissions = defaultCapability.permissions.filter(
-			(permission: unknown) =>
+			(permission) =>
 				typeof permission === "object" &&
+				permission !== null &&
 				"identifier" in permission &&
 				String(permission.identifier).startsWith("fs:"),
 		);

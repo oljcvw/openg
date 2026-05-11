@@ -24,13 +24,15 @@
 		import("photoswipe/lightbox")
 			.then(({ default: PhotoSwipeLightbox }) => {
 				if (!gallery) return;
-				lightbox = new PhotoSwipeLightbox({
-					gallery,
+				const galleryElement = gallery;
+				const currentLightbox = new PhotoSwipeLightbox({
+					gallery: galleryElement,
 					children: ".item",
 					pswpModule: () => import("photoswipe"),
 					mainClass: `pswp--buttons-visible`,
 				});
-				lightbox.addFilter("itemData", (itemData) => {
+				lightbox = currentLightbox;
+				currentLightbox.addFilter("itemData", (itemData) => {
 					const img = itemData.element?.querySelector("img");
 					if (img?.naturalWidth) {
 						itemData.width = img.naturalWidth;
@@ -38,30 +40,30 @@
 					}
 					return itemData;
 				});
-				lightbox.on("openingAnimationStart", () => {
-					gallery?.querySelectorAll(".item").forEach((item) => {
+				currentLightbox.on("openingAnimationStart", () => {
+					galleryElement.querySelectorAll(".item").forEach((item) => {
 						if (item instanceof HTMLElement) {
 							item.style.visibility = "hidden";
 						}
 					});
 				});
 
-				lightbox.on("change", () => {
-					gallery?.scrollTo({
-						top: lightbox?.pswp?.currSlide?.data.element?.offsetTop ?? 0,
+				currentLightbox.on("change", () => {
+					galleryElement.scrollTo({
+						top: currentLightbox.pswp?.currSlide?.data.element?.offsetTop ?? 0,
 						behavior: "instant",
 					});
 				});
 
-				lightbox.on("destroy", () => {
-					gallery?.querySelectorAll(".item").forEach((item) => {
+				currentLightbox.on("destroy", () => {
+					galleryElement.querySelectorAll(".item").forEach((item) => {
 						if (item instanceof HTMLElement) {
 							item.style.visibility = "visible";
 						}
 					});
 				});
-				lightbox.on("uiRegister", () => {
-					lightbox?.pswp?.ui?.registerElement({
+				currentLightbox.on("uiRegister", () => {
+					currentLightbox.pswp?.ui?.registerElement({
 						name: "created-at-label",
 						order: 9,
 						appendTo: "root",
@@ -79,7 +81,7 @@
 					});
 				});
 
-				lightbox.init();
+				currentLightbox.init();
 			})
 			.catch((error) => console.error(error));
 		return () => lightbox?.destroy();
