@@ -1,42 +1,12 @@
+import {
+	BaseDirectory,
+	exists,
+	mkdir,
+	readTextFile,
+	remove,
+	writeTextFile,
+} from "@tauri-apps/plugin-fs";
 import z from "zod";
-
-type MaybePromise<T> = T | Promise<T>;
-
-export interface CacheStorageAdapter {
-	getItem(key: string): MaybePromise<string | null>;
-	setItem(key: string, value: string): MaybePromise<void>;
-	removeItem(key: string): MaybePromise<void>;
-	keys(): MaybePromise<Iterable<string>>;
-}
-
-export class MemoryCacheStorage implements CacheStorageAdapter {
-	#items = new Map<string, string>();
-	#failNextWrite = false;
-
-	async getItem(key: string) {
-		return this.#items.get(key) ?? null;
-	}
-
-	async setItem(key: string, value: string) {
-		if (this.#failNextWrite) {
-			this.#failNextWrite = false;
-			throw new DOMException("Quota exceeded", "QuotaExceededError");
-		}
-		this.#items.set(key, value);
-	}
-
-	async removeItem(key: string) {
-		this.#items.delete(key);
-	}
-
-	async keys() {
-		return this.#items.keys();
-	}
-
-	failNextWrite() {
-		this.#failNextWrite = true;
-	}
-}
 
 type CacheEntry<T> = {
 	version: 1;
@@ -45,22 +15,47 @@ type CacheEntry<T> = {
 	value: T;
 };
 
+type AppCacheFs = {
+	exists: typeof exists;
+	mkdir: typeof mkdir;
+	readTextFile: typeof readTextFile;
+	remove: typeof remove;
+	writeTextFile: typeof writeTextFile;
+};
+
 type JsonCacheOptions<TSchema extends z.ZodType> = {
 	namespace: string;
 	schema: TSchema;
-	storage: CacheStorageAdapter;
 	ttlMs?: number;
 	now?: () => number;
+	fs?: AppCacheFs;
+	rootPath?: string;
 };
 
-const CACHE_KEY_PREFIX = "open-grind-cache";
+const defaultFs: AppCacheFs = {
+	exists,
+	mkdir,
+	readTextFile,
+	remove,
+	writeTextFile,
+};
 
-function makeCacheKey(namespace: string, key: string) {
-	return `${CACHE_KEY_PREFIX}:${namespace}:${key}`;
+const CACHE_ROOT = "json-cache";
+const CACHE_BASE_DIR = BaseDirectory.AppCache;
+
+function pathSegment(value: string) {
+	const bytes = new TextEncoder().encode(value);
+	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+		"",
+	);
 }
 
-function makeCachePrefix(namespace: string) {
-	return `${CACHE_KEY_PREFIX}:${namespace}:`;
+function makeCacheDir(rootPath: string, namespace: string) {
+	return `${rootPath}/n-${pathSegment(namespace)}`;
+}
+
+function makeCachePath(rootPath: string, namespace: string, key: string) {
+	return `${makeCacheDir(rootPath, namespace)}/k-${pathSegment(key)}.json`;
 }
 
 function entrySchema<TSchema extends z.ZodType>(schema: TSchema) {
@@ -75,26 +70,37 @@ function entrySchema<TSchema extends z.ZodType>(schema: TSchema) {
 export function createJsonCache<TSchema extends z.ZodType>({
 	namespace,
 	schema,
-	storage,
 	ttlMs,
 	now = () => Date.now(),
+	fs = defaultFs,
+	rootPath = CACHE_ROOT,
 }: JsonCacheOptions<TSchema>) {
 	type Value = z.infer<TSchema>;
 	const hotEntries = new Map<string, CacheEntry<Value>>();
 	const schemaForEntry = entrySchema(schema);
+	const cacheDir = makeCacheDir(rootPath, namespace);
 
 	function isExpired(entry: CacheEntry<Value>) {
 		return entry.expiresAt !== null && entry.expiresAt <= now();
 	}
 
+	async function readEntry(storageKey: string) {
+		if (!(await fs.exists(storageKey, { baseDir: CACHE_BASE_DIR }))) {
+			return null;
+		}
+		return fs.readTextFile(storageKey, { baseDir: CACHE_BASE_DIR });
+	}
+
 	async function removeStorageKey(storageKey: string) {
 		hotEntries.delete(storageKey);
-		await storage.removeItem(storageKey);
+		if (await fs.exists(storageKey, { baseDir: CACHE_BASE_DIR })) {
+			await fs.remove(storageKey, { baseDir: CACHE_BASE_DIR });
+		}
 	}
 
 	return {
 		async get(key: string): Promise<Value | undefined> {
-			const storageKey = makeCacheKey(namespace, key);
+			const storageKey = makeCachePath(rootPath, namespace, key);
 			const hotEntry = hotEntries.get(storageKey);
 			if (hotEntry) {
 				if (!isExpired(hotEntry)) return hotEntry.value;
@@ -102,7 +108,7 @@ export function createJsonCache<TSchema extends z.ZodType>({
 				return undefined;
 			}
 
-			const raw = await storage.getItem(storageKey);
+			const raw = await readEntry(storageKey);
 			if (raw === null) return undefined;
 
 			let parsed: CacheEntry<Value>;
@@ -128,18 +134,25 @@ export function createJsonCache<TSchema extends z.ZodType>({
 		},
 
 		async set(key: string, value: Value): Promise<void> {
-			const storageKey = makeCacheKey(namespace, key);
+			const storageKey = makeCachePath(rootPath, namespace, key);
 			const parsedValue = schema.parse(value) as Value;
+			const storedAt = now();
 			const entry: CacheEntry<Value> = {
 				version: 1,
-				storedAt: now(),
-				expiresAt: ttlMs === undefined ? null : now() + ttlMs,
+				storedAt,
+				expiresAt: ttlMs === undefined ? null : storedAt + ttlMs,
 				value: parsedValue,
 			};
 			hotEntries.set(storageKey, entry);
 
 			try {
-				await storage.setItem(storageKey, JSON.stringify(entry));
+				await fs.mkdir(cacheDir, {
+					baseDir: CACHE_BASE_DIR,
+					recursive: true,
+				});
+				await fs.writeTextFile(storageKey, JSON.stringify(entry), {
+					baseDir: CACHE_BASE_DIR,
+				});
 			} catch (error) {
 				console.warn("Failed to persist cache entry", {
 					namespace,
@@ -150,51 +163,17 @@ export function createJsonCache<TSchema extends z.ZodType>({
 		},
 
 		async delete(key: string): Promise<void> {
-			await removeStorageKey(makeCacheKey(namespace, key));
+			await removeStorageKey(makeCachePath(rootPath, namespace, key));
 		},
 
 		async clear(): Promise<void> {
-			const prefix = makeCachePrefix(namespace);
-			for (const key of await storage.keys()) {
-				if (key.startsWith(prefix)) await removeStorageKey(key);
+			hotEntries.clear();
+			if (await fs.exists(cacheDir, { baseDir: CACHE_BASE_DIR })) {
+				await fs.remove(cacheDir, {
+					baseDir: CACHE_BASE_DIR,
+					recursive: true,
+				});
 			}
-			for (const key of hotEntries.keys()) {
-				if (key.startsWith(prefix)) hotEntries.delete(key);
-			}
-		},
-	};
-}
-
-function defaultLocalStorage() {
-	try {
-		return globalThis.localStorage;
-	} catch {
-		return undefined;
-	}
-}
-
-export function createLocalStorageCacheStorage(
-	storage: Storage | undefined = defaultLocalStorage(),
-): CacheStorageAdapter {
-	if (!storage) return new MemoryCacheStorage();
-
-	return {
-		getItem(key: string) {
-			return storage.getItem(key);
-		},
-		setItem(key: string, value: string) {
-			storage.setItem(key, value);
-		},
-		removeItem(key: string) {
-			storage.removeItem(key);
-		},
-		keys() {
-			const keys: string[] = [];
-			for (let index = 0; index < storage.length; index += 1) {
-				const key = storage.key(index);
-				if (key !== null) keys.push(key);
-			}
-			return keys;
 		},
 	};
 }

@@ -1,7 +1,5 @@
-import z from "zod";
 import { getCascadeV3 } from "$lib/api/grid";
 import { getProfiles } from "$lib/api/profile";
-import { createJsonCache, MemoryCacheStorage } from "$lib/cache/json-cache";
 
 export type FullGridProfile = {
 	type: "full";
@@ -19,15 +17,6 @@ export type PartialGridProfile = {
 };
 
 export type GridProfile = FullGridProfile | PartialGridProfile;
-
-const fullGridProfileSchema = z.object({
-	type: z.literal("full"),
-	id: z.number().int().nonnegative(),
-	displayName: z.string().nullable(),
-	distance: z.number().nullable(),
-	profilePhotosHashes: z.array(z.string()).nullable(),
-	unread: z.number().int().nonnegative().nullable(),
-});
 
 export async function getGrid(query: Parameters<typeof getCascadeV3>[0]) {
 	const response = await getCascadeV3(query);
@@ -71,13 +60,6 @@ export async function getGrid(query: Parameters<typeof getCascadeV3>[0]) {
 		shuffled: response.shuffled,
 	};
 }
-
-export const profileCache = createJsonCache({
-	namespace: "grid-profiles:v1",
-	schema: fullGridProfileSchema,
-	storage: new MemoryCacheStorage(),
-	ttlMs: 1000 * 60,
-});
 
 export async function resolvePartialBatch(
 	profileIds: number[],

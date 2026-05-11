@@ -6,7 +6,6 @@
 		getGrid,
 		resolvePartialBatch,
 		type GridProfile,
-		profileCache,
 	} from "./grid";
 	import { getPreferences } from "$lib/app-data/preferences.svelte";
 	import ProfileMiniCard from "./ProfileMiniCard.svelte";
@@ -82,25 +81,12 @@
 			const profileIds = partialBatches[batchIndex].batch.map(
 				(p) => p.profileId,
 			);
-			const uncachedIds: number[] = [];
-
-			for (const id of profileIds) {
-				const cached = await profileCache.get(String(id));
-				if (cached) {
-					const idx = items.findIndex((i) => i.id === id);
-					if (idx !== -1) items[idx] = cached;
-				} else {
-					uncachedIds.push(id);
-				}
-			}
-
-			const resolved = await resolvePartialBatch(uncachedIds);
+			const resolved = await resolvePartialBatch(profileIds);
 			for (const profile of resolved) {
-				await profileCache.set(String(profile.id), profile);
 				const idx = items.findIndex((i) => i.id === profile.id);
 				if (idx !== -1) items[idx] = profile;
 			}
-			const unresolved = uncachedIds.filter(
+			const unresolved = profileIds.filter(
 				(id) => !resolved.some((profile) => profile.id === id),
 			);
 			for (const unresolvedProfileId of unresolved) {
