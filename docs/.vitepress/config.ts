@@ -41,6 +41,7 @@ export default defineConfig({
 					items: [
 						{ text: "Download", link: "/guide/download" },
 						{ text: "Android", link: "/guide/android" },
+						{ text: "macOS", link: "/guide/macos" },
 					],
 				},
 			],
