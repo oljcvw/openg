@@ -1,9 +1,6 @@
 import z from "zod";
 import { fetchRest } from "$lib/api";
-import {
-	createJsonCache,
-	createLocalStorageCacheStorage,
-} from "$lib/cache/json-cache";
+import { createJsonCache } from "$lib/cache/json-cache";
 import {
 	profileRightNowSchema,
 	profileSchema,
@@ -19,7 +16,6 @@ const profileResponseSchema = z.object({
 const profilesCache = createJsonCache({
 	namespace: "profiles:v1",
 	schema: profileSchema,
-	storage: createLocalStorageCacheStorage(),
 	ttlMs: 1000 * 60,
 });
 
