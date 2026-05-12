@@ -69,6 +69,10 @@ export const grindrApiReferenceWoodwork: DefaultTheme.SidebarItem[] = [
 
 export const grindrApiReference: DefaultTheme.SidebarItem[] = [
 	{ text: "Getting started", link: "/grindr-api/getting-started" },
+	{
+		text: "Evidence and verification",
+		link: "/grindr-api/evidence-and-verification",
+	},
 	{ text: "Security headers", link: "/grindr-api/security-headers" },
 	{ text: "API Authorization", link: "/grindr-api/api-authorization" },
 	{ text: "Authentication", link: "/grindr-api/authentication" },

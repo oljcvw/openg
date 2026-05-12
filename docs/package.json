@@ -5,6 +5,7 @@
 	"type": "module",
 	"module": "index.ts",
 	"scripts": {
+		"apk:endpoints": "bun scripts/apk-endpoint-inventory.mjs",
 		"build": "vitepress build",
 		"deploy": "bun run build && bun gh-pages -d .vitepress/dist",
 		"preview": "vitepress preview",

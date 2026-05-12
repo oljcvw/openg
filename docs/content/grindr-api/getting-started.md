@@ -7,4 +7,4 @@ Basic terminology:
 - Body — JSON or binary payload passed in HTTP request's body
 - Response — JSON payload or binary passed in HTTP response's body
 
-Next, read [API Authorization](./api-authorization.md) and [Security Headers](./security-headers.md).
+Next, read [Evidence and verification](./evidence-and-verification.md), [API Authorization](./api-authorization.md), and [Security Headers](./security-headers.md).
