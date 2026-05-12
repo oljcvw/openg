@@ -18,13 +18,13 @@ pub fn init_keyring() {
         use keyring_core::CredentialStore;
         use std::sync::Arc;
 
-        let store: Arc<dyn CredentialStore> = if let Ok(s) =
+        let store: Arc<CredentialStore> = if let Ok(s) =
             apple_native_keyring_store::protected::Store::new()
         {
-            s as Arc<dyn CredentialStore>
+            s
         } else {
             apple_native_keyring_store::keychain::Store::new()
-                .expect("failed to init macOS keyring") as Arc<dyn CredentialStore>
+                .expect("failed to init macOS keyring")
         };
         keyring_core::set_default_store(store);
     }
