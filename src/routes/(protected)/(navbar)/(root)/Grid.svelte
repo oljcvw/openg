@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { uniqBy } from "lodash-es";
 	import { onMount } from "svelte";
-	import { cn } from "tailwind-variants";
 
 	import ApiErrorDisplay from "$lib/components/ApiErrorDisplay.svelte";
 	import EmptyGrid from "./EmptyGrid.svelte";
@@ -16,7 +14,7 @@
 		onResetFilters: () => void;
 	} = $props();
 
-	const gridProfiles = $derived(uniqBy(gridState.items, "id"));
+	const gridProfiles = $derived(gridState.orderedProfiles);
 
 	$effect.pre(() => {
 		gridState.load(geohash);

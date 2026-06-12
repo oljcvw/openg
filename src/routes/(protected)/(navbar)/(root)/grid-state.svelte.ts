@@ -10,6 +10,11 @@ import {
 	profileCache,
 	resolvePartialBatch,
 } from "./grid";
+import {
+	type AdjacentProfileIds,
+	getAdjacentProfileIds,
+	getUniqueGridProfiles,
+} from "./profile-navigation";
 
 class GridState {
 	items = $state<GridProfile[]>([]);
@@ -22,6 +27,15 @@ class GridState {
 	get errorMessage(): string | null {
 		return this.error?.message ?? null;
 	}
+
+	get orderedProfiles(): GridProfile[] {
+		return getUniqueGridProfiles(this.items);
+	}
+
+	getProfileNavigation(profileId: number): AdjacentProfileIds {
+		return getAdjacentProfileIds(this.items, profileId);
+	}
+
 	currentQuery: z.infer<typeof cascadeV3QuerySchema> | null = null;
 	scrollY = 0;
 

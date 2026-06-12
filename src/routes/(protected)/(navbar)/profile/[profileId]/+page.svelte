@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 
 	import { showErrorToast } from "$lib/api/error";
@@ -7,6 +8,8 @@
 	import { getPreferences } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/ApiErrorDisplay.svelte";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import { gridState } from "../../(root)/grid-state.svelte";
+	import { selectProfileIdForHorizontalSwipe } from "../../(root)/profile-navigation";
 	import AboutMe from "./AboutMe.svelte";
 	import BlockedProfile from "./BlockedProfile.svelte";
 	import ProfileBottomNavBar from "./bottom-nav/ProfileBottomNavBar.svelte";
@@ -56,10 +59,51 @@
 	const optimisticallyBlocked = $derived(
 		optimisticBlockProfileId === profileId,
 	);
+	const profileNavigation = $derived(gridState.getProfileNavigation(profileId));
+
+	let swipeStart = $state<{
+		pointerId: number;
+		x: number;
+		y: number;
+	} | null>(null);
+
+	function handleProfilePointerDown(event: PointerEvent) {
+		if (event.pointerType === "mouse" && event.button !== 0) return;
+		swipeStart = {
+			pointerId: event.pointerId,
+			x: event.clientX,
+			y: event.clientY,
+		};
+		if (event.currentTarget instanceof HTMLElement) {
+			event.currentTarget.setPointerCapture(event.pointerId);
+		}
+	}
+
+	function handleProfilePointerUp(event: PointerEvent) {
+		if (!swipeStart || swipeStart.pointerId !== event.pointerId) return;
+		const targetProfileId = selectProfileIdForHorizontalSwipe({
+			...profileNavigation,
+			deltaX: event.clientX - swipeStart.x,
+			deltaY: event.clientY - swipeStart.y,
+		});
+		swipeStart = null;
+
+		if (targetProfileId === null) return;
+		void goto(`/profile/${targetProfileId}`);
+	}
+
+	function handleProfilePointerCancel(event: PointerEvent) {
+		if (swipeStart?.pointerId === event.pointerId) swipeStart = null;
+	}
 </script>
 
 <div class="flex flex-1">
-	<main class="w-full max-w-200 flex-1 mx-auto relative">
+	<main
+		class="w-full max-w-200 flex-1 mx-auto relative touch-pan-y"
+		onpointercancel={handleProfilePointerCancel}
+		onpointerdown={handleProfilePointerDown}
+		onpointerup={handleProfilePointerUp}
+	>
 		{#if optimisticallyBlocked}
 			<div class="h-full flex">
 				<BlockedProfile
