@@ -39,6 +39,7 @@ android {
         targetSdk = prop("opengrind.android.targetSdk").toInt()
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+        buildConfigField("int", "MIN_SUPPORTED_WEBVIEW_MAJOR", "111")
     }
 	signingConfigs {
 		if (hasKeystore) {
