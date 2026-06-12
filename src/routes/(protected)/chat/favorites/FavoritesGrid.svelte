@@ -1,13 +1,18 @@
 <script lang="ts">
 	import { uniqBy } from "lodash-es";
-	import { onMount } from "svelte";
 
 	import ApiErrorDisplay from "$lib/components/ApiErrorDisplay.svelte";
-	import GridProfileMiniCard from "../(root)/GridProfileMiniCard.svelte";
+	import GridProfileMiniCard from "../../(navbar)/(root)/GridProfileMiniCard.svelte";
 	import EmptyFavorites from "./EmptyFavorites.svelte";
 	import { favoritesGridState } from "./favorites-grid-state.svelte";
 
-	let { geohash }: { geohash: string } = $props();
+	let {
+		geohash,
+		scrollContainer = null,
+	}: {
+		geohash: string;
+		scrollContainer?: HTMLDivElement | null;
+	} = $props();
 
 	const gridProfiles = $derived(uniqBy(favoritesGridState.items, "id"));
 
@@ -15,12 +20,13 @@
 		favoritesGridState.load(geohash);
 	});
 
-	onMount(() => {
+	$effect(() => {
+		const target = scrollContainer ?? window;
 		const saveScroll = () => {
-			favoritesGridState.scrollY = window.scrollY;
+			favoritesGridState.scrollY = scrollContainer?.scrollTop ?? window.scrollY;
 		};
-		window.addEventListener("scroll", saveScroll, { passive: true });
-		return () => window.removeEventListener("scroll", saveScroll);
+		target.addEventListener("scroll", saveScroll, { passive: true });
+		return () => target.removeEventListener("scroll", saveScroll);
 	});
 
 	let scrolled = $state(false);
@@ -31,7 +37,11 @@
 			favoritesGridState.errorMessage === null
 		) {
 			scrolled = true;
-			window.scrollTo({ top: favoritesGridState.scrollY, behavior: "instant" });
+			if (scrollContainer) {
+				scrollContainer.scrollTop = favoritesGridState.scrollY;
+			} else {
+				window.scrollTo({ top: favoritesGridState.scrollY, behavior: "instant" });
+			}
 		}
 	});
 
@@ -43,7 +53,7 @@
 						.loadMore()
 						.catch((error) => console.error(error));
 			},
-			{ rootMargin: "400px" },
+			{ root: scrollContainer, rootMargin: "400px" },
 		);
 		observer.observe(node);
 		return {
@@ -63,7 +73,7 @@
 					observer.disconnect();
 				}
 			},
-			{ rootMargin: "200px" },
+			{ root: scrollContainer, rootMargin: "200px" },
 		);
 		observer.observe(node);
 		return {

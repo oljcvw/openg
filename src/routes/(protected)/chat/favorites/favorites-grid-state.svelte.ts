@@ -2,7 +2,12 @@ import z from "zod";
 
 import { showErrorToast } from "$lib/api/error";
 import type { cascadeV3QuerySchema } from "$lib/model/grid/cascade/query/v3";
-import { getGrid, type GridProfile, profileCache, resolvePartialBatch } from "../(root)/grid";
+import {
+	getGrid,
+	type GridProfile,
+	profileCache,
+	resolvePartialBatch,
+} from "../../(navbar)/(root)/grid";
 
 class FavoritesGridState {
 	items = $state<GridProfile[]>([]);

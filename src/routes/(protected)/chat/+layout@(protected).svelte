@@ -36,7 +36,10 @@
 		return () => observer.disconnect();
 	});
 
-	const isChatSelected = $derived(page.params.conversationId !== undefined);
+	const isConversationSelected = $derived(
+		page.params.conversationId !== undefined,
+	);
+	const isInboxRootRoute = $derived(page.route.id === "/(protected)/chat");
 
 	const mobile = new MediaQuery("(width < 424px)");
 </script>
@@ -72,27 +75,33 @@
 					class="flex-1 self-stretch p-4 ps-1 pb-[calc(0.5rem+var(--content-pb))] h-full"
 				>
 					<Card.Root
-						class={[
-							"h-full rounded-2xl p-0 gap-0 relative dark:ring-neutral-800",
-							{
-								"bg-card/20 ring-0": !isChatSelected,
-							},
-						]}
-					>
+							class={[
+								"h-full rounded-2xl p-0 gap-0 relative dark:ring-neutral-800",
+								{
+									"bg-card/20 ring-0": !isConversationSelected,
+								},
+							]}
+						>
 						{@render children?.()}
 					</Card.Root>
 				</div>
 			</Resizable.Pane>
 		</Resizable.PaneGroup>
 	{/if}
-	{#if isChatSelected}
+	{#if isConversationSelected}
 		{#if mobile.current}
 			<div class="flex-1 self-stretch flex flex-col max-w-full">
 				{@render children?.()}
 			</div>
 		{/if}
 	{:else}
-		<ConversationsList class="xs:hidden" />
+		{#if isInboxRootRoute}
+			<ConversationsList class="xs:hidden" />
+		{:else}
+			<div class="flex-1 self-stretch flex flex-col max-w-full">
+				{@render children?.()}
+			</div>
+		{/if}
 	{/if}
 </main>
 {#if !mobile.current || page.route.id !== "/(protected)/chat/[conversationId]"}

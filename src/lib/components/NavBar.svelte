@@ -4,7 +4,6 @@
 	import DotsNineIcon from "phosphor-svelte/lib/DotsNineIcon";
 	import DropIcon from "phosphor-svelte/lib/DropIcon";
 	import FireIcon from "phosphor-svelte/lib/FireIcon";
-	import StarIcon from "phosphor-svelte/lib/StarIcon";
 
 	import { getMyProfile } from "$lib/api/users/profiles";
 	import { getOrCreateConversationsState } from "$lib/chat/conversations-context.svelte";
@@ -61,20 +60,13 @@
 			Right Now
 		</a>
 		<a
-			href="/favorites"
-			data-active={page.route.id === "/(protected)/(navbar)/favorites"}
-		>
-			<StarIcon weight="fill" />
-			Favorites
-		</a>
-		<a
 			href="/interest"
 			data-active={page.route.id?.startsWith("/(protected)/(navbar)/interest")}
 		>
 			<FireIcon weight="fill" />
 			Interest
 		</a>
-		<a href="/chat" data-active={page.route.id === "/(protected)/chat"}>
+		<a href="/chat" data-active={page.route.id?.startsWith("/(protected)/chat")}>
 			<ChatCircleIcon weight="fill" />
 			Inbox
 			{#if hasUnread}

@@ -7,6 +7,7 @@
 	import type { ConversationsState } from "$lib/chat/conversations.svelte";
 	import Conversation from "./Conversation.svelte";
 	import EmptyConversationsList from "./EmptyConversationsList.svelte";
+	import InboxSubnav from "./InboxSubnav.svelte";
 	import LazyConversation from "./LazyConversation.svelte";
 
 	const EAGER_COUNT = 10;
@@ -66,6 +67,9 @@
 	]}
 	onscroll={() => (conversations.listScrollY = container?.scrollTop ?? 0)}
 >
+	<div class="sticky top-0 z-10 -mx-1">
+		<InboxSubnav />
+	</div>
 	{#await conversations.initial}
 		{#each Array(8)}
 			<Skeleton class="w-full h-24.5 shrink-0" />
