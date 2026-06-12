@@ -4,6 +4,7 @@
 	import DotsNineIcon from "phosphor-svelte/lib/DotsNineIcon";
 	import DropIcon from "phosphor-svelte/lib/DropIcon";
 	import FireIcon from "phosphor-svelte/lib/FireIcon";
+	import StarIcon from "phosphor-svelte/lib/StarIcon";
 
 	import { getMyProfile } from "$lib/api/users/profiles";
 	import { getOrCreateConversationsState } from "$lib/chat/conversations-context.svelte";
@@ -58,6 +59,13 @@
 		>
 			<DropIcon weight="fill" />
 			Right Now
+		</a>
+		<a
+			href="/favorites"
+			data-active={page.route.id === "/(protected)/(navbar)/favorites"}
+		>
+			<StarIcon weight="fill" />
+			Favorites
 		</a>
 		<a
 			href="/interest"
