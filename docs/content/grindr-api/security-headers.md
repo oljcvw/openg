@@ -20,6 +20,9 @@ Security headers are HTTP headers that the Grindr API requires to be present and
       - [Frames](#frames)
       - [Pseudoheaders](#pseudoheaders)
     - [JA3/JA4 fingerprint hashes](#ja3ja4-fingerprint-hashes)
+  - [IOS Headers](#ios-security-headers)
+    - [`L-Device-Info iOS`](#l-device-info-ios)
+    - [`User-Agent iOS`](#user-agent-ios)
 
 ## `Accept`
 
@@ -247,3 +250,40 @@ JA4 (h1):       [not applicable, see below]
 In the official Grindr app the WebSocket connection (h1 ALPN) is always warm, because the API client opens connections first and adds shared keys to the session ticket cache.
 
 To test these fingerprints automatically we use [fingerprint_check.rs](). The public TLS-probe service [tls.peet.ws](https://tls.peet.ws/) is the destination of each probe, and its JA4 calculator is spec-incorrect (it drops the `padding (21)` extension from the sorted extension list before hashing — `40271e0a5736` instead of `eca864cca44a` for cold h2); the grindr.rs examples binary therefore recomputes JA4 spec-correctly from peet.ws's raw `ja4_r` field (which *does* report the full sorted extension list, including padding) rather than trusting peet.ws's pre-computed `ja4` field. The full set of extensions, the cipher list, the signature-algorithms list, and the HTTP/2 Akamai fingerprint `4:16777216|16711681|0|m,p,a,s` are wire-verified identical between our Rust backend and the official Grindr 26.8.2 Android app, in both cold and warm states.
+
+## IOS Security Headers
+
+This will only contain the diffrences between IOS and Android most things like the Accept, Connection, Host are all the same
+
+These are the diffrences:
+- "Accept-Encoding": "gzip, deflate, br"
+  - Note: iOS includes deflate and br
+- "Accept-Language": "en-GB;en;q=0.9" 
+  - Note: Seems to use the first 2 letters as a fallback US would be "en-US;en;q=0.9" the q=0.9 tells the server to use en at 90% prority and only to use it if it doesn't have en-GB/en-US
+- "L-Grindr-Roles":
+  - Note: This header is entirely gone in iOS
+- "L-Device-Info": See Below
+- "User-Agent iOS": See Below
+
+### `L-Device-Info iOS`
+
+```
+<deviceId>;appStore;2;<totalRAM>;<screenResolution>
+```
+
+- `deviceId` — 36 hex characters (most likely the identifierForVendor)
+- `appStore` — hardcoded channel/flavor
+- `deviceType` — 2 (not aware if this is hardcoded or changes for ios)
+- `totalRam` — ProcessInfo.processInfo.physicalMemory
+- `screenResolution` — "heightPx x widthPx" e.g. `2795x1290`
+
+Example: `E812B63B-F645-4C58-8FAB-40F457BAF456;appStore;2;8565768192;2796x1290`
+
+### `User-Agent iOS`
+
+```
+Grindr3/26.9.2.99239.060331878.99 (99239.060331878.99; iPhone99,11; iOS 26.1)
+```
+- App & Build Numbers: Grindr3/26.9.2.99239.060331878.99 & 99239.060331878.99
+- Hardware Identifier: iPhone99,11 is the Hardware Identifier like iPhone14,5 for  a iPhone 13 and iPhone15,2 for iPhone 14 Pro
+- OS Version (iOS 26.1): The operating system version.
