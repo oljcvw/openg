@@ -4,10 +4,17 @@
 
 	import { showErrorToast } from "$lib/api/error";
 	import { recordProfileView } from "$lib/api/interest/views";
-	import { BlockedProfileError, getProfile } from "$lib/api/users/profiles";
+	import {
+		BlockedProfileError,
+		getProfile,
+		invalidateProfile,
+		mergeProfileEditIntoCaches,
+	} from "$lib/api/users/profiles";
 	import { getPreferences } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/ApiErrorDisplay.svelte";
+	import DataRefreshControl from "$lib/components/DataRefreshControl.svelte";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import type { Profile } from "$lib/model/profile";
 	import { gridState } from "../../(root)/grid-state.svelte";
 	import { selectProfileIdForHorizontalSwipe } from "../../(root)/profile-navigation";
 	import AboutMe from "./AboutMe.svelte";
@@ -36,6 +43,49 @@
 
 	const ourProfileId = $derived(data.ourProfileId);
 	const profileId = $derived(Number(page.params.profileId));
+
+	let profileContainer = $state<HTMLElement | null>(null);
+	let profile = $state<Profile | null>(null);
+	let loading = $state(true);
+	let loadError = $state<Error | null>(null);
+	let refreshing = $state(false);
+
+	async function loadProfile(id: number, isRefresh: boolean) {
+		if (isRefresh) {
+			refreshing = true;
+			invalidateProfile(id);
+		} else {
+			loading = true;
+			loadError = null;
+			profile = null;
+		}
+		try {
+			const result = await getProfile(id);
+			if (id !== profileId) return;
+			profile = result;
+			loadError = null;
+		} catch (error) {
+			if (id !== profileId) return;
+			loadError = error instanceof Error ? error : new Error(String(error));
+			profile = null;
+		} finally {
+			if (id === profileId) {
+				loading = false;
+				refreshing = false;
+			}
+		}
+	}
+
+	$effect(() => {
+		const id = profileId;
+		if (!Number.isFinite(id)) return;
+		void loadProfile(id, false);
+	});
+
+	function refresh() {
+		if (refreshing || loading) return;
+		void loadProfile(profileId, true);
+	}
 
 	$effect(() => {
 		const id = profileId;
@@ -97,41 +147,70 @@
 	}
 </script>
 
-<div class="flex flex-1">
-	<main
-		class="w-full max-w-200 flex-1 mx-auto relative touch-pan-y"
-		onpointercancel={handleProfilePointerCancel}
-		onpointerdown={handleProfilePointerDown}
-		onpointerup={handleProfilePointerUp}
+{#if optimisticallyBlocked}
+	<div class="flex-1 flex">
+		<BlockedProfile
+			blockedByUs={true}
+			onRefresh={() => {
+				optimisticBlockProfileId = null;
+			}}
+		/>
+	</div>
+{:else if loadError instanceof BlockedProfileError}
+	<div class="flex-1 flex">
+		<BlockedProfile
+			blockedByUs={loadError.blockedByUs}
+			onRefresh={() => void loadProfile(profileId, false)}
+		/>
+	</div>
+{:else if loadError}
+	<div class="flex-1 flex">
+		<ApiErrorDisplay
+			error={loadError}
+			onRetry={() => void loadProfile(profileId, false)}
+			class="m-auto"
+		/>
+	</div>
+{:else}
+	<div
+		class="h-[calc(100dvh-var(--safe-area-top))] overflow-y-auto overscroll-contain"
+		bind:this={profileContainer}
 	>
-		{#if optimisticallyBlocked}
-			<div class="h-full flex">
-				<BlockedProfile
-					blockedByUs={true}
-					onRefresh={() => {
-						optimisticBlockProfileId = null;
-					}}
-				/>
-			</div>
-		{:else}
-			<svelte:boundary>
-				{#snippet pending()}
-					<Skeleton />
-				{/snippet}
-				{#snippet failed(error, reset)}
-					<div class="h-full flex">
-						{#if error instanceof BlockedProfileError}
-							<BlockedProfile
-								blockedByUs={error.blockedByUs}
-								onRefresh={reset}
-							/>
-						{:else}
-							<ApiErrorDisplay {error} onRetry={reset} class="m-auto" />
-						{/if}
+		<main
+			class="w-full max-w-200 mx-auto relative min-h-full touch-pan-y"
+			onpointercancel={handleProfilePointerCancel}
+			onpointerdown={handleProfilePointerDown}
+			onpointerup={handleProfilePointerUp}
+		>
+			<DataRefreshControl
+				container={profileContainer}
+				updating={refreshing}
+				position="top"
+				class="my-3"
+				containerClass="z-10"
+				onclick={refresh}
+			/>
+			{#if loading || !profile}
+				<div class="flex flex-col max-w-full">
+					<Skeleton
+						class="w-full h-auto aspect-3/4 max-h-[min(70vh,500px)] rounded-none"
+					/>
+					<div class="p-4 flex flex-col max-w-full gap-3.5 pb-40">
+						<Skeleton class="w-40 max-w-full h-6" />
+						<Skeleton class="w-30 max-w-full h-3" />
+						<Skeleton class="w-50 max-w-full h-3 mt-0.5" />
+						<div class="flex flex-wrap mt-2 gap-1">
+							{#each [10, 12, 18, 16, 15] as w}
+								<Skeleton
+									class="w-(--w) h-4.5"
+									--w="calc(var(--spacing) * {w})"
+								/>
+							{/each}
+						</div>
+						<Skeleton class="w-full h-27 rounded-4xl mt-2.25" />
 					</div>
-				{/snippet}
-
-				{@const profile = await getProfile(profileId)}
+				</div>
+			{:else}
 				{@const {
 					displayName,
 					age,
@@ -157,7 +236,6 @@
 					sexualHealth: sexualHealthValue,
 					socialNetworks,
 					medias,
-					tapType,
 				} = profile}
 				<ImageCarousel {medias} />
 				<ProfileTopNavBar
@@ -167,7 +245,7 @@
 						optimisticBlockProfileId = profileId;
 					}}
 				/>
-				<div class="flex flex-col p-4 pb-24">
+				<div class="flex flex-col p-4 pb-40">
 					<h1 class="text-2xl wrap-break-word">
 						{#if displayName !== null}
 							<span class="font-semibold">
@@ -233,8 +311,22 @@
 						</div>
 					{/if}
 				</div>
-				<ProfileBottomNavBar {ourProfileId} {profileId} {tapType} />
-			</svelte:boundary>
-		{/if}
-	</main>
-</div>
+				<ProfileBottomNavBar
+					{ourProfileId}
+					{profileId}
+					tapType={profile.tapType}
+					onTap={(tapType) => {
+						if (!profile) return;
+						const tapped = tapType !== null;
+						profile.tapType = tapType;
+						profile.tapped = tapped;
+						mergeProfileEditIntoCaches(profile.profileId, {
+							tapType,
+							tapped,
+						});
+					}}
+				/>
+			{/if}
+		</main>
+	</div>
+{/if}

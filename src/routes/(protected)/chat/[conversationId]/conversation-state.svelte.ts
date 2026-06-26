@@ -1,13 +1,12 @@
+import { ApiError } from "$lib/api";
 import { markConversationAsRead } from "$lib/api/conversation";
 import { showErrorToast } from "$lib/api/error";
 import { reactToMessage, sendMessage } from "$lib/api/messages";
 import { getPreferences } from "$lib/app-data/preferences.svelte";
-import {
-	apiResponseMessageSchema,
-	previewFromMessage,
-} from "$lib/model/message";
+import { previewFromMessage } from "$lib/model/message";
 import { reconciler } from "$lib/reconcile";
 import {
+	chatV1ConversationDeleteEventSchema,
 	chatV1ConversationReadEventSchema,
 	chatV1MessageSentEventSchema,
 	ws,
@@ -31,6 +30,7 @@ export class ConversationState {
 	pageKey: string | null = $state(null);
 	loading = $state(true);
 	loadingMore = $state(false);
+	refreshing = $state(false);
 	error: Error | null = $state(null);
 	lastReadTimestamp: number | null = $state(null);
 
@@ -65,30 +65,43 @@ export class ConversationState {
 		this.#wsPromises.push(
 			ws.on("chat.v1.message_sent", chatV1MessageSentEventSchema, (event) => {
 				if (this.#destroyed) return;
-				if (event.payload.conversationId !== this.conversationId) return;
-				if (event.payload.senderId === this.ourProfileId) {
+				const incoming = event.payload;
+				if (incoming.conversationId !== this.conversationId) return;
+
+				const existing = this.messages.find(
+					(m) => m.messageId === incoming.messageId,
+				);
+				if (existing) {
+					Object.assign(existing, incoming, { status: "sent" as const });
+					this.#syncCache();
+					return;
+				}
+
+				if (incoming.senderId === this.ourProfileId) {
 					const pending = this.messages.find((m) => m.status === "pending");
 					if (pending) {
 						pending.status = "sent";
-						pending.messageId = event.payload.messageId;
+						pending.messageId = incoming.messageId;
 						this.#syncCache();
 						return;
 					}
 				}
-				if (this.messages.some((m) => m.messageId === event.payload.messageId))
-					return;
-				const parsed = apiResponseMessageSchema.safeParse(event.payload);
-				if (!parsed.success) {
-					console.error("[ws] failed to parse incoming message", parsed.error);
-					return;
-				}
-				const msg: OptimisticMessage = { ...parsed.data, status: "sent" };
+
+				const newestTimestamp = this.messages.reduce(
+					(max, m) => Math.max(max, m.timestamp),
+					Number.NEGATIVE_INFINITY,
+				);
+				if (incoming.timestamp < newestTimestamp) return;
+
+				const msg: OptimisticMessage = { ...incoming, status: "sent" };
 				this.messages = [msg, ...this.messages];
 				this.#syncCache();
-				void this.reportRead({
-					messageId: msg.messageId,
-					timestamp: msg.timestamp,
-				});
+				if (msg.senderId !== this.ourProfileId) {
+					void this.reportRead({
+						messageId: msg.messageId,
+						timestamp: msg.timestamp,
+					});
+				}
 			}),
 			ws.on(
 				"chat.v1.conversation_read",
@@ -104,6 +117,16 @@ export class ConversationState {
 						this.lastReadTimestamp = event.payload.timestamp;
 						this.#syncCache();
 					}
+				},
+			),
+			ws.on(
+				"chat.v1.conversation.delete",
+				chatV1ConversationDeleteEventSchema,
+				(event) => {
+					if (this.#destroyed) return;
+					if (!event.payload.conversationIds.includes(this.conversationId))
+						return;
+					void this.#reconcileMessages();
 				},
 			),
 		);
@@ -125,7 +148,8 @@ export class ConversationState {
 	}
 
 	async #reconcileMessages(): Promise<void> {
-		if (this.loading || this.#destroyed) return;
+		if (this.loading || this.#destroyed || this.refreshing) return;
+		this.refreshing = true;
 		try {
 			const result = await getConversation({
 				conversationId: this.conversationId,
@@ -195,7 +219,21 @@ export class ConversationState {
 			}
 		} catch (error) {
 			console.error("Failed to reconcile messages", error);
+			if (error instanceof ApiError && error.response?.status === 403) {
+				this.error = error;
+			} else {
+				showErrorToast({
+					label: "Failed to refresh messages",
+					error,
+				});
+			}
+		} finally {
+			this.refreshing = false;
 		}
+	}
+
+	refresh(): Promise<void> {
+		return this.#reconcileMessages();
 	}
 
 	retry(): void {
@@ -262,10 +300,14 @@ export class ConversationState {
 			this.#syncCache();
 		} catch (error) {
 			console.error(error);
-			showErrorToast({
-				label: "Failed to load more messages",
-				error,
-			});
+			if (error instanceof ApiError && error.response?.status === 403) {
+				this.error = error;
+			} else {
+				showErrorToast({
+					label: "Failed to load more messages",
+					error,
+				});
+			}
 		} finally {
 			this.loadingMore = false;
 		}
