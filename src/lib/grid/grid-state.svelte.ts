@@ -2,6 +2,7 @@ import { untrack } from "svelte";
 import z from "zod";
 
 import { showErrorToast } from "$lib/api/error";
+import type { GridSearchFilters } from "$lib/components/filters/filters";
 import type { cascadeV3QuerySchema } from "$lib/model/grid/cascade/query/v3";
 import {
 	getGrid,
@@ -11,8 +12,37 @@ import {
 } from "./grid";
 import { GridSearchFiltersState } from "./grid-search-filters-state.svelte";
 
-class GridState {
-	filters = new GridSearchFiltersState({ onRefresh: () => this.refresh() });
+type GridQuery = z.infer<typeof cascadeV3QuerySchema>;
+
+type GridFiltersState = {
+	value: GridSearchFilters | null;
+	ready: Promise<void>;
+	set(gridSearchFilters: Partial<GridSearchFilters>): void;
+	resetFilters(): void;
+};
+
+type GridErrorLabels = {
+	loadMore: string;
+	loadBatch: string;
+	fetch: string;
+	refresh: string;
+};
+
+type GridStateOptions = {
+	filters?: GridFiltersState;
+	queryTransform?: (query: GridQuery) => GridQuery;
+	errorLabels?: Partial<GridErrorLabels>;
+};
+
+const defaultErrorLabels: GridErrorLabels = {
+	loadMore: "Failed to load more profiles",
+	loadBatch: "Failed to load profiles",
+	fetch: "Failed to fetch profiles",
+	refresh: "Failed to refresh profiles",
+};
+
+export class GridState {
+	filters: GridFiltersState;
 	items: GridProfile[] = $state([]);
 	partialBatches: { batch: { profileId: number }[] }[] = [];
 	nextPage: number | null = $state(0);
@@ -30,6 +60,19 @@ class GridState {
 	#geohash: string | null = null;
 	#loadingBatches = new Set<number>();
 	#fetchToken = 0;
+	#queryTransform: (query: GridQuery) => GridQuery;
+	#errorLabels: GridErrorLabels;
+
+	constructor(options: GridStateOptions = {}) {
+		this.filters =
+			options.filters ??
+			new GridSearchFiltersState({ onRefresh: () => this.refresh() });
+		this.#queryTransform = options.queryTransform ?? ((query) => query);
+		this.#errorLabels = {
+			...defaultErrorLabels,
+			...options.errorLabels,
+		};
+	}
 
 	load(geohash: string): void {
 		if (untrack(() => this.#geohash === geohash && this.items.length > 0))
@@ -88,7 +131,7 @@ class GridState {
 		} catch (error) {
 			console.error(error);
 			showErrorToast({
-				label: "Failed to load more profiles",
+				label: this.#errorLabels.loadMore,
 				error,
 			});
 		} finally {
@@ -132,7 +175,7 @@ class GridState {
 		} catch (error) {
 			console.error(batchIndex, error);
 			showErrorToast({
-				label: "Failed to load profiles",
+				label: this.#errorLabels.loadBatch,
 				error,
 			});
 			this.#loadingBatches.delete(batchIndex);
@@ -148,7 +191,7 @@ class GridState {
 			await this.filters.ready;
 			if (token !== this.#fetchToken) return;
 			const filters = this.filters.value;
-			const query = {
+			const query = this.#queryTransform({
 				nearbyGeoHash: geohash,
 				favorites: filters?.isFavorite || undefined,
 				onlineOnly: filters?.isOnline || undefined,
@@ -211,7 +254,7 @@ class GridState {
 						tags: filters?.tags,
 					}),
 				fresh: filters?.isFresh || undefined,
-			} satisfies z.infer<typeof cascadeV3QuerySchema>;
+			} satisfies GridQuery);
 			const result = await getGrid(query);
 			if (token !== this.#fetchToken) return;
 			this.currentQuery = query;
@@ -226,14 +269,14 @@ class GridState {
 			console.error(err);
 			if (opts?.silent) {
 				showErrorToast({
-					label: "Failed to refresh profiles",
+					label: this.#errorLabels.refresh,
 					error: err,
 				});
 			} else {
 				this.error =
 					err instanceof Error
 						? err
-						: new Error("Failed to fetch profiles", { cause: err });
+						: new Error(this.#errorLabels.fetch, { cause: err });
 			}
 			this.loading = false;
 		}
