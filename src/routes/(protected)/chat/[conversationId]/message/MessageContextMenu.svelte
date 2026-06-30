@@ -33,9 +33,9 @@
 		{#if reactionAvailable}
 			<span
 				class={[
-					"block w-45 mb-2 text-center text-muted-foreground/70",
+					"block w-45 mb-2 text-center text-foreground/50 text-shadow-sm",
 					{
-						"-mt-7": !placement.startsWith("bottom"),
+						"-mt-8": !placement.startsWith("bottom"),
 						"mt-1": placement.startsWith("bottom"),
 					},
 				]}
@@ -46,6 +46,7 @@
 					width="16"
 					height="16"
 					class="inline align-middle"
+					draggable="false"
 				/>
 			</span>
 		{/if}

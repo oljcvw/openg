@@ -3,10 +3,19 @@
 
 	import { showErrorToast } from "$lib/api/error";
 	import { recordProfileView } from "$lib/api/interest/views";
-	import { BlockedProfileError, getProfile } from "$lib/api/users/profiles";
+	import {
+		BlockedProfileError,
+		getProfile,
+		invalidateProfile,
+		mergeProfileEditIntoCaches,
+		ProfileUnavailableError,
+	} from "$lib/api/users/profiles";
 	import { getPreferences } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/ApiErrorDisplay.svelte";
+	import DataRefreshControl from "$lib/components/DataRefreshControl.svelte";
+	import NotFound from "$lib/components/NotFound.svelte";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import type { Profile } from "$lib/model/profile";
 	import AboutMe from "./AboutMe.svelte";
 	import BlockedProfile from "./BlockedProfile.svelte";
 	import ProfileBottomNavBar from "./bottom-nav/ProfileBottomNavBar.svelte";
@@ -34,9 +43,54 @@
 	const ourProfileId = $derived(data.ourProfileId);
 	const profileId = $derived(Number(page.params.profileId));
 
+	let profileContainer = $state<HTMLElement | null>(null);
+	let profile = $state<Profile | null>(null);
+	let loading = $state(true);
+	let loadError = $state<Error | null>(null);
+	let refreshing = $state(false);
+
+	async function loadProfile(id: number, isRefresh: boolean) {
+		if (isRefresh) {
+			refreshing = true;
+			invalidateProfile(id);
+		} else {
+			loading = true;
+			loadError = null;
+			profile = null;
+		}
+		try {
+			const result = await getProfile(id);
+			if (id !== profileId) return;
+			profile = result;
+			loadError = null;
+		} catch (error) {
+			if (id !== profileId) return;
+			loadError = error instanceof Error ? error : new Error(String(error));
+			profile = null;
+		} finally {
+			if (id === profileId) {
+				loading = false;
+				refreshing = false;
+			}
+		}
+	}
+
 	$effect(() => {
 		const id = profileId;
-		if (!Number.isFinite(id) || id === ourProfileId) return;
+		if (!Number.isFinite(id)) return;
+		void loadProfile(id, false);
+	});
+
+	function refresh() {
+		if (refreshing || loading) return;
+		void loadProfile(profileId, true);
+	}
+
+	const ourProfile = $derived(profileId === ourProfileId);
+
+	$effect(() => {
+		const id = profileId;
+		if (!Number.isFinite(id) || ourProfile) return;
 		void (async () => {
 			try {
 				const { revealProfileViews } = await getPreferences();
@@ -58,36 +112,78 @@
 	);
 </script>
 
-<div class="flex flex-1">
-	<main class="w-full max-w-200 flex-1 mx-auto relative">
-		{#if optimisticallyBlocked}
-			<div class="h-full flex">
-				<BlockedProfile
-					blockedByUs={true}
-					onRefresh={() => {
-						optimisticBlockProfileId = null;
-					}}
-				/>
-			</div>
-		{:else}
-			<svelte:boundary>
-				{#snippet pending()}
-					<Skeleton />
-				{/snippet}
-				{#snippet failed(error, reset)}
-					<div class="h-full flex">
-						{#if error instanceof BlockedProfileError}
-							<BlockedProfile
-								blockedByUs={error.blockedByUs}
-								onRefresh={reset}
-							/>
-						{:else}
-							<ApiErrorDisplay {error} onRetry={reset} class="m-auto" />
-						{/if}
-					</div>
-				{/snippet}
+{#if optimisticallyBlocked}
+	<div class="flex flex-1">
+		<BlockedProfile
+			blockedByUs={true}
+			onRefresh={() => {
+				optimisticBlockProfileId = null;
+			}}
+		/>
+	</div>
+{:else if loadError instanceof BlockedProfileError}
+	<div class="flex flex-1">
+		<BlockedProfile
+			blockedByUs={loadError.blockedByUs}
+			onRefresh={() => void loadProfile(profileId, false)}
+		/>
+	</div>
+{:else if loadError instanceof ProfileUnavailableError}
+	<div class="flex-1 flex">
+		<NotFound />
+	</div>
+{:else if loadError}
+	<div class="flex flex-1">
+		<ApiErrorDisplay
+			error={loadError}
+			onRetry={() => void loadProfile(profileId, false)}
+			class="m-auto"
+		/>
+	</div>
+{:else}
+	<div
+		class="-mb-(--nav-height) h-screen-safe overflow-y-auto overscroll-contain"
+		bind:this={profileContainer}
+	>
+		<main
+			class="relative mx-auto min-h-[calc(var(--screen-safe)+3.5rem)] w-full max-w-200"
+		>
+			<DataRefreshControl
+				container={profileContainer}
+				updating={refreshing}
+				position="top"
+				class="my-3"
+				containerClass="z-10"
+				onclick={refresh}
+			/>
+			{#if loading || !profile}
+				<div class="flex max-w-full flex-col">
+					<Skeleton class="aspect-3/4 h-auto max-h-photo w-full rounded-none" />
 
-				{@const profile = await getProfile(profileId)}
+					<div
+						class={[
+							"flex max-w-full flex-col gap-3.5 p-4",
+							{
+								"pb-24": ourProfile,
+								"pb-40": !ourProfile,
+							},
+						]}
+					>
+						<Skeleton class="h-6 w-40 max-w-full" />
+						<Skeleton class="h-3 w-30 max-w-full" />
+						<Skeleton class="mt-0.5 h-3 w-50 max-w-full" />
+						<div class="mt-2 flex flex-wrap gap-1">
+							{#each [10, 12, 18, 16, 15] as w}
+								<Skeleton
+									class="h-4.5 w-(--w)"
+									--w="calc(var(--spacing) * {w})"
+								/>
+							{/each}
+						</div>
+						<Skeleton class="mt-2.25 h-27 w-full rounded-4xl" />
+					</div>
+				</div>
+			{:else}
 				{@const {
 					displayName,
 					age,
@@ -113,7 +209,6 @@
 					sexualHealth: sexualHealthValue,
 					socialNetworks,
 					medias,
-					tapType,
 				} = profile}
 				<ImageCarousel {medias} />
 				<ProfileTopNavBar
@@ -123,24 +218,36 @@
 						optimisticBlockProfileId = profileId;
 					}}
 				/>
-				<div class="flex flex-col p-4 pb-24">
+				<div
+					class={[
+						"flex flex-col p-4",
+						{
+							"pb-24": ourProfile,
+							"pb-40": !ourProfile,
+						},
+					]}
+				>
 					<h1 class="text-2xl wrap-break-word">
 						{#if displayName !== null}
 							<span class="font-semibold">
 								{displayName}
 							</span>{:else}<span
-								class="font-normal tracking-tight italic text-muted-foreground"
+								class="font-normal tracking-tight text-muted-foreground italic"
 							>
 								Someone
 							</span>{/if}{#if age !== null}, {age}
 						{/if}
 					</h1>
-					<div class="flex items-center gap-3 text-sm mt-1">
-						<OnlineStatus onlineUntil={onlineUntil ?? null} {seen} />
+					<div class="mt-1 flex items-center gap-3 text-sm">
+						<OnlineStatus
+							onlineUntil={onlineUntil ?? null}
+							{seen}
+							self={ourProfile}
+						/>
 						<Distance {distance} />
 					</div>
 					{#if sexualPosition !== null || height !== null || weight !== null || bodyType !== null}
-						<div class="flex items-center gap-3 text-sm mt-2">
+						<div class="mt-2 flex items-center gap-3 text-sm">
 							{#if sexualPosition !== null && sexualPosition !== undefined}
 								<SexualPosition {sexualPosition} />
 							{/if}
@@ -152,8 +259,8 @@
 						<AboutMe>{aboutMe}</AboutMe>
 					{/if}
 					{#if (genders && genders.length > 0) || (pronouns && pronouns.length > 0) || ethnicity !== null || relationshipStatus !== null || (grindrTribes && grindrTribes.length > 0)}
-						<div class="flex flex-col gap-2 mt-4">
-							<span class="uppercase text-sm text-muted-foreground">Stats</span>
+						<div class="mt-4 flex flex-col gap-2">
+							<span class="text-sm text-muted-foreground uppercase">Stats</span>
 							<Genders {genders} {pronouns} />
 							<Tribes tribes={grindrTribes} />
 							<Ethnicity {ethnicity} />
@@ -161,8 +268,8 @@
 						</div>
 					{/if}
 					{#if (lookingFor && lookingFor.length > 0) || (meetAt && meetAt.length > 0) || nsfw !== null}
-						<div class="flex flex-col gap-2 mt-4">
-							<span class="uppercase text-sm text-muted-foreground">
+						<div class="mt-4 flex flex-col gap-2">
+							<span class="text-sm text-muted-foreground uppercase">
 								Expectations
 							</span>
 							<LookingFor {lookingFor} />
@@ -171,8 +278,8 @@
 						</div>
 					{/if}
 					{#if hivStatus !== null || lastTestedDateValue !== null || (sexualHealthValue && sexualHealthValue.length > 0)}
-						<div class="flex flex-col gap-2 mt-4">
-							<span class="uppercase text-sm text-muted-foreground">
+						<div class="mt-4 flex flex-col gap-2">
+							<span class="text-sm text-muted-foreground uppercase">
 								Health
 							</span>
 							<HivStatus {hivStatus} />
@@ -181,16 +288,30 @@
 						</div>
 					{/if}
 					{#if socialNetworks && Object.keys(socialNetworks).length > 0}
-						<div class="flex flex-col gap-2 mt-4">
-							<span class="uppercase text-sm text-muted-foreground">
+						<div class="mt-4 flex flex-col gap-2">
+							<span class="text-sm text-muted-foreground uppercase">
 								Socials
 							</span>
 							<Socials socials={socialNetworks} />
 						</div>
 					{/if}
 				</div>
-				<ProfileBottomNavBar {ourProfileId} {profileId} {tapType} />
-			</svelte:boundary>
-		{/if}
-	</main>
-</div>
+				<ProfileBottomNavBar
+					{ourProfileId}
+					{profileId}
+					tapType={profile.tapType}
+					onTap={(tapType) => {
+						if (!profile) return;
+						const tapped = tapType !== null;
+						profile.tapType = tapType;
+						profile.tapped = tapped;
+						mergeProfileEditIntoCaches(profile.profileId, {
+							tapType,
+							tapped,
+						});
+					}}
+				/>
+			{/if}
+		</main>
+	</div>
+{/if}

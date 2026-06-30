@@ -1,19 +1,16 @@
 <script lang="ts">
 	import { uniqBy } from "lodash-es";
 	import { onMount } from "svelte";
-	import { cn } from "tailwind-variants";
 
 	import ApiErrorDisplay from "$lib/components/ApiErrorDisplay.svelte";
+	import { gridState } from "$lib/grid/grid-state.svelte";
 	import EmptyGrid from "./EmptyGrid.svelte";
-	import { gridState } from "./grid-state.svelte";
 	import GridProfileMiniCard from "./GridProfileMiniCard.svelte";
 
 	let {
 		geohash,
-		onResetFilters,
 	}: {
 		geohash: string;
-		onResetFilters: () => void;
 	} = $props();
 
 	const gridProfiles = $derived(uniqBy(gridState.items, "id"));
@@ -79,7 +76,7 @@
 	}
 </script>
 
-<div class="profile-grid">
+<div class="profile-grid relative">
 	{#if gridState.loading}
 		{#each Array.from({ length: 20 })}
 			<div class="aspect-square bg-stone-700 animate-pulse"></div>
@@ -114,7 +111,7 @@
 				></div>
 			{/if}
 		{:else}
-			<EmptyGrid {onResetFilters} />
+			<EmptyGrid />
 		{/each}
 		{#if gridState.loadingMore}
 			{#each Array.from({ length: 20 })}
@@ -122,7 +119,10 @@
 			{/each}
 		{/if}
 		{#if gridState.nextPage !== 0 && gridState.nextPage !== null}
-			<div class="col-span-full h-0" use:observeSentinel></div>
+			<div
+				class="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+				use:observeSentinel
+			></div>
 		{/if}
 	{/if}
 </div>

@@ -7,10 +7,12 @@
 		ourProfileId,
 		profileId,
 		tapType,
+		onTap,
 	}: {
 		ourProfileId: number;
 		profileId: number;
 		tapType: TapType | null;
+		onTap: (tapType: TapType | null) => void;
 	} = $props();
 
 	const isOurProfile = $derived(profileId === ourProfileId);
@@ -18,13 +20,13 @@
 
 {#if !isOurProfile}
 	<div
-		class="fixed bottom-[calc(0.5rem+var(--safe-area-bottom)+4rem)] left-1/2 -translate-x-1/2 max-w-full w-90.5 px-2"
+		class="fixed bottom-[calc(0.5rem+var(--safe-area-bottom)+var(--nav-height))] left-1/2 w-90.5 max-w-full -translate-x-1/2 px-2"
 	>
 		<nav
-			class="flex flex-row items-center gap-2 bg-muted p-2 rounded-full backdrop-blur-lg shadow-xl"
+			class="flex flex-row items-center gap-2 rounded-full bg-muted p-2 shadow-xl backdrop-blur-lg"
 		>
 			<OpenConversationButton {profileId} {ourProfileId} />
-			<TapProfileButton {profileId} bind:tapType />
+			<TapProfileButton {profileId} {tapType} {onTap} />
 		</nav>
 	</div>
 {/if}

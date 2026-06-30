@@ -13,9 +13,11 @@
 		{href}
 		class={[
 			toggleVariants({ variant: "default" }),
-			"text-muted-foreground hover:bg-foreground/10",
+			"text-muted-foreground",
 			{
-				"bg-popover/50": page.url.pathname === href,
+				"hover:bg-muted-foreground/10": page.url.pathname !== href,
+				"bg-muted-foreground/15 hover:bg-muted-foreground/20":
+					page.url.pathname === href,
 			},
 		]}
 	>
@@ -25,15 +27,18 @@
 <ProgressiveBlur
 	direction="topToBottom"
 	tag="nav"
-	class="fixed top-0 left-0 w-full z-10 pt-[calc(1rem+var(--safe-area-top))] pb-2 px-4"
+	data-fixed-header
+	class="fixed top-0 left-0 z-10 w-full px-4 pt-fixed-header pb-2"
 	bgClass="bg-linear-to-b from-background to-transparent"
 	contentClass="flex items-center w-full *:flex-1 max-w-120 mx-auto"
 >
 	{@render tab("/interest/views", "Views")}
 	{@render tab("/interest/taps", "Taps")}
 </ProgressiveBlur>
-<div class="flex w-full p-4 flex-1">
-	<main class="w-full flex flex-col mx-auto gap-3 flex-1">
+<div class="flex w-full flex-1 p-4">
+	<main
+		class="mx-auto flex min-h-[calc(var(--screen-scroll)+1.5rem)] w-full flex-1 flex-col gap-3"
+	>
 		<div class="h-10"></div>
 		{@render children?.()}
 	</main>

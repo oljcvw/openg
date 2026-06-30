@@ -2,6 +2,7 @@
 	import { onDestroy, untrack } from "svelte";
 
 	import ApiErrorDisplay from "$lib/components/ApiErrorDisplay.svelte";
+	import DataRefreshControl from "$lib/components/DataRefreshControl.svelte";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import EmptyTapsList from "./EmptyTapsList.svelte";
 	import TapReceivedProfile from "./TapReceivedProfile.svelte";
@@ -17,6 +18,8 @@
 
 	const taps = untrack(() => new TapsState({ ourProfileId }));
 	onDestroy(() => taps.destroy());
+
+	let container: HTMLDivElement | null = $state(null);
 
 	function observeSentinel(node: HTMLElement) {
 		const observer = new IntersectionObserver(
@@ -34,13 +37,16 @@
 	}
 </script>
 
-<div class={["flex flex-col gap-1 flex-1 min-w-29.25", className]}>
+<div
+	bind:this={container}
+	class={["flex min-w-list-rail flex-1 flex-col gap-1", className]}
+>
 	{#if taps.loading}
 		{#each Array(8)}
-			<Skeleton class="w-full h-24.5 shrink-0" />
+			<Skeleton class="h-24.5 w-full shrink-0" />
 		{/each}
 	{:else if taps.error}
-		<div class="flex-1 flex">
+		<div class="flex flex-1">
 			<ApiErrorDisplay
 				error={taps.error}
 				onRetry={() => taps.retry()}
@@ -48,6 +54,14 @@
 			/>
 		</div>
 	{:else}
+		<DataRefreshControl
+			{container}
+			windowScroll
+			updating={taps.refreshing}
+			position="top"
+			class="mb-3"
+			onclick={() => void taps.refresh()}
+		/>
 		{#each taps.taps as tap (tap.profileId)}
 			<TapReceivedProfile {tap} />
 		{:else}
