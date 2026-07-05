@@ -4,7 +4,7 @@ import {
 	getAdjacentProfileIds,
 	getUniqueGridProfiles,
 	selectProfileIdForHorizontalSwipe,
-} from "./profile-navigation";
+} from "$lib/grid/profile-navigation";
 
 describe("getUniqueGridProfiles", () => {
 	it("keeps the first occurrence from the sorted grid list", () => {

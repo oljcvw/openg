@@ -51,6 +51,8 @@
 	let loading = $state(true);
 	let loadError = $state<Error | null>(null);
 	let refreshing = $state(false);
+	let swipeOffsetX = $state(0);
+	let swipeSettling = $state(false);
 
 	async function loadProfile(id: number, isRefresh: boolean) {
 		if (isRefresh) {
@@ -81,6 +83,7 @@
 	$effect(() => {
 		const id = profileId;
 		if (!Number.isFinite(id)) return;
+		resetSwipe();
 		void loadProfile(id, false);
 	});
 
@@ -121,8 +124,26 @@
 		y: number;
 	} | null>(null);
 
+	const swipeOpacity = $derived(
+		Math.max(0.35, 1 - Math.min(Math.abs(swipeOffsetX), 220) / 420),
+	);
+
+	function resetSwipe() {
+		swipeStart = null;
+		swipeOffsetX = 0;
+		swipeSettling = false;
+	}
+
+	function getSwipeOffset(deltaX: number): number {
+		const absX = Math.abs(deltaX);
+		if (absX <= 140) return deltaX;
+		return Math.sign(deltaX) * (140 + (absX - 140) * 0.25);
+	}
+
 	function handleProfilePointerDown(event: PointerEvent) {
 		if (event.pointerType === "mouse" && event.button !== 0) return;
+		swipeSettling = false;
+		swipeOffsetX = 0;
 		swipeStart = {
 			pointerId: event.pointerId,
 			x: event.clientX,
@@ -133,21 +154,46 @@
 		}
 	}
 
+	function handleProfilePointerMove(event: PointerEvent) {
+		if (!swipeStart || swipeStart.pointerId !== event.pointerId) return;
+		const deltaX = event.clientX - swipeStart.x;
+		const deltaY = event.clientY - swipeStart.y;
+		if (Math.abs(deltaX) <= Math.abs(deltaY)) return;
+		event.preventDefault();
+		swipeOffsetX = getSwipeOffset(deltaX);
+	}
+
 	function handleProfilePointerUp(event: PointerEvent) {
 		if (!swipeStart || swipeStart.pointerId !== event.pointerId) return;
+		const deltaX = event.clientX - swipeStart.x;
+		const deltaY = event.clientY - swipeStart.y;
 		const targetProfileId = selectProfileIdForHorizontalSwipe({
 			...profileNavigation,
-			deltaX: event.clientX - swipeStart.x,
-			deltaY: event.clientY - swipeStart.y,
+			deltaX,
+			deltaY,
 		});
 		swipeStart = null;
+		swipeSettling = true;
 
-		if (targetProfileId === null) return;
-		void goto(`/profile/${targetProfileId}`);
+		if (targetProfileId === null) {
+			swipeOffsetX = 0;
+			return;
+		}
+
+		swipeOffsetX =
+			deltaX < 0
+				? -Math.max(window.innerWidth, 320)
+				: Math.max(window.innerWidth, 320);
+		window.setTimeout(() => {
+			void goto(`/profile/${targetProfileId}`);
+		}, 180);
 	}
 
 	function handleProfilePointerCancel(event: PointerEvent) {
-		if (swipeStart?.pointerId === event.pointerId) swipeStart = null;
+		if (swipeStart?.pointerId !== event.pointerId) return;
+		swipeStart = null;
+		swipeSettling = true;
+		swipeOffsetX = 0;
 	}
 </script>
 
@@ -185,10 +231,18 @@
 		bind:this={profileContainer}
 	>
 		<main
-			class="relative mx-auto min-h-[calc(var(--screen-safe)+3.5rem)] w-full max-w-200"
+			class={[
+				"relative mx-auto min-h-[calc(var(--screen-safe)+3.5rem)] w-full max-w-200 touch-pan-y will-change-transform",
+				{
+					"transition-[transform,opacity] duration-180 ease-out": swipeSettling,
+				},
+			]}
 			onpointercancel={handleProfilePointerCancel}
 			onpointerdown={handleProfilePointerDown}
+			onpointermove={handleProfilePointerMove}
 			onpointerup={handleProfilePointerUp}
+			style:opacity={swipeOpacity}
+			style:transform={`translate3d(${swipeOffsetX}px, 0, 0)`}
 		>
 			<DataRefreshControl
 				container={profileContainer}
