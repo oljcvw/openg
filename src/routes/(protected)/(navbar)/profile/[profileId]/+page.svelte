@@ -9,14 +9,16 @@
 		getProfile,
 		invalidateProfile,
 		mergeProfileEditIntoCaches,
+		ProfileUnavailableError,
 	} from "$lib/api/users/profiles";
 	import { getPreferences } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/DataRefreshControl.svelte";
+	import NotFound from "$lib/components/NotFound.svelte";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import { gridState } from "$lib/grid/grid-state.svelte";
+	import { selectProfileIdForHorizontalSwipe } from "$lib/grid/profile-navigation";
 	import type { Profile } from "$lib/model/profile";
-	import { gridState } from "../../(root)/grid-state.svelte";
-	import { selectProfileIdForHorizontalSwipe } from "../../(root)/profile-navigation";
 	import AboutMe from "./AboutMe.svelte";
 	import BlockedProfile from "./BlockedProfile.svelte";
 	import ProfileBottomNavBar from "./bottom-nav/ProfileBottomNavBar.svelte";
@@ -164,6 +166,10 @@
 			blockedByUs={loadError.blockedByUs}
 			onRefresh={() => void loadProfile(profileId, false)}
 		/>
+	</div>
+{:else if loadError instanceof ProfileUnavailableError}
+	<div class="flex-1 flex">
+		<NotFound />
 	</div>
 {:else if loadError}
 	<div class="flex flex-1">

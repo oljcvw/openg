@@ -36,9 +36,12 @@
 	}
 </script>
 
-<div bind:this={container} class={["flex flex-1 flex-col gap-3", className]}>
+<div
+	bind:this={container}
+	class={["@container/photo-grid flex flex-1 flex-col gap-3", className]}
+>
 	{#if views.loading}
-		<div class="profile-grid">
+		<div class="photo-grid">
 			{#each Array(24)}
 				<Skeleton class="aspect-square rounded-none" />
 			{/each}
@@ -62,7 +65,7 @@
 			class="mb-3"
 			onclick={() => void views.refresh()}
 		/>
-		<div class="profile-grid">
+		<div class="photo-grid">
 			{#each views.views as entry (entry.key)}
 				{#if entry.type === "profile"}
 					<ViewedProfile view={entry.profile} />
