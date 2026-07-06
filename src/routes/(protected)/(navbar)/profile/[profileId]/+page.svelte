@@ -3,6 +3,7 @@
 
 	import { showErrorToast } from "$lib/api/error";
 	import { recordProfileView } from "$lib/api/interest/views";
+	import { getFavoriteUserNote } from "$lib/api/users/favorites";
 	import {
 		BlockedProfileError,
 		getProfile,
@@ -15,6 +16,7 @@
 	import DataRefreshControl from "$lib/components/DataRefreshControl.svelte";
 	import NotFound from "$lib/components/NotFound.svelte";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import type { FavoriteNote } from "$lib/model/favorites";
 	import type { Profile } from "$lib/model/profile";
 	import AboutMe from "./AboutMe.svelte";
 	import BlockedProfile from "./BlockedProfile.svelte";
@@ -45,6 +47,7 @@
 
 	let profileContainer = $state<HTMLElement | null>(null);
 	let profile = $state<Profile | null>(null);
+	let note = $state<FavoriteNote | null>(null);
 	let loading = $state(true);
 	let loadError = $state<Error | null>(null);
 	let refreshing = $state(false);
@@ -57,16 +60,20 @@
 			loading = true;
 			loadError = null;
 			profile = null;
+			note = null;
 		}
 		try {
-			const result = await getProfile(id);
+			const profileResult = await getProfile(id);
+			const noteResult = await getFavoriteUserNote(id);
 			if (id !== profileId) return;
-			profile = result;
+			profile = profileResult;
+			note = noteResult;
 			loadError = null;
 		} catch (error) {
 			if (id !== profileId) return;
 			loadError = error instanceof Error ? error : new Error(String(error));
 			profile = null;
+			note = null;
 		} finally {
 			if (id === profileId) {
 				loading = false;
@@ -129,7 +136,7 @@
 		/>
 	</div>
 {:else if loadError instanceof ProfileUnavailableError}
-	<div class="flex-1 flex">
+	<div class="flex flex-1">
 		<NotFound />
 	</div>
 {:else if loadError}
@@ -210,7 +217,8 @@
 					socialNetworks,
 					medias,
 				} = profile}
-				<ImageCarousel {medias} />
+				<ImageCarousel {profile} {medias} bind:note />
+
 				<ProfileTopNavBar
 					{ourProfileId}
 					{profile}

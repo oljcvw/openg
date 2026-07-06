@@ -17,23 +17,22 @@
 	} = $props();
 
 	let submitting = $state(false);
-</script>
 
-<Button
-	size="icon-lg"
-	onclick={async () => {
+	const toggleClick = async () => {
 		if (submitting) return;
 		submitting = true;
+		let previousValue = isFavorite;
 
 		try {
 			if (isFavorite) {
+				isFavorite = false; // Optimistically update the UI
 				await removeFavoriteUser({ profileId });
-				isFavorite = false;
 			} else {
-				await addFavoriteUser({ profileId });
 				isFavorite = true;
+				await addFavoriteUser({ profileId });
 			}
 		} catch (error) {
+			isFavorite = previousValue;
 			console.error(error);
 			showErrorToast({
 				label: isFavorite
@@ -44,7 +43,12 @@
 		} finally {
 			submitting = false;
 		}
-	}}
+	};
+</script>
+
+<Button
+	size="icon-lg"
+	onclick={toggleClick}
 	variant="secondary"
 	aria-checked={isFavorite}
 	role="switch"

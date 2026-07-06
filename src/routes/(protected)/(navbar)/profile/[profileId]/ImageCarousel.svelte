@@ -7,16 +7,23 @@
 
 	import { backGestureEventHandlers } from "$lib/back-gesture-event.svelte";
 	import { profileMediaUrl } from "$lib/media";
+	import type { FavoriteNote } from "$lib/model/favorites";
+	import type { Profile } from "$lib/model/profile";
 	import ImageCarouselItem from "./ImageCarouselItem.svelte";
+	import ProfileNote from "./ProfileNote.svelte";
 
 	let {
+		profile,
 		medias,
+		note = $bindable(),
 	}: {
+		profile: Profile | null;
 		medias: {
 			mediaHash: string;
 			takenOnGrindr: boolean | null;
 			createdAt: number | null;
 		}[];
+		note: FavoriteNote | null;
 	} = $props();
 
 	let gallery: HTMLDivElement | null = $state(null);
@@ -106,6 +113,7 @@
 </script>
 
 <div class="relative aspect-3/4 h-auto max-h-photo w-full">
+	<ProfileNote {profile} bind:note />
 	{#if medias.length}
 		<div
 			class="carousel relative flex size-full max-h-[inherit] snap-y snap-mandatory flex-col overflow-auto *:snap-center"
