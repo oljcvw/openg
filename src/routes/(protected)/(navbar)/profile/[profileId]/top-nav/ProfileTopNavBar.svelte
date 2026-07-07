@@ -5,7 +5,7 @@
 
 	let {
 		ourProfileId,
-		profile,
+		profile = $bindable(),
 		onBlocked,
 	}: {
 		ourProfileId: number;

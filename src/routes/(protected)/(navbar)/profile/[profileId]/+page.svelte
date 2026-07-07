@@ -221,7 +221,7 @@
 
 				<ProfileTopNavBar
 					{ourProfileId}
-					{profile}
+					bind:profile
 					onBlocked={() => {
 						optimisticBlockProfileId = profileId;
 					}}

@@ -26,7 +26,7 @@ export async function getFavoriteUserNote(
 	profileId: Profile["profileId"],
 ): Promise<FavoriteNote> {
 	return await fetchRest(`/v1/favorites/notes/${profileId}`).then((res) =>
-		res.debugJsonParsed(favoriteNoteSchema),
+		res.jsonParsed(favoriteNoteSchema),
 	);
 }
 
