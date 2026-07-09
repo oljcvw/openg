@@ -9,7 +9,7 @@
 	import * as Dialog from "$lib/components/ui/dialog";
 	import { Spinner } from "$lib/components/ui/spinner";
 	import type { FavoriteNote } from "$lib/model/favorites";
-	import type { Profile } from "$lib/model/profile";
+	import type { Profile } from "$lib/model/users/profiles";
 	import MultilineField from "../../settings/(subpage)/profile/fields/MultilineField.svelte";
 	import TextField from "../../settings/(subpage)/profile/fields/TextField.svelte";
 

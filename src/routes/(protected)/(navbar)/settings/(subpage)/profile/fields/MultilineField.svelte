@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Label } from "$lib/components/ui/label";
 	import { Textarea } from "$lib/components/ui/textarea";
-	import { cn } from "$lib/utils.js";
+	import { cn } from "$lib/util/utils";
 
 	let {
 		label,

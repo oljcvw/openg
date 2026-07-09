@@ -8,7 +8,7 @@
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 	import { profileMediaUrl } from "$lib/util/media";
 	import type { FavoriteNote } from "$lib/model/favorites";
-	import type { Profile } from "$lib/model/profile";
+	import type { Profile } from "$lib/model/users/profiles";
 	import ImageCarouselItem from "./ImageCarouselItem.svelte";
 	import ProfileNote from "./ProfileNote.svelte";
 
