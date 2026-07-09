@@ -20,3 +20,62 @@ keystore.properties
 *.keystore
 
 .local
+
+# AI tools and LLM-related files
+# Cursor IDE
+.cursor/
+.cursorignore
+
+# GitHub Copilot and VSCode AI
+.copilot/
+.copilot-instructions.md
+.copilot-workspace.md
+*.copilot
+
+# Claude Desktop
+.claude/
+.claude-config.json
+
+# MCP servers and configurations
+.mcp/
+.mcp-servers/
+mcp-server-*.log
+mcp-server-*.pid
+
+# Serena
+/.serena
+
+# LLM and GenAI tools
+.llm/
+.llm-cache/
+.genai/
+.genai-cache/
+
+# Codeium
+.codeium/
+.codeium-cache/
+
+# Tabnine
+.tabnine/
+.tabnine-cache/
+
+# OpenAI and API-related
+.openai/
+.openai-cache/
+openai-*.log
+
+# Anthropic Claude
+.anthropic/
+.anthropic-cache/
+
+# ChatGPT and OpenAI configs
+.chatgpt/
+chatgpt-*.log
+
+# Generic AI tool temp files and caches
+.ai-cache/
+.ai-logs/
+.ai-temp/
+*-ai-generated.log
+.agent-logs/
+agent-*.log

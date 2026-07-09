@@ -12,8 +12,23 @@
 	import Message from "./message/Message.svelte";
 	import { processMessages } from "./messages";
 
-	let { conversationState }: { conversationState: ConversationState } =
-		$props();
+	type ConversationProfile = {
+		mediaHash: string | null;
+		onlineUntil: number | null;
+		name: string | null;
+		profileId: number;
+		distance: number | null;
+	};
+
+	let {
+		conversationState,
+		profile,
+		onReply,
+	}: {
+		conversationState: ConversationState;
+		profile: ConversationProfile | null;
+		onReply?: () => void;
+	} = $props();
 
 	let container: HTMLDivElement | null = $state(null);
 
@@ -131,69 +146,72 @@
 			{/if}
 			{#each messages.toReversed() as message (message.messageId)}
 				{@const isOut = message.senderId === conversationState.ourProfileId}
-				<Message
-					{message}
-					{isOut}
-					indexInStack={message.indexInStack}
-					stackLength={message.stackLength}
-					dayStart={message.dayStart}
-					status={message.status}
-					isRead={isOut && message.messageId === messages[0].messageId
-						? conversationState.lastReadTimestamp === message.timestamp
-						: null}
-					onVisible={!isOut
-						? () => conversationState.reportRead(message)
-						: undefined}
-					onDelete={async () => {
-						let revert: (() => void) | undefined;
-						try {
-							({ revert } = conversationState.remove(message.messageId));
-							await deleteMessageForMe({
-								conversationId: conversationState.conversationId,
-								messageId: message.messageId,
-							});
-						} catch (error) {
-							console.error(error);
-							showErrorToast({
-								label: "Failed to delete message",
-								error,
-							});
-							revert?.();
-						}
-					}}
-					onReact={async (reactionType: number) => {
-						try {
-							await conversationState.reactTo(message.messageId, reactionType);
-						} catch (error) {
-							console.error(error);
-							showErrorToast({
-								label: "Failed to react to message",
-								error,
-							});
-						}
-					}}
-					onUnsend={isOut && !message.unsent
-						? async () => {
-								let revert: (() => void) | undefined;
-								try {
-									({ revert } = conversationState.markMessageAsUnsent(
-										message.messageId,
-									));
-									await unsendMessage({
-										conversationId: conversationState.conversationId,
-										messageId: message.messageId,
-									});
-								} catch (error) {
-									console.error(error);
-									showErrorToast({
-										label: "Failed to unsend message",
-										error,
-									});
-									revert?.();
-								}
+			<Message
+				{message}
+				{isOut}
+				indexInStack={message.indexInStack}
+				stackLength={message.stackLength}
+				dayStart={message.dayStart}
+				status={message.status}
+				isRead={isOut && message.messageId === messages[0].messageId
+					? conversationState.lastReadTimestamp === message.timestamp
+					: null}
+				profile={profile}
+				{conversationState}
+				onReply={onReply}
+				onVisible={!isOut
+					? () => conversationState.reportRead(message)
+					: undefined}
+				onDelete={async () => {
+					let revert: (() => void) | undefined;
+					try {
+						({ revert } = conversationState.remove(message.messageId));
+						await deleteMessageForMe({
+							conversationId: conversationState.conversationId,
+							messageId: message.messageId,
+						});
+					} catch (error) {
+						console.error(error);
+						showErrorToast({
+							label: "Failed to delete message",
+							error,
+						});
+						revert?.();
+					}
+				}}
+				onReact={async (reactionType: number) => {
+					try {
+						await conversationState.reactTo(message.messageId, reactionType);
+					} catch (error) {
+						console.error(error);
+						showErrorToast({
+							label: "Failed to react to message",
+							error,
+						});
+					}
+				}}
+				onUnsend={isOut && !message.unsent
+					? async () => {
+							let revert: (() => void) | undefined;
+							try {
+								({ revert } = conversationState.markMessageAsUnsent(
+									message.messageId,
+								));
+								await unsendMessage({
+									conversationId: conversationState.conversationId,
+									messageId: message.messageId,
+								});
+							} catch (error) {
+								console.error(error);
+								showErrorToast({
+									label: "Failed to unsend message",
+									error,
+								});
+								revert?.();
 							}
-						: undefined}
-				/>
+						}
+					: undefined}
+			/>
 			{/each}
 		</div>
 		<DataRefreshControl

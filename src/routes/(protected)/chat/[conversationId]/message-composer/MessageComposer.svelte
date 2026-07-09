@@ -14,6 +14,7 @@
 		$props();
 
 	let textContent = $state("");
+	let inputRef: HTMLTextAreaElement | null = $state(null);
 
 	async function onSubmit() {
 		const text = textContent.trim();
@@ -33,6 +34,12 @@
 	setMessageComposerContext(() => ({
 		disabled,
 		sendMessage: onSend,
+		clear: () => {
+			textContent = "";
+		},
+		focus: () => {
+			inputRef?.focus();
+		},
 	}));
 </script>
 
@@ -43,7 +50,7 @@
 		onSubmit().catch((error) => console.error(error));
 	}}
 >
-	<MessageTextInput bind:value={textContent} />
+	<MessageTextInput bind:value={textContent} bind:ref={inputRef} />
 	{#if textContent === ""}
 		<ComposerAttachments />
 		<ComposerVoiceMessage />

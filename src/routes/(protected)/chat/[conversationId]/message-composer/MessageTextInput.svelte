@@ -7,8 +7,10 @@
 
 	let {
 		value = $bindable(),
+		ref = $bindable(null),
 	}: {
 		value: string;
+		ref: HTMLTextAreaElement | null;
 	} = $props();
 
 	const isMobile = !demoEnabled && ["android", "ios"].includes(platform());
@@ -31,5 +33,6 @@
 		}
 	}}
 	bind:value
+	bind:ref
 	{disabled}
 />

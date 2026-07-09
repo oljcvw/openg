@@ -8,6 +8,14 @@
 	import { setMessageContext } from "./context";
 	import ExpiringImageMessage from "./ExpiringImageMessage.svelte";
 	import ImageMessage from "./ImageMessage.svelte";
+	import type { ConversationState } from "../conversation-state.svelte";
+
+	type ConversationProfile = {
+		onlineUntil: number | null;
+		name: string | null;
+		profileId: number;
+		distance: number | null;
+	};
 	import MessageContextMenu from "./MessageContextMenu.svelte";
 	import MessageDateGroup from "./MessageDateGroup.svelte";
 	import MessageTime from "./MessageTime.svelte";
@@ -29,6 +37,9 @@
 		onDelete,
 		onVisible,
 		onUnsend,
+		onReply,
+		profile,
+		conversationState,
 	}: {
 		message: ApiResponseMessage;
 		isOut: boolean;
@@ -41,6 +52,9 @@
 		onDelete?: () => void;
 		onVisible?: () => void;
 		onUnsend?: () => void;
+		onReply?: () => void;
+		profile: ConversationProfile | null;
+		conversationState: ConversationState;
 	} = $props();
 
 	const firstInStack = $derived(indexInStack === 0);
@@ -178,7 +192,13 @@
 				messageId={message.messageId}
 			/>
 		{:else if message.type === "Album" || message.type === "ExpiringAlbum" || message.type === "ExpiringAlbumV2"}
-			<AlbumMessage message={message.body} />
+			<AlbumMessage
+				message={message.body}
+				{profile}
+				{onReply}
+				conversationId={message.conversationId}
+				{conversationState}
+			/>
 		{:else if message.type === "Unsent"}
 			<UnsentMessage />
 		{:else}

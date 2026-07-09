@@ -7,6 +7,7 @@
 	import type { Message } from "$lib/model/messaging/messages";
 	import ChatNavBar from "./ChatNavBar.svelte";
 	import { ConversationState } from "./conversation-state.svelte";
+	import { getMessageComposerContext } from "./message-composer/message-composer-context.svelte";
 	import MessageComposer from "./message-composer/MessageComposer.svelte";
 	import MessagesList from "./MessagesList.svelte";
 
@@ -29,6 +30,13 @@
 				}),
 		),
 	);
+
+	const composer = $derived(getMessageComposerContext()());
+
+	function handleReply() {
+		composer.clear();
+		composer.focus();
+	}
 
 	$effect(() => {
 		const id = conversationId;
@@ -56,7 +64,11 @@
 
 <ChatNavBar {conversationState} />
 <Card.Content class="flex flex-col flex-1 pb-2 px-0 min-h-0">
-	<MessagesList {conversationState} />
+	<MessagesList
+		{conversationState}
+		profile={conversationState.profile}
+		onReply={handleReply}
+	/>
 	<MessageComposer
 		onSend={(message: Message) => conversationState.send(message)}
 		disabled={conversationState.loading || conversationState.error !== null}
