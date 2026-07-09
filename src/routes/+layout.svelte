@@ -8,11 +8,11 @@
 	import { onMount } from "svelte";
 	import { Toaster } from "svelte-sonner";
 
+	import { hydratePreferences } from "$lib/app-data/preferences.svelte";
 	import {
 		applyAndroidInsets,
 		applyBackGestureHandler,
-	} from "$lib/android-native-bridge";
-	import { hydratePreferences } from "$lib/app-data/preferences.svelte";
+	} from "$lib/platform/android-native-bridge";
 
 	onMount(() => {
 		if (env.PUBLIC_TEST_INSETS) {
@@ -40,10 +40,9 @@
 
 	import { env } from "$env/dynamic/public";
 
-	import RequestBlockedAlert from "$lib/api/request-blocked/RequestBlockedAlert.svelte";
-	import SessionErrorAlert from "$lib/api/session-error/SessionErrorAlert.svelte";
 	import favicon from "$lib/assets/favicon.png";
-	import CommandCenter from "$lib/components/command-center/CommandCenter.svelte";
+	import RequestBlockedAlert from "$lib/components/feedback/RequestBlockedAlert.svelte";
+	import SessionErrorAlert from "$lib/components/feedback/SessionErrorAlert.svelte";
 
 	let {
 		children,
@@ -99,4 +98,3 @@
 </IconContext>
 <RequestBlockedAlert />
 <SessionErrorAlert />
-<CommandCenter />

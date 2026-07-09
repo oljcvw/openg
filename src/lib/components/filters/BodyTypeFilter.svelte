@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { bodyTypes } from "$lib/model/profile";
+	import { bodyTypes } from "$lib/model/users/profiles";
 	import FilterSimpleArray from "./FilterSimpleArray.svelte";
 
 	let {
@@ -18,4 +18,5 @@
 		label,
 	}))}
 	convert={Number}
+	notSpecified
 />

@@ -5,15 +5,29 @@ import { toast } from "svelte-sonner";
 import z from "zod";
 
 import { ApiError } from "$lib/api/api-error";
-import { requestBlockedAlertState } from "$lib/api/request-blocked/request-blocked-state.svelte";
-import { fromBase64, toBase64 } from "$lib/base64";
+import { requestBlockedAlertState } from "$lib/api/request-blocked-state.svelte";
 import { demoCallMethod, demoEnabled, demoRoute } from "$lib/demo";
+import { fromBase64, toBase64 } from "$lib/util/base64";
 
 export const methods = {
 	login: {
 		request: z.object({
 			email: z.email(),
 			password: z.string().min(1),
+		}),
+		response: z.object({
+			profileId: z.coerce.number().int().nonnegative(),
+		}),
+	},
+	login_with_google: {
+		request: z.undefined(),
+		response: z.object({
+			profileId: z.coerce.number().int().nonnegative(),
+		}),
+	},
+	google_sign_in: {
+		request: z.object({
+			token: z.string().min(1),
 		}),
 		response: z.object({
 			profileId: z.coerce.number().int().nonnegative(),
@@ -223,7 +237,6 @@ export async function fetchRest(
 		const appError = asAppError(error);
 		if (appError) {
 			if (appError.kind === "Auth" && appError.message === "Not logged in") {
-				toast("Please log in to continue");
 				goto("/auth/sign-in").catch((error) => console.error(error));
 			}
 		}

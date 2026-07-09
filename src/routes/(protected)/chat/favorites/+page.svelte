@@ -1,12 +1,16 @@
 <script lang="ts">
 	import StarIcon from "phosphor-svelte/lib/StarIcon";
 
-	import { getPreferences } from "$lib/app-data/preferences.svelte";
+	import {
+		getGeohashSnapshot,
+		hydratePreferences,
+	} from "$lib/app-data/preferences.svelte";
 	import LocationChooser from "../../(navbar)/(root)/LocationEmpty.svelte";
 	import InboxSubnav from "../InboxSubnav.svelte";
 	import FavoritesGrid from "./FavoritesGrid.svelte";
 
-	let preferences = $state(getPreferences());
+	const preferencesHydrated = hydratePreferences();
+	const geohash = $derived(getGeohashSnapshot());
 	let scrollContainer: HTMLDivElement | null = $state(null);
 </script>
 
@@ -14,14 +18,14 @@
 	<title>Favorites</title>
 </svelte:head>
 
-{#await preferences then { geohash }}
+{#await preferencesHydrated then}
 	<main class="flex min-h-0 flex-1 flex-col">
 		<div class="p-4 pb-3">
 			<InboxSubnav />
 		</div>
 		{#if geohash === null}
 			<div class="flex flex-1 px-4 pb-4">
-				<LocationChooser onUpdate={() => (preferences = getPreferences())} />
+				<LocationChooser />
 			</div>
 		{:else}
 			<div bind:this={scrollContainer} class="flex-1 overflow-auto px-4 pb-4">

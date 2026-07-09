@@ -39,10 +39,17 @@ export default defineConfig({
 		},
 
 		sidebar: {
-			"/guide/": [
+			"/guides/": [
 				{
-					text: "User guide",
-					items: [{ text: "Download", link: "/guide/download" }],
+					text: "User guides",
+					items: [
+						{ text: "Download", link: "/guides/download" },
+						{
+							text: "Sign in with Google",
+							link: "/guides/sign-in-with-google",
+						},
+						{ text: "FAQ", link: "/guides/faq" },
+					],
 				},
 			],
 			"/grindr-api/": [

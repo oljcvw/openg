@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { uniqBy } from "lodash-es";
 
-	import ApiErrorDisplay from "$lib/components/ApiErrorDisplay.svelte";
+	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import GridProfileMiniCard from "../../(navbar)/(root)/GridProfileMiniCard.svelte";
 	import EmptyFavorites from "./EmptyFavorites.svelte";
 	import { favoritesGridState } from "./favorites-grid-state.svelte";

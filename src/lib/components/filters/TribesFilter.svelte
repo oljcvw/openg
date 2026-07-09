@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tribes } from "$lib/model/profile";
+	import { tribes } from "$lib/model/users/profiles";
 	import type { FilterTribeId } from "$lib/components/filters/filters";
 	import FilterSimpleArray from "./FilterSimpleArray.svelte";
 
@@ -14,15 +14,10 @@
 	bind:value
 	id="tribes"
 	label="Tribes"
-	items={[
-		...Object.entries(tribes).map(([value, label]) => ({
-			value: Number(value),
-			label,
-		})),
-		{
-			value: -1,
-			label: "Not Specified",
-		},
-	]}
+	items={Object.entries(tribes).map(([value, label]) => ({
+		value: Number(value),
+		label,
+	}))}
 	convert={Number}
+	notSpecified
 />

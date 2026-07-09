@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/state";
 
-	import ProgressiveBlur from "$lib/components/ProgressiveBlur.svelte";
+	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { toggleVariants } from "$lib/components/ui/toggle";
 
@@ -9,15 +9,15 @@
 </script>
 
 {#snippet tab(href: string, label: string)}
+	{@const active = page.url.pathname === href}
 	<Button
 		{href}
 		class={[
 			toggleVariants({ variant: "default" }),
 			"text-muted-foreground",
 			{
-				"hover:bg-muted-foreground/10": page.url.pathname !== href,
-				"bg-muted-foreground/15 hover:bg-muted-foreground/20":
-					page.url.pathname === href,
+				"hover:bg-muted-foreground/10": active,
+				"bg-muted-foreground/15 hover:bg-muted-foreground/20": active,
 			},
 		]}
 	>

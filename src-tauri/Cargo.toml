@@ -1,6 +1,6 @@
 [package]
 name = "open-grind"
-version = "0.1.0-beta.1"
+version = "0.1.0-beta.2"
 description = "FLOSS Grindr client"
 authors = ["Open Grind Governance (https://opengrind.org/governance)"]
 homepage = "https://opengrind.org"
@@ -26,7 +26,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-grindr = "0.3"
+grindr = "0.3.2"
 tokio = { version = "1", features = ["sync", "time", "rt", "macros"] }
 tauri-plugin-fs = "2"
 tauri-plugin-geolocation = "2"
@@ -37,6 +37,7 @@ serde_bytes = "0.11"
 base64 = "0.22"
 keyring-core = "0.7.2"
 tauri-plugin-devtools = "2.0.0"
+tauri-plugin-dialog = "2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 apple-native-keyring-store = { version = "0.2.3", features = ["keychain", "protected"], optional = true }
@@ -52,3 +53,6 @@ linux-keyutils-keyring-store = "0.2.1"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android-native-keyring-store = "0.5.0"
+# Reads the EmbeddedSetup oauth_token cookie via android.webkit.CookieManager.
+jni = "0.21"
+tauri-plugin-android-fs = "=28.2.2"

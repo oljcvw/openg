@@ -1,8 +1,14 @@
 import { demoMeProfileId } from "./config";
 import {
+	demoAlbumContent,
 	demoConversationMessages,
 	demoConversations,
+	demoDeleteConversation,
+	demoDrawerMedia,
 	demoSentMessage,
+	demoSetConversationMuted,
+	demoSetConversationPinned,
+	demoSingleMessage,
 } from "./mock/conversations";
 import {
 	buildFullProfile,
@@ -28,6 +34,7 @@ export function demoCallMethod(method: string): unknown {
 		case "auth_state":
 			return demoMeProfileId;
 		case "login":
+		case "google_sign_in":
 		case "refresh_token":
 			return { profileId: demoMeProfileId };
 		case "rotate_api_params":
@@ -102,8 +109,55 @@ export function demoRoute(
 			),
 		);
 	}
+	if (
+		method === "GET" &&
+		segments[0] === "v4" &&
+		segments[2] === "conversation" &&
+		segments[4] === "message" &&
+		segments.length === 6
+	) {
+		return ok(demoSingleMessage(segments[3], segments[5]));
+	}
+	if (method === "GET" && segments[0] === "v2" && segments[1] === "albums") {
+		return ok(demoAlbumContent(Number(segments[2])));
+	}
 	if (method === "POST" && rawPath === "/v4/chat/message/send") {
 		return ok(demoSentMessage(body));
+	}
+	if (
+		method === "POST" &&
+		segments[0] === "v4" &&
+		segments[1] === "chat" &&
+		segments[2] === "conversation" &&
+		segments.length === 5 &&
+		(segments[4] === "pin" || segments[4] === "unpin")
+	) {
+		demoSetConversationPinned(segments[3], segments[4] === "pin");
+		return ok({});
+	}
+	if (
+		method === "POST" &&
+		segments[0] === "v1" &&
+		segments[1] === "push" &&
+		segments[2] === "conversation" &&
+		segments.length === 5 &&
+		(segments[4] === "mute" || segments[4] === "unmute")
+	) {
+		demoSetConversationMuted(segments[3], segments[4] === "mute");
+		return ok({});
+	}
+	if (
+		method === "DELETE" &&
+		segments[0] === "v4" &&
+		segments[1] === "chat" &&
+		segments[2] === "conversation" &&
+		segments.length === 4
+	) {
+		demoDeleteConversation(segments[3]);
+		return ok({});
+	}
+	if (method === "GET" && rawPath.startsWith("/v4/chat/media/drawer/")) {
+		return ok(demoDrawerMedia());
 	}
 	if (method === "GET" && rawPath === "/v3/places/search") {
 		return ok({ places: [] });
