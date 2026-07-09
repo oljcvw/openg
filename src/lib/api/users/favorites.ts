@@ -1,6 +1,6 @@
 import { fetchRest } from "$lib/api";
 import { type FavoriteNote, favoriteNoteSchema } from "$lib/model/favorites";
-import type { Profile } from "$lib/model/profile";
+import type { Profile } from "$lib/model/users/profiles";
 
 export async function addFavoriteUser({
 	profileId,

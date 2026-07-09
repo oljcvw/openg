@@ -2,29 +2,29 @@ import { describe, expect, it } from "vitest";
 import z from "zod";
 
 import { demoRoute } from "$lib/demo";
-import {
-	albumContentSchema,
-	albumDetailsSchema,
-	albumMinSchema,
-} from "$lib/model/album";
-import { fullConversationSchema } from "$lib/model/conversation";
-import { cascadeV3ResponseSchema } from "$lib/model/grid/cascade/response/v3";
-import { searchProfileSchema } from "$lib/model/grid/search";
+import { cascadeV3ResponseSchema } from "$lib/model/browse/grid/cascade/response/v3";
+import { searchProfileSchema } from "$lib/model/browse/grid/search";
 import { tapProfileSchema } from "$lib/model/interest/tap-profile";
 import {
 	viewerProfileSchema,
 	viewPreviewSchema,
 } from "$lib/model/interest/views";
 import {
+	albumContentSchema,
+	albumDetailsSchema,
+	albumMinSchema,
+} from "$lib/model/messaging/albums";
+import { fullConversationSchema } from "$lib/model/messaging/conversations";
+import {
 	apiResponseMessageSchema,
 	expiringImageMessageSchema,
 	previewLabel,
-} from "$lib/model/message";
+} from "$lib/model/messaging/messages";
 import {
 	profileRightNowSchema,
 	profileSchema,
 	profileShortSchema,
-} from "$lib/model/profile";
+} from "$lib/model/users/profiles";
 
 const shortProfileSchema = z.object({
 	...profileShortSchema.shape,
@@ -219,5 +219,38 @@ describe("demo route data matches the real schemas", () => {
 		expect(demoRoute("/v3/me/favorites/100001", "POST", undefined).status).toBe(
 			200,
 		);
+	});
+
+	it("conversation pin/mute/delete mutations persist across inbox fetches", () => {
+		const inbox = () => {
+			const body = route("/v4/inbox?page=1", "POST") as { entries: unknown[] };
+			return z.array(fullConversationSchema).parse(body.entries);
+		};
+		const [first, second, third] = inbox();
+
+		route(
+			`/v4/chat/conversation/${first.data.conversationId}/${first.data.pinned ? "unpin" : "pin"}`,
+			"POST",
+		);
+		route(
+			`/v1/push/conversation/${second.data.conversationId}/${second.data.muted ? "unmute" : "mute"}`,
+			"POST",
+		);
+		route(`/v4/chat/conversation/${third.data.conversationId}`, "DELETE");
+
+		const after = inbox();
+		expect(
+			after.find(
+				(e) => e.data.conversationId === first.data.conversationId,
+			)?.data.pinned,
+		).toBe(!first.data.pinned);
+		expect(
+			after.find(
+				(e) => e.data.conversationId === second.data.conversationId,
+			)?.data.muted,
+		).toBe(!second.data.muted);
+		expect(
+			after.some((e) => e.data.conversationId === third.data.conversationId),
+		).toBe(false);
 	});
 });

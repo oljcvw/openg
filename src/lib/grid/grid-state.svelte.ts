@@ -2,7 +2,7 @@ import { untrack } from "svelte";
 import z from "zod";
 
 import { showErrorToast } from "$lib/api/error";
-import type { cascadeV3QuerySchema } from "$lib/model/grid/cascade/query/v3";
+import type { cascadeV3QuerySchema } from "$lib/model/browse/grid/cascade/query/v3";
 import {
 	getCachedProfile,
 	getGrid,
@@ -37,6 +37,7 @@ class GridState {
 			return;
 		this.#geohash = geohash;
 		this.#reset();
+		this.scrollY = 0;
 		void this.#fetchProfiles(geohash);
 	}
 
