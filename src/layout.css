@@ -95,10 +95,12 @@
 	--spacing-list-rail: 117px;
 }
 
-/* Keep in sync with src/lib/breakpoints.svelte.ts */
+/* Keep in sync with src/lib/util/breakpoints.svelte.ts */
 @theme {
 	--breakpoint-split: 560px;
 	--breakpoint-settings-dialog: 424px;
+	--breakpoint-selection-bar-compact: 350px;
+	--breakpoint-selection-bar-collapse: 300px;
 	--breakpoint-cramped: 250px;
 }
 
@@ -138,6 +140,7 @@ body {
 	user-select: none;
 	-webkit-user-select: none;
 	--nav-height: 4rem;
+	--selection-bar-height: 4.75rem;
 	--content-pb: calc(var(--nav-height) + var(--safe-area-bottom));
 	--screen-safe: calc(100dvh - var(--safe-area-top) - var(--safe-area-bottom));
 	--screen-scroll: calc(100dvh - var(--safe-area-top) - var(--content-pb));
@@ -152,6 +155,10 @@ a {
 
 [class^="scroll-lock-"] {
 	overflow: hidden;
+}
+
+:root[data-context-menu-open] body {
+	pointer-events: none !important;
 }
 
 *[data-tauri-drag-region] {
@@ -297,6 +304,12 @@ a {
 .incoming-message-toast[data-sonner-toast] {
 	opacity: 1 !important;
 	--fly-out: translateY(calc(-100% - var(--offset-top, 24px) - 12px));
+}
+
+@media not (max-width: 600px) {
+	.incoming-message-toast[data-sonner-toast] {
+		width: var(--width);
+	}
 }
 
 .incoming-message-toast[data-sonner-toast][data-mounted="false"] {
