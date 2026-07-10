@@ -6,7 +6,7 @@
 	import { showErrorToast } from "$lib/api/error";
 	import { updateFavoriteUserNote } from "$lib/api/users/favorites";
 	import Button from "$lib/components/ui/button/button.svelte";
-	import * as Dialog from "$lib/components/ui/dialog";
+	import * as Drawer from "$lib/components/ui/drawer";
 	import { Spinner } from "$lib/components/ui/spinner";
 	import type { FavoriteNote } from "$lib/model/favorites";
 	import type { Profile } from "$lib/model/users/profiles";
@@ -79,22 +79,24 @@
 			{/if}
 		</Button>
 	</div>
-	<Dialog.Root bind:open>
-		<Dialog.Content showCloseButton={false} class="flex flex-col">
-			<MultilineField
-				label="Note"
-				bind:value={notesValue}
-				maxLength={NOTE_MAX_LENGTH}
-				placeholder="Add a note..."
-				class="max-h-40 overflow-y-auto"
-			/>
-			<TextField
-				label="Phone number"
-				bind:value={phoneValue}
-				maxLength={PHONE_MAX_LENGTH}
-				placeholder="Add a phone number..."
-			/>
-			<Dialog.Footer>
+	<Drawer.Root bind:open>
+		<Drawer.Content class="flex flex-col">
+			<div class="flex flex-col gap-1.5 p-4">
+				<MultilineField
+					label="Note"
+					bind:value={notesValue}
+					maxLength={NOTE_MAX_LENGTH}
+					placeholder="Add a note..."
+					class="max-h-40 overflow-y-auto"
+				/>
+				<TextField
+					label="Phone number"
+					bind:value={phoneValue}
+					maxLength={PHONE_MAX_LENGTH}
+					placeholder="Add a phone number..."
+				/>
+			</div>
+			<Drawer.Footer>
 				<Button
 					disabled={saving || !dirty || wrongLength}
 					onclick={() => save()}
@@ -104,7 +106,7 @@
 					{/if}
 					Save
 				</Button>
-			</Dialog.Footer>
-		</Dialog.Content>
-	</Dialog.Root>
+			</Drawer.Footer>
+		</Drawer.Content>
+	</Drawer.Root>
 {/if}
