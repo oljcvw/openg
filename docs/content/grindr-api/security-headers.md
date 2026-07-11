@@ -9,6 +9,11 @@ Security headers are HTTP headers that the Grindr API requires to be present and
   - [`L-Time-Zone`](#l-time-zone)
   - [`L-Locale`](#l-locale)
   - [`L-Grindr-Roles`](#l-grindr-roles)
+  - [Device-key upload signing](#device-key-upload-signing)
+    - [The device key](#the-device-key)
+    - [1. Register the key](#1-register-the-key)
+    - [2. Sign each upload](#2-sign-each-upload)
+    - [Signing errors](#signing-errors)
   - [Correct headers order](#correct-headers-order)
   - [Fingerprint](#fingerprint)
     - [TLS parameters](#tls-parameters)
@@ -27,7 +32,7 @@ Set `Accept: application/json` header on all requests except `/v3/bootstrap` —
 
 ## `L-Device-Info`
 
-Absense or incorrect forming of this header might lead to HTTP status 403 and Cloudflare block page.
+Absence or incorrect forming of this header might lead to HTTP status 403 and Cloudflare block page.
 
 ```
 <deviceId>;GLOBAL;<deviceType>;<totalRAM>;<screenResolution>;<advertisingId>
@@ -44,7 +49,7 @@ Example: `a1b2c3d4e5f60789;GLOBAL;2;8026152960;2400x1080;550e8400-e29b-41d4-a716
 
 ## `User-Agent`
 
-Absense or incorrect forming of this header might lead to HTTP status 400 and `urn:gr:err:header` API error or 403 [WebSocket](/grindr-api/websocket/index#websocket) connection error.
+Absence or incorrect forming of this header might lead to HTTP status 400 and `urn:gr:err:header` API error or 403 [WebSocket](/grindr-api/websocket/index#websocket) connection error.
 
 ```
 grindr3/25.20.0.147239;147239;<subscriptionTier>;<os>;<deviceModel>;<manufacturer>
@@ -57,7 +62,7 @@ Example: `grindr3/25.20.0.147239;147239;Free;Android 13;Pixel 7;Google`
 
 ## `L-Time-Zone`
 
-[Time zone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) in format Country/Region. E.g. `America/New_York` or `Europe/Madrid`. Unknown whether this value is checked against your IP's ISP location.
+[Time zone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) in the format Country/Region. E.g. `America/New_York` or `Europe/Madrid`. Unknown whether this value is checked against your IP's ISP location.
 
 ## `L-Locale`
 
@@ -70,7 +75,100 @@ Note the hyphen/underscore.
 
 ## `L-Grindr-Roles`
 
-Should be a square-bracketed set of uppercased subscription tiers separated by comma without spaces or quotes, e.g. `[FREE]`. Only when user is already authorized.
+Should be a square-bracketed set of uppercased subscription tiers separated by comma without spaces or quotes, e.g. `[FREE]`. Only when the user is already authorized.
+
+## Device-key upload signing
+
+Starting with app version 26.10.0, the media-upload endpoints are protected by a per-request ECDSA signature bound to an ephemeral device key. Two endpoints require it:
+
+- `POST /v5/media/upload` — profile images (signed successor of the unsigned `POST /v4/media/upload`, see [Upload media (signed)](/grindr-api/users/profiles#upload-media-signed))
+- `POST /v6/chat/media/upload` — chat / drawer media (signed successor of the unsigned `POST /v5/chat/media/upload`, see [Upload media (signed)](/grindr-api/messaging/drawer#upload-media-signed))
+
+The registration endpoints live under [Media](/grindr-api/media). The older unsigned upload versions still respond, so signing is only mandatory when calling these two newer paths.
+
+Every binary value in this scheme (`publicKey`, `keyId`, signatures, `nonce`, body hash) is **base64url without padding** — the URL-safe alphabet (`-` and `_`), no trailing `=`. Every signature is **`SHA256withECDSA`** (ECDSA on the NIST P-256 / secp256r1 curve with SHA-256), serialized as an **ASN.1 DER** sequence and then base64url-encoded.
+
+Two identifiers are reused from data the client already sends:
+
+- `userId` — the numeric profile id of the authenticated session, as a decimal string.
+- `androidId` — the 16 hex character device id, i.e. the **first** field of [`L-Device-Info`](#l-device-info) (the part before the first `;`).
+
+### The device key
+
+Generate one **P-256 (secp256r1)** key pair per session (the official app stores it in the Android Keystore under the alias `device_signing_key_<userId>`). Two strings are derived from the public key and reused everywhere:
+
+- `publicKey` = `base64url( SubjectPublicKeyInfo DER )` — the X.509 SPKI (`spki`) encoding of the public key.
+- `keyId` = `base64url( SHA-256( SubjectPublicKeyInfo DER ) )` — SHA-256 over the exact same SPKI bytes.
+
+### 1. Register the key
+
+Both calls require [Authorization](/grindr-api/api-authorization). First fetch a challenge:
+
+```
+POST /v1/verification/device-keys/challenge
+```
+
+Response (`ChallengeResponse`):
+
+```json
+{ "challenge": "<opaque string>", "expiresAt": "<ISO-8601 instant>" }
+```
+
+Build the canonical **registration string** by joining five fields with a literal `|` (U+007C `|`), in exactly this order:
+
+```
+<userId>|<keyId>|<publicKey>|<androidId>|<challenge>
+```
+
+Sign its UTF-8 bytes with the device key to obtain `registrationSignature = base64url( DER( ECDSA-P256-SHA256( message ) ) )`, then submit the key:
+
+```
+POST /v1/verification/device-keys
+```
+
+Body (`RegisterKeyRequest`):
+
+```json
+{
+  "publicKey": "<base64url(SPKI)>",
+  "keyId": "<base64url(SHA-256(SPKI))>",
+  "registrationSignature": "<base64url(DER signature)>"
+}
+```
+
+Response (`RegisterKeyResponse`): `{ "keyId": "<keyId>" }`, echoing the accepted key id.
+
+### 2. Sign each upload
+
+For every signed upload, compute three per-request values:
+
+- `nonce` = `base64url( 32 random bytes )`, freshly generated each request.
+- `timestamp` = the signing time as **Unix epoch milliseconds**, a decimal string. In-app this is `GrindrTime.getTime()` plus a small per-call offset, so it may be slightly skewed from the local clock; the server returns its own time on drift (see below).
+- `bodyHash` = `base64url( SHA-256( rawRequestBody ) )` — SHA-256 of the exact bytes placed in the request body (the raw image/video `application/octet-stream` payload), not of any wrapper.
+
+Build the canonical **upload string** by joining five fields with `|`, in exactly this order:
+
+```
+<bodyHash>|<timestamp>|<userId>|<androidId>|<nonce>
+```
+
+Sign its UTF-8 bytes with the same device key and send four headers alongside the upload:
+
+| Header        | Value                                                            |
+| ------------- | ---------------------------------------------------------------- |
+| `X-Key-Id`    | `keyId` (base64url of `SHA-256(SPKI)`)                           |
+| `X-Sig`       | `base64url( DER( ECDSA-P256-SHA256( uploadString ) ) )`          |
+| `X-Timestamp` | the same `timestamp` (epoch milliseconds) embedded in the string |
+| `X-Nonce`     | the same `nonce` embedded in the string                          |
+
+The `X-Timestamp` and `X-Nonce` header values must be byte-for-byte identical to the `timestamp` and `nonce` used inside the signed string, or verification fails.
+
+### Signing errors
+
+A rejected signature returns a problem body (`UploadSigningErrorResponse`) with `type` and `detail` fields. The client matches the failure by substring on `type`:
+
+- `timestamp_drift` — the clock is too far from the server. `detail` carries the server's current time as an ISO-8601 instant; recompute your `timestamp` offset from it and retry.
+- `nonce_replayed` — the `nonce` was seen before; retry with a fresh one.
 
 ## Correct headers order
 
@@ -95,7 +193,7 @@ Other headers:
 
 ## Fingerprint
 
-Getting all of HTTP security headers right is enough for API to respond, but sooner or later you'll get hit with 403 HTTP errors from Cloudflare and HTML blocked pages. This is because Cloudflare, which protects Grindr API, learns requests fingerprints and categorizes them as coming from the Grindr official app or botnets. Tens of requests might get through as some new fingerprint, but hundreds or thousands of requests with the fingerprint different from the official app will get blocked.
+Getting all of HTTP security headers right is enough for the API to respond, but sooner or later you'll get hit with 403 HTTP errors from Cloudflare and HTML blocked pages. This is because Cloudflare, which protects Grindr API, learns request fingerprints and categorizes them as coming from the Grindr official app or botnets. Tens of requests might get through as some new fingerprint, but hundreds or thousands of requests with a fingerprint different from the official app will get blocked.
 
 Request fingerprint is a characteristic derived from many factors, such as ClientHello, TLS encryption negotiation, HTTP pseudo-headers, TCP frame size, etc. The goal is to make all of these parameters match official Grindr clients (we focus on Android apk specifically, using the Java library used in the official Grindr app).
 
@@ -175,7 +273,7 @@ In this order, IANA hex:
 | 14  | TLS_RSA_WITH_AES_128_CBC_SHA                  | `0x002f` |
 | 15  | TLS_RSA_WITH_AES_256_CBC_SHA                  | `0x0035` |
 
-No `TLS_EMPTY_RENEGOTIATION_INFO_SCSV (0x00ff)` , BoringSSL omits it whenever the `renegotiation_info` extension is present in the ClientHello ([RFC 5746 §3.4](https://www.rfc-editor.org/rfc/rfc5746#section-3.4)) and Conscrypt always sends the extension.
+No `TLS_EMPTY_RENEGOTIATION_INFO_SCSV (0x00ff)`. BoringSSL omits it whenever the `renegotiation_info` extension is present in the ClientHello ([RFC 5746 §3.4](https://www.rfc-editor.org/rfc/rfc5746#section-3.4)) and Conscrypt always sends the extension.
 
 #### Extensions
 

@@ -1,8 +1,14 @@
-import { getCascadeV3 } from "$lib/api/browse/grid";
+import { registerAccountCache } from "$lib/api/account-caches";
+import { getCascadeV4 } from "$lib/api/browse/grid";
 import { getProfiles } from "$lib/api/users/profiles";
 
-export type FullGridProfile = {
-	type: "full";
+function primaryImageHashes(url: string | null | undefined): string[] | null {
+	const hash = url?.split("/").pop();
+	return hash ? [hash] : null;
+}
+
+export type RenderedGridProfile = {
+	type: "rendered";
 	id: number;
 	displayName: string | null;
 	distance: number | null;
@@ -10,58 +16,64 @@ export type FullGridProfile = {
 	unread: number | null;
 	onlineUntil: number | null;
 	isFavorite: boolean;
+	isVisiting: boolean;
 	hasChattedInLast24Hrs: boolean;
 };
 
-export type PartialGridProfile = {
-	type: "partial";
+export type LazyGridProfile = {
+	type: "lazy";
 	id: number;
-	batchIndex: number;
+	unread: number | null;
+	isVisiting: boolean;
 };
 
-export type GridProfile = FullGridProfile | PartialGridProfile;
+export type GridProfile = RenderedGridProfile | LazyGridProfile;
 
-export async function getGrid(query: Parameters<typeof getCascadeV3>[0]) {
-	const response = await getCascadeV3(query);
+export async function getGrid(query: Parameters<typeof getCascadeV4>[0]) {
+	const response = await getCascadeV4(query);
 	const items: GridProfile[] = [];
-	const partialBatches: { batch: { profileId: number }[] }[] = [];
-	let currentBatch: { profileId: number }[] = [];
 
 	for (const item of response.items) {
-		if (item.type === "full_profile_v1") {
+		if (item.type === "full_profile_v1" || item.type === "partial_profile_v1") {
 			const profile = item.data;
 			items.push({
-				type: "full",
+				type: "rendered",
 				id: profile.profileId,
 				displayName: profile.displayName ?? null,
 				distance: profile.distanceMeters ?? null,
-				profilePhotosHashes: profile.photoMediaHashes,
+				profilePhotosHashes: primaryImageHashes(profile.primaryImageUrl),
 				unread: profile.unreadCount ?? null,
 				onlineUntil: profile.onlineUntil ?? null,
-				isFavorite: profile.isFavorite,
-				hasChattedInLast24Hrs: profile.hasChattedInLast24Hrs,
+				isFavorite: profile.favorite ?? false,
+				isVisiting: profile.isVisiting,
+				hasChattedInLast24Hrs: profile.chatted ?? false,
 			});
-		} else if (item.type === "partial_profile_v1") {
-			if (currentBatch.length === 150) {
-				partialBatches.push({ batch: currentBatch });
-				currentBatch = [];
-			}
-			const batchIndex = partialBatches.length;
-			currentBatch.push({ profileId: item.data.profileId });
+		} else if (
+			item.type === "hidden_profile_v1" ||
+			item.type === "smart_boost_profile_v1"
+		) {
+			// Seems like a dead branch for now
+			const profile = item.data;
 			items.push({
-				type: "partial",
-				id: item.data.profileId,
-				batchIndex,
+				type: "lazy",
+				id: profile.profileId,
+				unread: profile.unreadCount ?? null,
+				isVisiting: profile.isVisiting,
+			});
+		} else if (item.type === "sponsored_profile_v1") {
+			// Seems like a dead branch for now
+			const profile = item.data.alternativeProfile;
+			items.push({
+				type: "lazy",
+				id: profile.profileId,
+				unread: profile.unreadCount ?? null,
+				isVisiting: profile.isVisiting,
 			});
 		}
-	}
-	if (currentBatch.length > 0) {
-		partialBatches.push({ batch: currentBatch });
 	}
 
 	return {
 		items,
-		partialBatches,
 		nextPage: response.nextPage,
 		shuffled: response.shuffled,
 	};
@@ -71,10 +83,10 @@ const PROFILE_CACHE_TTL_MS = 60_000;
 
 const profileCache = new Map<
 	number,
-	{ profile: FullGridProfile; updatedAt: number }
+	{ profile: RenderedGridProfile; updatedAt: number }
 >();
 
-export function getCachedProfile(id: number): FullGridProfile | null {
+export function getCachedProfile(id: number): RenderedGridProfile | null {
 	const cached = profileCache.get(id);
 	if (!cached || Date.now() - cached.updatedAt >= PROFILE_CACHE_TTL_MS) {
 		return null;
@@ -82,31 +94,29 @@ export function getCachedProfile(id: number): FullGridProfile | null {
 	return cached.profile;
 }
 
-export function setCachedProfile(profile: FullGridProfile): void {
+export function setCachedProfile(profile: RenderedGridProfile): void {
 	profileCache.set(profile.id, { profile, updatedAt: Date.now() });
 }
 
-export async function resolvePartialBatch(
-	profileIds: number[],
-): Promise<FullGridProfile[]> {
-	const profiles = await getProfiles(profileIds);
-	return profiles
-		.filter(({ profileId }) => profileIds.includes(profileId))
-		.sort(
-			(a, b) =>
-				profileIds.indexOf(a.profileId) - profileIds.indexOf(b.profileId),
-		)
-		.map((profile) => ({
-			type: "full" as const,
-			id: profile.profileId,
-			displayName: profile.displayName ?? null,
-			distance: profile.distance ?? null,
-			profilePhotosHashes: profile.medias?.map((m) => m.mediaHash) ?? null,
-			unread: null,
-			onlineUntil: profile.onlineUntil ?? null,
-			isFavorite: profile.isFavorite,
-			hasChattedInLast24Hrs:
-				profile.lastChatTimestamp !== null &&
-				Date.now() - profile.lastChatTimestamp < 24 * 60 * 60 * 1000,
-		}));
+registerAccountCache(() => profileCache.clear());
+
+export async function resolveLazyProfile(
+	profile: LazyGridProfile,
+): Promise<RenderedGridProfile | null> {
+	const [resolved] = await getProfiles([profile.id]);
+	if (!resolved || resolved.profileId !== profile.id) return null;
+	return {
+		type: "rendered",
+		id: resolved.profileId,
+		displayName: resolved.displayName ?? null,
+		distance: resolved.distance ?? null,
+		profilePhotosHashes: resolved.medias?.map((m) => m.mediaHash) ?? null,
+		unread: profile.unread,
+		onlineUntil: resolved.onlineUntil ?? null,
+		isFavorite: resolved.isFavorite,
+		isVisiting: profile.isVisiting,
+		hasChattedInLast24Hrs:
+			resolved.lastChatTimestamp !== null &&
+			Date.now() - resolved.lastChatTimestamp < 24 * 60 * 60 * 1000,
+	};
 }

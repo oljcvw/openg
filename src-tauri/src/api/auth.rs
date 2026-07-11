@@ -2,18 +2,70 @@ use serde::Serialize;
 
 use crate::error::AppError;
 use crate::state::AppState;
+use crate::storage::{AuthStorage, DeviceStorage};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoginResult {
     pub profile_id: String,
+    pub restriction: Option<Restriction>,
 }
 
 impl From<grindr::LoginResult> for LoginResult {
     fn from(r: grindr::LoginResult) -> Self {
         Self {
             profile_id: r.profile_id,
+            restriction: r.restriction.map(Restriction::from),
         }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Restriction {
+    pub kind: String,
+    pub region: Option<String>,
+    pub reason: Option<String>,
+}
+
+impl From<grindr::Restriction> for Restriction {
+    fn from(r: grindr::Restriction) -> Self {
+        match r {
+            grindr::Restriction::AgeVerification { region, reason } => Self {
+                kind: "ageVerification".to_owned(),
+                region: Some(region_str(region).to_owned()),
+                reason: Some(reason),
+            },
+            grindr::Restriction::TimedBan(details) => Self {
+                kind: "timedBan".to_owned(),
+                region: None,
+                reason: details.reason,
+            },
+            grindr::Restriction::TrustVendorRejected => Self {
+                kind: "trustVendorRejected".to_owned(),
+                region: None,
+                reason: None,
+            },
+            grindr::Restriction::Other(raw) => Self {
+                kind: "other".to_owned(),
+                region: None,
+                reason: Some(raw),
+            },
+            _ => Self {
+                kind: "other".to_owned(),
+                region: None,
+                reason: None,
+            },
+        }
+    }
+}
+
+fn region_str(region: grindr::VerificationRegion) -> &'static str {
+    match region {
+        grindr::VerificationRegion::Uk => "uk",
+        grindr::VerificationRegion::Br => "br",
+        grindr::VerificationRegion::Au => "au",
+        _ => "other",
     }
 }
 
@@ -54,7 +106,17 @@ pub async fn refresh_token(state: tauri::State<'_, AppState>) -> Result<LoginRes
 
 #[tauri::command]
 pub async fn logout(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
-    state.client()?.logout().await;
+    let client = state.client()?;
+
+    client.logout().await;
+    AuthStorage::delete_session();
+
+    let new_device = grindr::DeviceInfo::generate();
+    if let Err(e) = DeviceStorage::save(&new_device) {
+        eprintln!("[auth] could not persist rotated device info on sign out: {e}");
+    }
+    client.rotate_device(new_device).await?;
+
     Ok(())
 }
 
@@ -79,4 +141,38 @@ pub async fn auth_state(state: tauri::State<'_, AppState>) -> Result<Option<u64>
         .borrow()
         .as_ref()
         .and_then(|s| s.profile_id.parse::<u64>().ok()))
+}
+
+#[tauri::command]
+pub async fn account_restriction(
+    state: tauri::State<'_, AppState>,
+) -> Result<Option<Restriction>, AppError> {
+    let Ok(client) = state.client() else {
+        return Ok(None);
+    };
+    Ok(client
+        .session_receiver()
+        .borrow()
+        .as_ref()
+        .and_then(|s| s.restriction.clone())
+        .map(Restriction::from))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn simulated_age_restriction_maps_to_frontend_shape() {
+        let restriction: grindr::Restriction = serde_json::from_str(
+            r#"{"AgeVerification":{"region":"Uk","reason":"UK_VERIFICATION_REQUIRED"}}"#,
+        )
+        .unwrap();
+
+        let mapped = Restriction::from(restriction);
+        let json = serde_json::to_value(&mapped).unwrap();
+        assert_eq!(json["kind"], "ageVerification");
+        assert_eq!(json["region"], "uk");
+        assert_eq!(json["reason"], "UK_VERIFICATION_REQUIRED");
+    }
 }

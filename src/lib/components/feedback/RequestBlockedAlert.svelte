@@ -16,14 +16,15 @@
 		<AlertDialog.Header>
 			<AlertDialog.Title>Grindr blocks your requests</AlertDialog.Title>
 			<AlertDialog.Description>
-				Cloudflare protecting Grindr API is currently blocking your requests
+				Cloudflare protecting the Grindr API is currently blocking your requests
 				because of suspicious activity. This is a <Link
 					href="https://git.opengrind.org/open-grind/open-grind/issues/81"
 				>
 					known issue
-				</Link>. If you use a VPN, try disabling it. You can also rotate request
-				parameters using the button below.
-				<div class="flex items-center gap-3 text-left mt-4">
+				</Link>.
+				<span class="font-semibold">If you use a VPN, try disabling it.</span>
+				You can also rotate request parameters using the button below.
+				<div class="mt-4 flex items-center gap-3 text-left">
 					<Checkbox
 						id="disable-request-blocked-alert"
 						bind:checked={requestBlockedAlertState.disable}

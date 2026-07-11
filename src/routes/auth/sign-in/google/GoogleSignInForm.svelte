@@ -3,6 +3,7 @@
 	import { toast } from "svelte-sonner";
 
 	import { asAppError, callMethod } from "$lib/api";
+	import { showAccountRestriction } from "$lib/api/account-status-state.svelte";
 	import { showErrorToast } from "$lib/api/error";
 	import { clearProfileCaches } from "$lib/api/users/profiles";
 	import { Button } from "$lib/components/ui/button";
@@ -22,7 +23,8 @@
 		if (retrying) return;
 		retrying = true;
 		try {
-			await callMethod("login_with_google");
+			const result = await callMethod("login_with_google");
+			if (showAccountRestriction(result.restriction)) return;
 			clearProfileCaches();
 			void goto("/");
 		} catch (error) {
@@ -32,13 +34,13 @@
 				appError.message === "companion-unavailable"
 			) {
 				toast.error(
-					'Couldn\'t find Open Grind Google OAuth app on your device. Install it first, then tap "Retry". Alternatively, try pasting the OAuth token manually.',
+					'Couldn\'t find the Open Grind Google OAuth app on your device. Install it first, then tap "Retry". Alternatively, try pasting the OAuth token manually.',
 				);
 				return;
 			}
 			if (
 				appError?.kind === "Auth" &&
-				appError.message === "Sign-in cancelled"
+				appError.message === "Sign-in canceled"
 			) {
 				return;
 			}
@@ -59,7 +61,10 @@
 		event.preventDefault();
 		try {
 			submitting = true;
-			await callMethod("google_sign_in", { token: token.trim() });
+			const result = await callMethod("google_sign_in", {
+				token: token.trim(),
+			});
+			if (showAccountRestriction(result.restriction)) return;
 			clearProfileCaches();
 			void goto("/");
 		} catch (error) {
@@ -90,7 +95,7 @@
 						</Link>
 					</li>
 					{#if !manualInput}
-						<li>On this screen tap "Retry" button</li>
+						<li>On this screen, tap the "Retry" button</li>
 					{:else}
 						<li>Sign in with Google in the companion app and copy the token</li>
 						<li>Return to this screen, paste it and tap "Sign in"</li>
