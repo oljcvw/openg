@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { NoteIcon } from "phosphor-svelte";
+	import { NotePencilIcon } from "phosphor-svelte";
 	import { toast } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 
@@ -73,7 +73,7 @@
 			class="w-full min-w-0 cursor-pointer text-base"
 			onclick={() => (open = true)}
 		>
-			<NoteIcon class="size-4 shrink-0" />
+			<NotePencilIcon weight="fill" class="size-4 shrink-0" />
 			{#if note.notes.trim().length > 0}
 				<span class="truncate">{note.notes}</span>
 			{/if}
