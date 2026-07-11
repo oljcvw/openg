@@ -19,7 +19,7 @@
 	}: { profile: Profile | null; note: FavoriteNote | null } = $props();
 
 	const NOTE_MAX_LENGTH = 250;
-	const PHONE_MAX_LENGTH = 32;
+	const PHONE_MAX_LENGTH = 20;
 
 	let open = $state(false);
 	let saving = $state(false);
