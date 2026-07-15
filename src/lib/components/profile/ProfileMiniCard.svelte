@@ -2,7 +2,9 @@
 	import { ChatIcon, StarIcon } from "phosphor-svelte";
 	import type { Snippet } from "svelte";
 
+	import { getShowLastOnlineOverlaySnapshot } from "$lib/app-data/preferences.svelte";
 	import DistanceFormatted from "$lib/components/profile/DistanceFormatted.svelte";
+	import ProfileLastOnlineOverlay from "$lib/components/profile/ProfileLastOnlineOverlay.svelte";
 	import ProfileStatusIndicator from "$lib/components/profile/ProfileStatusIndicator.svelte";
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import { Badge } from "$lib/components/ui/badge";
@@ -14,6 +16,7 @@
 		distance = null,
 		unread = null,
 		onlineUntil = null,
+		lastOnline = null,
 		isFavorite = false,
 		isVisiting = false,
 		hadRecentChat = false,
@@ -27,6 +30,7 @@
 		distance?: number | null;
 		unread?: number | null;
 		onlineUntil?: number | null;
+		lastOnline?: number | null;
 		isFavorite?: boolean;
 		isVisiting?: boolean;
 		hadRecentChat?: boolean;
@@ -34,20 +38,36 @@
 		class?: import("svelte/elements").ClassValue;
 		overlay?: Snippet;
 	} = $props();
+
+	const showLastOnlineOverlay = $derived(getShowLastOnlineOverlaySnapshot());
 </script>
 
 {#snippet content()}
 	<div class="absolute size-full bg-stone-700">
 		<UserAvatar {mediaHash} class="size-full" size="xl" />
 	</div>
-	{#if distance !== null}
-		<span class="profile-card-distance absolute top-1 right-1.5">
-			<DistanceFormatted {distance} />
-		</span>
+	{#if showLastOnlineOverlay || distance !== null}
+		<div class="absolute inset-x-1 top-1 z-2 flex min-w-0 items-start justify-between gap-1">
+			{#if showLastOnlineOverlay}
+				<ProfileLastOnlineOverlay
+					{onlineUntil}
+					{lastOnline}
+					class="min-w-0 max-w-[65%]"
+				/>
+			{/if}
+			{#if distance !== null}
+				<span class="profile-card-distance ms-auto shrink-0">
+					<DistanceFormatted {distance} />
+				</span>
+			{/if}
+		</div>
 	{/if}
 	{#if isFavorite || hadRecentChat}
 		<div
-			class="absolute inset-s-2 top-2 z-1 flex w-1/6 flex-col items-center gap-1"
+			class={[
+				"absolute inset-s-2 z-1 flex w-1/6 flex-col items-center gap-1",
+				showLastOnlineOverlay || distance !== null ? "top-8" : "top-2",
+			]}
 		>
 			{#if isFavorite}
 				<div class="badge">

@@ -6,6 +6,7 @@
 	import * as Item from "$lib/components/ui/item";
 	import RevealMessageReadSetting from "./RevealMessageReadSetting.svelte";
 	import RevealProfileViewSetting from "./RevealProfileViewSetting.svelte";
+	import ShowLastOnlineOverlaySetting from "./ShowLastOnlineOverlaySetting.svelte";
 	import UnitsSetting from "./UnitsSetting.svelte";
 </script>
 
@@ -57,6 +58,8 @@
 	title: "PIN",
 	unimplemented: { feature: "PIN", issue: 50 },
 })}
+<h2>Additional</h2>
+<ShowLastOnlineOverlaySetting />
 
 <style lang="postcss">
 	@reference "$layout";

@@ -82,6 +82,8 @@
 			badge: conversation.data.muted ? mutedBadge : undefined
 		}}
 		onlineUntil={conversation.data.onlineUntil ?? participant.onlineUntil}
+		lastOnline={participant.lastOnline ?? null}
+		showNameStatus={false}
 		link="/chat/{conversationId}"
 		selected={isSelected}
 		onToggleSelected={selection ? toggleSelected : undefined}

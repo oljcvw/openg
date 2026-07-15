@@ -12,6 +12,7 @@ const preferencesSchema = z.object({
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
 	revealMessageRead: z.boolean().default(false),
 	revealProfileViews: z.boolean().default(false),
+	showLastOnlineOverlay: z.boolean().default(true),
 	units: unitSystemSchema.default("metric"),
 	warnBeforeCopyingErrorDetails: z.boolean().default(true),
 });
@@ -73,6 +74,10 @@ export function getUnitsSnapshot(): UnitSystem {
 
 export function getGeohashSnapshot(): string | null {
 	return preferencesSnapshot.geohash;
+}
+
+export function getShowLastOnlineOverlaySnapshot(): boolean {
+	return preferencesSnapshot.showLastOnlineOverlay;
 }
 
 export async function hydratePreferences(): Promise<void> {

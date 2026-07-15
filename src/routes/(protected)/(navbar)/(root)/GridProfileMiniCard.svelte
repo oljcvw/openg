@@ -9,6 +9,7 @@
 		medias = null,
 		unread = null,
 		onlineUntil = null,
+		lastOnline = null,
 		isFavorite = false,
 		isVisiting = false,
 		hadRecentChat = false,
@@ -20,6 +21,7 @@
 		medias?: { mediaHash: string }[] | null;
 		unread?: number | null;
 		onlineUntil?: number | null;
+		lastOnline?: number | null;
 		isFavorite?: boolean;
 		isVisiting?: boolean;
 		hadRecentChat?: boolean;
@@ -33,6 +35,7 @@
 	{distance}
 	{unread}
 	{onlineUntil}
+	{lastOnline}
 	{isFavorite}
 	{isVisiting}
 	{hadRecentChat}

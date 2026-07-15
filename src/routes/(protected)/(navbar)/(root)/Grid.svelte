@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { afterNavigate, beforeNavigate } from "$app/navigation";
 
+	import { getShowLastOnlineOverlaySnapshot } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import type { GridProfile } from "$lib/grid/grid";
@@ -26,6 +27,12 @@
 
 	$effect.pre(() => {
 		gridState.load(geohash);
+	});
+
+	$effect(() => {
+		if (!getShowLastOnlineOverlaySnapshot()) return;
+		void gridState.items.length;
+		void gridState.enrichLastOnline();
 	});
 
 	export function refresh() {
@@ -110,6 +117,7 @@
 					distance={item.distance}
 					unread={item.unread}
 					onlineUntil={item.onlineUntil}
+					lastOnline={item.lastOnline}
 					isFavorite={item.isFavorite}
 					isVisiting={item.isVisiting}
 					hadRecentChat={item.hasChattedInLast24Hrs}

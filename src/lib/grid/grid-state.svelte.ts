@@ -3,8 +3,10 @@ import z from "zod";
 
 import { registerAccountCache } from "$lib/api/account-caches";
 import { showErrorToast } from "$lib/api/error";
+import { getShowLastOnlineOverlaySnapshot } from "$lib/app-data/preferences.svelte";
 import type { cascadeV4QuerySchema } from "$lib/model/browse/grid/cascade/query/v4";
 import {
+	enrichProfilesLastOnline,
 	getCachedProfile,
 	getGrid,
 	type GridProfile,
@@ -31,6 +33,8 @@ class GridState {
 	#geohash: string | null = null;
 	#resolvingIds = new Set<number>();
 	#fetchToken = 0;
+	#enriching = false;
+	#enrichedIds = new Set<number>();
 
 	load(geohash: string): void {
 		if (untrack(() => this.#geohash === geohash && this.items.length > 0))
@@ -66,6 +70,7 @@ class GridState {
 		this.error = null;
 		this.currentQuery = null;
 		this.#resolvingIds.clear();
+		this.#enrichedIds.clear();
 	}
 
 	reset(): void {
@@ -90,6 +95,7 @@ class GridState {
 			if (token !== this.#fetchToken) return;
 			this.items.push(...result.items);
 			this.nextPage = result.nextPage;
+			void this.enrichLastOnline();
 		} catch (error) {
 			console.error(error);
 			showErrorToast({
@@ -123,6 +129,7 @@ class GridState {
 			if (resolved) {
 				setCachedProfile(resolved);
 				this.items[idx] = resolved;
+				this.#enrichedIds.add(resolved.id);
 			} else {
 				this.items.splice(idx, 1);
 			}
@@ -214,10 +221,12 @@ class GridState {
 			if (token !== this.#fetchToken) return;
 			this.currentQuery = query;
 			this.#resolvingIds.clear();
+			this.#enrichedIds.clear();
 			this.items = result.items;
 			this.nextPage = result.nextPage;
 			this.error = null;
 			this.loading = false;
+			void this.enrichLastOnline();
 		} catch (err) {
 			if (token !== this.#fetchToken) return;
 			console.error(err);
@@ -233,6 +242,34 @@ class GridState {
 						: new Error("Failed to fetch profiles", { cause: err });
 			}
 			this.loading = false;
+		}
+	}
+
+	async enrichLastOnline(): Promise<void> {
+		if (!getShowLastOnlineOverlaySnapshot() || this.#enriching) return;
+		const token = this.#fetchToken;
+		const ids = this.items
+			.filter(
+				(item): item is Extract<GridProfile, { type: "rendered" }> =>
+					item.type === "rendered" && !this.#enrichedIds.has(item.id),
+			)
+			.map((item) => item.id);
+		if (ids.length === 0) return;
+		this.#enriching = true;
+		try {
+			const values = await enrichProfilesLastOnline(ids);
+			if (token !== this.#fetchToken) return;
+			for (const id of ids) this.#enrichedIds.add(id);
+			this.items = this.items.map((item) => {
+				if (item.type !== "rendered" || !values.has(item.id)) return item;
+				const next = { ...item, lastOnline: values.get(item.id) ?? null };
+				setCachedProfile(next);
+				return next;
+			});
+		} catch (error) {
+			console.error("Failed to enrich grid presence", error);
+		} finally {
+			this.#enriching = false;
 		}
 	}
 }

@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { getShowLastOnlineOverlaySnapshot } from "$lib/app-data/preferences.svelte";
 	import DisplayName from "$lib/components/profile/DisplayName.svelte";
+	import ProfileLastOnlineOverlay from "$lib/components/profile/ProfileLastOnlineOverlay.svelte";
 	import ProfileStatusIndicator from "$lib/components/profile/ProfileStatusIndicator.svelte";
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as Avatar from "$lib/components/ui/avatar";
@@ -10,6 +12,8 @@
 		avatar,
 		title,
 		onlineUntil = null,
+		lastOnline = null,
+		showNameStatus = true,
 		active,
 		selected,
 		link,
@@ -28,6 +32,8 @@
 			badge?: import("svelte").Snippet;
 		};
 		onlineUntil?: number | null;
+		lastOnline?: number | null;
+		showNameStatus?: boolean;
 		active?: boolean;
 		selected?: boolean;
 		link: string;
@@ -39,16 +45,26 @@
 
 	const longPress = $derived(onLongPress ? longPressHandlers(onLongPress) : {});
 	const linkTabindex = $derived(onToggleSelected ? -1 : undefined);
+	const showLastOnlineOverlay = $derived(getShowLastOnlineOverlaySnapshot());
 </script>
 
 {#snippet avatarNode()}
 	<Item.Media class="relative translate-y-0! rounded-2xl p-2">
-		<Avatar.Root class="size-20 after:rounded-xl">
-			<UserAvatar
-				mediaHash={avatar.mediaHash}
-				class="size-20 rounded-xl bg-neutral-700 *:rounded-xl"
-			/>
-		</Avatar.Root>
+		<div class="relative size-20 overflow-hidden rounded-xl">
+			<Avatar.Root class="size-20 after:rounded-xl">
+				<UserAvatar
+					mediaHash={avatar.mediaHash}
+					class="size-20 rounded-xl bg-neutral-700 *:rounded-xl"
+				/>
+			</Avatar.Root>
+			{#if showLastOnlineOverlay}
+				<ProfileLastOnlineOverlay
+					{onlineUntil}
+					{lastOnline}
+					class="absolute inset-x-1 top-1"
+				/>
+			{/if}
+		</div>
 		{@render avatar.overlay?.()}
 	</Item.Media>
 {/snippet}
@@ -63,7 +79,9 @@
 			]}
 		>
 			{@render title.badge?.()}
-			<ProfileStatusIndicator {onlineUntil} />
+			{#if showNameStatus}
+				<ProfileStatusIndicator {onlineUntil} />
+			{/if}
 			<DisplayName name={title.value} class="truncate" />
 		</Item.Title>
 		{@render description?.()}

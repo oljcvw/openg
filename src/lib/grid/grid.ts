@@ -15,6 +15,7 @@ export type RenderedGridProfile = {
 	profilePhotosHashes: string[] | null;
 	unread: number | null;
 	onlineUntil: number | null;
+	lastOnline: number | null;
 	isFavorite: boolean;
 	isVisiting: boolean;
 	hasChattedInLast24Hrs: boolean;
@@ -44,6 +45,7 @@ export async function getGrid(query: Parameters<typeof getCascadeV4>[0]) {
 				profilePhotosHashes: primaryImageHashes(profile.primaryImageUrl),
 				unread: profile.unreadCount ?? null,
 				onlineUntil: profile.onlineUntil ?? null,
+				lastOnline: null,
 				isFavorite: profile.favorite ?? false,
 				isVisiting: profile.isVisiting,
 				hasChattedInLast24Hrs: profile.chatted ?? false,
@@ -113,10 +115,27 @@ export async function resolveLazyProfile(
 		profilePhotosHashes: resolved.medias?.map((m) => m.mediaHash) ?? null,
 		unread: profile.unread,
 		onlineUntil: resolved.onlineUntil ?? null,
+		lastOnline: resolved.seen ?? null,
 		isFavorite: resolved.isFavorite,
 		isVisiting: profile.isVisiting,
 		hasChattedInLast24Hrs:
 			resolved.lastChatTimestamp !== null &&
 			Date.now() - resolved.lastChatTimestamp < 24 * 60 * 60 * 1000,
 	};
+}
+
+const PROFILE_ENRICH_BATCH = 150;
+
+export async function enrichProfilesLastOnline(
+	profileIds: number[],
+): Promise<Map<number, number | null>> {
+	const result = new Map<number, number | null>();
+	const unique = [...new Set(profileIds.filter(Number.isFinite))];
+	for (let i = 0; i < unique.length; i += PROFILE_ENRICH_BATCH) {
+		const profiles = await getProfiles(unique.slice(i, i + PROFILE_ENRICH_BATCH));
+		for (const profile of profiles) {
+			result.set(profile.profileId, profile.seen ?? null);
+		}
+	}
+	return result;
 }
