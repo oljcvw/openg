@@ -212,6 +212,8 @@
 	{:then}
 		<DataRefreshControl
 			{container}
+			mode="pull"
+			updatingLabel="Refreshing..."
 			updating={conversations.refreshing}
 			class="mb-3"
 			containerClass="z-10"

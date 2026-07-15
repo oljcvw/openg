@@ -14,6 +14,9 @@
 		container,
 		windowScroll = false,
 		offset = 0,
+		mode = "button",
+		updatingLabel = "Updating...",
+		idleLabel = "Refresh",
 		class: className,
 		containerClass,
 		onclick,
@@ -23,6 +26,9 @@
 		container?: HTMLElement | null;
 		windowScroll?: boolean;
 		offset?: number;
+		mode?: "button" | "pull";
+		updatingLabel?: string;
+		idleLabel?: string;
 		class: ClassValue;
 		containerClass?: ClassValue;
 		onclick?: () => void;
@@ -52,6 +58,7 @@
 	let measuredOffset = $state(0);
 
 	let suppressRevealUntilIdle = false;
+	let previousUpdating = false;
 
 	const progress = new Tween(0, revealTransition);
 
@@ -107,10 +114,23 @@
 	}
 
 	// Reveal while updating; conceal once idle and scrolled clear of the button.
+	// Pull mode: force collapse when refresh finishes so grid returns flush to top.
 	$effect(() => {
+		const finishingUpdate = previousUpdating && !updating;
+		previousUpdating = !!updating;
+
 		if (updating && !revealed) {
 			revealed = true;
-		} else if (
+			return;
+		}
+
+		if (finishingUpdate && revealed) {
+			revealed = false;
+			void tick().then(() => scrollToRest("smooth"));
+			return;
+		}
+
+		if (
 			!updating &&
 			revealed &&
 			!scrolling &&
@@ -208,9 +228,23 @@
 			}, boundarySettleDelay);
 		};
 
+		let wasScrolled = false;
+		let pullGesture = false;
+		let touchStartY = 0;
+
+		const tryAutoRefresh = () => {
+			if (mode !== "pull" || !onclick || updating || !revealed) return;
+			if (Math.abs(distance) >= 1) return;
+			if (!wasScrolled && !pullGesture) return;
+			onclick();
+			wasScrolled = false;
+			pullGesture = false;
+		};
+
 		const onScroll = () => {
 			scrolled =
 				position === "top" ? scrollTop() > 0 : scrollTop() < maxScrollY() - 1;
+			if (position === "top" && scrollTop() > 0) wasScrolled = true;
 			markActivity();
 			updateDistance();
 			if (revealed || suppressRevealUntilIdle) {
@@ -227,14 +261,28 @@
 			clearTimeout(idleTimer);
 			onIdle();
 			updateDistance();
+			tryAutoRefresh();
 		};
 		const onWheel = (e: WheelEvent) => {
 			markActivity();
 			const towardBoundary = position === "top" ? e.deltaY < 0 : e.deltaY > 0;
 			if (towardBoundary) {
+				if (mode === "pull" && Math.abs(distance) < 1) pullGesture = true;
 				armBoundaryReveal();
 			} else {
 				cancelBoundaryReveal();
+			}
+		};
+		const onTouchStart = (e: TouchEvent) => {
+			touchStartY = e.touches[0]?.clientY ?? 0;
+		};
+		const onTouchMove = (e: TouchEvent) => {
+			if (mode !== "pull") return;
+			const y = e.touches[0]?.clientY ?? 0;
+			if (Math.abs(distance) < 1 && y - touchStartY > 10) {
+				pullGesture = true;
+				markActivity();
+				armBoundaryReveal();
 			}
 		};
 
@@ -259,10 +307,18 @@
 		target.addEventListener("wheel", onWheel as EventListener, {
 			passive: true,
 		});
+		target.addEventListener("touchstart", onTouchStart as EventListener, {
+			passive: true,
+		});
+		target.addEventListener("touchmove", onTouchMove as EventListener, {
+			passive: true,
+		});
 		return () => {
 			target.removeEventListener("scroll", onScroll);
 			target.removeEventListener("scrollend", onScrollEnd);
 			target.removeEventListener("wheel", onWheel as EventListener);
+			target.removeEventListener("touchstart", onTouchStart as EventListener);
+			target.removeEventListener("touchmove", onTouchMove as EventListener);
 			clearTimeout(idleTimer);
 			clearTimeout(boundaryRevealTimer);
 			resizeObserver.disconnect();
@@ -294,40 +350,59 @@
 			--drc-offset: {verticalOffset.current}px;
 		"
 	>
-		{@render button()}
+		{@render control()}
 	</div>
 {:else}
 	<div
 		class={["absolute flex invisible", containerClass]}
 		bind:offsetHeight={realHeight}
 	>
-		{@render button()}
+		{@render control()}
 	</div>
 {/if}
 
-{#snippet button()}
-	<Button
-		size="sm"
-		variant={updating ? "ghost" : "default"}
-		disabled={updating}
-		class={[
-			"relative self-center transition-colors duration-(--duration) w-25 h-(--height) backdrop-blur-2xl",
-			{ "disabled:opacity-100 bg-muted/50": updating },
-			className,
-		]}
-		style="
-			--duration: {labelTransition.duration}ms;
-			--height: {buttonHeight}px;
-		"
-		{onclick}
-	>
-		{#if updating}
-			<Skeleton class="size-full absolute bg-input" />
-			<span class="label" transition:fade={labelTransition}>Updating...</span>
-		{:else}
-			<span class="label" transition:fade={labelTransition}>Refresh</span>
-		{/if}
-	</Button>
+{#snippet control()}
+	{#if mode === "pull"}
+		<div
+			class={[
+				"relative self-center transition-colors duration-(--duration) w-25 h-(--height) backdrop-blur-2xl rounded-md",
+				{ "bg-muted/50": updating },
+				className,
+			]}
+			style="
+				--duration: {labelTransition.duration}ms;
+				--height: {buttonHeight}px;
+			"
+		>
+			{#if updating}
+				<Skeleton class="size-full absolute bg-input" />
+				<span class="label" transition:fade={labelTransition}>{updatingLabel}</span>
+			{/if}
+		</div>
+	{:else}
+		<Button
+			size="sm"
+			variant={updating ? "ghost" : "default"}
+			disabled={updating}
+			class={[
+				"relative self-center transition-colors duration-(--duration) w-25 h-(--height) backdrop-blur-2xl",
+				{ "disabled:opacity-100 bg-muted/50": updating },
+				className,
+			]}
+			style="
+				--duration: {labelTransition.duration}ms;
+				--height: {buttonHeight}px;
+			"
+			{onclick}
+		>
+			{#if updating}
+				<Skeleton class="size-full absolute bg-input" />
+				<span class="label" transition:fade={labelTransition}>{updatingLabel}</span>
+			{:else}
+				<span class="label" transition:fade={labelTransition}>{idleLabel}</span>
+			{/if}
+		</Button>
+	{/if}
 {/snippet}
 
 <style lang="postcss">

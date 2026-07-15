@@ -36,6 +36,8 @@
 					<DataRefreshControl
 						container={gridContainer}
 						windowScroll
+						mode="pull"
+						updatingLabel="Refreshing..."
 						updating={gridState.refreshing}
 						position="top"
 						class="mb-3"
