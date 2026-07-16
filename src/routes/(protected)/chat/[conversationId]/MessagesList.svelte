@@ -3,7 +3,10 @@
 
 	import { ApiError } from "$lib/api";
 	import { showErrorToast } from "$lib/api/error";
-	import { deleteMessageForMe, unsendMessage } from "$lib/api/messaging/messages";
+	import {
+		deleteMessageForMe,
+		unsendMessage,
+	} from "$lib/api/messaging/messages";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import { Skeleton } from "$lib/components/ui/skeleton";
@@ -93,7 +96,7 @@
 </script>
 
 <div
-	class="flex-1 flex flex-col min-h-0 overflow-auto gap-1 p-2 max-w-full pt-20 *:first:mt-auto"
+	class="flex min-h-0 max-w-full flex-1 flex-col gap-1 overflow-auto p-2 pt-20 *:first:mt-auto"
 	bind:this={container}
 	style:overflow-anchor="none"
 >
@@ -101,7 +104,7 @@
 		{#each Array(10)}
 			<Skeleton
 				class={[
-					"h-9 shrink-0 max-w-full",
+					"h-9 max-w-full shrink-0",
 					Math.random() < 0.5 ? "self-start" : "self-end",
 				]}
 				style="width: {Math.floor(Math.random() * 400) + 100}px"
@@ -109,7 +112,7 @@
 		{/each}
 	{:else if conversationState.error}
 		{#if conversationState.error instanceof ApiError && conversationState.error.response?.status === 403}
-			<p class="text-muted-foreground text-sm text-center m-auto">
+			<p class="m-auto text-center text-sm text-muted-foreground">
 				Conversation is no longer available
 			</p>
 		{:else}
@@ -121,7 +124,7 @@
 		{/if}
 	{:else}
 		<div
-			class="flex flex-col gap-1 min-h-full shrink-0 justify-end overscroll-auto"
+			class="flex min-h-full shrink-0 flex-col justify-end gap-1 overscroll-auto"
 		>
 			{#if conversationState.loadingMore}
 				<Spinner class="mt-25 shrink-0 self-center" />
@@ -138,6 +141,7 @@
 					stackLength={message.stackLength}
 					dayStart={message.dayStart}
 					status={message.status}
+					profile={conversationState.profile}
 					isRead={isOut && message.messageId === messages[0].messageId
 						? conversationState.lastReadTimestamp === message.timestamp
 						: null}

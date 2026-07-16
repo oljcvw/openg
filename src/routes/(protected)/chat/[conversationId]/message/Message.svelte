@@ -4,6 +4,7 @@
 	import { scale } from "svelte/transition";
 
 	import type { ApiResponseMessage } from "$lib/model/messaging/messages";
+	import type { ConversationState } from "../conversation-state.svelte";
 	import AlbumMessage from "./AlbumMessage.svelte";
 	import { setMessageContext } from "./context";
 	import ExpiringImageMessage from "./ExpiringImageMessage.svelte";
@@ -13,6 +14,8 @@
 	import MessageTime from "./MessageTime.svelte";
 	import MessageWrapper from "./MessageWrapper.svelte";
 	import Reaction from "./Reaction.svelte";
+	import LocationMessage from "./LocationMessage.svelte";
+	import ProfilePhotoReplyMessage from "./ProfilePhotoReplyMessage.svelte";
 	import TextMessage from "./TextMessage.svelte";
 	import UnsentMessage from "./UnsentMessage.svelte";
 	import UnsupportedMessage from "./UnsupportedMessage.svelte";
@@ -25,6 +28,7 @@
 		stackLength,
 		dayStart,
 		status,
+		profile,
 		onReact,
 		onDelete,
 		onVisible,
@@ -37,6 +41,7 @@
 		stackLength: number;
 		dayStart?: number;
 		status?: "sent" | "pending" | "error";
+		profile: ConversationState["profile"];
 		onReact?: (reactionId: number) => void;
 		onDelete?: () => void;
 		onVisible?: () => void;
@@ -141,10 +146,10 @@
 {#snippet adornments()}
 	<div
 		class={[
-			"absolute top-0 -translate-y-1/2 z-5",
+			"absolute top-0 z-5 -translate-y-1/2",
 			{
-				"translate-x-1/2 right-0": !isOut,
-				"-translate-x-1/2 left-0": isOut,
+				"right-0 translate-x-1/2": !isOut,
+				"left-0 -translate-x-1/2": isOut,
 			},
 		]}
 	>
@@ -154,7 +159,7 @@
 				new Map<number, number>(),
 			)}
 			<div
-				class="flex items-center gap-0.5 mt-1 mr-1"
+				class="mt-1 mr-1 flex items-center gap-0.5"
 				transition:scale={{ duration: 150, easing: expoOut }}
 			>
 				{#each reactionMap.entries() as [type, count]}
@@ -168,7 +173,7 @@
 {#snippet content(clone?: boolean)}
 	<MessageWrapper {clone} {setRef} {adornments}>
 		{#if message.type === "Text"}
-			<TextMessage message={message.body} />
+			<TextMessage {message} {profile} />
 		{:else if message.type === "Image"}
 			<ImageMessage message={message.body} />
 		{:else if message.type === "ExpiringImage"}
@@ -181,15 +186,20 @@
 			<AlbumMessage message={message.body} />
 		{:else if message.type === "Unsent"}
 			<UnsentMessage />
+		{:else if message.type === "ProfilePhotoReply"}
+			<ProfilePhotoReplyMessage message={message.body} {profile} />
+		{:else if message.type === "Location"}
+			<LocationMessage message={message.body} />
 		{:else}
 			<UnsupportedMessage type={message.type} />
 		{/if}
+		{console.log(message)}
 	</MessageWrapper>
 {/snippet}
 
 <div
 	class={[
-		"flex flex-col gap-0.5 z-1 relative",
+		"relative z-1 flex flex-col gap-0.5",
 		{
 			"mt-3": firstInStack,
 		},
@@ -200,8 +210,8 @@
 	{/if}
 	<div
 		class={{
-			"*:me-auto *:float-start pe-3": !isOut,
-			"*:ms-auto *:float-end ps-3": isOut,
+			"pe-3 *:float-start *:me-auto": !isOut,
+			"ps-3 *:float-end *:ms-auto": isOut,
 		}}
 		role="button"
 		tabindex="0"
@@ -238,7 +248,7 @@
 	{#if lastInStack}
 		<span
 			class={[
-				"text-xs text-muted-foreground mx-3 mt-0.5",
+				"mx-3 mt-0.5 text-xs text-muted-foreground",
 				{ "text-right": isOut },
 			]}
 		>

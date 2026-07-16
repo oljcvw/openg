@@ -4,12 +4,31 @@ import {
 	mediaHashPrivateSchema,
 	mediaHashPublicSchema,
 } from "$lib/model/media";
-import { albumExpirationSchema, albumPreviewSchema } from "$lib/model/messaging/albums";
+import {
+	albumExpirationSchema,
+	albumPreviewSchema,
+} from "$lib/model/messaging/albums";
 import { unixTimestampMsSchema } from "$lib/model/types";
+
+export const replyPreviewSchema = z.object({
+	albumId: z.int().nonnegative().nullable(),
+	chat1Type: z.string(), // "text",
+	duration: z.number().nullable(),
+	lat: z.number().nullable(),
+	lon: z.number().nullable(),
+	previewMessageId: z.string(),
+	senderId: z.int().nonnegative(),
+	text: z.string().nullable(),
+	type: z.union([z.literal("Text"), z.string()]),
+	url: z.string().nullable(),
+});
+
+export type ReplyPreview = z.infer<typeof replyPreviewSchema>;
 
 const messageBaseSchema = z.object({
 	type: z.string(),
 	body: z.unknown(),
+	replyPreview: replyPreviewSchema.nullable(),
 });
 
 export const apiResponseMessageOverlaySchema = z.object({
@@ -27,7 +46,6 @@ export const apiResponseMessageOverlaySchema = z.object({
 	// replyToMessage: z.unknown().nullable(),
 	// dynamic: z.boolean(),
 	// chat1Type: z.string(),
-	// replyPreview: z.unknown().nullable(),
 });
 
 export const albumMessageSchema = messageBaseSchema.safeExtend({

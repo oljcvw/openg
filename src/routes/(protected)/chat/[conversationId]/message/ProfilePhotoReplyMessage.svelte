@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type { TextMessage } from "$lib/model/messaging/messages";
+	import type { ProfilePhotoReplyMessage } from "$lib/model/messaging/messages";
+	import { profileMediaUrl } from "$lib/util/media";
 	import type { ConversationState } from "../conversation-state.svelte";
 	import { getMessageContext, getMessageMetaContext } from "./context";
 	import MessageTail from "./MessageTail.svelte";
 
-	import TextMessageReply from "./reply-to/TextMessageReply.svelte";
-	import UnsupportedReply from "./reply-to/UnsupportedReply.svelte";
-
 	let {
 		message,
 		profile,
-	}: { message: TextMessage; profile: ConversationState["profile"] } = $props();
+	}: {
+		message: ProfilePhotoReplyMessage["body"];
+		profile: ConversationState["profile"];
+	} = $props();
 
 	const { lastInStack, isOut } = $derived(getMessageContext()());
 	const { clone, setRef, adornments } = $derived(getMessageMetaContext()());
@@ -21,9 +22,6 @@
 	});
 
 	let replyToHeader = $derived.by(() => {
-		if (!message.replyPreview) {
-			return "";
-		}
 		if (isOut) {
 			return `Reply to "${profile?.name ? profile.name : "Someone"}"`;
 		}
@@ -55,18 +53,24 @@
 			}}
 		/>
 	{/if}
-	{#if message.replyPreview}
-		<div
-			class="relative mb-2 overflow-hidden rounded-sm bg-white/60 px-3 py-1 text-xs after:absolute after:top-0 after:bottom-0 after:left-0 after:w-1 after:bg-white/60 after:content-['']"
-		>
+
+	<div
+		class="relative mb-2 flex justify-between gap-2 overflow-hidden rounded-sm bg-white/60 px-3 py-1 text-xs
+        after:absolute after:top-0 after:bottom-0 after:left-0 after:w-1 after:bg-white/60 after:content-['']"
+	>
+		<div>
 			<div class="font-semibold">{replyToHeader}</div>
-			{#if message.replyPreview.type === "Text"}
-				<TextMessageReply replyPreview={message.replyPreview} />
-			{:else}
-				<UnsupportedReply type={message.replyPreview.type} />
-			{/if}
+			<div>Image</div>
 		</div>
-	{/if}
-	<span class="whitespace-pre-wrap">{message.body.text}</span>
+		<div class="flex-none">
+			<img
+				src={profileMediaUrl(message.imageHash, "thumb")}
+				alt=""
+				class="size-10"
+			/>
+		</div>
+	</div>
+
+	<span class="whitespace-pre-wrap">{message.photoContentReply}</span>
 	{@render adornments?.()}
 </div>
