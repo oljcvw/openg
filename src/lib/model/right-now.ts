@@ -6,6 +6,8 @@ export const rightNowStatusSchema = z.enum([
 	"NOT_HOSTING",
 ]);
 
+export type RightNowStatus = z.infer<typeof rightNowStatusSchema>;
+
 export const rightNowShareLocationSchema = z.enum([
 	"DISTANCE_AND_MAP",
 	"DISTANCE_ONLY",
