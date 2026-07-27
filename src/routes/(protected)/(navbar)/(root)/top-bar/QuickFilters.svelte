@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isEqual } from "lodash-es";
 	import { SlidersHorizontalIcon } from "phosphor-svelte";
 
 	import { defaultFilters } from "$lib/components/filters/filters";
@@ -22,9 +23,16 @@
 
 	const filters = $derived(gridState.filters.value ?? defaultFilters);
 	const { ageEnabled, positionEnabled } = $derived(filters);
+	const hasActiveFilters = $derived(!isEqual(filters, defaultFilters));
 </script>
 
-<Button variant="secondary" onclick={() => (openFilters.all = true)}>
+<Button
+	variant="secondary"
+	onclick={() => (openFilters.all = true)}
+	class={{
+		"bg-primary text-primary-foreground": hasActiveFilters,
+	}}
+>
 	<SlidersHorizontalIcon />
 </Button>
 <Button
