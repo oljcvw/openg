@@ -85,18 +85,19 @@ function conversationsStub() {
 		clearActive: vi.fn(),
 		getCachedConversation: vi.fn(() => undefined),
 		setCachedConversation: vi.fn(),
+		removeMessageFromSearch: vi.fn(),
 		updatePreview: vi.fn(),
 		markRead: markReadMock,
 		ensureLoaded: vi.fn(),
 	};
 }
 
-function create() {
+function create(conversations = conversationsStub()) {
 	return new ConversationState({
 		conversationId: CONVERSATION_ID,
 		ourProfileId: OUR_ID,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		conversations: conversationsStub() as any,
+		conversations: conversations as any,
 	});
 }
 
@@ -278,6 +279,65 @@ describe("ConversationState send echo matching", () => {
 		emitMessageSent(echo("real-text", "Text", { text: "hello" }));
 		expect(text().messageId).toBe("real-text");
 		expect(text().status).toBe("sent");
+	});
+});
+
+describe("ConversationState search-corpus synchronization", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		readHandlers.length = 0;
+		messageSentHandlers.length = 0;
+		reconcileHandlers.length = 0;
+	});
+
+	it("removes deleted text and restores deleted or unsent text on rollback", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [message("needle", 2000), message("other", 1000)],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const conversations = conversationsStub();
+		const state = create(conversations);
+		await flush();
+
+		const deletion = state.remove("needle");
+		expect(conversations.removeMessageFromSearch).toHaveBeenCalledWith(
+			CONVERSATION_ID,
+			"needle",
+		);
+		expect(
+			conversations.setCachedConversation.mock.lastCall?.[1].messages.map(
+				(candidate: { messageId: string }) => candidate.messageId,
+			),
+		).toEqual(["other"]);
+
+		deletion.revert();
+		expect(
+			conversations.setCachedConversation.mock.lastCall?.[1].messages.map(
+				(candidate: { messageId: string }) => candidate.messageId,
+			),
+		).toEqual(["needle", "other"]);
+
+		const unsend = state.markMessageAsUnsent("needle");
+		expect(
+			conversations.setCachedConversation.mock.lastCall?.[1].messages.find(
+				(candidate: { messageId: string }) => candidate.messageId === "needle",
+			),
+		).toEqual(expect.objectContaining({ type: "Unsent", unsent: true }));
+
+		unsend.revert();
+		expect(
+			conversations.setCachedConversation.mock.lastCall?.[1].messages.find(
+				(candidate: { messageId: string }) => candidate.messageId === "needle",
+			),
+		).toEqual(
+			expect.objectContaining({
+				type: "Text",
+				unsent: false,
+				body: { text: "needle" },
+			}),
+		);
 	});
 });
 
