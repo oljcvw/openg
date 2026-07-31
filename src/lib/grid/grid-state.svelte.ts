@@ -12,6 +12,10 @@ import {
 	setCachedProfile,
 } from "./grid";
 import { GridSearchFiltersState } from "./grid-search-filters-state.svelte";
+import {
+	type AdjacentProfileIds,
+	getAdjacentProfileIds,
+} from "./profile-navigation";
 
 class GridState {
 	filters = new GridSearchFiltersState({ onRefresh: () => this.retry() });
@@ -24,6 +28,28 @@ class GridState {
 
 	get errorMessage(): string | null {
 		return this.error?.message ?? null;
+	}
+
+	get hasMoreProfiles(): boolean {
+		return this.nextPage !== 0 && this.nextPage !== null;
+	}
+
+	getProfileNavigation(profileId: number): AdjacentProfileIds {
+		return getAdjacentProfileIds(this.items, profileId);
+	}
+
+	async getAdjacentProfileId(
+		profileId: number,
+		direction: "next" | "previous",
+	): Promise<number | null> {
+		let adjacent = this.getProfileNavigation(profileId);
+		if (direction === "previous") return adjacent.previousProfileId;
+		if (adjacent.nextProfileId !== null) return adjacent.nextProfileId;
+		if (!this.hasMoreProfiles) return null;
+
+		await this.loadMore();
+		adjacent = this.getProfileNavigation(profileId);
+		return adjacent.nextProfileId;
 	}
 	currentQuery: z.infer<typeof cascadeV4QuerySchema> | null = null;
 	scrollY = 0;

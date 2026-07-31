@@ -36,5 +36,5 @@
 	{isFavorite}
 	{isVisiting}
 	{hadRecentChat}
-	href="/profile/{id}"
+	href="/profile/{id}?from=browse"
 />
