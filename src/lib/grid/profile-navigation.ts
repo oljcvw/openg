@@ -87,6 +87,23 @@ export function selectProfileForHorizontalSwipe({
 	};
 }
 
+export function selectProfileForNavigationKey({
+	canNavigateNext,
+	canNavigatePrevious,
+	enabled,
+	key,
+}: {
+	canNavigateNext: boolean;
+	canNavigatePrevious: boolean;
+	enabled: boolean;
+	key: string;
+}): ProfileNavigationDirection | null {
+	if (!enabled) return null;
+	if (key === "ArrowLeft" && canNavigatePrevious) return "previous";
+	if (key === "ArrowRight" && canNavigateNext) return "next";
+	return null;
+}
+
 export function isProfileSwipeInteractiveTarget(target: EventTarget | null) {
 	if (!(target instanceof Element)) return false;
 	return Boolean(

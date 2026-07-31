@@ -16,13 +16,18 @@ export const gridColumnsSchema = z.union([
 ]);
 export type GridColumns = z.infer<typeof gridColumnsSchema>;
 
+export const contrastModeSchema = z.enum(["standard", "high"]);
+export type ContrastMode = z.infer<typeof contrastModeSchema>;
+
 const preferencesSchema = z.object({
+	contrastMode: contrastModeSchema.default("standard"),
 	geohash: geohashSchema.nullable().default(null),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
 	gridColumns: gridColumnsSchema.default("auto"),
 	rightNowFilters: rightNowFiltersSchema.optional(),
 	revealMessageRead: z.boolean().default(false),
 	revealProfileViews: z.boolean().default(false),
+	showProfileNavigationButtons: z.boolean().default(false),
 	stayAwake: z.boolean().default(false),
 	units: unitSystemSchema.default("metric"),
 	warnBeforeCopyingErrorDetails: z.boolean().default(true),
@@ -93,6 +98,14 @@ export function getGeohashSnapshot(): string | null {
 
 export function getGridColumnsSnapshot(): GridColumns {
 	return preferencesSnapshot.gridColumns;
+}
+
+export function getContrastModeSnapshot(): ContrastMode {
+	return preferencesSnapshot.contrastMode;
+}
+
+export function getShowProfileNavigationButtonsSnapshot(): boolean {
+	return preferencesSnapshot.showProfileNavigationButtons;
 }
 
 export function getStayAwakeSnapshot(): boolean {

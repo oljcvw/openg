@@ -13,7 +13,10 @@
 		mergeProfileEditIntoCaches,
 		ProfileUnavailableError,
 	} from "$lib/api/users/profiles";
-	import { getPreferences } from "$lib/app-data/preferences.svelte";
+	import {
+		getPreferences,
+		getShowProfileNavigationButtonsSnapshot,
+	} from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import NotFound from "$lib/components/feedback/NotFound.svelte";
@@ -23,6 +26,7 @@
 		isProfileSwipeInteractiveTarget,
 		type ProfileNavigationDirection,
 		selectProfileForHorizontalSwipe,
+		selectProfileForNavigationKey,
 	} from "$lib/grid/profile-navigation";
 	import type { Profile } from "$lib/model/users/profiles";
 	import AboutMe from "./AboutMe.svelte";
@@ -79,6 +83,9 @@
 	);
 	const canNavigatePrevious = $derived(
 		browseNavigation && profileNavigation.previousProfileId !== null,
+	);
+	const showProfileNavigationButtons = $derived(
+		getShowProfileNavigationButtonsSnapshot(),
 	);
 	const swipeOpacity = $derived(
 		Math.max(0.45, 1 - Math.min(Math.abs(swipeOffsetX), 240) / 480),
@@ -315,13 +322,15 @@
 		)
 			return;
 
-		if (event.key === "ArrowLeft" && canNavigatePrevious) {
-			event.preventDefault();
-			void navigateToAdjacent("previous");
-		} else if (event.key === "ArrowRight" && canNavigateNext) {
-			event.preventDefault();
-			void navigateToAdjacent("next");
-		}
+		const direction = selectProfileForNavigationKey({
+			canNavigateNext,
+			canNavigatePrevious,
+			enabled: showProfileNavigationButtons,
+			key: event.key,
+		});
+		if (direction === null) return;
+		event.preventDefault();
+		void navigateToAdjacent(direction);
 	}
 </script>
 
@@ -555,7 +564,7 @@
 	</div>
 {/if}
 
-{#if browseNavigation}
+{#if browseNavigation && showProfileNavigationButtons}
 	<button
 		type="button"
 		aria-label="Previous profile"

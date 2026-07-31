@@ -4,6 +4,7 @@ import {
 	getAdjacentProfileIds,
 	getUniqueProfileIds,
 	selectProfileForHorizontalSwipe,
+	selectProfileForNavigationKey,
 } from "./profile-navigation";
 
 describe("getUniqueProfileIds", () => {
@@ -121,5 +122,64 @@ describe("selectProfileForHorizontalSwipe", () => {
 				elapsedMs: 100,
 			}),
 		).toEqual({ direction: "next", profileId: null });
+	});
+});
+
+describe("selectProfileForNavigationKey", () => {
+	it("keeps arrow-key navigation disabled with hidden controls", () => {
+		expect(
+			selectProfileForNavigationKey({
+				canNavigateNext: true,
+				canNavigatePrevious: true,
+				enabled: false,
+				key: "ArrowLeft",
+			}),
+		).toBeNull();
+		expect(
+			selectProfileForNavigationKey({
+				canNavigateNext: true,
+				canNavigatePrevious: true,
+				enabled: false,
+				key: "ArrowRight",
+			}),
+		).toBeNull();
+	});
+
+	it("maps available arrow keys when accessible controls are enabled", () => {
+		expect(
+			selectProfileForNavigationKey({
+				canNavigateNext: true,
+				canNavigatePrevious: true,
+				enabled: true,
+				key: "ArrowLeft",
+			}),
+		).toBe("previous");
+		expect(
+			selectProfileForNavigationKey({
+				canNavigateNext: true,
+				canNavigatePrevious: true,
+				enabled: true,
+				key: "ArrowRight",
+			}),
+		).toBe("next");
+	});
+
+	it("ignores unavailable neighbors and unrelated keys", () => {
+		expect(
+			selectProfileForNavigationKey({
+				canNavigateNext: false,
+				canNavigatePrevious: false,
+				enabled: true,
+				key: "ArrowRight",
+			}),
+		).toBeNull();
+		expect(
+			selectProfileForNavigationKey({
+				canNavigateNext: true,
+				canNavigatePrevious: true,
+				enabled: true,
+				key: "Enter",
+			}),
+		).toBeNull();
 	});
 });

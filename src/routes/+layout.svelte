@@ -11,6 +11,7 @@
 	import { Toaster } from "svelte-sonner";
 
 	import {
+		getContrastModeSnapshot,
 		getStayAwakeSnapshot,
 		hydratePreferences,
 	} from "$lib/app-data/preferences.svelte";
@@ -24,6 +25,11 @@
 		applyStayAwake,
 		registerStayAwakeVisibilityListener,
 	} from "$lib/platform/stay-awake";
+	import { applyContrastMode } from "$lib/theme/contrast";
+
+	$effect(() => {
+		applyContrastMode(getContrastModeSnapshot());
+	});
 
 	$effect(() => {
 		const stayAwake = getStayAwakeSnapshot();

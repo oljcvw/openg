@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	contrastModeSchema,
 	gridColumnsSchema,
 	parsePreferences,
 } from "$lib/app-data/preferences.svelte";
@@ -13,11 +14,19 @@ describe("preference migration", () => {
 		});
 
 		expect(preferences).toMatchObject({
+			contrastMode: "standard",
 			gridColumns: "auto",
 			revealMessageRead: true,
+			showProfileNavigationButtons: false,
 			stayAwake: false,
 			units: "imperial",
 		});
+	});
+
+	it("accepts standard and high contrast modes", () => {
+		expect(contrastModeSchema.parse("standard")).toBe("standard");
+		expect(contrastModeSchema.parse("high")).toBe("high");
+		expect(contrastModeSchema.safeParse("system").success).toBe(false);
 	});
 
 	it("accepts Auto or two through seven Browse columns", () => {

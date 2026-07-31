@@ -1,6 +1,8 @@
 <script lang="ts">
+	import ContrastSetting from "./ContrastSetting.svelte";
 	import GridColumnsSetting from "./GridColumnsSetting.svelte";
 	import NotificationsLink from "./NotificationsLink.svelte";
+	import ProfileNavigationButtonsSetting from "./ProfileNavigationButtonsSetting.svelte";
 	import RevealMessageReadSetting from "./RevealMessageReadSetting.svelte";
 	import RevealProfileViewSetting from "./RevealProfileViewSetting.svelte";
 	import StayAwakeSetting from "./StayAwakeSetting.svelte";
@@ -9,8 +11,11 @@
 
 <h2>Display</h2>
 <UnitsSetting />
+<ContrastSetting />
 <GridColumnsSetting />
 <StayAwakeSetting />
+<h2>Accessibility</h2>
+<ProfileNavigationButtonsSetting />
 <h2>Notifications</h2>
 <NotificationsLink />
 <h2>Privacy</h2>

@@ -42,6 +42,35 @@
 	--message-bubble-out: oklch(0.8618 0.1973 89.76);
 }
 
+:root[data-contrast="high"] {
+	--background: oklch(0.08 0 0);
+	--foreground: oklch(1 0 0);
+	--card: oklch(0.16 0 0);
+	--card-foreground: oklch(1 0 0);
+	--popover: oklch(0.16 0 0);
+	--popover-foreground: oklch(1 0 0);
+	--primary: oklch(0.92 0.2 100);
+	--primary-foreground: oklch(0.12 0.03 80);
+	--secondary: oklch(0.32 0 0);
+	--secondary-foreground: oklch(1 0 0);
+	--muted: oklch(0.24 0 0);
+	--muted-foreground: oklch(0.88 0 0);
+	--accent: oklch(0.92 0.2 100);
+	--accent-foreground: oklch(0.12 0.03 80);
+	--destructive: oklch(0.76 0.21 25);
+	--border: oklch(1 0 0 / 38%);
+	--input: oklch(1 0 0 / 45%);
+	--ring: oklch(0.92 0.2 100);
+	--sidebar: oklch(0.16 0 0);
+	--sidebar-foreground: oklch(1 0 0);
+	--sidebar-primary: oklch(0.92 0.2 100);
+	--sidebar-primary-foreground: oklch(0.12 0.03 80);
+	--sidebar-accent: oklch(0.28 0 0);
+	--sidebar-accent-foreground: oklch(1 0 0);
+	--sidebar-border: oklch(1 0 0 / 38%);
+	--sidebar-ring: oklch(0.92 0.2 100);
+}
+
 @theme inline {
 	--font-sans: "IBM Plex Sans Variable", sans-serif;
 	--font-heading: "IBM Plex Sans Variable", sans-serif;
