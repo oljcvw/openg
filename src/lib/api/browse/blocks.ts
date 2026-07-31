@@ -44,6 +44,7 @@ export async function blockUser({
 	await fetchRest(`/v3/me/blocks/${profileId}`, {
 		method: "POST",
 	}).then((res) => res.assertOk());
+	blockedUsersCache = null;
 }
 
 export async function unblockUser({
@@ -54,4 +55,12 @@ export async function unblockUser({
 	await fetchRest(`/v3/me/blocks/${profileId}`, {
 		method: "DELETE",
 	}).then((res) => res.assertOk());
+	blockedUsersCache = null;
+}
+
+export async function unblockAllUsers() {
+	await fetchRest("/v3/me/blocks", {
+		method: "DELETE",
+	}).then((res) => res.assertOk());
+	blockedUsersCache = null;
 }

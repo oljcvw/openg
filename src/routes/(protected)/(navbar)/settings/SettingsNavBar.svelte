@@ -11,6 +11,26 @@
 			title: "Privacy",
 			back: "/settings/account",
 		},
+		[`${base}/account/email`]: {
+			title: "Change Email",
+			back: "/settings/account",
+		},
+		[`${base}/account/password`]: {
+			title: "Change Password",
+			back: "/settings/account",
+		},
+		[`${base}/account/blocked`]: {
+			title: "Blocked Users",
+			back: "/settings/account",
+		},
+		[`${base}/account/hidden`]: {
+			title: "Hidden Users",
+			back: "/settings/account",
+		},
+		[`${base}/account/delete`]: {
+			title: "Delete Account",
+			back: "/settings/account",
+		},
 		[`${base}/app`]: { title: "App Settings", back: "/settings" },
 		[`${base}/app/notifications`]: {
 			title: "Notifications",

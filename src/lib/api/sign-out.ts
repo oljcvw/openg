@@ -19,16 +19,19 @@ export async function signOut(): Promise<void> {
 		console.error(error);
 	}
 
+	await clearLocalAccountState();
+
+	await goto("/auth/sign-in");
+}
+
+export async function clearLocalAccountState(): Promise<void> {
 	try {
 		await clearAccountPreferences();
 	} catch (error) {
 		console.error(error);
 	}
-
 	clearInboxMarkers();
 	clearAccountCaches();
-
-	await goto("/auth/sign-in");
 }
 
 function clearInboxMarkers(): void {

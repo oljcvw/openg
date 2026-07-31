@@ -267,4 +267,27 @@ describe("demo route data matches the real schemas", () => {
 			after.some((e) => e.data.conversationId === third.data.conversationId),
 		).toBe(false);
 	});
+
+	it("account settings routes round-trip privacy and list mutations", () => {
+		route("/v3/me/prefs/settings", "PUT", {
+			settings: { incognito: true },
+		});
+		expect(
+			(route("/v3/me/prefs/settings") as { incognito: boolean }).incognito,
+		).toBe(true);
+
+		const blocked = route("/v3.1/me/blocks") as {
+			blocking: Array<{ profileId: number }>;
+		};
+		route(`/v3/me/blocks/${blocked.blocking[0]?.profileId}`, "DELETE");
+		expect(
+			(route("/v3.1/me/blocks") as { blocking: unknown[] }).blocking,
+		).toHaveLength(0);
+
+		const hidden = route("/v1/hides") as {
+			hides: Array<{ profileId: number }>;
+		};
+		route(`/v1/hides/${hidden.hides[0]?.profileId}`, "DELETE");
+		expect((route("/v1/hides") as { hides: unknown[] }).hides).toHaveLength(0);
+	});
 });

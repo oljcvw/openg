@@ -37,6 +37,23 @@ import { demoRightNowFeed } from "./mock/right-now";
 
 type DemoResponse = { status: number; body: unknown };
 
+let demoAccountPreferences = {
+	profileId: demoMeProfileId,
+	locationSearchOptOut: false,
+	incognito: false,
+	hideViewedMe: false,
+	approximateDistance: true,
+	viewRightNowNsfw: false,
+	showOnMap: true,
+	mapLocationFuzzRadius: null,
+};
+let demoBlockedProfiles = [
+	{ profileId: 1002, blockedTime: Date.now() - 86_400_000 },
+];
+let demoHiddenProfiles = [
+	{ profileId: 1003, displayName: "Hidden profile", mediaHash: "demo" },
+];
+
 function ok(body: unknown): DemoResponse {
 	return { status: 200, body };
 }
@@ -68,6 +85,11 @@ export function demoCallMethod(method: string): unknown {
 		case "notification_test":
 		case "notification_sync":
 		case "notification_cancel":
+			return undefined;
+		case "validate_password_complexity":
+		case "update_account_password":
+		case "update_account_email":
+		case "delete_account":
 			return undefined;
 		default:
 			return undefined;
@@ -111,7 +133,55 @@ export function demoRoute(
 		return ok({ profiles: demoReceivedTaps() });
 	if (rawPath === "/v2/taps/add") return ok({ isMutual: false });
 	if (rawPath === "/v7/views/list") return ok(demoViews());
-	if (rawPath === "/v3.1/me/blocks") return ok({ blocking: [] });
+	if (rawPath === "/v3/me/prefs/settings" && method === "GET") {
+		return ok(demoAccountPreferences);
+	}
+	if (rawPath === "/v3/me/prefs/settings" && method === "PUT") {
+		const settings =
+			(body as { settings?: Partial<typeof demoAccountPreferences> })
+				?.settings ?? {};
+		demoAccountPreferences = { ...demoAccountPreferences, ...settings };
+		return ok({});
+	}
+	if (rawPath === "/v3.1/me/blocks" && method === "GET") {
+		return ok({ blocking: demoBlockedProfiles });
+	}
+	if (rawPath === "/v3/me/blocks" && method === "DELETE") {
+		demoBlockedProfiles = [];
+		return ok({});
+	}
+	if (
+		method === "DELETE" &&
+		segments[0] === "v3" &&
+		segments[1] === "me" &&
+		segments[2] === "blocks" &&
+		segments.length === 4
+	) {
+		const profileId = Number(segments[3]);
+		demoBlockedProfiles = demoBlockedProfiles.filter(
+			(profile) => profile.profileId !== profileId,
+		);
+		return ok({});
+	}
+	if (rawPath === "/v1/hides" && method === "GET") {
+		return ok({ hides: demoHiddenProfiles });
+	}
+	if (rawPath === "/v1/hides" && method === "DELETE") {
+		demoHiddenProfiles = [];
+		return ok({});
+	}
+	if (
+		method === "DELETE" &&
+		segments[0] === "v1" &&
+		segments[1] === "hides" &&
+		segments.length === 3
+	) {
+		const profileId = Number(segments[2]);
+		demoHiddenProfiles = demoHiddenProfiles.filter(
+			(profile) => profile.profileId !== profileId,
+		);
+		return ok({});
+	}
 	if (method === "POST" && rawPath === "/v4/inbox") {
 		return ok(demoConversations(num(params.get("page")) ?? 1));
 	}

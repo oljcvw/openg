@@ -111,6 +111,10 @@ pub fn run() {
             client: OnceLock::new(),
         })
         .invoke_handler(tauri::generate_handler![
+            api::account::validate_password_complexity,
+            api::account::update_account_password,
+            api::account::update_account_email,
+            api::account::delete_account,
             api::auth::login,
             api::auth::login_with_google,
             api::auth::google_sign_in,

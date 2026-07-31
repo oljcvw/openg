@@ -119,6 +119,28 @@ export const methods = {
 		request: z.undefined(),
 		response: z.undefined(),
 	},
+	validate_password_complexity: {
+		request: z.object({ password: z.string().min(1).max(1024) }),
+		response: z.undefined(),
+	},
+	update_account_password: {
+		request: z.object({
+			currentPassword: z.string().min(1).max(1024),
+			newPassword: z.string().min(8).max(1024),
+		}),
+		response: z.undefined(),
+	},
+	update_account_email: {
+		request: z.object({
+			email: z.email(),
+			password: z.string().min(1).max(1024),
+		}),
+		response: z.undefined(),
+	},
+	delete_account: {
+		request: z.undefined(),
+		response: z.undefined(),
+	},
 } satisfies Record<string, { request: z.ZodType; response: z.ZodType }>;
 
 export async function callMethod<T extends keyof typeof methods>(
