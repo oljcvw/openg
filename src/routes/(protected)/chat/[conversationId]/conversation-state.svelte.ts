@@ -198,6 +198,10 @@ export class ConversationState {
 					newValue.push(local);
 				} else {
 					dropped++;
+					this.#conversations.removeMessageFromSearch(
+						this.conversationId,
+						local.messageId,
+					);
 				}
 			}
 
@@ -427,6 +431,10 @@ export class ConversationState {
 		const index = this.messages.findIndex((m) => m.messageId === messageId);
 		if (index > -1) {
 			const [removed] = this.messages.splice(index, 1);
+			this.#conversations.removeMessageFromSearch(
+				this.conversationId,
+				messageId,
+			);
 			if (isLatest) this.#updatePreview(this.messages.at(0));
 			this.#syncCache();
 			const revertDeleteMessage = () => {

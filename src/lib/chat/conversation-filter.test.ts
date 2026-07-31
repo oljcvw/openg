@@ -7,8 +7,13 @@ function conversation(
 	name: string,
 	{
 		favorite = false,
+		previewText = null,
 		unreadCount = 0,
-	}: { favorite?: boolean; unreadCount?: number } = {},
+	}: {
+		favorite?: boolean;
+		previewText?: string | null;
+		unreadCount?: number;
+	} = {},
 ): Conversation {
 	return {
 		type: "full_conversation_v1",
@@ -29,7 +34,15 @@ function conversation(
 			],
 			lastActivityTimestamp: 0,
 			unreadCount,
-			preview: null,
+			preview:
+				previewText === null
+					? null
+					: {
+							type: "Text",
+							text: previewText,
+							albumId: null,
+							imageHash: null,
+						},
 			muted: false,
 			pinned: false,
 			favorite,
@@ -69,5 +82,37 @@ describe("conversation filters", () => {
 				query: "Ben",
 			}),
 		).toEqual([]);
+	});
+
+	it("matches preview text and complete-history message matches", () => {
+		const withPreview = conversation("Dee", {
+			previewText: "Meet after work?",
+		});
+		const withHistoryMatch = conversation("Eli");
+		const rows = [withPreview, withHistoryMatch];
+
+		expect(
+			filterConversations(rows, { filter: "all", query: "AFTER WORK" }),
+		).toEqual([withPreview]);
+		expect(
+			filterConversations(rows, {
+				filter: "all",
+				messageMatchIds: [withHistoryMatch.data.conversationId],
+				query: "older message",
+			}),
+		).toEqual([withHistoryMatch]);
+	});
+
+	it("still applies unread and favorite filters to message-body matches", () => {
+		const unread = conversation("Fox", { unreadCount: 1 });
+		const read = conversation("Gus");
+
+		expect(
+			filterConversations([unread, read], {
+				filter: "unread",
+				messageMatchIds: [unread.data.conversationId, read.data.conversationId],
+				query: "message text",
+			}),
+		).toEqual([unread]);
 	});
 });

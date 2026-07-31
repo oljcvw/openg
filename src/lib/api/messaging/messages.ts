@@ -23,9 +23,11 @@ const conversationMessagesSchema = z.object({
 });
 
 export async function getConversationMessages({
+	abortController,
 	conversationId,
 	pageKey,
 }: {
+	abortController?: AbortController;
 	conversationId: string;
 	pageKey?: string;
 }) {
@@ -33,7 +35,7 @@ export async function getConversationMessages({
 	if (pageKey !== undefined) params.set("pageKey", pageKey);
 	const messages = await fetchRest(
 		`/v5/chat/conversation/${conversationId}/message?` + params.toString(),
-		{ method: "GET" },
+		{ method: "GET", abortController },
 	).then((res) => res.jsonParsed(conversationMessagesSchema));
 	return messages;
 }

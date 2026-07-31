@@ -7,6 +7,7 @@
 	import {
 		type ConversationFilter,
 		filterConversations,
+		normalizeConversationSearchQuery,
 	} from "$lib/chat/conversation-filter";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
@@ -64,16 +65,43 @@
 	let deleteIds: string[] = $state([]);
 	let searchQuery = $state("");
 	let conversationFilter: ConversationFilter = $state("all");
+	const normalizedSearchQuery = $derived(
+		normalizeConversationSearchQuery(searchQuery),
+	);
+	const loadedConversationVersions = $derived(
+		conversations.entries
+			.map(
+				(entry) =>
+					`${entry.data.conversationId}:${entry.data.lastActivityTimestamp}`,
+			)
+			.join("\u0000"),
+	);
+	const messageMatchIds = $derived(
+		conversations.messageSearchQuery === normalizedSearchQuery
+			? conversations.messageSearchMatchIds
+			: [],
+	);
 
 	const filteredEntries = $derived(
 		filterConversations(conversations.entries, {
 			filter: conversationFilter,
+			messageMatchIds,
 			query: searchQuery,
 		}),
 	);
 	const filtering = $derived(
 		searchQuery.trim() !== "" || conversationFilter !== "all",
 	);
+
+	$effect(() => {
+		void loadedConversationVersions;
+		conversations.cancelMessageSearch(searchQuery);
+		if (normalizedSearchQuery === "") return;
+		const timeout = setTimeout(() => {
+			void conversations.searchLoadedMessages(searchQuery);
+		}, 250);
+		return () => clearTimeout(timeout);
+	});
 
 	async function compensateScroll() {
 		if (!container) return;
@@ -239,7 +267,7 @@
 					<Input
 						bind:value={searchQuery}
 						type="search"
-						aria-label="Search loaded chats by display name"
+						aria-label="Search loaded chats by name or message text"
 						placeholder="Search chats"
 						class="pl-9"
 					/>
@@ -258,6 +286,34 @@
 						</Button>
 					{/each}
 				</div>
+				{#if normalizedSearchQuery !== "" && conversations.messageSearchStatus === "searching"}
+					<p class="px-1 text-xs text-muted-foreground" aria-live="polite">
+						Searching message history…
+						{conversations.messageSearchScanned}/{conversations.messageSearchTotal}
+						chats checked
+					</p>
+				{:else if normalizedSearchQuery !== "" && conversations.messageSearchStatus === "partial"}
+					<div
+						class="flex items-center justify-between gap-2 px-1 text-xs text-muted-foreground"
+						aria-live="polite"
+					>
+						<span>
+							Couldn’t search {conversations.messageSearchFailureCount}
+							{conversations.messageSearchFailureCount === 1
+								? "chat"
+								: "chats"}; results may be incomplete.
+						</span>
+						<Button
+							variant="ghost"
+							size="sm"
+							class="h-7 shrink-0 px-2 text-xs"
+							onclick={() =>
+								void conversations.searchLoadedMessages(searchQuery)}
+						>
+							Retry
+						</Button>
+					</div>
+				{/if}
 			</div>
 		{/if}
 		{#await conversations.initial}
@@ -294,11 +350,24 @@
 						<div
 							class="flex min-h-48 flex-col items-center justify-center gap-1 px-4 text-center"
 						>
-							<p class="font-medium">No matching chats</p>
-							<p class="text-sm text-muted-foreground">
-								Try another name or filter. More results may appear as older
-								chats load.
-							</p>
+							{#if normalizedSearchQuery !== "" && conversations.messageSearchStatus === "searching"}
+								<p class="font-medium">Searching loaded chats…</p>
+								<p class="text-sm text-muted-foreground">
+									Checking complete message history for chats already in your
+									Inbox.
+								</p>
+							{:else}
+								<p class="font-medium">No matching chats</p>
+								<p class="text-sm text-muted-foreground">
+									{#if conversations.messageSearchStatus === "partial"}
+										Some message histories could not be searched. Retry, or try
+										another name, message, or filter.
+									{:else}
+										Try another name, message, or filter. More results may
+										appear as older chats load.
+									{/if}
+								</p>
+							{/if}
 						</div>
 					{:else}
 						<EmptyConversationsList />
@@ -309,7 +378,7 @@
 						<Skeleton class="h-24.5 w-full shrink-0" />
 					{/each}
 				{/if}
-				{#if conversations.nextPage !== null}
+				{#if conversations.nextPage !== null && normalizedSearchQuery === ""}
 					<div class="h-0" use:observeSentinel></div>
 				{/if}
 			</div>
