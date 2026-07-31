@@ -3,18 +3,17 @@
 	import { onMount } from "svelte";
 
 	import {
-		getBlockedUsers,
-		unblockAllUsers,
-		unblockUser,
-	} from "$lib/api/browse/blocks";
+		type BlockedProfile,
+		getBlockedProfiles,
+	} from "$lib/api/browse/blocked-profiles";
+	import { unblockAllUsers, unblockUser } from "$lib/api/browse/blocks";
 	import { showErrorToast } from "$lib/api/error";
+	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
 	import { Button } from "$lib/components/ui/button";
 	import * as Empty from "$lib/components/ui/empty";
 	import * as Item from "$lib/components/ui/item";
 	import { Skeleton } from "$lib/components/ui/skeleton";
-
-	type BlockedProfile = Awaited<ReturnType<typeof getBlockedUsers>>[number];
 
 	let profiles = $state<BlockedProfile[] | null>(null);
 	let clearDialogOpen = $state(false);
@@ -24,7 +23,7 @@
 
 	async function load(): Promise<void> {
 		try {
-			profiles = await getBlockedUsers();
+			profiles = await getBlockedProfiles();
 		} catch (error) {
 			showErrorToast({
 				label: "Failed to load blocked users",
@@ -84,9 +83,14 @@
 	</div>
 	<Item.Group>
 		{#each profiles as profile (profile.profileId)}
+			{@const displayName =
+				profile.displayName || `Profile ${profile.profileId}`}
 			<Item.Root variant="outline">
+				<Item.Media variant="image">
+					<UserAvatar mediaHash={profile.mediaHash} class="size-full" />
+				</Item.Media>
 				<Item.Content>
-					<Item.Title>Profile {profile.profileId}</Item.Title>
+					<Item.Title>{displayName}</Item.Title>
 					<Item.Description>
 						Blocked {new Date(profile.blockedTime).toLocaleDateString()}
 					</Item.Description>
@@ -95,6 +99,7 @@
 					<Button
 						variant="outline"
 						size="sm"
+						aria-label="Unblock {displayName}"
 						onclick={() => void unblock(profile.profileId)}
 					>
 						Unblock
