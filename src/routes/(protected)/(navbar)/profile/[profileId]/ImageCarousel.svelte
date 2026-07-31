@@ -105,10 +105,13 @@
 	let indicatorHeight = $state(BULLET_SIZE);
 </script>
 
-<div class="relative aspect-3/4 h-auto max-h-photo w-full">
+<div
+	class="relative h-[calc(var(--screen-safe)*0.666667)] w-full"
+	data-profile-swipe-surface
+>
 	{#if medias.length}
 		<div
-			class="carousel relative flex size-full max-h-[inherit] snap-y snap-mandatory flex-col overflow-auto *:snap-center"
+			class="carousel relative flex size-full max-h-[inherit] snap-y snap-mandatory flex-col overflow-hidden *:snap-center"
 			bind:this={gallery}
 			onscroll={() => {
 				if (!gallery) return;

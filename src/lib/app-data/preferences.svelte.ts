@@ -19,19 +19,31 @@ export type GridColumns = z.infer<typeof gridColumnsSchema>;
 export const contrastModeSchema = z.enum(["standard", "high"]);
 export type ContrastMode = z.infer<typeof contrastModeSchema>;
 
-const preferencesSchema = z.object({
-	contrastMode: contrastModeSchema.default("standard"),
-	geohash: geohashSchema.nullable().default(null),
-	gridSearchFilters: gridSearchFiltersSchema.optional(),
-	gridColumns: gridColumnsSchema.default("auto"),
-	rightNowFilters: rightNowFiltersSchema.optional(),
-	revealMessageRead: z.boolean().default(false),
-	revealProfileViews: z.boolean().default(false),
-	showProfileNavigationButtons: z.boolean().default(false),
-	stayAwake: z.boolean().default(false),
-	units: unitSystemSchema.default("metric"),
-	warnBeforeCopyingErrorDetails: z.boolean().default(true),
-});
+const preferencesSchema = z
+	.object({
+		contrastMode: contrastModeSchema.default("standard"),
+		geohash: geohashSchema.nullable().default(null),
+		gridSearchFilters: gridSearchFiltersSchema.optional(),
+		gridColumns: gridColumnsSchema.default("auto"),
+		profileSwipeNavigation: z.boolean().optional(),
+		rightNowFilters: rightNowFiltersSchema.optional(),
+		revealMessageRead: z.boolean().default(false),
+		revealProfileViews: z.boolean().default(false),
+		// Removed in favor of swipe-only navigation. Keep accepting old payloads so
+		// existing preferences migrate without a reset.
+		showProfileNavigationButtons: z.boolean().optional(),
+		stayAwake: z.boolean().default(false),
+		units: unitSystemSchema.default("metric"),
+		warnBeforeCopyingErrorDetails: z.boolean().default(true),
+	})
+	.transform((input) => {
+		const { showProfileNavigationButtons, ...value } = input;
+		void showProfileNavigationButtons;
+		return {
+			...value,
+			profileSwipeNavigation: value.profileSwipeNavigation ?? true,
+		};
+	});
 
 type Preferences = z.infer<typeof preferencesSchema>;
 
@@ -104,8 +116,8 @@ export function getContrastModeSnapshot(): ContrastMode {
 	return preferencesSnapshot.contrastMode;
 }
 
-export function getShowProfileNavigationButtonsSnapshot(): boolean {
-	return preferencesSnapshot.showProfileNavigationButtons;
+export function getProfileSwipeNavigationSnapshot(): boolean {
+	return preferencesSnapshot.profileSwipeNavigation;
 }
 
 export function getStayAwakeSnapshot(): boolean {

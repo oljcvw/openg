@@ -16,11 +16,21 @@ describe("preference migration", () => {
 		expect(preferences).toMatchObject({
 			contrastMode: "standard",
 			gridColumns: "auto",
+			profileSwipeNavigation: true,
 			revealMessageRead: true,
-			showProfileNavigationButtons: false,
 			stayAwake: false,
 			units: "imperial",
 		});
+	});
+
+	it("removes the retired navigation-button preference", () => {
+		const preferences = parsePreferences({
+			profileSwipeNavigation: false,
+			showProfileNavigationButtons: true,
+		});
+
+		expect(preferences.profileSwipeNavigation).toBe(false);
+		expect(preferences).not.toHaveProperty("showProfileNavigationButtons");
 	});
 
 	it("accepts standard and high contrast modes", () => {

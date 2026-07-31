@@ -12,6 +12,9 @@ export interface TouchPullOptions {
 	scrollRoot: () => Element | null;
 	boundaryDistance: () => number;
 	position: PullPosition;
+	canStart?: (target: EventTarget | null) => boolean;
+	primaryAxisRatio?: number;
+	requireBoundaryAtStart?: boolean;
 }
 
 /**
@@ -20,7 +23,15 @@ export interface TouchPullOptions {
  */
 export function attachTouchPull(
 	model: PullModel,
-	{ listenTarget, scrollRoot, boundaryDistance, position }: TouchPullOptions,
+	{
+		listenTarget,
+		scrollRoot,
+		boundaryDistance,
+		position,
+		canStart = () => true,
+		primaryAxisRatio = 1,
+		requireBoundaryAtStart = false,
+	}: TouchPullOptions,
 ): () => void {
 	let touchId: number | null = null;
 	let startX = 0;
@@ -62,12 +73,16 @@ export function attachTouchPull(
 		if (!engaged && !dead) {
 			const nativeScrollOwnsGesture = boundaryDistance() >= AT_BOUNDARY_PX;
 			if (nativeScrollOwnsGesture) {
+				if (requireBoundaryAtStart) dead = true;
 				anchorPullOrigin(touch);
 				return;
 			}
 			const pull = pullDelta(touch);
 			const cross = Math.abs(touch.clientX - startX);
-			if (pull <= -SLOP_PX || cross > Math.abs(pull)) {
+			if (
+				pull <= -SLOP_PX ||
+				cross * Math.max(primaryAxisRatio, 1) > Math.abs(pull)
+			) {
 				dead = true;
 				return;
 			}
@@ -140,12 +155,13 @@ export function attachTouchPull(
 			if (engaged) model.cancel();
 			reset();
 		}
+		if (!canStart(event.target)) return;
 		const touch = event.changedTouches[0];
 		touchId = touch.identifier;
 		anchorPullOrigin(touch);
 		startTarget = event.target;
 		engaged = false;
-		dead = false;
+		dead = requireBoundaryAtStart && boundaryDistance() >= AT_BOUNDARY_PX;
 		addGestureListeners();
 	};
 

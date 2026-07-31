@@ -2,7 +2,7 @@
 	import ContrastSetting from "./ContrastSetting.svelte";
 	import GridColumnsSetting from "./GridColumnsSetting.svelte";
 	import NotificationsLink from "./NotificationsLink.svelte";
-	import ProfileNavigationButtonsSetting from "./ProfileNavigationButtonsSetting.svelte";
+	import ProfileSwipeNavigationSetting from "./ProfileSwipeNavigationSetting.svelte";
 	import RevealMessageReadSetting from "./RevealMessageReadSetting.svelte";
 	import RevealProfileViewSetting from "./RevealProfileViewSetting.svelte";
 	import StayAwakeSetting from "./StayAwakeSetting.svelte";
@@ -15,7 +15,7 @@
 <GridColumnsSetting />
 <StayAwakeSetting />
 <h2>Accessibility</h2>
-<ProfileNavigationButtonsSetting />
+<ProfileSwipeNavigationSetting />
 <h2>Notifications</h2>
 <NotificationsLink />
 <h2>Privacy</h2>

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
 	getAdjacentProfileIds,
 	getUniqueProfileIds,
+	isProfileSwipeInteractiveTarget,
 	selectProfileForHorizontalSwipe,
 	selectProfileForNavigationKey,
 } from "./profile-navigation";
@@ -181,5 +182,29 @@ describe("selectProfileForNavigationKey", () => {
 				key: "Enter",
 			}),
 		).toBeNull();
+	});
+});
+
+describe("isProfileSwipeInteractiveTarget", () => {
+	it("allows the inline photo surface to own profile gestures", () => {
+		const surface = document.createElement("div");
+		surface.dataset.profileSwipeSurface = "";
+		const link = document.createElement("a");
+		const image = document.createElement("img");
+		link.appendChild(image);
+		surface.appendChild(link);
+
+		expect(isProfileSwipeInteractiveTarget(image)).toBe(false);
+	});
+
+	it("protects controls and the full-screen photo viewer", () => {
+		const button = document.createElement("button");
+		const viewer = document.createElement("div");
+		viewer.className = "pswp";
+		const image = document.createElement("img");
+		viewer.appendChild(image);
+
+		expect(isProfileSwipeInteractiveTarget(button)).toBe(true);
+		expect(isProfileSwipeInteractiveTarget(image)).toBe(true);
 	});
 });

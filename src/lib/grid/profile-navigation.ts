@@ -106,6 +106,7 @@ export function selectProfileForNavigationKey({
 
 export function isProfileSwipeInteractiveTarget(target: EventTarget | null) {
 	if (!(target instanceof Element)) return false;
+	if (target.closest("[data-profile-swipe-surface]")) return false;
 	return Boolean(
 		target.closest(
 			[

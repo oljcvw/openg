@@ -4,42 +4,39 @@
 	import { showErrorToast } from "$lib/api/error";
 	import {
 		getPreferences,
-		getShowProfileNavigationButtonsSnapshot,
+		getProfileSwipeNavigationSnapshot,
 		setPreferences,
 	} from "$lib/app-data/preferences.svelte";
 	import SwitchField from "$lib/components/ui/switch-field/SwitchField.svelte";
 
-	let value = $state(getShowProfileNavigationButtonsSnapshot());
+	let value = $state(getProfileSwipeNavigationSnapshot());
 	let loaded = $state(false);
 
 	onMount(() => {
 		void getPreferences()
 			.then((preferences) => {
-				value = preferences.showProfileNavigationButtons;
+				value = preferences.profileSwipeNavigation;
 				loaded = true;
 			})
 			.catch((error) => {
-				console.error(
-					"Failed to load profile navigation button preference",
-					error,
-				);
+				console.error("Failed to load profile swipe preference", error);
 			});
 	});
 </script>
 
 <SwitchField
-	title="Show profile navigation buttons"
-	description="Show accessible Previous and Next buttons when viewing Browse profiles, and enable keyboard arrow navigation."
+	title="Swipe between profiles"
+	description="Swipe left or right to move between profiles opened from Browse. No navigation arrows are shown."
 	disabled={!loaded}
 	bind:checked={
 		() => value,
 		(next: boolean) => {
 			const previous = value;
 			value = next;
-			setPreferences({ showProfileNavigationButtons: next }).catch((error) => {
+			setPreferences({ profileSwipeNavigation: next }).catch((error) => {
 				value = previous;
 				showErrorToast({
-					label: "Failed to save profile navigation button preference",
+					label: "Failed to save profile swipe preference",
 					error,
 				});
 			});

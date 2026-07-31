@@ -6,11 +6,17 @@
 	let {
 		ourProfileId,
 		profileId,
+		dismissOffsetY = 0,
+		dismissSettling = false,
+		dismissClosing = false,
 		tapType,
 		onTap,
 	}: {
 		ourProfileId: number;
 		profileId: number;
+		dismissOffsetY?: number;
+		dismissSettling?: boolean;
+		dismissClosing?: boolean;
 		tapType: TapType | null;
 		onTap: (tapType: TapType | null) => void;
 	} = $props();
@@ -20,7 +26,17 @@
 
 {#if !isOurProfile}
 	<div
-		class="fixed bottom-[calc(0.5rem+var(--safe-area-bottom)+var(--nav-height))] left-1/2 w-90.5 max-w-full -translate-x-1/2 px-2"
+		class={[
+			"fixed bottom-[calc(0.5rem+var(--safe-area-bottom)+var(--nav-height))] left-1/2 z-40 w-90.5 max-w-full px-2 will-change-transform",
+			{
+				"transition-[transform,opacity] motion-reduce:transition-none":
+					dismissSettling,
+			},
+		]}
+		style:opacity={dismissClosing ? 0 : 1}
+		style:transform={`translate3d(-50%, ${dismissOffsetY}px, 0)`}
+		style:transition-duration={dismissClosing ? "220ms" : "170ms"}
+		style:transition-timing-function="cubic-bezier(0.2, 0.85, 0.25, 1)"
 	>
 		<nav
 			class="flex flex-row items-center gap-2 rounded-full bg-muted p-2 shadow-xl backdrop-blur-lg"
