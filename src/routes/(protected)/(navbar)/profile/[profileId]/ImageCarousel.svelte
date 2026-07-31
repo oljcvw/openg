@@ -32,6 +32,10 @@
 					children: ".item",
 					pswpModule: () => import("photoswipe"),
 					mainClass: `pswp--buttons-visible`,
+					imageClickAction: "close",
+					tapAction: "close",
+					doubleTapAction: false,
+					loop: false,
 				});
 				lightbox.addFilter("itemData", (itemData) => {
 					const img = itemData.element?.querySelector("img");
@@ -56,9 +60,11 @@
 					});
 				});
 				lightbox.on("change", () => {
+					const index = lightbox?.pswp?.currIndex;
+					if (index === undefined || !gallery) return;
 					gallery?.scrollTo({
-						top: lightbox?.pswp?.currSlide?.data.element?.offsetTop ?? 0,
-						behavior: "instant",
+						top: index * gallery.clientHeight,
+						behavior: "auto",
 					});
 				});
 				lightbox.on("close", () => {
@@ -106,13 +112,15 @@
 </script>
 
 <div
-	class="relative h-[calc(var(--screen-safe)*0.666667)] w-full"
+	class="relative w-full"
 	data-profile-swipe-surface
+	style:height="calc(var(--screen-safe) * 0.7)"
 >
 	{#if medias.length}
 		<div
-			class="carousel relative flex size-full max-h-[inherit] snap-y snap-mandatory flex-col overflow-hidden *:snap-center"
+			class="carousel relative flex size-full max-h-[inherit] snap-y snap-mandatory flex-col *:snap-center"
 			bind:this={gallery}
+			data-profile-photo-carousel
 			onscroll={() => {
 				if (!gallery) return;
 				const item = gallery.scrollTop / gallery.clientHeight;
@@ -128,10 +136,17 @@
 					BULLET_SIZE +
 					(item > 0 && item < medias.length - 1 ? indicatorStretch : 0);
 			}}
+			style="overflow-y: auto; overscroll-behavior-y: auto;"
 		>
-			{#each medias as { mediaHash, createdAt }}
+			{#each medias as { mediaHash, createdAt }, index}
 				{@const src = profileMediaUrl(mediaHash, "full")}
-				<ImageCarouselItem {src} thumb={src} {createdAt} />
+				<ImageCarouselItem
+					{src}
+					thumb={src}
+					{createdAt}
+					photoNumber={index + 1}
+					photoCount={medias.length}
+				/>
 			{/each}
 		</div>
 		<div

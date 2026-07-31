@@ -47,6 +47,7 @@
 	import Height from "./HeightWeightBodyType.svelte";
 	import ImageCarousel from "./ImageCarousel.svelte";
 	import OnlineStatus from "./OnlineStatus.svelte";
+	import { waitForProfileDismissAnimations } from "./profile-dismiss";
 	import ProfileAlbums from "./ProfileAlbums.svelte";
 	import ProfileTags from "./ProfileTags.svelte";
 	import SexualPosition from "./SexualPosition.svelte";
@@ -58,6 +59,7 @@
 	const profileId = $derived(Number(page.params.profileId));
 
 	let profileScrollShell = $state<HTMLElement | null>(null);
+	let profileMain = $state<HTMLElement | null>(null);
 	let profilePhotoPane = $state<HTMLElement | null>(null);
 	let profileScrollTop = $state(0);
 	let profilePhotoHeight = $state(0);
@@ -190,7 +192,15 @@
 		else void goto("/", { replaceState: true });
 	}
 
-	async function animateProfileClose() {
+	async function finishAnimatedProfileClose() {
+		await tick();
+		const element = profileMain;
+		if (!dismissClosing || !element) return;
+		await waitForProfileDismissAnimations(() => element.getAnimations());
+		if (dismissClosing) closeProfile();
+	}
+
+	function animateProfileClose() {
 		if (dismissClosing) return;
 		dismissClosing = true;
 		if (reducedMotionPreferred()) {
@@ -198,8 +208,7 @@
 			return;
 		}
 		dismissExitY = Math.max(window.innerHeight * 1.08, 640);
-		await new Promise((resolve) => window.setTimeout(resolve, 280));
-		closeProfile();
+		void finishAnimatedProfileClose();
 	}
 
 	dismissModel.onTrigger = () => void animateProfileClose();
@@ -480,6 +489,7 @@
 			}}
 		>
 			<main
+				bind:this={profileMain}
 				class={[
 					"relative mx-auto min-h-overscrollable w-full max-w-200 touch-pan-y overflow-hidden bg-background will-change-transform",
 					{
@@ -497,9 +507,10 @@
 			>
 				{#if loading || !profile}
 					<div
-						class="relative h-[calc(var(--screen-safe)*0.666667)] w-full"
+						class="relative w-full"
 						bind:this={profilePhotoPane}
 						data-profile-photo-pane
+						style:height="calc(var(--screen-safe) * 0.7)"
 					>
 						<Skeleton class="size-full rounded-none" />
 					</div>

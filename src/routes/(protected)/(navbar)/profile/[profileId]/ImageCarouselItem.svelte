@@ -3,10 +3,14 @@
 		src,
 		thumb,
 		createdAt,
+		photoNumber,
+		photoCount,
 	}: {
 		src: string;
 		thumb: string;
 		createdAt: number | null;
+		photoNumber: number;
+		photoCount: number;
 	} = $props();
 
 	let width: number | null = $state(null);
@@ -20,7 +24,7 @@
 	data-pswp-height={height}
 	data-created-at={createdAt}
 	href={src}
-	aria-label="Open image"
+	aria-label={`Open photo ${photoNumber} of ${photoCount}`}
 >
 	<img
 		src={thumb}
