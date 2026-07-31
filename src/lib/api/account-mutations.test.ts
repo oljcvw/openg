@@ -1,0 +1,67 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { callMethod } from "$lib/api";
+import {
+	changeEmail,
+	changePassword,
+	deleteAccount,
+} from "$lib/api/account-mutations";
+import { clearLocalAccountState } from "$lib/api/sign-out";
+import { deleteFavoriteNotesForAccount } from "$lib/app-data/favorite-notes";
+
+vi.mock("$lib/api", () => ({
+	callMethod: vi.fn(),
+}));
+vi.mock("$lib/api/sign-out", () => ({
+	clearLocalAccountState: vi.fn(),
+}));
+vi.mock("$lib/app-data/favorite-notes", () => ({
+	deleteFavoriteNotesForAccount: vi.fn(),
+}));
+
+const callMethodMock = vi.mocked(callMethod);
+const clearLocalAccountStateMock = vi.mocked(clearLocalAccountState);
+const deleteFavoriteNotesForAccountMock = vi.mocked(
+	deleteFavoriteNotesForAccount,
+);
+
+describe("account mutation local cleanup", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		callMethodMock.mockImplementation((method) =>
+			Promise.resolve(method === "auth_state" ? 100 : undefined),
+		);
+	});
+
+	it("deletes only the current account's private local data after account deletion", async () => {
+		await deleteAccount();
+
+		expect(callMethodMock).toHaveBeenNthCalledWith(1, "auth_state");
+		expect(callMethodMock).toHaveBeenNthCalledWith(2, "delete_account");
+		expect(deleteFavoriteNotesForAccountMock).toHaveBeenCalledWith(100);
+		expect(callMethodMock).toHaveBeenNthCalledWith(
+			3,
+			"notification_clear_account",
+			{ accountId: 100 },
+		);
+		expect(clearLocalAccountStateMock).toHaveBeenCalledOnce();
+	});
+
+	it("preserves private notes during email and password changes", async () => {
+		await changeEmail({
+			email: "new@example.com",
+			password: "current-password",
+		});
+		await changePassword({
+			currentPassword: "current-password",
+			newPassword: "different-password",
+		});
+
+		expect(deleteFavoriteNotesForAccountMock).not.toHaveBeenCalled();
+		expect(callMethodMock).not.toHaveBeenCalledWith(
+			"notification_clear_account",
+			expect.anything(),
+		);
+		expect(clearLocalAccountStateMock).toHaveBeenCalledTimes(2);
+	});
+});
