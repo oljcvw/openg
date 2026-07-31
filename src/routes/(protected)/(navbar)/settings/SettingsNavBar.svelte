@@ -12,6 +12,10 @@
 			back: "/settings/account",
 		},
 		[`${base}/app`]: { title: "App Settings", back: "/settings" },
+		[`${base}/app/notifications`]: {
+			title: "Notifications",
+			back: "/settings/app",
+		},
 		[`${base}/profile`]: { title: "Edit Profile", back: "/settings" },
 	};
 

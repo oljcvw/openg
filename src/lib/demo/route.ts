@@ -53,6 +53,22 @@ export function demoCallMethod(method: string): unknown {
 			return { "user-agent": "demo", "l-device-info": "demo" };
 		case "recaptcha_first_party_enabled":
 			return false;
+		case "notification_get_settings":
+		case "notification_set_settings":
+			return {
+				supported: false,
+				enabled: false,
+				messages: true,
+				taps: true,
+				showPreviews: false,
+				permission: "unsupported",
+				lastSuccessfulCheck: null,
+				lastError: null,
+			};
+		case "notification_test":
+		case "notification_sync":
+		case "notification_cancel":
+			return undefined;
 		default:
 			return undefined;
 	}

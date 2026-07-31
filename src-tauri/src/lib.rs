@@ -106,6 +106,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(api::google_oauth::plugin())
+        .plugin(api::notifications::plugin())
         .manage(AppState {
             client: OnceLock::new(),
         })
@@ -121,6 +122,11 @@ pub fn run() {
             api::rest::request,
             api::media_upload::upload_album_media,
             api::media_upload::upload_chat_media,
+            api::notifications::notification_get_settings,
+            api::notifications::notification_set_settings,
+            api::notifications::notification_test,
+            api::notifications::notification_sync,
+            api::notifications::notification_cancel,
             api::ws::ws_connect,
             api::ws::ws_send,
             api::client::rotate_api_params,

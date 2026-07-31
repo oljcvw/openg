@@ -25,6 +25,18 @@ export const restrictionSchema = z.object({
 });
 export type Restriction = z.infer<typeof restrictionSchema>;
 
+export const notificationSettingsSchema = z.object({
+	supported: z.boolean(),
+	enabled: z.boolean(),
+	messages: z.boolean(),
+	taps: z.boolean(),
+	showPreviews: z.boolean(),
+	permission: z.enum(["granted", "denied", "unsupported"]),
+	lastSuccessfulCheck: z.number().int().nonnegative().nullable(),
+	lastError: z.string().nullable(),
+});
+export type NotificationSettings = z.infer<typeof notificationSettingsSchema>;
+
 export const methods = {
 	login: {
 		request: z.object({
@@ -81,6 +93,31 @@ export const methods = {
 	recaptcha_first_party_enabled: {
 		request: z.undefined(),
 		response: z.boolean(),
+	},
+	notification_get_settings: {
+		request: z.undefined(),
+		response: notificationSettingsSchema,
+	},
+	notification_set_settings: {
+		request: z.object({
+			enabled: z.boolean(),
+			messages: z.boolean(),
+			taps: z.boolean(),
+			showPreviews: z.boolean(),
+		}),
+		response: notificationSettingsSchema,
+	},
+	notification_test: {
+		request: z.undefined(),
+		response: z.undefined(),
+	},
+	notification_sync: {
+		request: z.undefined(),
+		response: z.undefined(),
+	},
+	notification_cancel: {
+		request: z.undefined(),
+		response: z.undefined(),
 	},
 } satisfies Record<string, { request: z.ZodType; response: z.ZodType }>;
 

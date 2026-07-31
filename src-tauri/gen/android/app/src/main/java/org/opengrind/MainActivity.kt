@@ -18,6 +18,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.crates.keyring.Keyring
+import org.json.JSONObject
+import org.opengrind.notifications.NotificationNotifier
+import org.opengrind.notifications.NotificationRoute
 
 class MainActivity : TauriActivity() {
 	private var insetsTop = 0
@@ -28,6 +31,7 @@ class MainActivity : TauriActivity() {
 	private var webViewRef: WebView? = null
 	private var pendingWebViewWarning: WebViewSupport.Status? = null
 	private var shownWebViewWarning = false
+	private var pendingNotificationRoute: String? = null
 
 	override val handleBackNavigation = false
 
@@ -83,6 +87,7 @@ class MainActivity : TauriActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		enableEdgeToEdge()
 		Keyring.initializeNdkContext(applicationContext)
+		pendingNotificationRoute = notificationRoute(intent)
 		pendingWebViewWarning = WebViewSupport.current(
 			context = this,
 			minSupportedMajor = BuildConfig.MIN_SUPPORTED_WEBVIEW_MAJOR,
@@ -130,7 +135,30 @@ class MainActivity : TauriActivity() {
 		webView.addJavascriptInterface(InsetsInterface(), "__AndroidInsets")
 		webView.addJavascriptInterface(BackInterface(), "__AndroidBack")
 		webView.addJavascriptInterface(ScreenInterface(), "__AndroidScreen")
+		openPendingNotificationRoute()
 		maybeWarnAboutWebView()
+	}
+
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		pendingNotificationRoute = notificationRoute(intent)
+		openPendingNotificationRoute()
+	}
+
+	private fun notificationRoute(intent: Intent?): String? =
+		NotificationRoute.sanitize(
+			intent?.getStringExtra(NotificationNotifier.EXTRA_ROUTE),
+		)
+
+	private fun openPendingNotificationRoute() {
+		val webView = webViewRef ?: return
+		val route = pendingNotificationRoute ?: return
+		pendingNotificationRoute = null
+		webView.evaluateJavascript(
+			"window.location.assign(${JSONObject.quote(route)})",
+			null,
+		)
 	}
 
 	private fun maybeWarnAboutWebView() {

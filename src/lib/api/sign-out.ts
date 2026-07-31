@@ -8,6 +8,12 @@ const INBOX_LAST_VIEWED_PREFIX = "chat:inbox-last-viewed:";
 
 export async function signOut(): Promise<void> {
 	try {
+		await callMethod("notification_cancel");
+	} catch (error) {
+		console.error(error);
+	}
+
+	try {
 		await callMethod("logout");
 	} catch (error) {
 		console.error(error);
