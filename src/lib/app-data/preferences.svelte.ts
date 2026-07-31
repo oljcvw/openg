@@ -7,19 +7,31 @@ import { geohashSchema } from "$lib/model/geohash";
 import { type UnitSystem, unitSystemSchema } from "$lib/util/units";
 import { existsAppDataFile, readAppDataFile, writeAppDataFileAtomic } from ".";
 
+export const gridColumnsSchema = z.union([
+	z.literal("auto"),
+	z.number().int().min(2).max(7),
+]);
+export type GridColumns = z.infer<typeof gridColumnsSchema>;
+
 const preferencesSchema = z.object({
 	geohash: geohashSchema.nullable().default(null),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
+	gridColumns: gridColumnsSchema.default("auto"),
 	revealMessageRead: z.boolean().default(false),
 	revealProfileViews: z.boolean().default(false),
+	stayAwake: z.boolean().default(false),
 	units: unitSystemSchema.default("metric"),
 	warnBeforeCopyingErrorDetails: z.boolean().default(true),
 });
 
 type Preferences = z.infer<typeof preferencesSchema>;
 
+export function parsePreferences(value: unknown): Preferences {
+	return preferencesSchema.parse(value);
+}
+
 let writeQueue: Promise<unknown> = Promise.resolve();
-let preferencesSnapshot = $state<Preferences>(preferencesSchema.parse({}));
+let preferencesSnapshot = $state<Preferences>(parsePreferences({}));
 
 function enqueueWrite<T>(task: () => Promise<T>): Promise<T> {
 	const run = writeQueue.then(task);
@@ -35,10 +47,10 @@ let hydrating: Promise<Preferences> | null = null;
 
 async function readFromDisk(): Promise<Preferences> {
 	if (!(await existsAppDataFile("preferences.data"))) {
-		return preferencesSchema.parse({});
+		return parsePreferences({});
 	}
 	const bytes = await readAppDataFile("preferences.data");
-	return preferencesSchema.parse(decode(bytes));
+	return parsePreferences(decode(bytes));
 }
 
 export async function getPreferences(): Promise<Preferences> {
@@ -75,6 +87,14 @@ export function getGeohashSnapshot(): string | null {
 	return preferencesSnapshot.geohash;
 }
 
+export function getGridColumnsSnapshot(): GridColumns {
+	return preferencesSnapshot.gridColumns;
+}
+
+export function getStayAwakeSnapshot(): boolean {
+	return preferencesSnapshot.stayAwake;
+}
+
 export async function hydratePreferences(): Promise<void> {
 	await getPreferences();
 }
@@ -84,7 +104,7 @@ export async function setPreferences(
 ): Promise<void> {
 	await enqueueWrite(async () => {
 		const oldValues = await getPreferences();
-		const preferences = preferencesSchema.parse({
+		const preferences = parsePreferences({
 			...oldValues,
 			...newValues,
 		});
@@ -96,7 +116,7 @@ export async function setPreferences(
 
 async function resetToDefaults(): Promise<void> {
 	await enqueueWrite(async () => {
-		const preferences = preferencesSchema.parse({});
+		const preferences = parsePreferences({});
 		await writeAppDataFileAtomic("preferences.data", encode(preferences));
 		cache = preferences;
 		preferencesSnapshot = preferences;
@@ -110,7 +130,7 @@ export async function clearAccountPreferences(): Promise<void> {
 	await enqueueWrite(async () => {
 		const kept: Partial<Preferences> = { ...(await getPreferences()) };
 		for (const key of accountPreferenceKeys) delete kept[key];
-		const preferences = preferencesSchema.parse(kept);
+		const preferences = parsePreferences(kept);
 		await writeAppDataFileAtomic("preferences.data", encode(preferences));
 		cache = preferences;
 		preferencesSnapshot = preferences;

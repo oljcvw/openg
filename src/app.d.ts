@@ -21,6 +21,9 @@ declare global {
 		__AndroidBack?: {
 			moveTaskToBack(): void;
 		};
+		__AndroidScreen?: {
+			setStayAwake(enabled: boolean): void;
+		};
 	}
 }
 

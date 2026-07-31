@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.widget.TextView
@@ -66,6 +67,18 @@ class MainActivity : TauriActivity() {
 			runOnUiThread { this@MainActivity.moveTaskToBack(true) }
 		}
 	}
+
+	inner class ScreenInterface {
+		@JavascriptInterface fun setStayAwake(enabled: Boolean) {
+			runOnUiThread {
+				if (enabled) {
+					window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+				} else {
+					window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+				}
+			}
+		}
+	}
 	
 	override fun onCreate(savedInstanceState: Bundle?) {
 		enableEdgeToEdge()
@@ -116,6 +129,7 @@ class MainActivity : TauriActivity() {
 		webViewRef = webView
 		webView.addJavascriptInterface(InsetsInterface(), "__AndroidInsets")
 		webView.addJavascriptInterface(BackInterface(), "__AndroidBack")
+		webView.addJavascriptInterface(ScreenInterface(), "__AndroidScreen")
 		maybeWarnAboutWebView()
 	}
 

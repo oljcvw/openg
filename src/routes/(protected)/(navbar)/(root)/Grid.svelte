@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
+	import { getGridColumnsSnapshot } from "$lib/app-data/preferences.svelte";
 	import { nearestScrollableAncestor } from "$lib/components/feedback/refresh/scroll-chain";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import type { GridProfile } from "$lib/grid/grid";
@@ -12,6 +13,7 @@
 		geohash: string;
 	} = $props();
 
+	const gridColumns = $derived(getGridColumnsSnapshot());
 	const gridProfiles = $derived.by(() => {
 		const byId = new Map<number, GridProfile>();
 		for (const item of gridState.items) {
@@ -63,7 +65,13 @@
 	}
 </script>
 
-<div class="photo-grid relative">
+<div
+	class="photo-grid relative"
+	data-columns={gridColumns === "auto" ? undefined : gridColumns}
+	style:grid-template-columns={gridColumns === "auto"
+		? undefined
+		: `repeat(${gridColumns}, minmax(0, 1fr))`}
+>
 	{#if gridState.loading}
 		{#each Array.from({ length: 20 })}
 			<div class="aspect-square animate-pulse bg-stone-700"></div>

@@ -10,13 +10,27 @@
 	import { onMount } from "svelte";
 	import { Toaster } from "svelte-sonner";
 
-	import { hydratePreferences } from "$lib/app-data/preferences.svelte";
+	import {
+		getStayAwakeSnapshot,
+		hydratePreferences,
+	} from "$lib/app-data/preferences.svelte";
 	import {
 		applyAndroidInsets,
 		applyBackGestureHandler,
 		registerAndroidBackButtonListener,
 	} from "$lib/platform/android-native-bridge";
 	import { blockZoom } from "$lib/platform/block-zoom";
+	import {
+		applyStayAwake,
+		registerStayAwakeVisibilityListener,
+	} from "$lib/platform/stay-awake";
+
+	$effect(() => {
+		const stayAwake = getStayAwakeSnapshot();
+		void applyStayAwake(stayAwake).catch((error) => {
+			console.error("Failed to apply Stay Awake preference", error);
+		});
+	});
 
 	onMount(() => {
 		if (env.PUBLIC_TEST_INSETS) {
@@ -46,7 +60,11 @@
 		void hydratePreferences().catch((error) => {
 			console.error("Failed to hydrate preferences", error);
 		});
-		return releaseZoomBlock;
+		const releaseStayAwake = registerStayAwakeVisibilityListener();
+		return () => {
+			releaseStayAwake();
+			releaseZoomBlock();
+		};
 	});
 
 	import { env } from "$env/dynamic/public";

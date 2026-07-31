@@ -4,8 +4,10 @@
 
 	import ToastUnimplemented from "$lib/components/feedback/ToastUnimplemented.svelte";
 	import * as Item from "$lib/components/ui/item";
+	import GridColumnsSetting from "./GridColumnsSetting.svelte";
 	import RevealMessageReadSetting from "./RevealMessageReadSetting.svelte";
 	import RevealProfileViewSetting from "./RevealProfileViewSetting.svelte";
+	import StayAwakeSetting from "./StayAwakeSetting.svelte";
 	import UnitsSetting from "./UnitsSetting.svelte";
 </script>
 
@@ -43,6 +45,9 @@
 {/snippet}
 <h2>Display</h2>
 <UnitsSetting />
+<GridColumnsSetting />
+<StayAwakeSetting />
+<h2>Notifications</h2>
 {@render item({
 	title: "Notifications",
 	unimplemented: { feature: "Notifications", issue: 45 },
@@ -50,15 +55,6 @@
 <h2>Privacy</h2>
 <RevealMessageReadSetting />
 <RevealProfileViewSetting />
-<h2>Security</h2>
-{@render item({
-	title: "Discreet app icon",
-	unimplemented: { feature: "Discreet app icon", issue: 97 },
-})}
-{@render item({
-	title: "PIN",
-	unimplemented: { feature: "PIN", issue: 50 },
-})}
 
 <style lang="postcss">
 	@reference "$layout";
