@@ -1,6 +1,7 @@
 pub mod account;
 pub mod auth;
 pub mod client;
+pub mod diagnostics;
 pub mod google_oauth;
 pub mod media_upload;
 pub mod notifications;

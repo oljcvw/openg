@@ -21,6 +21,7 @@
 		registerAndroidBackButtonListener,
 	} from "$lib/platform/android-native-bridge";
 	import { blockZoom } from "$lib/platform/block-zoom";
+	import { registerMediaOriginLogging } from "$lib/platform/media-origin-logging";
 	import {
 		applyStayAwake,
 		registerStayAwakeVisibilityListener,
@@ -67,7 +68,11 @@
 			console.error("Failed to hydrate preferences", error);
 		});
 		const releaseStayAwake = registerStayAwakeVisibilityListener();
+		const releaseMediaOriginLogging = isTauri()
+			? registerMediaOriginLogging()
+			: () => {};
 		return () => {
+			releaseMediaOriginLogging();
 			releaseStayAwake();
 			releaseZoomBlock();
 		};

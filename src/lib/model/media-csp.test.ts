@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const SIGNED_MEDIA_ORIGIN = "https://d2wxe7lth7kp8g.cloudfront.net";
+const SIGNED_MEDIA_SOURCE = "https://*.cloudfront.net";
 
 function directives(csp: string): Map<string, string[]> {
 	return new Map(
@@ -14,14 +14,17 @@ function directives(csp: string): Map<string, string[]> {
 }
 
 describe("remote media content security policy", () => {
-	it("allows Grindr's exact signed-media origin for images and media", () => {
+	it("limits CloudFront wildcard access to image and media loading", () => {
 		const config = JSON.parse(
 			readFileSync(join(process.cwd(), "src-tauri/tauri.conf.json"), "utf8"),
 		) as { app: { security: { csp: string } } };
 		const csp = directives(config.app.security.csp);
 
-		expect(csp.get("img-src")).toContain(SIGNED_MEDIA_ORIGIN);
-		expect(csp.get("media-src")).toContain(SIGNED_MEDIA_ORIGIN);
-		expect(config.app.security.csp).not.toContain("https://*.cloudfront.net");
+		expect(csp.get("img-src")).toContain(SIGNED_MEDIA_SOURCE);
+		expect(csp.get("media-src")).toContain(SIGNED_MEDIA_SOURCE);
+		for (const [directive, sources] of csp) {
+			if (directive === "img-src" || directive === "media-src") continue;
+			expect(sources, directive).not.toContain(SIGNED_MEDIA_SOURCE);
+		}
 	});
 });

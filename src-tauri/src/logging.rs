@@ -1,6 +1,7 @@
 use tracing_subscriber::EnvFilter;
 
-const DEFAULT_FILTER: &str = "open_grind_lib=warn,grindr=warn";
+const DEFAULT_FILTER: &str =
+	"open_grind_lib::api::diagnostics=info,open_grind_lib=warn,grindr=warn";
 
 pub fn init() {
 	let filter = EnvFilter::try_from_default_env()
@@ -68,10 +69,15 @@ mod tests {
 		let output = capture_with_default_filter(|| {
 			tracing::warn!("[session] persist failed");
 			tracing::warn!(target: "grindr::ws", "connection error");
+			tracing::info!(
+				target: "open_grind_lib::api::diagnostics",
+				"[media-origin] observed"
+			);
 		});
 
 		assert!(output.contains("[session] persist failed"));
 		assert!(output.contains("connection error"));
+		assert!(output.contains("[media-origin] observed"));
 	}
 
 	#[test]

@@ -17,7 +17,7 @@
 	import { getNow, subscribeNow } from "$lib/util/now.svelte";
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
 	import { albumExpiry } from "./album-expiry";
-	import { albumMediaLoadError } from "./album-media-error";
+	import { preloadAlbumSlides } from "./album-media-preload";
 	import LockedMedia from "./LockedMedia.svelte";
 	import { MessageMediaState } from "./message-media.svelte";
 
@@ -76,63 +76,7 @@
 			const loaded = await getAlbumContent(message.albumId).then(
 				async (res) => ({
 					...res,
-					content: await Promise.all(
-						res.content.map(async (slide) => {
-							if (slide.contentType.startsWith("video/")) {
-								const video = document.createElement("video");
-								video.src = slide.url ?? "";
-								video.load();
-								try {
-									await new Promise<void>((resolve, reject) => {
-										if (video.readyState >= 1) resolve();
-										video.addEventListener("loadedmetadata", () => resolve(), {
-											once: true,
-										});
-										video.addEventListener(
-											"error",
-											() => reject(albumMediaLoadError("video")),
-											{
-												once: true,
-											},
-										);
-									});
-									return {
-										...slide,
-										width: video.videoWidth,
-										height: video.videoHeight,
-									};
-								} finally {
-									video.remove();
-								}
-							} else {
-								const img = document.createElement("img");
-								img.src = slide.url ?? "";
-								try {
-									await new Promise<void>((resolve, reject) => {
-										if (img.complete) resolve();
-										img.addEventListener("load", () => resolve(), {
-											once: true,
-										});
-										img.addEventListener(
-											"error",
-											() => reject(albumMediaLoadError("image")),
-											{
-												once: true,
-											},
-										);
-									});
-									return {
-										...slide,
-										src: img.src,
-										width: img.naturalWidth,
-										height: img.naturalHeight,
-									};
-								} finally {
-									img.remove();
-								}
-							}
-						}),
-					),
+					content: await preloadAlbumSlides(res.content),
 				}),
 			);
 			cachedAlbum = loaded;
