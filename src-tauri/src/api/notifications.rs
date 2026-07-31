@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+#[cfg(any(target_os = "android", test))]
 use serde_json::Value;
 
 #[cfg(target_os = "android")]
@@ -191,6 +192,7 @@ where
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg(any(target_os = "android", test))]
 struct PollMessage {
 	conversation_id: String,
 	title: String,
@@ -201,6 +203,7 @@ struct PollMessage {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg(any(target_os = "android", test))]
 struct PollTap {
 	profile_id: u64,
 	display_name: Option<String>,
@@ -222,6 +225,7 @@ enum PollResponse {
 	},
 }
 
+#[cfg(any(target_os = "android", test))]
 fn parse_messages(body: &[u8]) -> Result<Vec<PollMessage>, String> {
 	let root: Value = serde_json::from_slice(body)
 		.map_err(|e| format!("inbox decode failed: {e}"))?;
@@ -265,6 +269,7 @@ fn parse_messages(body: &[u8]) -> Result<Vec<PollMessage>, String> {
 		.collect())
 }
 
+#[cfg(any(target_os = "android", test))]
 fn parse_taps(body: &[u8]) -> Result<Vec<PollTap>, String> {
 	let root: Value = serde_json::from_slice(body)
 		.map_err(|e| format!("taps decode failed: {e}"))?;
@@ -289,6 +294,7 @@ fn parse_taps(body: &[u8]) -> Result<Vec<PollTap>, String> {
 		.collect())
 }
 
+#[cfg(any(target_os = "android", test))]
 fn value_u64(value: &Value) -> Option<u64> {
 	value
 		.as_u64()
