@@ -10,6 +10,7 @@
 	import * as Drawer from "$lib/components/ui/drawer";
 	import * as Tabs from "$lib/components/ui/tabs";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+	import ComposerAlbumsTab from "./ComposerAlbumsTab.svelte";
 	import ComposerMediaTab from "./ComposerMediaTab.svelte";
 	import ComposerUnimplementedTab from "./ComposerUnimplementedTab.svelte";
 
@@ -132,7 +133,13 @@
 						/>
 					</Tabs.Content>
 					<Tabs.Content value="albums">
-						<ComposerUnimplementedTab label="Sharing albums" issue={33} />
+						<!-- Tabs.Content renders regardless of the active tab, so the
+						     tab is told whether it is showing rather than fetching
+						     albums every time the sheet opens. -->
+						<ComposerAlbumsTab
+							active={selectedTab === "albums"}
+							onClose={() => (open = false)}
+						/>
 					</Tabs.Content>
 					<Tabs.Content value="location">
 						<ComposerUnimplementedTab label="Sharing location" issue={35} />

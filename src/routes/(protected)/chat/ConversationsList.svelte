@@ -6,6 +6,7 @@
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
+	import InboxTabs from "$lib/components/shared/InboxTabs.svelte";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 	import { below } from "$lib/util/breakpoints.svelte";
@@ -206,6 +207,9 @@
 		]}
 		onscroll={() => (conversations.listScrollY = container?.scrollTop ?? 0)}
 	>
+		{#if !selecting}
+			<InboxTabs class="sticky top-0 z-10 mb-3 shrink-0 shadow-md" />
+		{/if}
 		{#await conversations.initial}
 			{#each Array(8)}
 				<Skeleton class="h-24.5 w-full shrink-0" />

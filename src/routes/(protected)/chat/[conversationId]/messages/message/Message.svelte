@@ -4,6 +4,7 @@
 	import { scale } from "svelte/transition";
 
 	import type { ApiResponseMessage } from "$lib/model/messaging/messages";
+	import AlbumContentMessage from "./AlbumContentMessage.svelte";
 	import AlbumMessage from "./AlbumMessage.svelte";
 	import { setMessageContext } from "./context";
 	import ExpiringImageMessage from "./ExpiringImageMessage.svelte";
@@ -29,6 +30,7 @@
 		onDelete,
 		onVisible,
 		onUnsend,
+		onUnshareAlbum,
 	}: {
 		message: ApiResponseMessage;
 		isOut: boolean;
@@ -41,6 +43,7 @@
 		onDelete?: () => void;
 		onVisible?: () => void;
 		onUnsend?: () => void;
+		onUnshareAlbum?: () => void;
 	} = $props();
 
 	const firstInStack = $derived(indexInStack === 0);
@@ -179,6 +182,8 @@
 			/>
 		{:else if message.type === "Album" || message.type === "ExpiringAlbum" || message.type === "ExpiringAlbumV2"}
 			<AlbumMessage message={message.body} />
+		{:else if message.type === "AlbumContentReply" || message.type === "AlbumContentReaction"}
+			<AlbumContentMessage message={message.body} />
 		{:else if message.type === "Unsent"}
 			<UnsentMessage />
 		{:else}
@@ -272,5 +277,6 @@
 		reactionAvailable={message.reactions.length === 0 && !isOut}
 		{onDelete}
 		{onUnsend}
+		{onUnshareAlbum}
 	/>
 {/if}

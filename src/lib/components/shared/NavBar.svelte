@@ -65,7 +65,11 @@
 			<FireIcon weight="fill" />
 			Interest
 		</a>
-		<a href="/chat" data-active={page.route.id === "/(protected)/chat"}>
+		<a
+			href="/chat"
+			data-active={page.route.id === "/(protected)/chat" ||
+				page.route.id?.startsWith("/(protected)/albums")}
+		>
 			<ChatCircleIcon weight="fill" />
 			Inbox
 			{#if hasUnread}
