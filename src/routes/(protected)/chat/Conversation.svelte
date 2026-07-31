@@ -5,6 +5,7 @@
 		BellSimpleSlashIcon,
 		PushPinIcon,
 		PushPinSlashIcon,
+		StarIcon,
 		TrashIcon,
 	} from "phosphor-svelte";
 
@@ -106,6 +107,16 @@
 				<span
 					class="flex max-w-full items-center gap-1 font-medium text-muted-foreground"
 				>
+					{#if conversation.data.favorite}
+						<span title="Favorite">
+							<span class="sr-only">Favorite</span>
+							<StarIcon
+								aria-hidden="true"
+								weight="fill"
+								class="size-4 shrink-0 text-primary"
+							/>
+						</span>
+					{/if}
 					{#if conversation.data.pinned}
 						<PushPinIcon weight="fill" class="size-4 shrink-0" />
 					{/if}

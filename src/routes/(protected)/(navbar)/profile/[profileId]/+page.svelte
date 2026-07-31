@@ -29,6 +29,7 @@
 	import BlockedProfile from "./BlockedProfile.svelte";
 	import ProfileBottomNavBar from "./bottom-nav/ProfileBottomNavBar.svelte";
 	import Distance from "./Distance.svelte";
+	import FavoriteNote from "./FavoriteNote.svelte";
 	import Ethnicity from "./fields/Ethnicity.svelte";
 	import Genders from "./fields/GendersPronouns.svelte";
 	import HealthPractices from "./fields/HealthPractices.svelte";
@@ -478,6 +479,11 @@
 							</div>
 						{/if}
 						<ProfileTags tags={profileTags} />
+						<FavoriteNote
+							accountProfileId={ourProfileId}
+							{profileId}
+							isFavorite={profile.isFavorite}
+						/>
 						{#if aboutMe !== null}
 							<AboutMe>{aboutMe}</AboutMe>
 						{/if}

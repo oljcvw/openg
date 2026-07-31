@@ -1,12 +1,19 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
+	import { MagnifyingGlassIcon } from "phosphor-svelte";
 	import { onMount, tick, untrack } from "svelte";
 
+	import {
+		type ConversationFilter,
+		filterConversations,
+	} from "$lib/chat/conversation-filter";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import InboxTabs from "$lib/components/shared/InboxTabs.svelte";
+	import { Button } from "$lib/components/ui/button";
+	import { Input } from "$lib/components/ui/input";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 	import { below } from "$lib/util/breakpoints.svelte";
@@ -55,6 +62,18 @@
 	let selecting = $state(false);
 	let deleteDialogOpen = $state(false);
 	let deleteIds: string[] = $state([]);
+	let searchQuery = $state("");
+	let conversationFilter: ConversationFilter = $state("all");
+
+	const filteredEntries = $derived(
+		filterConversations(conversations.entries, {
+			filter: conversationFilter,
+			query: searchQuery,
+		}),
+	);
+	const filtering = $derived(
+		searchQuery.trim() !== "" || conversationFilter !== "all",
+	);
 
 	async function compensateScroll() {
 		if (!container) return;
@@ -208,7 +227,38 @@
 		onscroll={() => (conversations.listScrollY = container?.scrollTop ?? 0)}
 	>
 		{#if !selecting}
-			<InboxTabs class="sticky top-0 z-10 mb-3 shrink-0 shadow-md" />
+			<div
+				class="sticky top-0 z-10 mb-3 flex shrink-0 flex-col gap-2 bg-background pb-2 shadow-md"
+			>
+				<InboxTabs />
+				<div class="relative">
+					<MagnifyingGlassIcon
+						aria-hidden="true"
+						class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+					/>
+					<Input
+						bind:value={searchQuery}
+						type="search"
+						aria-label="Search loaded chats by display name"
+						placeholder="Search chats"
+						class="pl-9"
+					/>
+				</div>
+				<div class="flex gap-1" aria-label="Chat filters">
+					{#each [["all", "All"], ["unread", "Unread"], ["favorites", "Favorites"]] as option}
+						<Button
+							variant={conversationFilter === option[0] ? "secondary" : "ghost"}
+							size="sm"
+							aria-pressed={conversationFilter === option[0]}
+							onclick={() => {
+								conversationFilter = option[0] as ConversationFilter;
+							}}
+						>
+							{option[1]}
+						</Button>
+					{/each}
+				</div>
+			</div>
 		{/if}
 		{#await conversations.initial}
 			{#each Array(8)}
@@ -218,7 +268,7 @@
 			<div
 				class="flex min-h-overscrollable shrink-0 flex-col gap-1 pb-nav-clear"
 			>
-				{#each conversations.entries as conversation, i (conversation.data.conversationId)}
+				{#each filteredEntries as conversation, i (conversation.data.conversationId)}
 					{@const conversationId = conversation.data.conversationId}
 					{#if i < EAGER_COUNT}
 						<Conversation
@@ -240,7 +290,19 @@
 						/>
 					{/if}
 				{:else}
-					<EmptyConversationsList />
+					{#if filtering}
+						<div
+							class="flex min-h-48 flex-col items-center justify-center gap-1 px-4 text-center"
+						>
+							<p class="font-medium">No matching chats</p>
+							<p class="text-sm text-muted-foreground">
+								Try another name or filter. More results may appear as older
+								chats load.
+							</p>
+						</div>
+					{:else}
+						<EmptyConversationsList />
+					{/if}
 				{/each}
 				{#if conversations.loadingMore}
 					{#each Array(6)}
