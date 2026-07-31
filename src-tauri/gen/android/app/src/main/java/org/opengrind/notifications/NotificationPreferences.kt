@@ -52,6 +52,12 @@ class NotificationPreferences(context: Context) {
 		saveWatermark(accountId, "tap", watermark)
 	}
 
+	fun clearAccount(accountId: String) {
+		preferences.edit().apply {
+			notificationAccountKeys(accountId).forEach(::remove)
+		}.apply()
+	}
+
 	fun recordSuccess(timestamp: Long) {
 		preferences.edit()
 			.putLong(KEY_LAST_SUCCESS, timestamp)
@@ -105,4 +111,15 @@ class NotificationPreferences(context: Context) {
 		const val KEY_LAST_ERROR = "last_error"
 		val ACCOUNT_ID = Regex("^[0-9]+$")
 	}
+}
+
+internal fun notificationAccountKeys(accountId: String): Set<String> {
+	require(accountId.matches(Regex("^[0-9]+$"))) { "Invalid account id" }
+	return setOf(
+		"account_${accountId}_initialized",
+		"account_${accountId}_message_timestamp",
+		"account_${accountId}_message_ids",
+		"account_${accountId}_tap_timestamp",
+		"account_${accountId}_tap_ids",
+	)
 }

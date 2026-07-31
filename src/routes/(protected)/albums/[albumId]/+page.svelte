@@ -42,6 +42,7 @@
 	let album = $state<AlbumContentResponse | null>(null);
 	let error = $state<unknown>(null);
 	let busy = $state(false);
+	let loadGeneration = 0;
 	let uploadProgress = $state<{ completed: number; total: number } | null>(
 		null,
 	);
@@ -58,16 +59,48 @@
 
 	let deleteAlbumOpen = $state(false);
 
+	type AlbumActionContext = {
+		id: number;
+		generation: number;
+		target: AlbumContentResponse;
+	};
+
+	function getActionContext(): AlbumActionContext | null {
+		if (album === null) return null;
+		return {
+			id: albumId,
+			generation: loadGeneration,
+			target: album,
+		};
+	}
+
+	function isCurrentAction(context: AlbumActionContext): boolean {
+		return (
+			context.id === albumId &&
+			context.generation === loadGeneration &&
+			context.target === album
+		);
+	}
+
 	async function load(id: number) {
+		const generation = ++loadGeneration;
 		album = null;
 		error = null;
+		busy = false;
+		uploadProgress = null;
+		renameOpen = false;
+		deleteAlbumOpen = false;
 		if (!Number.isFinite(id)) {
-			error = new Error("Invalid album");
+			if (generation === loadGeneration && id === albumId)
+				error = new Error("Invalid album");
 			return;
 		}
 		try {
-			album = await getAlbumContent(id);
+			const loaded = await getAlbumContent(id);
+			if (generation !== loadGeneration || id !== albumId) return;
+			album = loaded;
 		} catch (err) {
+			if (generation !== loadGeneration || id !== albumId) return;
 			console.error(err);
 			error = err;
 		}
@@ -78,57 +111,68 @@
 	});
 
 	async function submitRename() {
-		if (album === null || renameTooLong || busy) return;
+		const context = getActionContext();
+		if (context === null || renameTooLong || busy) return;
 		const albumName = renameValue.trim() === "" ? null : renameValue;
 		busy = true;
 		try {
-			await renameAlbum({ albumId, albumName });
-			album.albumName = albumName;
+			await renameAlbum({ albumId: context.id, albumName });
+			if (!isCurrentAction(context)) return;
+			context.target.albumName = albumName;
 			renameOpen = false;
 		} catch (err) {
+			if (!isCurrentAction(context)) return;
 			console.error(err);
 			showErrorToast({ label: "Failed to rename album", error: err });
 		} finally {
-			busy = false;
+			if (isCurrentAction(context)) busy = false;
 		}
 	}
 
 	async function confirmDeleteAlbum() {
-		if (busy) return;
+		const context = getActionContext();
+		if (context === null || busy) return;
 		busy = true;
 		try {
-			await deleteAlbum({ albumId });
+			await deleteAlbum({ albumId: context.id });
+			if (!isCurrentAction(context)) return;
 			deleteAlbumOpen = false;
 			toast.success("Album deleted");
 			history.back();
 		} catch (err) {
+			if (!isCurrentAction(context)) return;
 			console.error(err);
 			showErrorToast({ label: "Failed to delete album", error: err });
 		} finally {
-			busy = false;
+			if (isCurrentAction(context)) busy = false;
 		}
 	}
 
 	async function removeContent(contentId: number) {
-		if (album === null || busy) return;
-		const previous = album.content;
+		const context = getActionContext();
+		if (context === null || busy) return;
+		const previous = context.target.content;
 		busy = true;
-		album.content = previous.filter((item) => item.contentId !== contentId);
+		context.target.content = previous.filter(
+			(item) => item.contentId !== contentId,
+		);
 		try {
-			await deleteAlbumContent({ albumId, contentId });
+			await deleteAlbumContent({ albumId: context.id, contentId });
 		} catch (err) {
+			if (!isCurrentAction(context)) return;
 			console.error(err);
-			if (album !== null) album.content = previous;
+			context.target.content = previous;
 			showErrorToast({ label: "Failed to delete media", error: err });
 		} finally {
-			busy = false;
+			if (isCurrentAction(context)) busy = false;
 		}
 	}
 
 	async function moveContent(index: number, delta: number) {
-		if (album === null || busy) return;
+		const context = getActionContext();
+		if (context === null || busy) return;
 		const target = index + delta;
-		const previous = album.content;
+		const previous = context.target.content;
 		if (target < 0 || target >= previous.length) return;
 
 		const next = [...previous];
@@ -137,33 +181,38 @@
 		next.splice(target, 0, moved);
 
 		busy = true;
-		album.content = next;
+		context.target.content = next;
 		try {
 			// The API wants every id exactly once, so send the whole order.
 			await reorderAlbumContent({
-				albumId,
+				albumId: context.id,
 				contentIds: next.map((item) => item.contentId),
 			});
 		} catch (err) {
+			if (!isCurrentAction(context)) return;
 			console.error(err);
-			if (album !== null) album.content = previous;
+			context.target.content = previous;
 			showErrorToast({ label: "Failed to reorder media", error: err });
 		} finally {
-			busy = false;
+			if (isCurrentAction(context)) busy = false;
 		}
 	}
 
 	async function addMedia() {
-		if (album === null || !isMine || busy) return;
+		const context = getActionContext();
+		if (context === null || !isMine || busy) return;
 		busy = true;
 		try {
 			const limits = await getAlbumLimits();
-			const remaining = limits.maxContentItemsPerAlbum - album.content.length;
+			if (!isCurrentAction(context)) return;
+			const remaining =
+				limits.maxContentItemsPerAlbum - context.target.content.length;
 			if (remaining <= 0) {
 				toast.error("This album has reached its media limit");
 				return;
 			}
 			const picked = await pickMultipleMedia("media");
+			if (!isCurrentAction(context)) return;
 			if (picked.length === 0) return;
 			const selected = picked.slice(0, remaining);
 			if (picked.length > selected.length) {
@@ -173,25 +222,33 @@
 			}
 			uploadProgress = { completed: 0, total: selected.length };
 			for (const media of selected) {
+				if (!isCurrentAction(context)) return;
 				await uploadAlbumMedia({
-					albumId,
+					albumId: context.id,
 					media,
 					maxBytes: limits.maxContentSizeInBytes,
 				});
+				if (!isCurrentAction(context)) return;
 				if (uploadProgress !== null) uploadProgress.completed += 1;
 			}
-			await load(albumId);
-			toast.success(
-				`${selected.length} ${selected.length === 1 ? "item" : "items"} added`,
-			);
+			await load(context.id);
+			if (context.id === albumId) {
+				toast.success(
+					`${selected.length} ${selected.length === 1 ? "item" : "items"} added`,
+				);
+			}
 		} catch (err) {
+			if (!isCurrentAction(context)) return;
 			console.error(err);
 			// Reload because an earlier item in a multi-upload may have succeeded.
-			await load(albumId);
-			showErrorToast({ label: "Failed to add album media", error: err });
+			await load(context.id);
+			if (context.id === albumId)
+				showErrorToast({ label: "Failed to add album media", error: err });
 		} finally {
-			uploadProgress = null;
-			busy = false;
+			if (isCurrentAction(context)) {
+				uploadProgress = null;
+				busy = false;
+			}
 		}
 	}
 </script>

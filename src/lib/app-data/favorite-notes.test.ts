@@ -5,6 +5,7 @@ import {
 	favoriteNoteLength,
 	favoriteNoteSchema,
 	parseFavoriteNotes,
+	removeAccountFavoriteNotes,
 } from "$lib/app-data/favorite-notes";
 
 describe("favorite notes", () => {
@@ -35,5 +36,21 @@ describe("favorite notes", () => {
 			version: 1,
 			accounts: {},
 		});
+	});
+
+	it("deletes one account's notes while preserving other accounts", () => {
+		const notes = removeAccountFavoriteNotes(
+			{
+				version: 1,
+				accounts: {
+					"100": { "200": "Delete me" },
+					"101": { "200": "Keep me" },
+				},
+			},
+			100,
+		);
+
+		expect(notes.accounts["100"]).toBeUndefined();
+		expect(notes.accounts["101"]?.["200"]).toBe("Keep me");
 	});
 });

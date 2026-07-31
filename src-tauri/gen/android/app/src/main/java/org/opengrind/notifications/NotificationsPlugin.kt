@@ -74,6 +74,17 @@ class NotificationsPlugin(private val activity: Activity) : Plugin(activity) {
 		invoke.resolve()
 	}
 
+	@Command
+	fun clearAccount(invoke: Invoke) {
+		val account = invoke.parseArgs(AccountArgs::class.java)
+		try {
+			preferences.clearAccount(account.accountId)
+			invoke.resolve()
+		} catch (_: IllegalArgumentException) {
+			invoke.reject("Invalid account id")
+		}
+	}
+
 	private fun applySettings(settings: StoredNotificationSettings) {
 		preferences.save(settings)
 		notifier.createChannel()
@@ -121,6 +132,10 @@ class NotificationsPlugin(private val activity: Activity) : Plugin(activity) {
 			showPreviews = showPreviews,
 		)
 	}
+
+	data class AccountArgs(
+		val accountId: String = "",
+	)
 
 	companion object {
 		const val PERMISSION_ALIAS = "notifications"

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+	<!-- Private favorite notes and account-scoped notification watermarks must
+	     stay on this installation rather than entering cloud backup. -->
+	<exclude domain="root" path="favorite-notes.data" />
+	<exclude domain="root" path="favorite-notes.data.tmp" />
+	<exclude domain="sharedpref" path="notification_preferences.xml" />
+</full-backup-content>

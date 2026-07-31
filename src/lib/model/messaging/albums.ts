@@ -114,19 +114,28 @@ export const albumSharesSchema = z.object({
 	profileIds: z.array(z.int()).nullish(),
 });
 
-export const albumStorageLimitsSchema = z.object({
+const albumStorageLimitsBaseSchema = z.object({
 	subscriptionType: z.string(),
 	maxAlbums: z.int(),
 	maxContentItemsPerAlbum: z.int(),
 	maxShares: z.int(),
 	maxViewableAlbums: z.int(),
 	maxViewableVideos: z.int(),
-	maxContentSizeInBytes: z.int(),
 	maxContentSizeHumanReadable: z.string(),
 	maxVideoLength: z.int(),
 	minVideoLength: z.int(),
 	maxShareableAlbums: z.int(),
 	maxVideosPerAlbum: z.int(),
 });
+
+export const albumStorageLimitsSchema = z.union([
+	albumStorageLimitsBaseSchema
+		.extend({ maxContentSize: z.int() })
+		.transform(({ maxContentSize, ...limits }) => ({
+			...limits,
+			maxContentSizeInBytes: maxContentSize,
+		})),
+	albumStorageLimitsBaseSchema.extend({ maxContentSizeInBytes: z.int() }),
+]);
 
 export type AlbumStorageLimits = z.infer<typeof albumStorageLimitsSchema>;

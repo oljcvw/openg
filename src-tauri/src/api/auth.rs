@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::error::AppError;
 use crate::state::AppState;
-use crate::storage::{AuthStorage, DeviceStorage};
+use crate::storage::{account_storage_lock, AuthStorage, DeviceStorage};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -112,6 +112,7 @@ pub async fn logout(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
 	let client = state.client()?;
 
 	client.logout().await;
+	let _storage_guard = account_storage_lock().lock().await;
 	AuthStorage::delete_session();
 
 	let new_device = grindr::DeviceInfo::generate();

@@ -136,6 +136,31 @@ describe("getAlbumsSharedByProfile", () => {
 
 describe("getAlbumLimits", () => {
 	it("parses the storage limits", async () => {
+		const responseLimits = {
+			subscriptionType: "FreeAlbums",
+			maxAlbums: 10,
+			maxContentItemsPerAlbum: 30,
+			maxShares: 100,
+			maxViewableAlbums: 10,
+			maxViewableVideos: 10,
+			maxContentSize: 125_829_120,
+			maxContentSizeHumanReadable: "120.00 MB",
+			maxVideoLength: 60,
+			minVideoLength: 1,
+			maxShareableAlbums: 10,
+			maxVideosPerAlbum: 10,
+		};
+		fetchRestMock.mockResolvedValue(response(responseLimits));
+		const { maxContentSize, ...otherLimits } = responseLimits;
+
+		await expect(getAlbumLimits()).resolves.toEqual({
+			...otherLimits,
+			maxContentSizeInBytes: maxContentSize,
+		});
+		expect(fetchRestMock).toHaveBeenCalledWith("/v1/albums/storage");
+	});
+
+	it("tolerates the older byte-limit field name", async () => {
 		const limits = {
 			subscriptionType: "FreeAlbums",
 			maxAlbums: 10,
@@ -153,7 +178,6 @@ describe("getAlbumLimits", () => {
 		fetchRestMock.mockResolvedValue(response(limits));
 
 		await expect(getAlbumLimits()).resolves.toEqual(limits);
-		expect(fetchRestMock).toHaveBeenCalledWith("/v1/albums/storage");
 	});
 });
 
@@ -298,7 +322,7 @@ describe("getAlbumShares", () => {
 });
 
 describe("unshareAlbum", () => {
-	it("puts one entry per profile without fabricating unavailable share ids", async () => {
+	it("uses the documented zero share-id sentinel for each profile", async () => {
 		fetchRestMock.mockResolvedValue(response());
 
 		await unshareAlbum({ albumId: 12, profileIds: [42, 43] });
@@ -306,7 +330,10 @@ describe("unshareAlbum", () => {
 		expect(fetchRestMock).toHaveBeenCalledWith("/v1/albums/12/unshares", {
 			method: "PUT",
 			body: {
-				profiles: [{ profileId: 42 }, { profileId: 43 }],
+				profiles: [
+					{ profileId: 42, shareId: 0 },
+					{ profileId: 43, shareId: 0 },
+				],
 			},
 		});
 	});

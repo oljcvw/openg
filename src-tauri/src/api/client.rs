@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::error::AppError;
 use crate::state::AppState;
-use crate::storage::DeviceStorage;
+use crate::storage::{account_storage_lock, DeviceStorage};
 
 #[derive(Debug, Serialize)]
 pub struct RotateResult {
@@ -18,6 +18,7 @@ pub async fn rotate_api_params(
 ) -> Result<RotateResult, AppError> {
 	let client = state.client()?;
 
+	let _storage_guard = account_storage_lock().lock().await;
 	let new_device = grindr::DeviceInfo::generate();
 	if let Err(e) = DeviceStorage::save(&new_device) {
 		tracing::error!("[client] could not persist rotated device info: {e}");

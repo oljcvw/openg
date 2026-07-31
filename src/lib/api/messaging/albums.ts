@@ -162,9 +162,9 @@ export async function getAlbumShares(albumId: number) {
 /**
  * Revokes an album share.
  *
- * `GET .../shares` returns profile ids but no per-share id or expiration. Both
- * fields are optional in the unshare contract, so omit them instead of
- * fabricating a share identity.
+ * `GET .../shares` returns profile ids but no per-share id. The current API
+ * contract requires the field and explicitly defines `0` as the sentinel when
+ * a concrete share id is unavailable.
  */
 export async function unshareAlbum({
 	albumId,
@@ -176,7 +176,7 @@ export async function unshareAlbum({
 	return await fetchRest(`/v1/albums/${albumId}/unshares`, {
 		method: "PUT",
 		body: {
-			profiles: profileIds.map((profileId) => ({ profileId })),
+			profiles: profileIds.map((profileId) => ({ profileId, shareId: 0 })),
 		},
 	}).then((res) => res.assertOk());
 }

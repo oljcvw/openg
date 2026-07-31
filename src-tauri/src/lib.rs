@@ -10,7 +10,9 @@ use std::sync::OnceLock;
 use tauri::Manager;
 
 use crate::state::AppState;
-use crate::storage::{AuthStorage, DeviceStorage, SigningKeyStorage};
+use crate::storage::{
+	account_storage_lock, AuthStorage, DeviceStorage, SigningKeyStorage,
+};
 
 // Mirrors MIN_SUPPORTED_WEBVIEW_MAJOR in gen/android/app/build.gradle.kts and the
 // CSS feature floor in src/app.html (Tailwind v4: Chromium 111 / WebKitGTK 2.42 /
@@ -131,6 +133,7 @@ pub fn run() {
             api::notifications::notification_test,
             api::notifications::notification_sync,
             api::notifications::notification_cancel,
+            api::notifications::notification_clear_account,
             api::ws::ws_connect,
             api::ws::ws_send,
             api::client::rotate_api_params,
@@ -202,6 +205,7 @@ pub fn run() {
                 let mut session_rx = client.session_receiver();
                 tauri::async_runtime::spawn(async move {
                     while session_rx.changed().await.is_ok() {
+                        let _storage_guard = account_storage_lock().lock().await;
                         match session_rx.borrow().as_ref() {
                             Some(s) => {
                                 if let Err(e) = AuthStorage::set_session(s) {
@@ -223,6 +227,7 @@ pub fn run() {
                         client.restore_signing_key(k).await;
                     }
                     while key_rx.changed().await.is_ok() {
+                        let _storage_guard = account_storage_lock().lock().await;
                         match key_rx.borrow().clone() {
                             Some(k) => {
                                 if let Err(e) = SigningKeyStorage::save(&k) {

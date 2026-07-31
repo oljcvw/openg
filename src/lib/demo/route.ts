@@ -90,6 +90,7 @@ export function demoCallMethod(method: string): unknown {
 		case "update_account_password":
 		case "update_account_email":
 		case "delete_account":
+		case "notification_clear_account":
 			return undefined;
 		default:
 			return undefined;

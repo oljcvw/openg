@@ -17,6 +17,7 @@
 	import { getNow, subscribeNow } from "$lib/util/now.svelte";
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
 	import { albumExpiry } from "./album-expiry";
+	import { albumMediaLoadError } from "./album-media-error";
 	import LockedMedia from "./LockedMedia.svelte";
 	import { MessageMediaState } from "./message-media.svelte";
 
@@ -89,12 +90,7 @@
 										});
 										video.addEventListener(
 											"error",
-											({ error }) =>
-												reject(
-													new Error(`Failed to load video: ${slide.url}`, {
-														cause: error,
-													}),
-												),
+											() => reject(albumMediaLoadError("video")),
 											{
 												once: true,
 											},
@@ -119,12 +115,7 @@
 										});
 										img.addEventListener(
 											"error",
-											({ error }) =>
-												reject(
-													new Error(`Failed to load image: ${slide.url}`, {
-														cause: error,
-													}),
-												),
+											() => reject(albumMediaLoadError("image")),
 											{
 												once: true,
 											},

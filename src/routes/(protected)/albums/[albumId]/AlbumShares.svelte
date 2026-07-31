@@ -27,6 +27,7 @@
 	let error = $state<unknown>(null);
 	let loadingMore = $state(false);
 	let revoking = $state<number | null>(null);
+	let loadGeneration = 0;
 
 	const remaining = $derived((sharedIds?.length ?? 0) - shares.length);
 
@@ -46,16 +47,24 @@
 	}
 
 	async function load(id: number) {
+		const generation = ++loadGeneration;
 		sharedIds = null;
 		shares = [];
 		error = null;
+		loadingMore = false;
+		revoking = null;
 		try {
 			const profileIds = await getAlbumShares(id);
-			sharedIds = profileIds;
+			if (generation !== loadGeneration || id !== albumId) return;
+			let resolved: Share[] = [];
 			if (profileIds.length > 0) {
-				shares = await resolvePage(profileIds.slice(0, PAGE_SIZE));
+				resolved = await resolvePage(profileIds.slice(0, PAGE_SIZE));
 			}
+			if (generation !== loadGeneration || id !== albumId) return;
+			sharedIds = profileIds;
+			shares = resolved;
 		} catch (err) {
+			if (generation !== loadGeneration || id !== albumId) return;
 			console.error(err);
 			error = err;
 		}
@@ -63,15 +72,20 @@
 
 	async function loadMore() {
 		if (sharedIds === null || loadingMore || remaining <= 0) return;
+		const generation = loadGeneration;
+		const id = albumId;
 		loadingMore = true;
 		try {
 			const next = sharedIds.slice(shares.length, shares.length + PAGE_SIZE);
-			shares = [...shares, ...(await resolvePage(next))];
+			const resolved = await resolvePage(next);
+			if (generation !== loadGeneration || id !== albumId) return;
+			shares = [...shares, ...resolved];
 		} catch (err) {
+			if (generation !== loadGeneration || id !== albumId) return;
 			console.error(err);
 			showErrorToast({ label: "Failed to load more", error: err });
 		} finally {
-			loadingMore = false;
+			if (generation === loadGeneration && id === albumId) loadingMore = false;
 		}
 	}
 
@@ -81,6 +95,8 @@
 
 	async function revoke(profileId: number) {
 		if (revoking !== null) return;
+		const id = albumId;
+		const generation = loadGeneration;
 		const previousShares = shares;
 		const previousIds = sharedIds;
 		revoking = profileId;
@@ -89,16 +105,18 @@
 		// include a profile that is no longer shared with.
 		sharedIds = previousIds?.filter((id) => id !== profileId) ?? null;
 		try {
-			await unshareAlbum({ albumId, profileIds: [profileId] });
-			setAlbumShared(albumId, profileId, false);
+			await unshareAlbum({ albumId: id, profileIds: [profileId] });
+			if (generation !== loadGeneration || id !== albumId) return;
+			setAlbumShared(id, profileId, false);
 			toast.success("Album unshared");
 		} catch (err) {
+			if (generation !== loadGeneration || id !== albumId) return;
 			console.error(err);
 			shares = previousShares;
 			sharedIds = previousIds;
 			showErrorToast({ label: "Failed to unshare album", error: err });
 		} finally {
-			revoking = null;
+			if (generation === loadGeneration && id === albumId) revoking = null;
 		}
 	}
 </script>

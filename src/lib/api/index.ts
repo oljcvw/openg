@@ -141,6 +141,12 @@ export const methods = {
 		request: z.undefined(),
 		response: z.undefined(),
 	},
+	notification_clear_account: {
+		request: z.object({
+			accountId: z.coerce.number().int().nonnegative(),
+		}),
+		response: z.undefined(),
+	},
 } satisfies Record<string, { request: z.ZodType; response: z.ZodType }>;
 
 export async function callMethod<T extends keyof typeof methods>(

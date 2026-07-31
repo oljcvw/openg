@@ -76,6 +76,19 @@ describe("ensureAlbumSharesSwept", () => {
 		expect(getAlbumSharesMock).toHaveBeenCalledTimes(4);
 	});
 
+	it("fills a newly requested album even when the profile sweep is fresh", async () => {
+		setNowForTesting(() => 1_000);
+		getAlbumSharesMock.mockResolvedValue([]);
+
+		await ensureAlbumSharesSwept(42, [{ albumId: 1 }]);
+		await ensureAlbumSharesSwept(42, ALBUMS);
+
+		expect(getAlbumSharesMock).toHaveBeenCalledTimes(2);
+		expect(getAlbumSharesMock).toHaveBeenNthCalledWith(1, 1);
+		expect(getAlbumSharesMock).toHaveBeenNthCalledWith(2, 2);
+		expect(getAlbumShared(2, 42)).toBe(false);
+	});
+
 	it("shares one sweep between concurrent callers", async () => {
 		getAlbumSharesMock.mockResolvedValue([]);
 
@@ -97,6 +110,11 @@ describe("ensureAlbumSharesSwept", () => {
 
 		expect(getAlbumShared(1, 42)).toBeUndefined();
 		expect(getAlbumShared(2, 42)).toBe(true);
+
+		getAlbumSharesMock.mockResolvedValue([]);
+		await ensureAlbumSharesSwept(42, ALBUMS);
+		expect(getAlbumSharesMock).toHaveBeenCalledTimes(4);
+		expect(getAlbumShared(1, 42)).toBe(false);
 	});
 
 	it("retries after a wholesale failure instead of caching it as checked", async () => {

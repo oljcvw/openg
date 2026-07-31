@@ -57,15 +57,22 @@
 
 	let albums = $state<AlbumEntry[] | null>(null);
 	let error = $state<unknown>(null);
+	let loadGeneration = 0;
 
 	async function load(id: number, isSelf: boolean) {
+		const generation = ++loadGeneration;
 		albums = null;
 		error = null;
 		try {
-			albums = isSelf
+			const loaded = isSelf
 				? (await getMyAlbums()).map(fromMyAlbum)
 				: (await getAlbumsSharedByProfile(id)).map(fromSharedAlbum);
+			if (generation !== loadGeneration || id !== profileId || isSelf !== self)
+				return;
+			albums = loaded;
 		} catch (err) {
+			if (generation !== loadGeneration || id !== profileId || isSelf !== self)
+				return;
 			console.error(err);
 			error = err;
 		}

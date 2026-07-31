@@ -37,6 +37,15 @@ export function favoriteNoteLength(value: string): number {
 	return Array.from(value).length;
 }
 
+export function removeAccountFavoriteNotes(
+	value: unknown,
+	accountProfileId: number,
+): FavoriteNotes {
+	const notes = structuredClone(parseFavoriteNotes(value));
+	delete notes.accounts[accountKey(accountProfileId)];
+	return parseFavoriteNotes(notes);
+}
+
 function accountKey(profileId: number): string {
 	return String(profileId);
 }
@@ -110,6 +119,18 @@ export async function setFavoriteNote(
 		}
 
 		const validated = parseFavoriteNotes(notes);
+		await writeAppDataFileAtomic(FILE_NAME, encode(validated));
+		if (generation === cacheGeneration) cache = validated;
+	});
+}
+
+export async function deleteFavoriteNotesForAccount(
+	accountProfileId: number,
+): Promise<void> {
+	await enqueueWrite(async () => {
+		const generation = cacheGeneration;
+		const current = await getFavoriteNotes();
+		const validated = removeAccountFavoriteNotes(current, accountProfileId);
 		await writeAppDataFileAtomic(FILE_NAME, encode(validated));
 		if (generation === cacheGeneration) cache = validated;
 	});

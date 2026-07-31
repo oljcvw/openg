@@ -52,6 +52,15 @@ function sweptRecently(profileId: number): boolean {
 	return at !== undefined && now() - at < SWEEP_TTL_MS;
 }
 
+function allKnown(
+	profileId: number,
+	albums: readonly { albumId: number }[],
+): boolean {
+	return albums.every(
+		(album) => getAlbumShared(album.albumId, profileId) !== undefined,
+	);
+}
+
 async function sweep(
 	profileId: number,
 	albums: readonly { albumId: number }[],
@@ -67,16 +76,16 @@ async function sweep(
 				);
 				return true;
 			} catch (error) {
-				// Swallowed per album: not knowing leaves it looking unshared, which
-				// is recoverable, whereas failing the sweep would block sharing.
+				// Preserve unknown so callers can block sharing and offer a retry
+				// instead of treating a failed lookup as known-unshared.
 				console.error(error);
 				return false;
 			}
 		}),
 	);
-	// Only counts as swept if something actually landed, so a wholesale failure
-	// (offline, say) retries instead of being cached as "checked".
-	if (outcomes.some(Boolean)) sweptAt.set(profileId, now());
+	// A partial result is not safe to cache: an unknown album may already be
+	// shared, so the next attempt must retry rather than enabling a duplicate.
+	if (outcomes.every(Boolean)) sweptAt.set(profileId, now());
 }
 
 /**
@@ -88,14 +97,24 @@ export function ensureAlbumSharesSwept(
 	profileId: number,
 	albums: readonly { albumId: number }[],
 ): Promise<void> {
-	if (sweptRecently(profileId)) return Promise.resolve();
+	const recent = sweptRecently(profileId);
+	if (recent && allKnown(profileId, albums)) return Promise.resolve();
 	let inFlight = sweepsInFlight.get(profileId);
-	if (!inFlight) {
-		inFlight = sweep(profileId, albums).finally(() => {
-			sweepsInFlight.delete(profileId);
-		});
-		sweepsInFlight.set(profileId, inFlight);
+	if (inFlight) {
+		// The active caller may have requested a smaller album list. Re-check
+		// after it settles so newly requested IDs cannot remain unknown behind
+		// the profile-level TTL.
+		return inFlight.then(() => ensureAlbumSharesSwept(profileId, albums));
 	}
+	const requested = recent
+		? albums.filter(
+				(album) => getAlbumShared(album.albumId, profileId) === undefined,
+			)
+		: albums;
+	inFlight = sweep(profileId, requested).finally(() => {
+		sweepsInFlight.delete(profileId);
+	});
+	sweepsInFlight.set(profileId, inFlight);
 	return inFlight;
 }
 

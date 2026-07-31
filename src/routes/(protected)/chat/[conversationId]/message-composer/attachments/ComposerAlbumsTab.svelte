@@ -80,8 +80,22 @@
 		error = null;
 		try {
 			const list = await getMyAlbums();
+			const targetProfileId = recipientId;
+			if (targetProfileId !== null) {
+				await ensureAlbumSharesSwept(targetProfileId, list);
+				if (
+					list.some(
+						(album) =>
+							album.isShareable &&
+							getAlbumShared(album.albumId, targetProfileId) === undefined,
+					)
+				) {
+					throw new Error(
+						"Could not confirm which albums are already shared. Retry before sharing.",
+					);
+				}
+			}
 			albums = list;
-			if (recipientId !== null) void ensureAlbumSharesSwept(recipientId, list);
 		} catch (err) {
 			console.error(err);
 			error = err;

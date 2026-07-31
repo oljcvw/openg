@@ -35,7 +35,10 @@
 		key: keyof AccountPreferencesUpdate,
 		value: boolean,
 	): Promise<void> {
-		if (!settings || updating.has(key)) return;
+		// Each write is followed by a whole-object reconciliation GET. Keep
+		// mutations serial so an older response or rollback cannot overwrite a
+		// different setting that completed later.
+		if (!settings || updating.size > 0) return;
 		const previous = settings;
 		updating = new Set(updating).add(key);
 		settings = { ...settings, [key]: value };
@@ -62,7 +65,7 @@
 			() => settings?.incognito ?? false,
 			(value) => void update("incognito", value)
 		}
-		disabled={updating.has("incognito")}
+		disabled={updating.size > 0}
 	/>
 	<SwitchField
 		title="Hide Viewed Me"
@@ -71,7 +74,7 @@
 			() => settings?.hideViewedMe ?? false,
 			(value) => void update("hideViewedMe", value)
 		}
-		disabled={updating.has("hideViewedMe")}
+		disabled={updating.size > 0}
 	/>
 	<SwitchField
 		title="Approximate distance"
@@ -80,7 +83,7 @@
 			() => settings?.approximateDistance ?? false,
 			(value) => void update("approximateDistance", value)
 		}
-		disabled={updating.has("approximateDistance")}
+		disabled={updating.size > 0}
 	/>
 	<SwitchField
 		title="Exclude from location search"
@@ -89,7 +92,7 @@
 			() => settings?.locationSearchOptOut ?? false,
 			(value) => void update("locationSearchOptOut", value)
 		}
-		disabled={updating.has("locationSearchOptOut")}
+		disabled={updating.size > 0}
 	/>
 	<SwitchField
 		title="Show NSFW Right Now posts"
@@ -98,7 +101,7 @@
 			() => settings?.viewRightNowNsfw ?? false,
 			(value) => void update("viewRightNowNsfw", value)
 		}
-		disabled={updating.has("viewRightNowNsfw")}
+		disabled={updating.size > 0}
 	/>
 	{#if settings.showOnMap !== undefined}
 		<SwitchField
@@ -108,7 +111,7 @@
 				() => settings?.showOnMap ?? false,
 				(value) => void update("showOnMap", value)
 			}
-			disabled={updating.has("showOnMap")}
+			disabled={updating.size > 0}
 		/>
 	{/if}
 {:else}

@@ -3,7 +3,9 @@ use serde_json::Value;
 
 use crate::error::AppError;
 use crate::state::AppState;
-use crate::storage::{AuthStorage, DeviceStorage, SigningKeyStorage};
+use crate::storage::{
+	account_storage_lock, AuthStorage, DeviceStorage, SigningKeyStorage,
+};
 
 const MAX_SECRET_LENGTH: usize = 1024;
 
@@ -96,6 +98,7 @@ async fn account_request(
 async fn purge_account_state(
 	client: &grindr::GrindrClient,
 ) -> Result<(), AppError> {
+	let _storage_guard = account_storage_lock().lock().await;
 	AuthStorage::delete_session();
 	SigningKeyStorage::delete();
 

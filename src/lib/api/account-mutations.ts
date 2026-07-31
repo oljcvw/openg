@@ -2,6 +2,14 @@ import z from "zod";
 
 import { callMethod } from "$lib/api";
 import { clearLocalAccountState } from "$lib/api/sign-out";
+import { deleteFavoriteNotesForAccount } from "$lib/app-data/favorite-notes";
+
+export class AccountDeletionCleanupError extends Error {
+	constructor(options: ErrorOptions) {
+		super("Account deleted, but local account data cleanup failed.", options);
+		this.name = "AccountDeletionCleanupError";
+	}
+}
 
 export const emailSchema = z.email("Enter a valid email address");
 export const passwordSchema = z
@@ -32,6 +40,21 @@ export async function changeEmail(input: {
 }
 
 export async function deleteAccount(): Promise<void> {
+	const accountProfileId = await callMethod("auth_state");
+	if (accountProfileId === null) {
+		throw new Error("Cannot delete a signed-out account.");
+	}
 	await callMethod("delete_account");
-	await clearLocalAccountState();
+	try {
+		await Promise.all([
+			deleteFavoriteNotesForAccount(accountProfileId),
+			callMethod("notification_clear_account", {
+				accountId: accountProfileId,
+			}),
+		]);
+	} catch (error) {
+		throw new AccountDeletionCleanupError({ cause: error });
+	} finally {
+		await clearLocalAccountState();
+	}
 }

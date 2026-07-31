@@ -20,7 +20,9 @@ use tauri::{Manager, Wry};
 
 use crate::error::AppError;
 #[cfg(target_os = "android")]
-use crate::storage::{AuthStorage, DeviceStorage, SigningKeyStorage};
+use crate::storage::{
+	account_storage_lock, AuthStorage, DeviceStorage, SigningKeyStorage,
+};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -169,6 +171,32 @@ pub async fn notification_cancel(
 	}
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ClearNotificationAccount {
+	account_id: String,
+}
+
+#[tauri::command]
+pub async fn notification_clear_account(
+	app: tauri::AppHandle,
+	account_id: u64,
+) -> Result<(), AppError> {
+	let input = ClearNotificationAccount {
+		account_id: account_id.to_string(),
+	};
+	#[cfg(target_os = "android")]
+	{
+		let _: Value = run_mobile(&app, "clearAccount", input).await?;
+		return Ok(());
+	}
+	#[cfg(not(target_os = "android"))]
+	{
+		let _ = (app, input);
+		Ok(())
+	}
+}
+
 #[cfg(target_os = "android")]
 async fn run_mobile<I, O>(
 	app: &tauri::AppHandle,
@@ -305,6 +333,19 @@ fn value_u64(value: &Value) -> Option<u64> {
 fn poll_notifications() -> PollResponse {
 	crate::storage::init_keyring();
 
+	let runtime = match tokio::runtime::Builder::new_current_thread()
+		.enable_all()
+		.build()
+	{
+		Ok(runtime) => runtime,
+		Err(error) => {
+			return PollResponse::Retry {
+				error: format!("background runtime failed: {error}"),
+			}
+		}
+	};
+	let _storage_guard = runtime.block_on(account_storage_lock().lock());
+
 	let session = match AuthStorage::get_session() {
 		Ok(Some(session)) => session,
 		Ok(None) => return PollResponse::SignedOut,
@@ -333,18 +374,6 @@ fn poll_notifications() -> PollResponse {
 		Err(error) => {
 			return PollResponse::Retry {
 				error: format!("device signing key unavailable: {error}"),
-			}
-		}
-	};
-
-	let runtime = match tokio::runtime::Builder::new_current_thread()
-		.enable_all()
-		.build()
-	{
-		Ok(runtime) => runtime,
-		Err(error) => {
-			return PollResponse::Retry {
-				error: format!("background runtime failed: {error}"),
 			}
 		}
 	};
