@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { getGridColumnsSnapshot } from "$lib/app-data/preferences.svelte";
+	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { nearestScrollableAncestor } from "$lib/components/feedback/refresh/scroll-chain";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import type { GridProfile } from "$lib/grid/grid";
@@ -94,6 +94,7 @@
 					unread={item.unread}
 					onlineUntil={item.onlineUntil}
 					isFavorite={item.isFavorite}
+					isRightNow={item.isRightNow}
 					isVisiting={item.isVisiting}
 					hadRecentChat={item.hasChattedInLast24Hrs}
 					medias={item.profilePhotosHashes?.map((mediaHash) => ({

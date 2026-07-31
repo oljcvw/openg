@@ -17,6 +17,7 @@ export type RenderedGridProfile = {
 	unread: number | null;
 	onlineUntil: number | null;
 	isFavorite: boolean;
+	isRightNow: boolean;
 	isVisiting: boolean;
 	hasChattedInLast24Hrs: boolean;
 };
@@ -46,6 +47,7 @@ export async function getGrid(query: Parameters<typeof getCascadeV4>[0]) {
 				unread: profile.unreadCount ?? null,
 				onlineUntil: profile.onlineUntil ?? null,
 				isFavorite: profile.favorite ?? false,
+				isRightNow: profile.rightNow !== "NOT_ACTIVE",
 				isVisiting: profile.isVisiting,
 				hasChattedInLast24Hrs: profile.chatted ?? false,
 			});
@@ -115,6 +117,7 @@ export async function resolveLazyProfile(
 		unread: profile.unread,
 		onlineUntil: resolved.onlineUntil ?? null,
 		isFavorite: resolved.isFavorite,
+		isRightNow: resolved.rightNow !== "NOT_ACTIVE",
 		isVisiting: profile.isVisiting,
 		hasChattedInLast24Hrs:
 			resolved.lastChatTimestamp !== null &&

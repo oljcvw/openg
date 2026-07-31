@@ -20,6 +20,7 @@ import {
 	expiringImageMessageSchema,
 	previewLabel,
 } from "$lib/model/messaging/messages";
+import { rightNowFeedResponseSchema } from "$lib/model/right-now/feed/response/v4";
 import {
 	profileRightNowSchema,
 	profileSchema,
@@ -219,6 +220,21 @@ describe("demo route data matches the real schemas", () => {
 		expect(demoRoute("/v3/me/favorites/100001", "POST", undefined).status).toBe(
 			200,
 		);
+	});
+
+	it("Right Now feed validates and applies filters", () => {
+		const all = rightNowFeedResponseSchema.parse(
+			route("/v4/rightnow/feed?sort=DISTANCE"),
+		);
+		const hosting = rightNowFeedResponseSchema.parse(
+			route("/v4/rightnow/feed?sort=NEWEST&hosting=true"),
+		);
+		expect(all.items.length).toBeGreaterThan(12);
+		expect(hosting.items.length).toBeGreaterThan(0);
+		expect(hosting.items.length).toBeLessThan(all.items.length);
+		for (const item of hosting.items) {
+			expect((item as { data: { hosting: boolean } }).data.hosting).toBe(true);
+		}
 	});
 
 	it("conversation pin/mute/delete mutations persist across inbox fetches", () => {

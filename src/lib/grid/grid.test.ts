@@ -21,6 +21,7 @@ function rendered(id: number): RenderedGridProfile {
 		unread: 0,
 		onlineUntil: null,
 		isFavorite: false,
+		isRightNow: false,
 		isVisiting: false,
 		hasChattedInLast24Hrs: false,
 	};

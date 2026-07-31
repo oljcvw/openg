@@ -2,7 +2,10 @@ import { decode, encode } from "@msgpack/msgpack";
 import { toast } from "svelte-sonner";
 import z from "zod";
 
-import { gridSearchFiltersSchema } from "$lib/components/filters/filters";
+import {
+	gridSearchFiltersSchema,
+	rightNowFiltersSchema,
+} from "$lib/components/filters/filters";
 import { geohashSchema } from "$lib/model/geohash";
 import { type UnitSystem, unitSystemSchema } from "$lib/util/units";
 import { existsAppDataFile, readAppDataFile, writeAppDataFileAtomic } from ".";
@@ -17,6 +20,7 @@ const preferencesSchema = z.object({
 	geohash: geohashSchema.nullable().default(null),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
 	gridColumns: gridColumnsSchema.default("auto"),
+	rightNowFilters: rightNowFiltersSchema.optional(),
 	revealMessageRead: z.boolean().default(false),
 	revealProfileViews: z.boolean().default(false),
 	stayAwake: z.boolean().default(false),
@@ -124,7 +128,11 @@ async function resetToDefaults(): Promise<void> {
 	window.location.reload();
 }
 
-const accountPreferenceKeys = ["geohash", "gridSearchFilters"] as const;
+const accountPreferenceKeys = [
+	"geohash",
+	"gridSearchFilters",
+	"rightNowFilters",
+] as const;
 
 export async function clearAccountPreferences(): Promise<void> {
 	await enqueueWrite(async () => {

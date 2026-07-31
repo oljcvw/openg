@@ -1,0 +1,104 @@
+<script lang="ts">
+	import { env } from "$env/dynamic/public";
+	import {
+		ChatIcon,
+		ClockIcon,
+		HouseIcon,
+		NavigationArrowIcon,
+	} from "phosphor-svelte";
+
+	import DistanceFormatted from "$lib/components/profile/DistanceFormatted.svelte";
+	import RelativeTimeDynamic from "$lib/components/shared/RelativeTimeDynamic.svelte";
+	import { Button } from "$lib/components/ui/button";
+	import type { FeedPost } from "$lib/right-now/posts";
+	import RightNowAvatar from "./RightNowAvatar.svelte";
+
+	let {
+		post,
+		ourProfileId,
+	}: {
+		post: FeedPost;
+		ourProfileId: number;
+	} = $props();
+
+	const conversationId = $derived(
+		[post.profileId, ourProfileId].toSorted((a, b) => a - b).join(":"),
+	);
+</script>
+
+<article
+	class="flex w-full gap-3 rounded-2xl border bg-card p-3 text-muted-foreground"
+	aria-label="Right Now post by {post.displayName ?? 'someone'}"
+>
+	<RightNowAvatar
+		profileId={post.profileId}
+		displayName={post.displayName}
+		mediaHash={post.mediaHash}
+		onlineUntil={post.onlineUntil}
+	/>
+	<div class="min-w-0 flex-1">
+		<p
+			class={[
+				"wrap-break-word",
+				post.text ? "text-foreground" : "font-semibold",
+			]}
+		>
+			{post.text ??
+				(post.displayName ? `${post.displayName} joined` : "Joined")}
+		</p>
+		{#if post.media.length > 0}
+			<div class="mt-2 grid gap-1">
+				{#each post.media as image (image.mediaId)}
+					<a
+						href={image.fullImageUrl}
+						rel="noreferrer"
+						aria-label="Open image from {post.displayName ?? 'this post'}"
+						class="pswp-trigger block overflow-hidden rounded-xl bg-muted"
+					>
+						<img
+							src={image.thumbnailUrl}
+							alt=""
+							class={[
+								"max-h-80 w-full object-cover",
+								{
+									"blur-2xl":
+										image.shouldBlur && env.PUBLIC_ENABLE_BLUR_EFFECTS,
+								},
+							]}
+							loading="lazy"
+							draggable="false"
+						/>
+					</a>
+				{/each}
+			</div>
+		{/if}
+		<div class="mt-2 flex items-center justify-between gap-2 text-sm">
+			<div class="flex min-w-0 flex-wrap items-center gap-1.5">
+				<ClockIcon class="size-4" aria-hidden="true" />
+				<span class="sr-only">Posted:</span>
+				<RelativeTimeDynamic date={post.posted} />
+				{#if post.distance !== null}
+					<NavigationArrowIcon class="size-4 -scale-x-100" aria-hidden="true" />
+					<span class="sr-only">Distance:</span>
+					<DistanceFormatted distance={post.distance} />
+				{/if}
+				{#if post.hosting}
+					<HouseIcon
+						class="size-4 text-fuchsia-500"
+						weight="fill"
+						aria-hidden="true"
+					/>
+					<span class="sr-only">Hosting</span>
+				{/if}
+			</div>
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				href="/chat/{conversationId}"
+				aria-label="Message {post.displayName ?? 'this profile'}"
+			>
+				<ChatIcon aria-hidden="true" />
+			</Button>
+		</div>
+	</div>
+</article>

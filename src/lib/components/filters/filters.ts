@@ -185,3 +185,19 @@ export type GridSearchFilters = z.infer<typeof gridSearchFiltersSchema>;
 export const defaultFilters: GridSearchFilters = gridSearchFiltersSchema.parse(
 	{},
 );
+
+export const filterRightNowSortSchema = z.enum(["DISTANCE", "NEWEST"]);
+
+export const rightNowFiltersSchema = z.object({
+	sort: filterRightNowSortSchema.default("DISTANCE"),
+	hosting: z.boolean().nullable().default(null),
+	ageEnabled: filterAgeEnabledSchema.default(false),
+	age: filterAgeSchema.default([AGE_MIN, AGE_MAX]),
+	positionEnabled: filterPositionEnabledSchema.default(false),
+	positions: filterPositionSchema.default([]),
+});
+
+export type RightNowFilters = z.infer<typeof rightNowFiltersSchema>;
+
+export const defaultRightNowFilters: RightNowFilters =
+	rightNowFiltersSchema.parse({});
