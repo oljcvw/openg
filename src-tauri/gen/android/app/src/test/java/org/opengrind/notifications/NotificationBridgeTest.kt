@@ -1,9 +1,25 @@
 package org.opengrind.notifications
 
+import app.tauri.annotation.InvokeArg
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NotificationBridgeTest {
+	@Test
+	fun `keeps reflection parsed plugin arguments in minified builds`() {
+		assertTrue(
+			NotificationsPlugin.SettingsArgs::class.java.isAnnotationPresent(
+				InvokeArg::class.java,
+			),
+		)
+		assertTrue(
+			NotificationsPlugin.AccountArgs::class.java.isAnnotationPresent(
+				InvokeArg::class.java,
+			),
+		)
+	}
+
 	@Test
 	fun `parses minimal poll result without retaining credentials`() {
 		val result = NotificationBridge.parse(

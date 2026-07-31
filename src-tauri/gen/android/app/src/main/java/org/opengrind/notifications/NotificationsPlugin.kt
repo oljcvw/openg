@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import app.tauri.annotation.Command
+import app.tauri.annotation.InvokeArg
 import app.tauri.annotation.Permission
 import app.tauri.annotation.PermissionCallback
 import app.tauri.annotation.TauriPlugin
@@ -119,6 +120,7 @@ class NotificationsPlugin(private val activity: Activity) : Plugin(activity) {
 				Manifest.permission.POST_NOTIFICATIONS,
 			) == PackageManager.PERMISSION_GRANTED
 
+	@InvokeArg
 	data class SettingsArgs(
 		val enabled: Boolean = false,
 		val messages: Boolean = true,
@@ -133,6 +135,7 @@ class NotificationsPlugin(private val activity: Activity) : Plugin(activity) {
 		)
 	}
 
+	@InvokeArg
 	data class AccountArgs(
 		val accountId: String = "",
 	)
