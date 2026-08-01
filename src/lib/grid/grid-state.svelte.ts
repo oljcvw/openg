@@ -3,6 +3,7 @@ import z from "zod";
 
 import { registerAccountCache } from "$lib/api/account-caches";
 import { showErrorToast } from "$lib/api/error";
+import { readCachedGrid, writeCachedGrid } from "$lib/app-data/grid-cache";
 import type { cascadeV4QuerySchema } from "$lib/model/browse/grid/cascade/query/v4";
 import {
 	getCachedProfile,
@@ -236,18 +237,36 @@ class GridState {
 					}),
 				fresh: filters?.isFresh || undefined,
 			} satisfies z.infer<typeof cascadeV4QuerySchema>;
+			if (!opts?.silent && this.items.length === 0) {
+				const cached = await readCachedGrid(query);
+				if (token !== this.#fetchToken) return;
+				if (cached) {
+					this.currentQuery = cached.query;
+					this.items = cached.items;
+					this.nextPage = cached.nextPage;
+					this.loading = false;
+				}
+			}
 			const result = await getGrid(query);
 			if (token !== this.#fetchToken) return;
 			this.currentQuery = query;
 			this.#resolvingIds.clear();
 			this.items = result.items;
 			this.nextPage = result.nextPage;
+			void writeCachedGrid({
+				query,
+				items: result.items,
+				nextPage: result.nextPage,
+			}).catch((error: unknown) => {
+				console.error("Browse cache persistence failed", error);
+			});
 			this.error = null;
 			this.loading = false;
 		} catch (err) {
 			if (token !== this.#fetchToken) return;
 			console.error(err);
-			if (opts?.silent) {
+			if (opts?.silent || this.items.length > 0) {
+				this.error = null;
 				showErrorToast({
 					label: "Failed to refresh profiles",
 					error: err,

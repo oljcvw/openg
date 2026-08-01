@@ -4,6 +4,11 @@ import { fetchRest } from "$lib/api";
 import { registerAccountCache } from "$lib/api/account-caches";
 import { ApiError } from "$lib/api/api-error";
 import { getBlockedUsers } from "$lib/api/browse/blocks";
+import {
+	readCachedProfile,
+	removeCachedProfile,
+	writeCachedProfile,
+} from "$lib/app-data/profile-cache";
 import { mediaHashPublicSchema } from "$lib/model/media";
 import { rightNowAttributionStatusSchema } from "$lib/model/right-now";
 import {
@@ -114,6 +119,24 @@ export async function getProfile(profileId: number): Promise<Profile> {
 	return request;
 }
 
+export async function getPersistedProfile(
+	profileId: number,
+): Promise<Profile | null> {
+	const cached = profilesCache.get(profileId)?.profile;
+	return cached ? structuredClone(cached) : await readCachedProfile(profileId);
+}
+
+export async function refreshProfile(profileId: number): Promise<Profile> {
+	let request = profilesInFlight.get(profileId);
+	if (!request) {
+		request = fetchProfile(profileId).finally(() => {
+			profilesInFlight.delete(profileId);
+		});
+		profilesInFlight.set(profileId, request);
+	}
+	return await request;
+}
+
 const MAGIC_PROFILE_UNAVAILABLE_DISPLAY_NAME = "3";
 const MAGIC_PROFILE_BLOCK_DISPLAY_NAME = "4";
 
@@ -134,6 +157,9 @@ async function fetchProfile(profileId: number): Promise<Profile> {
 		}
 	}
 	profilesCache.set(profileId, { profile, updatedAt: now() });
+	void writeCachedProfile(profile, now()).catch((error: unknown) => {
+		console.error("Profile cache persistence failed", error);
+	});
 	return profile;
 }
 
@@ -185,6 +211,9 @@ registerAccountCache(clearProfileCaches);
 
 export function invalidateProfile(profileId: number) {
 	profilesCache.delete(profileId);
+	void removeCachedProfile(profileId).catch((error: unknown) => {
+		console.error("Profile cache invalidation failed", error);
+	});
 	if (myProfileCache?.profile.profileId === profileId) {
 		myProfileCache = null;
 	}
@@ -241,9 +270,13 @@ export function mergeProfileEditIntoCaches(
 ) {
 	const cached = profilesCache.get(cacheProfileId);
 	if (cached) {
+		const profile = applyProfileEdit(cached.profile, patch);
 		profilesCache.set(cacheProfileId, {
-			profile: applyProfileEdit(cached.profile, patch),
+			profile,
 			updatedAt: now(),
+		});
+		void writeCachedProfile(profile, now()).catch((error: unknown) => {
+			console.error("Profile cache persistence failed", error);
 		});
 	}
 	if (myProfileCache && myProfileCache.profile.profileId === cacheProfileId) {

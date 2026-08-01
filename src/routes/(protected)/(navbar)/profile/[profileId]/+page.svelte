@@ -7,9 +7,11 @@
 	import { recordProfileView } from "$lib/api/interest/views";
 	import {
 		BlockedProfileError,
+		getPersistedProfile,
 		getProfile,
 		mergeProfileEditIntoCaches,
 		ProfileUnavailableError,
+		refreshProfile,
 	} from "$lib/api/users/profiles";
 	import {
 		getPreferences,
@@ -118,12 +120,22 @@
 		loadError = null;
 		profile = null;
 		try {
-			const result = await getProfile(id);
+			const cached = await getPersistedProfile(id);
+			if (id !== profileId) return;
+			if (cached) {
+				profile = cached;
+				loading = false;
+			}
+			const result = cached ? await refreshProfile(id) : await getProfile(id);
 			if (id !== profileId) return;
 			profile = result;
 			loadError = null;
 		} catch (error) {
 			if (id !== profileId) return;
+			if (profile) {
+				showErrorToast({ label: "Failed to refresh profile", error });
+				return;
+			}
 			loadError = error instanceof Error ? error : new Error(String(error));
 			profile = null;
 		} finally {
