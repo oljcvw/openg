@@ -1,9 +1,14 @@
-import { decode, encode } from "@msgpack/msgpack";
+import { decode } from "@msgpack/msgpack";
 import z from "zod";
 
 import { registerAccountCache } from "$lib/api/account-caches";
 import { type Profile, profileSchema } from "$lib/model/users/profiles";
-import { existsAppDataFile, readAppDataFile, writeAppDataFileAtomic } from ".";
+import { existsAppDataFile, readAppDataFile, removeAppDataFile } from ".";
+import {
+	readCacheEntry,
+	removeCacheEntry,
+	writeCacheEntry,
+} from "./cache-manager";
 
 const FILE_NAME = "profile-cache.data";
 const MAX_PROFILE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -23,10 +28,7 @@ const profileCacheSchema = z.object({
 type ProfileCache = z.infer<typeof profileCacheSchema>;
 
 let activeAccountProfileId: number | null = null;
-let cache: ProfileCache | null = null;
-let hydrating: Promise<ProfileCache> | null = null;
-let writeQueue: Promise<unknown> = Promise.resolve();
-let generation = 0;
+let migration: Promise<void> | null = null;
 
 export function parseProfileCache(value: unknown): ProfileCache {
 	return profileCacheSchema.parse(value);
@@ -46,36 +48,26 @@ function accountKey(): string | null {
 		: String(activeAccountProfileId);
 }
 
-async function readFromDisk(): Promise<ProfileCache> {
-	if (!(await existsAppDataFile(FILE_NAME))) return parseProfileCache({});
-	return parseProfileCache(decode(await readAppDataFile(FILE_NAME)));
-}
-
-async function getCache(): Promise<ProfileCache> {
-	if (cache !== null) return cache;
-	const currentGeneration = generation;
-	hydrating ??= readFromDisk()
-		.catch((error: unknown) => {
-			console.error("Profile cache hydration failed", error);
-			return parseProfileCache({});
-		})
-		.then((value) => {
-			if (currentGeneration === generation) cache = value;
-			return value;
-		})
-		.finally(() => {
-			if (currentGeneration === generation) hydrating = null;
-		});
-	return await hydrating;
-}
-
-function enqueueWrite<T>(task: () => Promise<T>): Promise<T> {
-	const run = writeQueue.then(task);
-	writeQueue = run.then(
-		() => undefined,
-		() => undefined,
-	);
-	return run;
+async function migrateLegacyCache(): Promise<void> {
+	if (migration) return await migration;
+	migration = (async () => {
+		if (!(await existsAppDataFile(FILE_NAME))) return;
+		try {
+			const legacy = parseProfileCache(
+				decode(await readAppDataFile(FILE_NAME)),
+			);
+			for (const [accountId, profiles] of Object.entries(legacy.accounts)) {
+				for (const [profileId, entry] of Object.entries(profiles)) {
+					await writeCacheEntry(Number(accountId), "profile", profileId, entry);
+				}
+			}
+		} catch (error) {
+			console.error("Profile cache migration failed", error);
+			return;
+		}
+		await removeAppDataFile(FILE_NAME);
+	})();
+	return await migration;
 }
 
 export async function readCachedProfile(
@@ -84,7 +76,13 @@ export async function readCachedProfile(
 ): Promise<Profile | null> {
 	const owner = accountKey();
 	if (owner === null) return null;
-	const entry = (await getCache()).accounts[owner]?.[String(profileId)];
+	await migrateLegacyCache();
+	const entry = await readCacheEntry(
+		Number(owner),
+		"profile",
+		String(profileId),
+		(value) => cachedProfileSchema.parse(value),
+	);
 	if (!entry || now - entry.updatedAt > MAX_PROFILE_AGE_MS) return null;
 	return structuredClone(entry.profile);
 }
@@ -95,48 +93,28 @@ export async function writeCachedProfile(
 ): Promise<void> {
 	const owner = accountKey();
 	if (owner === null) return;
-	await enqueueWrite(async () => {
-		const currentGeneration = generation;
-		const next = structuredClone(await getCache());
-		next.accounts[owner] ??= {};
-		next.accounts[owner][String(profile.profileId)] = { profile, updatedAt };
-		const validated = parseProfileCache(next);
-		await writeAppDataFileAtomic(FILE_NAME, encode(validated));
-		if (currentGeneration === generation) cache = validated;
-	});
+	await migrateLegacyCache();
+	await writeCacheEntry(
+		Number(owner),
+		"profile",
+		String(profile.profileId),
+		cachedProfileSchema.parse({ profile, updatedAt }),
+	);
 }
 
 export async function removeCachedProfile(profileId: number): Promise<void> {
 	const owner = accountKey();
 	if (owner === null) return;
-	await enqueueWrite(async () => {
-		const currentGeneration = generation;
-		const next = structuredClone(await getCache());
-		delete next.accounts[owner]?.[String(profileId)];
-		const validated = parseProfileCache(next);
-		await writeAppDataFileAtomic(FILE_NAME, encode(validated));
-		if (currentGeneration === generation) cache = validated;
-	});
+	await removeCacheEntry(Number(owner), "profile", String(profileId));
 }
 
 export async function deleteActiveAccountProfileCache(): Promise<void> {
-	const owner = accountKey();
-	if (owner === null) return;
-	await enqueueWrite(async () => {
-		const currentGeneration = generation;
-		const next = structuredClone(await getCache());
-		delete next.accounts[owner];
-		const validated = parseProfileCache(next);
-		await writeAppDataFileAtomic(FILE_NAME, encode(validated));
-		if (currentGeneration === generation) cache = validated;
-	});
+	// Account-wide cache deletion is coordinated by the logout flow.
 }
 
 export function clearProfileDiskCacheMemory(): void {
-	generation += 1;
 	activeAccountProfileId = null;
-	cache = null;
-	hydrating = null;
+	migration = null;
 }
 
 registerAccountCache(clearProfileDiskCacheMemory);

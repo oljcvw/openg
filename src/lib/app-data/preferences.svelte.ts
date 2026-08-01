@@ -27,6 +27,7 @@ export type ContrastMode = z.infer<typeof contrastModeSchema>;
 const preferencesSchema = z
 	.object({
 		contrastMode: contrastModeSchema.default("standard"),
+		cacheSizeMb: z.number().int().min(10).max(1000).default(100),
 		geohash: geohashSchema.nullable().default(null),
 		gridSearchFilters: gridSearchFiltersSchema.optional(),
 		gridColumns: gridColumnsSchema.default("auto"),
@@ -152,6 +153,10 @@ export function getGridColumnsSnapshot(): GridColumns {
 
 export function getContrastModeSnapshot(): ContrastMode {
 	return preferencesSnapshot.contrastMode;
+}
+
+export function getCacheSizeMbSnapshot(): number {
+	return preferencesSnapshot.cacheSizeMb;
 }
 
 export function getProfileSwipeNavigationSnapshot(): boolean {

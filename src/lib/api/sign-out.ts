@@ -2,9 +2,9 @@ import { goto } from "$app/navigation";
 
 import { callMethod } from "$lib/api";
 import { clearAccountCaches } from "$lib/api/account-caches";
-import { deleteActiveAccountGridCache } from "$lib/app-data/grid-cache";
+import { removeAccountCache } from "$lib/app-data/cache-manager";
 import { clearAccountPreferences } from "$lib/app-data/preferences.svelte";
-import { deleteActiveAccountProfileCache } from "$lib/app-data/profile-cache";
+import { getProfileCacheAccount } from "$lib/app-data/profile-cache";
 import { invalidateProfileLocationMutations } from "$lib/location/profile-location";
 
 const INBOX_LAST_VIEWED_PREFIX = "chat:inbox-last-viewed:";
@@ -29,11 +29,9 @@ export async function signOut(): Promise<void> {
 
 export async function clearLocalAccountState(): Promise<void> {
 	invalidateProfileLocationMutations();
+	const accountId = getProfileCacheAccount();
 	try {
-		await Promise.all([
-			deleteActiveAccountGridCache(),
-			deleteActiveAccountProfileCache(),
-		]);
+		if (accountId !== null) await removeAccountCache(accountId);
 	} catch (error) {
 		console.error(error);
 	}

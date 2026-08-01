@@ -4,6 +4,7 @@ import {
 	exists,
 	mkdir,
 	readFile,
+	remove,
 	rename,
 	writeFile,
 } from "@tauri-apps/plugin-fs";
@@ -33,4 +34,9 @@ export async function writeAppDataFileAtomic(
 		oldPathBaseDir: BaseDirectory.AppData,
 		newPathBaseDir: BaseDirectory.AppData,
 	});
+}
+
+export async function removeAppDataFile(path: string): Promise<void> {
+	if (!(await existsAppDataFile(path))) return;
+	await remove(path, { baseDir: BaseDirectory.AppData });
 }

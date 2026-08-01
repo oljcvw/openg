@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CacheSetting from "./CacheSetting.svelte";
 	import ContrastSetting from "./ContrastSetting.svelte";
 	import GridColumnsSetting from "./GridColumnsSetting.svelte";
 	import NotificationsLink from "./NotificationsLink.svelte";
@@ -15,6 +16,8 @@
 <ContrastSetting />
 <GridColumnsSetting />
 <StayAwakeSetting />
+<h2>Storage</h2>
+<CacheSetting />
 <h2>Accessibility</h2>
 <ProfileSwipeNavigationSetting />
 <h2>Messages</h2>

@@ -15,6 +15,7 @@ describe("preference migration", () => {
 		});
 
 		expect(preferences).toMatchObject({
+			cacheSizeMb: 100,
 			contrastMode: "standard",
 			gridColumns: "auto",
 			pendingProfileLocation: null,

@@ -1,10 +1,15 @@
-import { decode, encode } from "@msgpack/msgpack";
+import { decode } from "@msgpack/msgpack";
 import z from "zod";
 
 import { registerAccountCache } from "$lib/api/account-caches";
+import {
+	readCacheEntry,
+	removeCacheEntry,
+	writeCacheEntry,
+} from "$lib/app-data/cache-manager";
 import { getProfileCacheAccount } from "$lib/app-data/profile-cache";
 import { cascadeV4QuerySchema } from "$lib/model/browse/grid/cascade/query/v4";
-import { existsAppDataFile, readAppDataFile, writeAppDataFileAtomic } from ".";
+import { existsAppDataFile, readAppDataFile, removeAppDataFile } from ".";
 
 const FILE_NAME = "grid-cache.data";
 const MAX_GRID_AGE_MS = 24 * 60 * 60 * 1000;
@@ -54,10 +59,7 @@ export type CachedGridProfile = z.infer<typeof cachedGridProfileSchema>;
 export type CachedGrid = z.infer<typeof cachedGridSchema>;
 type GridCache = z.infer<typeof gridCacheSchema>;
 
-let cache: GridCache | null = null;
-let hydrating: Promise<GridCache> | null = null;
-let writeQueue: Promise<unknown> = Promise.resolve();
-let generation = 0;
+let migration: Promise<void> | null = null;
 
 export function parseGridCache(value: unknown): GridCache {
 	return gridCacheSchema.parse(value);
@@ -78,36 +80,33 @@ function queryKey(query: z.infer<typeof cascadeV4QuerySchema>): string {
 	);
 }
 
-async function readFromDisk(): Promise<GridCache> {
-	if (!(await existsAppDataFile(FILE_NAME))) return parseGridCache({});
-	return parseGridCache(decode(await readAppDataFile(FILE_NAME)));
+async function migrateLegacyCache(): Promise<void> {
+	if (migration) return await migration;
+	migration = (async () => {
+		if (!(await existsAppDataFile(FILE_NAME))) return;
+		try {
+			const legacy = parseGridCache(decode(await readAppDataFile(FILE_NAME)));
+			for (const [accountId, grids] of Object.entries(legacy.accounts)) {
+				await writeCacheEntry(Number(accountId), "grid", "grids", grids);
+			}
+		} catch (error) {
+			console.error("Browse cache migration failed", error);
+			return;
+		}
+		await removeAppDataFile(FILE_NAME);
+	})();
+	return await migration;
 }
 
-async function getCache(): Promise<GridCache> {
-	if (cache !== null) return cache;
-	const currentGeneration = generation;
-	hydrating ??= readFromDisk()
-		.catch((error: unknown) => {
-			console.error("Browse cache hydration failed", error);
-			return parseGridCache({});
-		})
-		.then((value) => {
-			if (currentGeneration === generation) cache = value;
-			return value;
-		})
-		.finally(() => {
-			if (currentGeneration === generation) hydrating = null;
-		});
-	return await hydrating;
-}
-
-function enqueueWrite<T>(task: () => Promise<T>): Promise<T> {
-	const run = writeQueue.then(task);
-	writeQueue = run.then(
-		() => undefined,
-		() => undefined,
+async function getAccountCache(
+	owner: string,
+): Promise<Record<string, CachedGrid>> {
+	await migrateLegacyCache();
+	return (
+		(await readCacheEntry(Number(owner), "grid", "grids", (value) =>
+			z.record(z.string(), cachedGridSchema).parse(value),
+		)) ?? {}
 	);
-	return run;
 }
 
 export async function readCachedGrid(
@@ -116,7 +115,7 @@ export async function readCachedGrid(
 ): Promise<CachedGrid | null> {
 	const owner = ownerKey();
 	if (owner === null) return null;
-	const entry = (await getCache()).accounts[owner]?.[queryKey(query)];
+	const entry = (await getAccountCache(owner))[queryKey(query)];
 	if (!entry || now - entry.updatedAt > MAX_GRID_AGE_MS) return null;
 	return structuredClone(entry);
 }
@@ -127,33 +126,20 @@ export async function writeCachedGrid(
 ): Promise<void> {
 	const owner = ownerKey();
 	if (owner === null) return;
-	await enqueueWrite(async () => {
-		const currentGeneration = generation;
-		const next = structuredClone(await getCache());
-		const account = (next.accounts[owner] ??= {});
-		account[queryKey(grid.query)] = { ...grid, updatedAt };
-		for (const [key] of Object.entries(account)
-			.toSorted(([, left], [, right]) => right.updatedAt - left.updatedAt)
-			.slice(MAX_GRIDS_PER_ACCOUNT)) {
-			delete account[key];
-		}
-		const validated = parseGridCache(next);
-		await writeAppDataFileAtomic(FILE_NAME, encode(validated));
-		if (currentGeneration === generation) cache = validated;
-	});
+	const account = await getAccountCache(owner);
+	account[queryKey(grid.query)] = { ...grid, updatedAt };
+	for (const [key] of Object.entries(account)
+		.toSorted(([, left], [, right]) => right.updatedAt - left.updatedAt)
+		.slice(MAX_GRIDS_PER_ACCOUNT)) {
+		delete account[key];
+	}
+	await writeCacheEntry(Number(owner), "grid", "grids", account);
 }
 
 export async function deleteActiveAccountGridCache(): Promise<void> {
 	const owner = ownerKey();
 	if (owner === null) return;
-	await enqueueWrite(async () => {
-		const currentGeneration = generation;
-		const next = structuredClone(await getCache());
-		delete next.accounts[owner];
-		const validated = parseGridCache(next);
-		await writeAppDataFileAtomic(FILE_NAME, encode(validated));
-		if (currentGeneration === generation) cache = validated;
-	});
+	await removeCacheEntry(Number(owner), "grid", "grids");
 }
 
 export async function updateCachedGridProfile(
@@ -162,30 +148,21 @@ export async function updateCachedGridProfile(
 ): Promise<void> {
 	const owner = ownerKey();
 	if (owner === null) return;
-	await enqueueWrite(async () => {
-		const currentGeneration = generation;
-		const next = structuredClone(await getCache());
-		const account = next.accounts[owner];
-		if (!account) return;
-		let changed = false;
-		for (const grid of Object.values(account)) {
-			for (const item of grid.items) {
-				if (item.id !== profileId || item.type !== "rendered") continue;
-				Object.assign(item, patch);
-				changed = true;
-			}
+	const account = await getAccountCache(owner);
+	let changed = false;
+	for (const grid of Object.values(account)) {
+		for (const item of grid.items) {
+			if (item.id !== profileId || item.type !== "rendered") continue;
+			Object.assign(item, patch);
+			changed = true;
 		}
-		if (!changed) return;
-		const validated = parseGridCache(next);
-		await writeAppDataFileAtomic(FILE_NAME, encode(validated));
-		if (currentGeneration === generation) cache = validated;
-	});
+	}
+	if (!changed) return;
+	await writeCacheEntry(Number(owner), "grid", "grids", account);
 }
 
 export function clearGridDiskCacheMemory(): void {
-	generation += 1;
-	cache = null;
-	hydrating = null;
+	migration = null;
 }
 
 registerAccountCache(clearGridDiskCacheMemory);
