@@ -105,7 +105,7 @@ export const audioMessageSchema = messageBaseSchema.safeExtend({
 	body: z.object({
 		mediaId: z.int().nonnegative(),
 		mediaHash: mediaHashPrivateSchema.nullable(),
-		url: mediaUrlSchema,
+		url: mediaUrlSchema.nullable(),
 		contentType: z.string().nullable(),
 		length: z.int().nonnegative().nullable(),
 		expiresAt: unixTimestampMsSchema.nullable(),
@@ -121,7 +121,7 @@ export const videoMessageSchema = messageBaseSchema.safeExtend({
 		url: mediaUrlSchema.nullable(),
 		fileCacheKey: z.string().optional(),
 		contentType: z.string().nullable(),
-		length: z.int().nonnegative(),
+		length: z.int().nonnegative().nullable(),
 		maxViews: z.int().nonnegative().nullable(),
 		looping: z.boolean().nullable(),
 		viewsRemaining: z.int().nonnegative().optional(),
@@ -139,10 +139,16 @@ export type NonExpiringVideoMessage = z.infer<
 	typeof nonExpiringVideoMessageSchema
 >;
 
+export const gaymojiAssetIdSchema = z
+	.string()
+	.min(5)
+	.max(128)
+	.regex(/^[A-Za-z0-9._-]+\.png$/);
+
 export const gaymojiMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Gaymoji"),
 	body: z.object({
-		imageHash: z.string(),
+		imageHash: gaymojiAssetIdSchema,
 	}),
 });
 
@@ -161,7 +167,7 @@ export const giphyMessageSchema = messageBaseSchema.safeExtend({
 		id: z.string(),
 		urlPath: mediaUrlSchema,
 		stillPath: mediaUrlSchema,
-		previewPath: z.string(),
+		previewPath: mediaUrlSchema,
 		width: z.int().nonnegative(),
 		height: z.int().nonnegative(),
 		imageHash: z.string(),
@@ -229,7 +235,7 @@ export type ProfileLinkMessage = z.infer<typeof profileLinkMessageSchema>;
 export const profilePhotoReplyMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("ProfilePhotoReply"),
 	body: z.object({
-		imageHash: z.string(),
+		imageHash: mediaHashPublicSchema,
 		photoContentReply: z.string(),
 	}),
 });
@@ -265,7 +271,10 @@ export type UnknownMessage = z.infer<typeof unknownMessageSchema>;
 
 export const videoCallMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("VideoCall"),
-	body: z.unknown(),
+	body: z.object({
+		result: z.string().nullable(),
+		videoCallDuration: z.int().nonnegative().nullable(),
+	}),
 });
 
 export type VideoCallMessage = z.infer<typeof videoCallMessageSchema>;
@@ -305,12 +314,92 @@ export const unsentMessageSchema = z.intersection(
 
 export type UnsentMessage = z.infer<typeof unsentMessageSchema>;
 
-export const apiResponseMessageSchema = z
+const strictApiResponseMessageSchema = z
 	.intersection(messageSchema, apiResponseMessageOverlaySchema)
 	.or(unsentMessageSchema);
 
+type StrictApiResponseMessage = z.infer<typeof strictApiResponseMessageSchema>;
+
+function safeSourceType(value: unknown): string {
+	if (
+		typeof value === "object" &&
+		value !== null &&
+		"type" in value &&
+		typeof value.type === "string" &&
+		/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(value.type)
+	) {
+		return value.type;
+	}
+	return "Unknown";
+}
+
+export const apiResponseMessageSchema = z.unknown().transform((value, ctx) => {
+	const parsed = strictApiResponseMessageSchema.safeParse(value);
+	if (parsed.success) return parsed.data;
+	const overlay = apiResponseMessageOverlaySchema.safeParse(value);
+	if (!overlay.success) {
+		ctx.addIssue({ code: "custom", message: "Invalid message metadata" });
+		return z.NEVER;
+	}
+	return {
+		...overlay.data,
+		type: "Unknown" as const,
+		body: { sourceType: safeSourceType(value) },
+	} satisfies StrictApiResponseMessage;
+});
+
 export type Message = z.infer<typeof messageSchema>;
 export type ApiResponseMessage = z.infer<typeof apiResponseMessageSchema>;
+
+export type RetractedDisplayMessage<
+	T extends ApiResponseMessage = ApiResponseMessage,
+> = T extends ApiResponseMessage
+	? Omit<T, "body" | "type" | "unsent"> & {
+			type: "Retracted";
+			body: null;
+			unsent: true;
+		}
+	: never;
+
+export type DisplayMessage = ApiResponseMessage | RetractedDisplayMessage;
+
+function asRetractedMessage<T extends ApiResponseMessage>(
+	message: T,
+): RetractedDisplayMessage<T> {
+	return { ...message, type: "Retracted", body: null, unsent: true };
+}
+
+export function applyMessageRetractions<T extends ApiResponseMessage>(
+	messages: readonly T[],
+	showRetractedMessages: boolean,
+): (T | RetractedDisplayMessage<T>)[] {
+	const targetIds = new Set(
+		messages.flatMap((message) =>
+			message.type === "Retract" ? [message.body.targetMessageId] : [],
+		),
+	);
+	const loadedIds = new Set(messages.map((message) => message.messageId));
+	const visible: (T | RetractedDisplayMessage<T>)[] = [];
+	const standaloneTargets = new Set<string>();
+	for (const message of messages) {
+		if (message.type === "Retract") {
+			if (
+				!loadedIds.has(message.body.targetMessageId) &&
+				!standaloneTargets.has(message.body.targetMessageId)
+			) {
+				standaloneTargets.add(message.body.targetMessageId);
+				visible.push(asRetractedMessage(message));
+			}
+			continue;
+		}
+		if (targetIds.has(message.messageId) && !showRetractedMessages) {
+			visible.push(asRetractedMessage(message));
+		} else {
+			visible.push(message);
+		}
+	}
+	return visible;
+}
 
 export type MessagePreview = {
 	type: string;
@@ -320,10 +409,17 @@ export type MessagePreview = {
 };
 
 export function previewFromMessage(
-	message: ApiResponseMessage | undefined,
+	message: DisplayMessage | undefined,
 ): MessagePreview {
 	if (!message) return { type: "", text: null, albumId: null, imageHash: null };
 	switch (message.type) {
+		case "Retracted":
+			return {
+				type: "Retracted",
+				text: null,
+				albumId: null,
+				imageHash: null,
+			};
 		case "Unsent":
 			return {
 				type: "Unsent",
@@ -371,5 +467,20 @@ export function previewLabel(preview: MessagePreview | null): string | null {
 	if (preview.albumId !== null) return "Album";
 	if (preview.imageHash !== null || preview.type === "Image") return "Photo";
 	if (preview.type === "Location") return "Location";
-	return null;
+	const labels: Record<string, string> = {
+		Audio: "Voice message",
+		Gaymoji: "Gaymoji",
+		Generative: "Generated content",
+		Giphy: "GIF",
+		NonExpiringVideo: "Video",
+		PrivateVideo: "Private video",
+		ProfileLink: "Profile shared",
+		ProfilePhotoReply: "Photo reply",
+		Retract: "Message removed",
+		Retracted: "Message removed",
+		Unsent: "Message unsent",
+		Video: "Video",
+		VideoCall: "Video call",
+	};
+	return labels[preview.type] ?? null;
 }

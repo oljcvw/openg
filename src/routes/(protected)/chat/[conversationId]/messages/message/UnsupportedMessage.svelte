@@ -14,5 +14,5 @@
 	class="w-full max-w-full rounded-lg bg-card p-2 text-center text-sm text-muted-foreground/30"
 	bind:this={el}
 >
-	Unsupported message type: {type}
+	{type === "Unknown" ? "Message unavailable" : `${type} unavailable`}
 </div>

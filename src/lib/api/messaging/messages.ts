@@ -56,8 +56,10 @@ export async function getSingleMessage({
 	return message;
 }
 
-function toOutboundBody(message: z.infer<typeof messageSchema>): unknown {
-	if (message.type === "Image") {
+export function toOutboundBody(
+	message: z.infer<typeof messageSchema>,
+): unknown {
+	if (message.type === "Image" || message.type === "Audio") {
 		return { mediaId: message.body.mediaId };
 	}
 	return message.body;

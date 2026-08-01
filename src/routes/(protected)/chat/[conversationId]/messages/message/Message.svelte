@@ -3,11 +3,14 @@
 	import { expoOut } from "svelte/easing";
 	import { scale } from "svelte/transition";
 
-	import type { ApiResponseMessage } from "$lib/model/messaging/messages";
+	import { videoMessageSchema } from "$lib/model/messaging/messages";
+	import type { DisplayMessage } from "$lib/model/messaging/messages";
 	import AlbumContentMessage from "./AlbumContentMessage.svelte";
 	import AlbumMessage from "./AlbumMessage.svelte";
+	import AudioMessage from "./AudioMessage.svelte";
 	import { setMessageContext } from "./context";
 	import ExpiringImageMessage from "./ExpiringImageMessage.svelte";
+	import GiphyMessage from "./GiphyMessage.svelte";
 	import ImageMessage from "./ImageMessage.svelte";
 	import LocationMessage from "./LocationMessage.svelte";
 	import MessageContextMenu from "./MessageContextMenu.svelte";
@@ -16,8 +19,10 @@
 	import MessageWrapper from "./MessageWrapper.svelte";
 	import Reaction from "./Reaction.svelte";
 	import TextMessage from "./TextMessage.svelte";
+	import UncommonMessage from "./UncommonMessage.svelte";
 	import UnsentMessage from "./UnsentMessage.svelte";
 	import UnsupportedMessage from "./UnsupportedMessage.svelte";
+	import VideoMessage from "./VideoMessage.svelte";
 
 	let {
 		message,
@@ -33,7 +38,7 @@
 		onUnsend,
 		onUnshareAlbum,
 	}: {
-		message: ApiResponseMessage;
+		message: DisplayMessage;
 		isOut: boolean;
 		isRead: boolean | null;
 		indexInStack: number;
@@ -122,6 +127,19 @@
 
 	let contextMenu: HTMLDialogElement | null = $state(null);
 
+	function unsupportedType(): string {
+		if (
+			message.type === "Unknown" &&
+			typeof message.body === "object" &&
+			message.body !== null &&
+			"sourceType" in message.body &&
+			typeof message.body.sourceType === "string"
+		) {
+			return message.body.sourceType;
+		}
+		return message.type;
+	}
+
 	function observeRead(node: HTMLElement) {
 		if (!onVisible) return {};
 		const observer = new IntersectionObserver(
@@ -175,6 +193,35 @@
 			<TextMessage message={message.body} />
 		{:else if message.type === "Image"}
 			<ImageMessage message={message.body} />
+		{:else if message.type === "Audio"}
+			<AudioMessage
+				message={message.body}
+				conversationId={message.conversationId}
+				messageId={message.messageId}
+			/>
+		{:else if message.type === "Video" || message.type === "PrivateVideo"}
+			<VideoMessage
+				message={message.body}
+				conversationId={message.conversationId}
+				messageId={message.messageId}
+				privateMedia={message.type === "PrivateVideo" ||
+					message.body.maxViews !== null}
+			/>
+		{:else if message.type === "NonExpiringVideo"}
+			{@const video = videoMessageSchema.shape.body.safeParse(message.body)}
+			{#if video.success}
+				<VideoMessage
+					message={video.data}
+					conversationId={message.conversationId}
+					messageId={message.messageId}
+				/>
+			{:else}
+				<UnsupportedMessage type="Video" />
+			{/if}
+		{:else if message.type === "Giphy"}
+			<GiphyMessage message={message.body} />
+		{:else if message.type === "Gaymoji" || message.type === "Generative" || message.type === "ProfileLink" || message.type === "ProfilePhotoReply" || message.type === "VideoCall"}
+			<UncommonMessage type={message.type} body={message.body} />
 		{:else if message.type === "ExpiringImage"}
 			<ExpiringImageMessage
 				message={message.body}
@@ -187,10 +234,14 @@
 			<AlbumMessage message={message.body} />
 		{:else if message.type === "AlbumContentReply" || message.type === "AlbumContentReaction"}
 			<AlbumContentMessage message={message.body} />
-		{:else if message.type === "Unsent"}
-			<UnsentMessage />
+		{:else if message.type === "Unsent" || message.type === "Retracted"}
+			<UnsentMessage
+				label={message.type === "Retracted"
+					? "Message removed"
+					: "Message unsent"}
+			/>
 		{:else}
-			<UnsupportedMessage type={message.type} />
+			<UnsupportedMessage type={unsupportedType()} />
 		{/if}
 	</MessageWrapper>
 {/snippet}

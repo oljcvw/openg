@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	apiResponseMessageSchema,
+	applyMessageRetractions,
 	messageSchema,
 	previewFromMessage,
 	previewLabel,
@@ -94,6 +95,61 @@ describe("apiResponseMessageSchema", () => {
 				},
 			],
 		});
+	});
+
+	it("degrades a malformed known body without rejecting message metadata", () => {
+		const message = apiResponseMessageSchema.parse({
+			type: "Audio",
+			body: { mediaId: "not-a-number" },
+			messageId: "msg-2",
+			conversationId: "conversation-1",
+			senderId: 42,
+			timestamp: 1_710_000_000_000,
+			unsent: false,
+			reactions: [],
+		});
+		expect(message.type).toBe("Unknown");
+		expect(message.body).toEqual({ sourceType: "Audio" });
+	});
+});
+
+describe("applyMessageRetractions", () => {
+	const target = apiResponseMessageSchema.parse({
+		type: "Text",
+		body: { text: "keep me private" },
+		messageId: "target",
+		conversationId: "conversation-1",
+		senderId: 42,
+		timestamp: 1_710_000_000_000,
+		unsent: false,
+		reactions: [],
+	});
+	const retract = apiResponseMessageSchema.parse({
+		type: "Retract",
+		body: { targetMessageId: "target" },
+		messageId: "retract",
+		conversationId: "conversation-1",
+		senderId: 42,
+		timestamp: 1_710_000_000_001,
+		unsent: false,
+		reactions: [],
+	});
+
+	it("replaces loaded targets by default", () => {
+		expect(applyMessageRetractions([retract, target], false)).toMatchObject([
+			{ messageId: "target", type: "Retracted", body: null },
+		]);
+	});
+
+	it("keeps loaded targets when opted in", () => {
+		expect(applyMessageRetractions([retract, target], true)).toEqual([target]);
+	});
+
+	it("deduplicates missing-target retract events", () => {
+		const duplicate = { ...retract, messageId: "retract-2" };
+		expect(applyMessageRetractions([retract, duplicate], false)).toHaveLength(
+			1,
+		);
 	});
 });
 

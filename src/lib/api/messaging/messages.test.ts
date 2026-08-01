@@ -91,6 +91,38 @@ describe("message API wrappers", () => {
 		);
 	});
 
+	it("keeps valid siblings when one rich message body is malformed", async () => {
+		const data = {
+			lastReadTimestamp: null,
+			messages: [
+				apiMessage({ messageId: "valid" }),
+				apiMessage({
+					type: "VideoCall",
+					body: { videoCallDuration: "invalid" },
+					messageId: "malformed",
+				}),
+			],
+			profile: {
+				distance: null,
+				mediaHash: null,
+				name: "Alex",
+				onlineUntil: null,
+				profileId: 42,
+				showDistance: true,
+			},
+		};
+		fetchRestMock.mockResolvedValue(response({ data }));
+
+		const result = await getConversationMessages({
+			conversationId: "conversation-1",
+		});
+
+		expect(result.messages.map((message) => message.type)).toEqual([
+			"Text",
+			"Unknown",
+		]);
+	});
+
 	it("loads a single message by conversation and message id", async () => {
 		const data = { message: apiMessage({ messageId: "msg-2" }) };
 		fetchRestMock.mockResolvedValue(response({ data }));
@@ -155,6 +187,33 @@ describe("message API wrappers", () => {
 				type: "Image",
 				target: { type: "Direct", targetId: 99 },
 				body: { mediaId: 910_001 },
+			},
+		});
+	});
+
+	it("sends audio messages by media reference only", async () => {
+		const audioBody = {
+			mediaId: 910_002,
+			mediaHash: "a".repeat(64),
+			url: "https://audio.example/message.aac",
+			contentType: "audio/aac",
+			length: 12_345,
+			expiresAt: 1_710_000_900_000,
+		};
+		const responseMessage = apiMessage({ type: "Audio", body: audioBody });
+		fetchRestMock.mockResolvedValue(response({ data: responseMessage }));
+
+		await sendMessage({
+			toUserId: 99,
+			message: { type: "Audio", body: audioBody },
+		});
+
+		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/send", {
+			method: "POST",
+			body: {
+				type: "Audio",
+				target: { type: "Direct", targetId: 99 },
+				body: { mediaId: 910_002 },
 			},
 		});
 	});
