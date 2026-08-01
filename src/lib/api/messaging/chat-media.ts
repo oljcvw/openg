@@ -15,16 +15,25 @@ const mediaUploadResponseSchema = z.object({
 
 export type MediaUploadResponse = z.infer<typeof mediaUploadResponseSchema>;
 
-async function uploadChatMedia(
+export type ChatMediaUploadOptions = {
+	length?: number;
+	looping?: boolean;
+	takenOnGrindr?: boolean;
+};
+
+export async function uploadChatMedia(
 	bytes: Uint8Array<ArrayBuffer>,
 	contentType: string,
+	options: ChatMediaUploadOptions = {},
 ): Promise<MediaUploadResponse> {
 	if (demoEnabled) {
 		return demoUploadChatMedia(bytes, contentType);
 	}
 	const response = await invoke("upload_chat_media", {
 		contentType,
-		takenOnGrindr: false,
+		takenOnGrindr: options.takenOnGrindr ?? false,
+		length: options.length,
+		looping: options.looping,
 		data: toBase64(bytes),
 	});
 	return mediaUploadResponseSchema.parse(response);

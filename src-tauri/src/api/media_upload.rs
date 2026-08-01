@@ -65,6 +65,8 @@ pub async fn upload_chat_media(
 	state: tauri::State<'_, AppState>,
 	content_type: String,
 	taken_on_grindr: bool,
+	length: Option<i64>,
+	looping: Option<bool>,
 	// Base64, because raw byte arrays over the Tauri IPC are unreliable.
 	// https://github.com/tauri-apps/tauri/issues/10573
 	data: String,
@@ -72,10 +74,22 @@ pub async fn upload_chat_media(
 	let bytes = STANDARD.decode(&data).map_err(|e| {
 		AppError::Http(format!("Failed to decode base64 media: {e}"))
 	})?;
+	if length.is_some_and(|value| value < 0) {
+		return Err(AppError::Api {
+			code: 400,
+			message: "Invalid media length".to_owned(),
+		});
+	}
 
 	let response = state
 		.client()?
-		.upload_chat_media(bytes, &content_type, None, None, taken_on_grindr)
+		.upload_chat_media(
+			bytes,
+			&content_type,
+			length,
+			looping,
+			taken_on_grindr,
+		)
 		.await?;
 
 	Ok(MediaUploadResponse {

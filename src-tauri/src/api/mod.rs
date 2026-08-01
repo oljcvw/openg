@@ -6,4 +6,5 @@ pub mod google_oauth;
 pub mod media_upload;
 pub mod notifications;
 pub mod rest;
+pub mod voice_recorder;
 pub mod ws;

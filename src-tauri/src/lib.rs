@@ -109,6 +109,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(api::google_oauth::plugin())
         .plugin(api::notifications::plugin())
+        .plugin(api::voice_recorder::plugin())
         .manage(AppState {
             client: OnceLock::new(),
         })
@@ -134,6 +135,11 @@ pub fn run() {
             api::notifications::notification_sync,
             api::notifications::notification_cancel,
             api::notifications::notification_clear_account,
+            api::voice_recorder::voice_recorder_permission_status,
+            api::voice_recorder::voice_recorder_request_permission,
+            api::voice_recorder::voice_recorder_start,
+            api::voice_recorder::voice_recorder_stop,
+            api::voice_recorder::voice_recorder_cancel,
             api::ws::ws_connect,
             api::ws::ws_send,
             api::client::rotate_api_params,
