@@ -11,8 +11,8 @@
 	import * as Tabs from "$lib/components/ui/tabs";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 	import ComposerAlbumsTab from "./ComposerAlbumsTab.svelte";
+	import ComposerLocationTab from "./ComposerLocationTab.svelte";
 	import ComposerMediaTab from "./ComposerMediaTab.svelte";
-	import ComposerUnimplementedTab from "./ComposerUnimplementedTab.svelte";
 
 	const FULLSIZE_TABS: Tab[] = ["media"];
 
@@ -142,7 +142,10 @@
 						/>
 					</Tabs.Content>
 					<Tabs.Content value="location">
-						<ComposerUnimplementedTab label="Sharing location" issue={35} />
+						<ComposerLocationTab
+							active={open && selectedTab === "location"}
+							onClose={() => (open = false)}
+						/>
 					</Tabs.Content>
 				</div>
 			</div>

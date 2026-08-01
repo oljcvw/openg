@@ -680,6 +680,13 @@ export function demoSentMessage(body: unknown): ApiResponseMessage {
 			...overlay,
 		};
 	}
+	if (sent.type === "Location" && sent.body && typeof sent.body === "object") {
+		return {
+			type: "Location",
+			body: sent.body as { lat: number; lon: number },
+			...overlay,
+		};
+	}
 	return {
 		type: "Text",
 		body:

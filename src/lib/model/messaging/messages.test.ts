@@ -40,6 +40,21 @@ describe("messageSchema", () => {
 
 		expect(result.success).toBe(false);
 	});
+
+	it("accepts bounded location messages", () => {
+		expect(
+			messageSchema.parse({
+				type: "Location",
+				body: { lat: 53.35, lon: -6.26 },
+			}),
+		).toEqual({ type: "Location", body: { lat: 53.35, lon: -6.26 } });
+		expect(
+			messageSchema.safeParse({
+				type: "Location",
+				body: { lat: 91, lon: 0 },
+			}).success,
+		).toBe(false);
+	});
 });
 
 describe("apiResponseMessageSchema", () => {
@@ -83,6 +98,21 @@ describe("apiResponseMessageSchema", () => {
 });
 
 describe("previewFromMessage", () => {
+	it("labels location previews", () => {
+		const preview = previewFromMessage({
+			type: "Location",
+			body: { lat: 53.35, lon: -6.26 },
+			messageId: "location-1",
+			conversationId: "conversation-1",
+			senderId: 42,
+			timestamp: 1_710_000_000_000,
+			unsent: false,
+			reactions: [],
+		});
+		expect(preview.type).toBe("Location");
+		expect(previewLabel(preview)).toBe("Location");
+	});
+
 	it("extracts preview text from text messages", () => {
 		expect(
 			previewFromMessage({

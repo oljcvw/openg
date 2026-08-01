@@ -109,6 +109,9 @@ export function demoRoute(
 	if (method === "GET" && rawPath === "/v4/cascade") {
 		return ok(demoCascadeV4(params));
 	}
+	if (method === "PUT" && rawPath === "/v4/location") {
+		return ok({});
+	}
 	if (method === "GET" && rawPath === "/v7/search") {
 		return ok({ profiles: demoSearchProfiles(params) });
 	}

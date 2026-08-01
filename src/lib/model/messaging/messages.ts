@@ -1,5 +1,6 @@
 import z from "zod";
 
+import { locationPointSchema } from "$lib/model/location";
 import {
 	mediaHashPrivateSchema,
 	mediaHashPublicSchema,
@@ -203,10 +204,7 @@ export type ExpiringImageMessage = z.infer<typeof expiringImageMessageSchema>;
 
 export const locationMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Location"),
-	body: z.object({
-		lat: z.number(),
-		lon: z.number(),
-	}),
+	body: locationPointSchema,
 });
 
 export type LocationMessage = z.infer<typeof locationMessageSchema>;
@@ -372,5 +370,6 @@ export function previewLabel(preview: MessagePreview | null): string | null {
 	if (preview.text !== null) return preview.text;
 	if (preview.albumId !== null) return "Album";
 	if (preview.imageHash !== null || preview.type === "Image") return "Photo";
+	if (preview.type === "Location") return "Location";
 	return null;
 }

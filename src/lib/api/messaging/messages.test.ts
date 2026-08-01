@@ -159,6 +159,28 @@ describe("message API wrappers", () => {
 		});
 	});
 
+	it("sends location coordinates unchanged", async () => {
+		const message = apiMessage({
+			type: "Location",
+			body: { lat: 53.35, lon: -6.26 },
+		});
+		fetchRestMock.mockResolvedValue(response({ data: message }));
+
+		await sendMessage({
+			toUserId: 99,
+			message: { type: "Location", body: { lat: 53.35, lon: -6.26 } },
+		});
+
+		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/send", {
+			method: "POST",
+			body: {
+				type: "Location",
+				target: { type: "Direct", targetId: 99 },
+				body: { lat: 53.35, lon: -6.26 },
+			},
+		});
+	});
+
 	it("posts reactions without parsing a response body", async () => {
 		const res = response();
 		fetchRestMock.mockResolvedValue(res);

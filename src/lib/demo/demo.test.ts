@@ -195,6 +195,21 @@ describe("demo route data matches the real schemas", () => {
 		apiResponseMessageSchema.parse(body);
 	});
 
+	it("updates and sends locations through demo routes", () => {
+		expect(
+			demoRoute("/v4/location", "PUT", { geohash: "u2fkb88pbpbp" }).status,
+		).toBe(200);
+		const body = route("/v4/chat/message/send", "POST", {
+			type: "Location",
+			target: { type: "Direct", targetId: 100001 },
+			body: { lat: 53.35, lon: -6.26 },
+		});
+		expect(apiResponseMessageSchema.parse(body)).toMatchObject({
+			type: "Location",
+			body: { lat: 53.35, lon: -6.26 },
+		});
+	});
+
 	it("taps and views validate", () => {
 		const taps = route("/v2/taps/received") as { profiles: unknown[] };
 		for (const tap of taps.profiles) tapProfileSchema.parse(tap);
