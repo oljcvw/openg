@@ -10,6 +10,10 @@ import {
 	setConversationPinned,
 } from "$lib/api/messaging/conversations";
 import { getConversationMessages } from "$lib/api/messaging/messages";
+import {
+	getShowRetractedMessagesSnapshot,
+	subscribePreferences,
+} from "$lib/app-data/preferences.svelte";
 import { showIncomingMessageToast } from "$lib/components/incoming-message-toast/incoming-message-toast-manager";
 import { previewFromMessage } from "$lib/model/messaging/messages";
 import { below } from "$lib/util/breakpoints.svelte";
@@ -23,6 +27,7 @@ import type { Conversation } from "$lib/model/messaging/conversations";
 import type { ApiResponseMessage } from "$lib/model/messaging/messages";
 import {
 	conversationRowMatchesQuery,
+	messageCorpusMatchesQuery,
 	normalizeConversationSearchQuery,
 	searchableMessageText,
 } from "./conversation-filter";
@@ -36,6 +41,7 @@ type MessageSearchCorpus = {
 	nextPageKey?: string | null;
 	pageKeys: Set<string>;
 	textByMessageId: Map<string, string>;
+	retractedMessageIds: Set<string>;
 };
 
 const MESSAGE_SEARCH_CONCURRENCY = 3;
@@ -89,6 +95,7 @@ class ConversationsState {
 	#messageSearchFetches = new Map<string, Promise<void>>();
 	#messageSearchActiveRequests = 0;
 	#messageSearchSlotWaiters: (() => void)[] = [];
+	#unsubscribePreferences: () => void;
 
 	constructor(ourProfileId: number) {
 		this.ourProfileId = ourProfileId;
@@ -98,6 +105,11 @@ class ConversationsState {
 		this.#unsubscribeReconcile = reconciler.subscribe(() =>
 			this.#trackFetch(this.#reconcile()),
 		);
+		this.#unsubscribePreferences = subscribePreferences(() => {
+			for (const entry of this.entries) {
+				this.#refreshCurrentSearchMatch(entry.data.conversationId);
+			}
+		});
 
 		this.#wsPromises.push(
 			ws.on("chat.v1.message_sent", chatV1MessageSentEventSchema, (event) => {
@@ -124,6 +136,7 @@ class ConversationsState {
 		this.#messageSearchCorpora.clear();
 		this.#messageSearchFetches.clear();
 		this.#unsubscribeReconcile();
+		this.#unsubscribePreferences();
 		const unlisteners = await Promise.all(this.#wsPromises);
 		for (const unlisten of unlisteners) unlisten();
 		this.#wsPromises = [];
@@ -685,6 +698,7 @@ class ConversationsState {
 				nextPageKey: null,
 				pageKeys: new Set(),
 				textByMessageId: new Map(),
+				retractedMessageIds: new Set(),
 			};
 			this.#messageSearchCorpora.set(id, corpus);
 		} else if (existingCorpus && !existingCorpus.initialized) {
@@ -810,6 +824,7 @@ class ConversationsState {
 				initialized: false,
 				pageKeys: new Set(),
 				textByMessageId: new Map(),
+				retractedMessageIds: new Set(),
 			};
 			this.#messageSearchCorpora.set(conversationId, corpus);
 		}
@@ -832,6 +847,12 @@ class ConversationsState {
 		const corpus = this.#messageSearchCorpora.get(conversationId);
 		if (!corpus) return;
 		for (const message of messages) {
+			if (message.type === "Retract") {
+				corpus.retractedMessageIds.add(message.body.targetMessageId);
+			}
+		}
+		for (const message of messages) {
+			if (message.type === "Retract") continue;
 			const text = searchableMessageText(message);
 			if (text === null) {
 				corpus.textByMessageId.delete(message.messageId);
@@ -851,8 +872,11 @@ class ConversationsState {
 			entry !== undefined &&
 			!conversationRowMatchesQuery(entry, normalizedQuery) &&
 			corpus !== undefined &&
-			[...corpus.textByMessageId.values()].some((text) =>
-				text.includes(normalizedQuery),
+			messageCorpusMatchesQuery(
+				corpus.textByMessageId,
+				corpus.retractedMessageIds,
+				normalizedQuery,
+				getShowRetractedMessagesSnapshot(),
 			);
 		const alreadyMatches = this.messageSearchMatchIds.includes(conversationId);
 		if (matches && !alreadyMatches) {
@@ -975,8 +999,11 @@ class ConversationsState {
 				const corpus = this.#messageSearchCorpora.get(conversationId);
 				return (
 					corpus !== undefined &&
-					[...corpus.textByMessageId.values()].some((text) =>
-						text.includes(normalizedQuery),
+					messageCorpusMatchesQuery(
+						corpus.textByMessageId,
+						corpus.retractedMessageIds,
+						normalizedQuery,
+						getShowRetractedMessagesSnapshot(),
 					)
 				);
 			});

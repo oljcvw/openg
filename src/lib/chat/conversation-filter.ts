@@ -21,8 +21,13 @@ export function conversationRowMatchesQuery(
 
 export function searchableMessageText(
 	message: ApiResponseMessage,
+	showRetractedMessages = true,
+	retractedMessageIds: ReadonlySet<string> = new Set(),
 ): string | null {
 	if (message.unsent) return null;
+	if (!showRetractedMessages && retractedMessageIds.has(message.messageId)) {
+		return null;
+	}
 	switch (message.type) {
 		case "Text":
 			return message.body.text.toLocaleLowerCase();
@@ -33,6 +38,19 @@ export function searchableMessageText(
 		default:
 			return null;
 	}
+}
+
+export function messageCorpusMatchesQuery(
+	textByMessageId: ReadonlyMap<string, string>,
+	retractedMessageIds: ReadonlySet<string>,
+	normalizedQuery: string,
+	showRetractedMessages: boolean,
+): boolean {
+	return [...textByMessageId.entries()].some(
+		([messageId, text]) =>
+			(showRetractedMessages || !retractedMessageIds.has(messageId)) &&
+			text.includes(normalizedQuery),
+	);
 }
 
 export type ConversationFilter = "all" | "favorites" | "unread";

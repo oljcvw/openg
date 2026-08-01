@@ -11,7 +11,9 @@
 		deleteMessageForMe,
 		unsendMessage,
 	} from "$lib/api/messaging/messages";
-	import type { ApiResponseMessage } from "$lib/model/messaging/messages";
+	import { getShowRetractedMessagesSnapshot } from "$lib/app-data/preferences.svelte";
+	import { applyMessageRetractions } from "$lib/model/messaging/messages";
+	import type { DisplayMessage } from "$lib/model/messaging/messages";
 	import { getConversationState } from "../conversation-state.svelte";
 	import { processMessages } from "../messages";
 	import Message from "./message/Message.svelte";
@@ -31,7 +33,7 @@
 	 * we own. Keyed off ownerProfileId rather than who sent the message: a
 	 * forwarded album is not ours to unshare.
 	 */
-	function albumIdToUnshare(message: ApiResponseMessage): number | null {
+	function albumIdToUnshare(message: DisplayMessage): number | null {
 		if (!ALBUM_MESSAGE_TYPES.includes(message.type)) return null;
 		const body = message.body as {
 			albumId?: number;
@@ -57,7 +59,10 @@
 
 	const messages = $derived(
 		processMessages({
-			messages: conversationState.messages,
+			messages: applyMessageRetractions(
+				conversationState.messages,
+				getShowRetractedMessagesSnapshot(),
+			),
 			ourProfileId: conversationState.ourProfileId,
 		}),
 	);

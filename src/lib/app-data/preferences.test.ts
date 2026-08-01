@@ -10,6 +10,7 @@ describe("preference migration", () => {
 	it("adds safe defaults to an older preference payload", () => {
 		const preferences = parsePreferences({
 			revealMessageRead: true,
+			showRetractedMessages: false,
 			units: "imperial",
 		});
 
@@ -30,6 +31,12 @@ describe("preference migration", () => {
 		expect(preferences.geohash).toBe("u2fkb88pbpbp");
 		expect(preferences.reportedProfileLocation).toBeNull();
 		expect(preferences.pendingProfileLocation).toBeNull();
+	});
+
+	it("preserves an explicit retracted-message opt-in", () => {
+		expect(
+			parsePreferences({ showRetractedMessages: true }).showRetractedMessages,
+		).toBe(true);
 	});
 
 	it("removes the retired navigation-button preference", () => {

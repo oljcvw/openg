@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { filterConversations } from "$lib/chat/conversation-filter";
+import {
+	filterConversations,
+	messageCorpusMatchesQuery,
+} from "$lib/chat/conversation-filter";
 import type { Conversation } from "$lib/model/messaging/conversations";
 
 function conversation(
@@ -114,5 +117,22 @@ describe("conversation filters", () => {
 				query: "message text",
 			}),
 		).toEqual([unread]);
+	});
+});
+
+describe("retracted message search", () => {
+	it("hides retracted text by default and restores it when opted in", () => {
+		const texts = new Map([
+			["ordinary", "ordinary text"],
+			["retracted", "private needle"],
+		]);
+		const retracted = new Set(["retracted"]);
+
+		expect(messageCorpusMatchesQuery(texts, retracted, "needle", false)).toBe(
+			false,
+		);
+		expect(messageCorpusMatchesQuery(texts, retracted, "needle", true)).toBe(
+			true,
+		);
 	});
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { applyMessageRetractions } from "$lib/model/messaging/messages";
 import {
 	getStackedMessages,
 	groupMessagesByDate,
@@ -145,6 +146,35 @@ describe("processMessages", () => {
 			indexInStack: 0,
 			stackLength: 1,
 			dayStart: localDayStart(thirdTs),
+		});
+	});
+});
+
+describe("retraction processing order", () => {
+	it("resolves retracts before restacking visible history", () => {
+		const target = {
+			...baseMessage,
+			messageId: "target",
+			senderId: 7,
+			timestamp: Date.UTC(2026, 5, 5, 9, 0, 5),
+		};
+		const retract = {
+			...baseMessage,
+			type: "Retract" as const,
+			body: { targetMessageId: "target" },
+			messageId: "retract",
+			senderId: 7,
+			timestamp: Date.UTC(2026, 5, 5, 9, 1, 0),
+		};
+		const visible = applyMessageRetractions([retract, target], false);
+		const processed = processMessages({ messages: visible, ourProfileId: 7 });
+
+		expect(processed).toHaveLength(1);
+		expect(processed[0]).toMatchObject({
+			messageId: "target",
+			type: "Retracted",
+			indexInStack: 0,
+			stackLength: 1,
 		});
 	});
 });

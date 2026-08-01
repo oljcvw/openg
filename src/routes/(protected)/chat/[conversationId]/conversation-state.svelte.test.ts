@@ -23,6 +23,8 @@ const {
 vi.mock("$lib/api/error", () => ({ showErrorToast: showErrorToastMock }));
 vi.mock("$lib/app-data/preferences.svelte", () => ({
 	getPreferences: () => Promise.resolve({ revealMessageRead: true }),
+	getShowRetractedMessagesSnapshot: () => false,
+	subscribePreferences: () => vi.fn(),
 }));
 vi.mock("$lib/api/messaging/conversations", () => ({
 	markConversationAsRead: markConversationAsReadMock,

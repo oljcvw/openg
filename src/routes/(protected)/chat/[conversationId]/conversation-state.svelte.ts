@@ -4,8 +4,15 @@ import { ApiError } from "$lib/api";
 import { showErrorToast } from "$lib/api/error";
 import { markConversationAsRead } from "$lib/api/messaging/conversations";
 import { reactToMessage, sendMessage } from "$lib/api/messaging/messages";
-import { getPreferences } from "$lib/app-data/preferences.svelte";
-import { previewFromMessage } from "$lib/model/messaging/messages";
+import {
+	getPreferences,
+	getShowRetractedMessagesSnapshot,
+	subscribePreferences,
+} from "$lib/app-data/preferences.svelte";
+import {
+	applyMessageRetractions,
+	previewFromMessage,
+} from "$lib/model/messaging/messages";
 import { now } from "$lib/util/clock";
 import { reconciler } from "$lib/util/reconcile";
 import {
@@ -17,6 +24,7 @@ import {
 import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
 import type {
 	ApiResponseMessage,
+	DisplayMessage,
 	Message as MessageType,
 } from "$lib/model/messaging/messages";
 import { getConversation } from "./messages";
@@ -50,6 +58,7 @@ export class ConversationState {
 	#readTimer: ReturnType<typeof setTimeout> | null = null;
 	#readDeadline: number | null = null;
 	#unsubscribeReconcile: () => void;
+	#unsubscribePreferences: () => void;
 
 	constructor({
 		conversationId,
@@ -70,6 +79,9 @@ export class ConversationState {
 		this.#unsubscribeReconcile = reconciler.subscribe(() =>
 			this.#reconcileMessages(),
 		);
+		this.#unsubscribePreferences = subscribePreferences(() => {
+			this.#updatePreviewFromMessages();
+		});
 
 		this.#wsPromises.push(
 			ws.on("chat.v1.message_sent", chatV1MessageSentEventSchema, (event) => {
@@ -150,6 +162,7 @@ export class ConversationState {
 		}
 		this.#wsPromises = [];
 		this.#unsubscribeReconcile();
+		this.#unsubscribePreferences();
 		if (this.#readTimer !== null) clearTimeout(this.#readTimer);
 		if (this.#readQueue.length > 0) void this.#flushReadQueue();
 	}
@@ -416,12 +429,34 @@ export class ConversationState {
 		});
 	}
 
-	#updatePreview(message: OptimisticMessage | undefined) {
+	#updatePreview(
+		message: DisplayMessage | undefined,
+		timestamp = message?.timestamp,
+	) {
 		this.#conversations.updatePreview({
 			conversationId: this.conversationId,
 			preview: previewFromMessage(message),
-			timestamp: message?.timestamp ?? -1,
+			timestamp: timestamp ?? -1,
 		});
+	}
+
+	#updatePreviewFromMessages(): void {
+		const latest = this.messages.at(0);
+		if (latest?.type === "Retract") {
+			const target = this.messages.find(
+				(message) => message.messageId === latest.body.targetMessageId,
+			);
+			this.#updatePreview(
+				getShowRetractedMessagesSnapshot() && target ? target : latest,
+				latest.timestamp,
+			);
+			return;
+		}
+		const visible = applyMessageRetractions(
+			this.messages,
+			getShowRetractedMessagesSnapshot(),
+		);
+		this.#updatePreview(visible.at(0));
 	}
 
 	remove(messageId: string) {

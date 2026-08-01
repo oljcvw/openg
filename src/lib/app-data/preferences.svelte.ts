@@ -40,6 +40,7 @@ const preferencesSchema = z
 		rightNowFilters: rightNowFiltersSchema.optional(),
 		revealMessageRead: z.boolean().default(false),
 		revealProfileViews: z.boolean().default(false),
+		showRetractedMessages: z.boolean().default(false),
 		// Removed in favor of swipe-only navigation. Keep accepting old payloads so
 		// existing preferences migrate without a reset.
 		showProfileNavigationButtons: z.boolean().optional(),
@@ -76,6 +77,16 @@ function enqueueWrite<T>(task: () => Promise<T>): Promise<T> {
 
 let cache: Preferences | null = null;
 let hydrating: Promise<Preferences> | null = null;
+const preferenceListeners = new Set<() => void>();
+
+function notifyPreferenceListeners(): void {
+	for (const listener of preferenceListeners) listener();
+}
+
+export function subscribePreferences(listener: () => void): () => void {
+	preferenceListeners.add(listener);
+	return () => preferenceListeners.delete(listener);
+}
 
 async function readFromDisk(): Promise<Preferences> {
 	if (!(await existsAppDataFile("preferences.data"))) {
@@ -151,6 +162,10 @@ export function getStayAwakeSnapshot(): boolean {
 	return preferencesSnapshot.stayAwake;
 }
 
+export function getShowRetractedMessagesSnapshot(): boolean {
+	return preferencesSnapshot.showRetractedMessages;
+}
+
 export async function hydratePreferences(): Promise<void> {
 	await getPreferences();
 }
@@ -167,6 +182,7 @@ export async function setPreferences(
 		await writeAppDataFileAtomic("preferences.data", encode(preferences));
 		cache = preferences;
 		preferencesSnapshot = preferences;
+		notifyPreferenceListeners();
 	});
 }
 
@@ -176,6 +192,7 @@ async function resetToDefaults(): Promise<void> {
 		await writeAppDataFileAtomic("preferences.data", encode(preferences));
 		cache = preferences;
 		preferencesSnapshot = preferences;
+		notifyPreferenceListeners();
 	});
 	window.location.reload();
 }
@@ -196,5 +213,6 @@ export async function clearAccountPreferences(): Promise<void> {
 		await writeAppDataFileAtomic("preferences.data", encode(preferences));
 		cache = preferences;
 		preferencesSnapshot = preferences;
+		notifyPreferenceListeners();
 	});
 }

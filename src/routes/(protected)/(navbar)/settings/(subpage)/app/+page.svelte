@@ -5,6 +5,7 @@
 	import ProfileSwipeNavigationSetting from "./ProfileSwipeNavigationSetting.svelte";
 	import RevealMessageReadSetting from "./RevealMessageReadSetting.svelte";
 	import RevealProfileViewSetting from "./RevealProfileViewSetting.svelte";
+	import ShowRetractedMessagesSetting from "./ShowRetractedMessagesSetting.svelte";
 	import StayAwakeSetting from "./StayAwakeSetting.svelte";
 	import UnitsSetting from "./UnitsSetting.svelte";
 </script>
@@ -16,6 +17,8 @@
 <StayAwakeSetting />
 <h2>Accessibility</h2>
 <ProfileSwipeNavigationSetting />
+<h2>Messages</h2>
+<ShowRetractedMessagesSetting />
 <h2>Notifications</h2>
 <NotificationsLink />
 <h2>Privacy</h2>

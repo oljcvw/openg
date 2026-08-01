@@ -1,12 +1,12 @@
 import { getConversationMessages } from "$lib/api/messaging/messages";
-import type { ApiResponseMessage } from "$lib/model/messaging/messages";
+import type { DisplayMessage } from "$lib/model/messaging/messages";
 
-type StackedMessage = ApiResponseMessage & {
+type StackedMessage = DisplayMessage & {
 	indexInStack: number;
 	stackLength: number;
 };
 
-export function getStackedMessages<T extends ApiResponseMessage>({
+export function getStackedMessages<T extends DisplayMessage>({
 	messages,
 	ourProfileId,
 }: {
@@ -55,11 +55,11 @@ export function getStackedMessages<T extends ApiResponseMessage>({
 	return stackedMessages;
 }
 
-type GroupedMessage = ApiResponseMessage & {
+type GroupedMessage = DisplayMessage & {
 	dayStart?: number;
 };
 
-export function groupMessagesByDate<T extends ApiResponseMessage>({
+export function groupMessagesByDate<T extends DisplayMessage>({
 	messages,
 }: {
 	messages: T[];
@@ -79,7 +79,7 @@ export function groupMessagesByDate<T extends ApiResponseMessage>({
 	return groupedMessages.toReversed();
 }
 
-export function processMessages<T extends ApiResponseMessage>({
+export function processMessages<T extends DisplayMessage>({
 	messages,
 	ourProfileId,
 }: {
