@@ -85,10 +85,19 @@
 	const filteredEntries = $derived(
 		filterConversations(conversations.entries, {
 			filter: conversationFilter,
+			failedConversationIds: conversations.failedConversationIds,
 			messageMatchIds,
 			query: searchQuery,
 		}),
 	);
+	$effect(() => {
+		if (
+			conversationFilter === "failed" &&
+			conversations.failedConversationIds.length === 0
+		) {
+			conversationFilter = "all";
+		}
+	});
 	const filtering = $derived(
 		searchQuery.trim() !== "" || conversationFilter !== "all",
 	);
@@ -273,7 +282,7 @@
 					/>
 				</div>
 				<div class="flex gap-1" aria-label="Chat filters">
-					{#each [["all", "All"], ["unread", "Unread"], ["favorites", "Favorites"]] as option}
+					{#each [["all", "All"], ["unread", "Unread"], ["favorites", "Favorites"], ...(conversations.failedConversationIds.length > 0 ? [["failed", "Failed"]] : [])] as option}
 						<Button
 							variant={conversationFilter === option[0] ? "secondary" : "ghost"}
 							size="sm"

@@ -53,26 +53,34 @@ export function messageCorpusMatchesQuery(
 	);
 }
 
-export type ConversationFilter = "all" | "favorites" | "unread";
+export type ConversationFilter = "all" | "failed" | "favorites" | "unread";
 
 export function filterConversations(
 	conversations: readonly Conversation[],
 	{
 		filter,
 		messageMatchIds = [],
+		failedConversationIds = [],
 		query,
 	}: {
 		filter: ConversationFilter;
 		messageMatchIds?: readonly string[];
+		failedConversationIds?: readonly string[];
 		query: string;
 	},
 ): Conversation[] {
 	const normalizedQuery = normalizeConversationSearchQuery(query);
 	const messageMatches = new Set(messageMatchIds);
+	const failedConversations = new Set(failedConversationIds);
 
 	return conversations.filter((conversation) => {
 		if (filter === "favorites" && !conversation.data.favorite) return false;
 		if (filter === "unread" && conversation.data.unreadCount === 0)
+			return false;
+		if (
+			filter === "failed" &&
+			!failedConversations.has(conversation.data.conversationId)
+		)
 			return false;
 		return (
 			normalizedQuery === "" ||

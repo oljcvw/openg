@@ -87,6 +87,16 @@ describe("conversation filters", () => {
 		).toEqual([]);
 	});
 
+	it("shows only conversations with unactioned failed messages", () => {
+		expect(
+			filterConversations(conversations, {
+				filter: "failed",
+				failedConversationIds: ["Cal"],
+				query: "",
+			}),
+		).toEqual([conversations[2]]);
+	});
+
 	it("matches preview text and complete-history message matches", () => {
 		const withPreview = conversation("Dee", {
 			previewText: "Meet after work?",

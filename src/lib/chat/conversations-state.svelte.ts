@@ -11,6 +11,14 @@ import {
 } from "$lib/api/messaging/conversations";
 import { getConversationMessages } from "$lib/api/messaging/messages";
 import {
+	type FailedCachedMessage,
+	readCachedInbox,
+	readCachedConversation as readPersistedConversation,
+	removeCachedConversation,
+	writeCachedInbox,
+	writeCachedConversation as writePersistedConversation,
+} from "$lib/app-data/chat-cache";
+import {
 	getShowRetractedMessagesSnapshot,
 	subscribePreferences,
 } from "$lib/app-data/preferences.svelte";
@@ -48,6 +56,7 @@ const MESSAGE_SEARCH_CONCURRENCY = 3;
 
 export type CachedConversation = {
 	messages: ApiResponseMessage[];
+	failedMessages?: FailedCachedMessage[];
 	profile: {
 		distance: number | null;
 		mediaHash: string | null;
@@ -74,6 +83,7 @@ class ConversationsState {
 	messageSearchScanned = $state(0);
 	messageSearchTotal = $state(0);
 	messageSearchFailureCount = $state(0);
+	failedConversationIds = $state<string[]>([]);
 
 	readonly ourProfileId: number;
 	#activeConversationId: string | null = null;
@@ -100,7 +110,7 @@ class ConversationsState {
 	constructor(ourProfileId: number) {
 		this.ourProfileId = ourProfileId;
 		this.inboxLastViewedAt = this.#loadInboxLastViewed();
-		this.initial = this.#trackFetch(this.#load(1));
+		this.initial = this.#trackFetch(this.#initialize());
 
 		this.#unsubscribeReconcile = reconciler.subscribe(() =>
 			this.#trackFetch(this.#reconcile()),
@@ -128,6 +138,26 @@ class ConversationsState {
 				},
 			),
 		);
+	}
+
+	async #initialize(): Promise<void> {
+		const cached = await readCachedInbox(this.ourProfileId).catch((error) => {
+			console.error("Inbox cache hydration failed", error);
+			return null;
+		});
+		if (this.#destroyed) return;
+		if (cached) {
+			this.entries = cached.entries;
+			this.nextPage = cached.nextPage;
+			this.failedConversationIds = cached.failedConversationIds;
+		}
+		try {
+			await this.#load(1);
+		} catch (error) {
+			if (!cached) throw error;
+			console.error("Inbox network refresh failed", error);
+			showErrorToast({ label: "Showing cached conversations", error });
+		}
 	}
 
 	async destroy(): Promise<void> {
@@ -361,6 +391,7 @@ class ConversationsState {
 
 	remove(conversationId: string) {
 		this.#messageCache.delete(conversationId);
+		void removeCachedConversation(this.ourProfileId, conversationId);
 		this.#messageSearchCorpora.delete(conversationId);
 		this.messageSearchMatchIds = this.messageSearchMatchIds.filter(
 			(id) => id !== conversationId,
@@ -682,14 +713,55 @@ class ConversationsState {
 				Number(b.data.pinned) - Number(a.data.pinned) ||
 				b.data.lastActivityTimestamp - a.data.lastActivityTimestamp,
 		);
+		this.#persistInbox();
 	}
 
-	getCachedConversation(id: string): CachedConversation | undefined {
-		return this.#messageCache.get(id);
+	#persistInbox(): void {
+		void writeCachedInbox(
+			this.ourProfileId,
+			this.entries,
+			this.nextPage,
+			this.failedConversationIds,
+		).catch((error) => console.error("Inbox cache write failed", error));
+	}
+
+	async getCachedConversation(
+		id: string,
+	): Promise<CachedConversation | undefined> {
+		const memory = this.#messageCache.get(id);
+		if (memory) return memory;
+		const persisted = await readPersistedConversation(this.ourProfileId, id);
+		if (!persisted) return undefined;
+		const cached = {
+			messages: persisted.messages,
+			failedMessages: persisted.failedMessages,
+			profile: persisted.profile,
+			pageKey: persisted.pageKey,
+			lastReadTimestamp: persisted.lastReadTimestamp,
+		};
+		this.#messageCache.set(id, cached);
+		return cached;
 	}
 
 	setCachedConversation(id: string, data: CachedConversation): void {
-		this.#messageCache.set(id, data);
+		const normalized = { ...data, failedMessages: data.failedMessages ?? [] };
+		this.#messageCache.set(id, normalized);
+		const hasFailed = normalized.failedMessages.some(
+			(message) => message.state === "failed",
+		);
+		if (hasFailed && !this.failedConversationIds.includes(id)) {
+			this.failedConversationIds = [...this.failedConversationIds, id];
+		} else if (!hasFailed && this.failedConversationIds.includes(id)) {
+			this.failedConversationIds = this.failedConversationIds.filter(
+				(conversationId) => conversationId !== id,
+			);
+		}
+		this.#persistInbox();
+		void writePersistedConversation(this.ourProfileId, id, {
+			...normalized,
+		}).catch((error) =>
+			console.error("Conversation cache write failed", error),
+		);
 		const existingCorpus = this.#messageSearchCorpora.get(id);
 		if (existingCorpus && data.pageKey === null) {
 			const corpus: MessageSearchCorpus = {
@@ -757,6 +829,14 @@ class ConversationsState {
 		this.messageSearchQuery = normalizedQuery;
 		this.messageSearchStatus = "searching";
 		this.messageSearchTotal = candidates.length;
+		await Promise.all(
+			candidates.map((conversation) =>
+				this.getCachedConversation(conversation.data.conversationId).catch(
+					() => undefined,
+				),
+			),
+		);
+		if (this.#isMessageSearchStale(searchEpoch)) return;
 
 		const targets: string[] = [];
 		for (const conversation of candidates) {
@@ -939,6 +1019,13 @@ class ConversationsState {
 			}
 			corpus.initialized = true;
 			this.#mergeSearchMessages(conversationId, result.messages);
+			const cachedConversation = this.#messageCache.get(conversationId);
+			if (cachedConversation) {
+				this.setCachedConversation(conversationId, {
+					...cachedConversation,
+					messages: [...cachedConversation.messages, ...result.messages],
+				});
+			}
 			const nextPageKey = result.messages.at(-1)?.messageId ?? null;
 			if (nextPageKey === null) {
 				corpus.complete = true;

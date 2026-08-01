@@ -77,6 +77,9 @@
 		stackLength={message.stackLength}
 		dayStart={message.dayStart}
 		status={message.status}
+		onRetry={() => conversationState.retryFailedMessage(message.messageId)}
+		onMarkHandled={() =>
+			conversationState.markFailedMessageHandled(message.messageId)}
 		isRead={isOut && message.messageId === messages[0].messageId
 			? conversationState.lastReadTimestamp === message.timestamp
 			: null}

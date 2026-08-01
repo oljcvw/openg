@@ -30,7 +30,8 @@ import type {
 import { getConversation } from "./messages";
 
 export type OptimisticMessage = ApiResponseMessage & {
-	status: "sent" | "pending" | "error";
+	status: "sent" | "pending" | "error" | "handled";
+	lastAttemptAt?: number;
 };
 
 const READ_DEBOUNCE_MS = 500;
@@ -270,14 +271,21 @@ export class ConversationState {
 	}
 
 	async #initialLoad(): Promise<void> {
-		const cached = this.#conversations.getCachedConversation(
+		const cached = await this.#conversations.getCachedConversation(
 			this.conversationId,
 		);
 		if (cached) {
-			this.messages = cached.messages.map((m) => ({
-				...m,
-				status: "sent" as const,
-			}));
+			this.messages = removeDuplicateMessages([
+				...(cached.failedMessages ?? []).map(
+					({ message, state, lastAttemptAt }) => ({
+						...message,
+						status:
+							state === "failed" ? ("error" as const) : ("handled" as const),
+						lastAttemptAt,
+					}),
+				),
+				...cached.messages.map((m) => ({ ...m, status: "sent" as const })),
+			]);
 			this.profile = cached.profile;
 			this.pageKey = cached.pageKey;
 			this.lastReadTimestamp = cached.lastReadTimestamp;
@@ -384,10 +392,80 @@ export class ConversationState {
 			void this.#conversations.ensureLoaded(this.conversationId);
 		} catch {
 			const msg = this.messages.find((m) => m.messageId === tempId);
-			if (msg) msg.status = "error";
+			if (msg) {
+				msg.status = "error";
+				msg.lastAttemptAt = Date.now();
+			}
 			const latestSent = this.messages.find((m) => m.status === "sent");
 			this.#updatePreview(latestSent);
+			this.#syncCache();
 		}
+	}
+
+	markFailedMessageHandled(messageId: string): void {
+		const message = this.messages.find((item) => item.messageId === messageId);
+		if (!message || message.status !== "error") return;
+		message.status = "handled";
+		this.#syncCache();
+	}
+
+	async retryFailedMessage(messageId: string): Promise<void> {
+		const message = this.messages.find((item) => item.messageId === messageId);
+		if (
+			!message ||
+			(message.status !== "error" && message.status !== "handled")
+		)
+			return;
+		const previousAttemptAt = message.lastAttemptAt ?? message.timestamp;
+		try {
+			const latest = await getConversation({
+				conversationId: this.conversationId,
+			});
+			const duplicate = latest.messages.find(
+				(candidate) =>
+					candidate.senderId === this.ourProfileId &&
+					candidate.type === message.type &&
+					JSON.stringify(candidate.body) === JSON.stringify(message.body) &&
+					candidate.timestamp >= previousAttemptAt - 5000 &&
+					candidate.timestamp <= Date.now() + 5000,
+			);
+			if (duplicate) {
+				Object.assign(message, duplicate, { status: "sent" as const });
+				this.#syncCache();
+				return;
+			}
+		} catch (error) {
+			console.warn("Failed to reconcile before retrying message", error);
+			return;
+		}
+		const {
+			status: _status,
+			lastAttemptAt: _lastAttemptAt,
+			messageId: _messageId,
+			conversationId: _conversationId,
+			senderId: _senderId,
+			timestamp: _timestamp,
+			unsent: _unsent,
+			reactions: _reactions,
+			...payload
+		} = message;
+		void [
+			_status,
+			_lastAttemptAt,
+			_messageId,
+			_conversationId,
+			_senderId,
+			_timestamp,
+			_unsent,
+			_reactions,
+		];
+		message.status = "pending";
+		message.lastAttemptAt = Date.now();
+		this.#syncCache();
+		void this.#resolveMessage({
+			tempId: message.messageId,
+			message: payload as MessageType,
+		});
 	}
 
 	// Echoes come back in send order, so match the oldest pending; prefer a
@@ -421,8 +499,19 @@ export class ConversationState {
 				void _status;
 				return rest;
 			});
+		const failedMessages = this.messages
+			.filter(
+				(message) => message.status === "error" || message.status === "handled",
+			)
+			.map(({ status, lastAttemptAt, ...message }) => ({
+				localId: message.messageId,
+				message,
+				state: status === "error" ? ("failed" as const) : ("handled" as const),
+				lastAttemptAt: lastAttemptAt ?? message.timestamp,
+			}));
 		this.#conversations.setCachedConversation(this.conversationId, {
 			messages: cachedMessages,
+			failedMessages,
 			profile: this.profile,
 			pageKey: this.pageKey,
 			lastReadTimestamp: this.lastReadTimestamp,

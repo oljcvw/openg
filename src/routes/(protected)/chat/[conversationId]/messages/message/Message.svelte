@@ -37,6 +37,8 @@
 		onVisible,
 		onUnsend,
 		onUnshareAlbum,
+		onRetry,
+		onMarkHandled,
 	}: {
 		message: DisplayMessage;
 		isOut: boolean;
@@ -44,12 +46,14 @@
 		indexInStack: number;
 		stackLength: number;
 		dayStart?: number;
-		status?: "sent" | "pending" | "error";
+		status?: "sent" | "pending" | "error" | "handled";
 		onReact?: (reactionId: number) => void;
 		onDelete?: () => void;
 		onVisible?: () => void;
 		onUnsend?: () => void;
 		onUnshareAlbum?: () => void;
+		onRetry?: () => void;
+		onMarkHandled?: () => void;
 	} = $props();
 
 	const firstInStack = $derived(indexInStack === 0);
@@ -304,7 +308,14 @@
 			{#if status === "pending"}
 				Sending...
 			{:else if status === "error"}
-				<span class="text-destructive"> Failed to send </span>
+				<span class="text-destructive">Not sent</span>
+				<button class="ms-2 underline" onclick={onRetry}>Retry</button>
+				<button class="ms-2 underline" onclick={onMarkHandled}
+					>Mark handled</button
+				>
+			{:else if status === "handled"}
+				<span class="text-muted-foreground">Not sent</span>
+				<button class="ms-2 underline" onclick={onRetry}>Retry</button>
 			{:else}
 				{#if isRead !== null}
 					{#if isRead}
