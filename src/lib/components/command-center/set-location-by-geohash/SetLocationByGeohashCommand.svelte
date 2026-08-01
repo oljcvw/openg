@@ -19,7 +19,7 @@
 </script>
 
 {#if !queryHasValue || geohash !== null}
-	<Command.Group heading="Set location by geohash...">
+	<Command.Group heading="Browse by geohash...">
 		<SetLocationByGeohashCommandItem {geohash} />
 	</Command.Group>
 {/if}

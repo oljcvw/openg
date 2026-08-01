@@ -3,6 +3,7 @@ import { goto } from "$app/navigation";
 import { callMethod } from "$lib/api";
 import { clearAccountCaches } from "$lib/api/account-caches";
 import { clearAccountPreferences } from "$lib/app-data/preferences.svelte";
+import { invalidateProfileLocationMutations } from "$lib/location/profile-location";
 
 const INBOX_LAST_VIEWED_PREFIX = "chat:inbox-last-viewed:";
 
@@ -25,6 +26,7 @@ export async function signOut(): Promise<void> {
 }
 
 export async function clearLocalAccountState(): Promise<void> {
+	invalidateProfileLocationMutations();
 	try {
 		await clearAccountPreferences();
 	} catch (error) {

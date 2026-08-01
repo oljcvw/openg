@@ -1,6 +1,7 @@
 import z from "zod";
 
 import { fetchRest } from "$lib/api";
+import { geohashSchema } from "$lib/model/geohash";
 
 const placesResponseSchema = z.object({
 	places: z.array(
@@ -22,4 +23,15 @@ export async function getPlaces({ query }: { query: string }) {
 			}).toString(),
 	).then((res) => res.jsonParsed(placesResponseSchema));
 	return response;
+}
+
+export async function updateReportedProfileLocation(
+	geohash: string,
+): Promise<void> {
+	const parsedGeohash = geohashSchema.parse(geohash);
+	const response = await fetchRest("/v4/location", {
+		method: "PUT",
+		body: { geohash: parsedGeohash },
+	});
+	response.assertOk();
 }

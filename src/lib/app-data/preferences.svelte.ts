@@ -7,6 +7,11 @@ import {
 	rightNowFiltersSchema,
 } from "$lib/components/filters/filters";
 import { geohashSchema } from "$lib/model/geohash";
+import {
+	getLocationActivity,
+	type LocationActivity,
+	reportedProfileLocationSchema,
+} from "$lib/model/location";
 import { type UnitSystem, unitSystemSchema } from "$lib/util/units";
 import { existsAppDataFile, readAppDataFile, writeAppDataFileAtomic } from ".";
 
@@ -26,6 +31,12 @@ const preferencesSchema = z
 		gridSearchFilters: gridSearchFiltersSchema.optional(),
 		gridColumns: gridColumnsSchema.default("auto"),
 		profileSwipeNavigation: z.boolean().optional(),
+		pendingProfileLocation: reportedProfileLocationSchema
+			.nullable()
+			.default(null),
+		reportedProfileLocation: reportedProfileLocationSchema
+			.nullable()
+			.default(null),
 		rightNowFilters: rightNowFiltersSchema.optional(),
 		revealMessageRead: z.boolean().default(false),
 		revealProfileViews: z.boolean().default(false),
@@ -108,6 +119,22 @@ export function getGeohashSnapshot(): string | null {
 	return preferencesSnapshot.geohash;
 }
 
+export function getReportedProfileLocationSnapshot() {
+	return preferencesSnapshot.reportedProfileLocation;
+}
+
+export function getPendingProfileLocationSnapshot() {
+	return preferencesSnapshot.pendingProfileLocation;
+}
+
+export function getLocationActivitySnapshot(): LocationActivity {
+	return getLocationActivity({
+		browseGeohash: preferencesSnapshot.geohash,
+		reportedProfileLocation: preferencesSnapshot.reportedProfileLocation,
+		pendingProfileLocation: preferencesSnapshot.pendingProfileLocation,
+	});
+}
+
 export function getGridColumnsSnapshot(): GridColumns {
 	return preferencesSnapshot.gridColumns;
 }
@@ -156,6 +183,8 @@ async function resetToDefaults(): Promise<void> {
 const accountPreferenceKeys = [
 	"geohash",
 	"gridSearchFilters",
+	"pendingProfileLocation",
+	"reportedProfileLocation",
 	"rightNowFilters",
 ] as const;
 

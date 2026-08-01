@@ -38,7 +38,7 @@
 	}}
 >
 	{#if geohash === null}
-		Enter the 12-character geohash to set your location
+		Enter a 12-character geohash to browse that area
 	{:else}
 		@{#each Array.from(geohash) as char}
 			<span class="w-2.25">{char}</span>

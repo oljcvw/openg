@@ -16,11 +16,20 @@ describe("preference migration", () => {
 		expect(preferences).toMatchObject({
 			contrastMode: "standard",
 			gridColumns: "auto",
+			pendingProfileLocation: null,
 			profileSwipeNavigation: true,
+			reportedProfileLocation: null,
 			revealMessageRead: true,
 			stayAwake: false,
 			units: "imperial",
 		});
+	});
+
+	it("keeps a legacy geohash as Browse-only state", () => {
+		const preferences = parsePreferences({ geohash: "u2fkb88pbpbp" });
+		expect(preferences.geohash).toBe("u2fkb88pbpbp");
+		expect(preferences.reportedProfileLocation).toBeNull();
+		expect(preferences.pendingProfileLocation).toBeNull();
 	});
 
 	it("removes the retired navigation-button preference", () => {

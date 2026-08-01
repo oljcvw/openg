@@ -1,9 +1,4 @@
 <script lang="ts">
-	import {
-		checkPermissions,
-		getCurrentPosition,
-		requestPermissions,
-	} from "@tauri-apps/plugin-geolocation";
 	import { platform } from "@tauri-apps/plugin-os";
 	import { divIcon } from "leaflet";
 	import { GpsFixIcon } from "phosphor-svelte";
@@ -23,6 +18,10 @@
 	import { Input } from "$lib/components/ui/input";
 	import Spinner from "$lib/components/ui/spinner/spinner.svelte";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+	import {
+		getDeviceLocation,
+		LocationPermissionDeniedError,
+	} from "$lib/platform/geolocation";
 
 	let {
 		pinPos = $bindable(),
@@ -218,34 +217,21 @@
 					if (map) {
 						gpsRequestInProgress = true;
 						try {
-							let permissions = await checkPermissions();
-							if (
-								permissions.location === "prompt" ||
-								permissions.location === "prompt-with-rationale"
-							) {
-								permissions = await requestPermissions(["location"]);
-							}
-							if (permissions.location === "granted") {
-								const pos = await getCurrentPosition();
-								map.setView(
-									[pos.coords.latitude, pos.coords.longitude],
-									Math.max(map.getZoom(), 16),
-								);
-								pinPos = {
-									lat: pos.coords.latitude,
-									lon: pos.coords.longitude,
-								};
-							} else {
+							const point = await getDeviceLocation();
+							map.setView([point.lat, point.lon], Math.max(map.getZoom(), 16));
+							pinPos = point;
+						} catch (error) {
+							if (error instanceof LocationPermissionDeniedError) {
 								toast.error(
 									"Location permission denied. Change this in your system settings to use this button.",
 								);
+							} else {
+								console.error(error);
+								showErrorToast({
+									label: "Failed to get current location",
+									error,
+								});
 							}
-						} catch (error) {
-							console.error(error);
-							showErrorToast({
-								label: "Failed to get current location",
-								error,
-							});
 						} finally {
 							gpsRequestInProgress = false;
 						}

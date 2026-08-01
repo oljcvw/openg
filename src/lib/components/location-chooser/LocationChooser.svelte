@@ -3,16 +3,20 @@
 	import Button from "$lib/components/ui/button/button.svelte";
 	import * as Dialog from "$lib/components/ui/dialog";
 	import * as Drawer from "$lib/components/ui/drawer/index";
-	import { encodeGeohash } from "$lib/model/geohash";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 	import { above } from "$lib/util/breakpoints.svelte";
+	import type { LocationPoint } from "$lib/model/location";
 
 	let {
-		onSubmit,
+		onBrowse,
+		onSetProfile,
+		onUseDeviceLocation,
 		open = $bindable(),
 		pinPos = $bindable(),
 	}: {
-		onSubmit: (geohash: string) => void;
+		onBrowse: (point: LocationPoint) => void | Promise<void>;
+		onSetProfile: (point: LocationPoint) => void | Promise<void>;
+		onUseDeviceLocation?: () => void | Promise<void>;
 		open: boolean;
 		pinPos?:
 			| {
@@ -24,12 +28,33 @@
 	} = $props();
 
 	const isDesktop = above("md");
+	let submitting: "browse" | "profile" | "device" | null = $state(null);
 
-	function onSubmitPin() {
+	async function submitPin(action: "browse" | "profile") {
 		if (!pinPos) return;
-		const geohash = encodeGeohash(pinPos.lat, pinPos.lon);
-		open = false;
-		void onSubmit(geohash);
+		submitting = action;
+		try {
+			const point = { lat: pinPos.lat, lon: pinPos.lon };
+			await (action === "browse" ? onBrowse(point) : onSetProfile(point));
+			open = false;
+		} catch (error) {
+			console.error("Location selection failed", error);
+		} finally {
+			submitting = null;
+		}
+	}
+
+	async function useDeviceLocation() {
+		if (!onUseDeviceLocation) return;
+		submitting = "device";
+		try {
+			await onUseDeviceLocation();
+			open = false;
+		} catch (error) {
+			console.error("Device location selection failed", error);
+		} finally {
+			submitting = null;
+		}
 	}
 
 	let geoMapPicker: GeoMapPicker | null = $state(null);
@@ -86,12 +111,28 @@
 				<GeoMapPicker bind:pinPos bind:this={geoMapPicker} />
 			</div>
 			<Dialog.Footer>
-				<Button type="submit" disabled={!pinPos} onclick={onSubmitPin}>
-					Save
+				<Button
+					variant="secondary"
+					disabled={!pinPos || submitting !== null}
+					onclick={() => void submitPin("browse")}
+				>
+					Browse this area
 				</Button>
-				<!-- <Dialog.Close class={buttonVariants({ variant: "outline" })}>
-						Cancel
-					</Dialog.Close> -->
+				<Button
+					disabled={!pinPos || submitting !== null}
+					onclick={() => void submitPin("profile")}
+				>
+					Set profile location
+				</Button>
+				{#if onUseDeviceLocation}
+					<Button
+						variant="outline"
+						disabled={submitting !== null}
+						onclick={() => void useDeviceLocation()}
+					>
+						Use current device location
+					</Button>
+				{/if}
 			</Dialog.Footer>
 		</Dialog.Content>
 	</Dialog.Root>
@@ -108,12 +149,28 @@
 				<GeoMapPicker bind:pinPos bind:this={geoMapPicker} />
 			</div>
 			<Drawer.Footer class="pt-2 pb-(--safe-area-bottom)">
-				<Button type="submit" disabled={!pinPos} onclick={onSubmitPin}>
-					Save
+				<Button
+					variant="secondary"
+					disabled={!pinPos || submitting !== null}
+					onclick={() => void submitPin("browse")}
+				>
+					Browse this area
 				</Button>
-				<!-- <Drawer.Close class={buttonVariants({ variant: "outline" })}>
-						Cancel
-					</Drawer.Close> -->
+				<Button
+					disabled={!pinPos || submitting !== null}
+					onclick={() => void submitPin("profile")}
+				>
+					Set profile location
+				</Button>
+				{#if onUseDeviceLocation}
+					<Button
+						variant="outline"
+						disabled={submitting !== null}
+						onclick={() => void useDeviceLocation()}
+					>
+						Use current device location
+					</Button>
+				{/if}
 			</Drawer.Footer>
 		</Drawer.Content>
 	</Drawer.Root>
