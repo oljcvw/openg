@@ -1,17 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchRestMock } = vi.hoisted(() => ({ fetchRestMock: vi.fn() }));
+const { fetchRestMock, wsSendMock } = vi.hoisted(() => ({
+	fetchRestMock: vi.fn(),
+	wsSendMock: vi.fn(),
+}));
 
 vi.mock("$lib/api", async (importOriginal) => ({
 	...(await importOriginal<typeof import("$lib/api")>()),
 	fetchRest: fetchRestMock,
 }));
+vi.mock("$lib/ws.svelte", () => ({ ws: { send: wsSendMock } }));
 
 import {
 	deleteMessageForMe,
 	getConversationMessages,
 	getSingleMessage,
 	reactToMessage,
+	sendExpiringVideoMessage,
 	sendMessage,
 	unsendMessage,
 } from "$lib/api/messaging/messages";
@@ -56,6 +61,7 @@ function response({
 
 beforeEach(() => {
 	fetchRestMock.mockReset();
+	wsSendMock.mockReset();
 });
 
 afterEach(() => {
@@ -215,6 +221,21 @@ describe("message API wrappers", () => {
 				target: { type: "Direct", targetId: 99 },
 				body: { mediaId: 910_002 },
 			},
+		});
+	});
+
+	it("sends expiring video over the exact WebSocket command contract", () => {
+		sendExpiringVideoMessage({
+			toUserId: 99,
+			mediaId: 910_003,
+			looping: false,
+			maxViews: 2,
+		});
+
+		expect(wsSendMock).toHaveBeenCalledWith("chat.v1.message.send", {
+			type: "Video",
+			target: { type: "Direct", targetId: 99 },
+			body: { mediaId: 910_003, looping: false, maxViews: 2 },
 		});
 	});
 

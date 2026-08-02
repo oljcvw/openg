@@ -7,6 +7,7 @@ import {
 	messageSchema,
 } from "$lib/model/messaging/messages";
 import { unixTimestampMsSchema } from "$lib/model/types";
+import { ws } from "$lib/ws.svelte";
 import type { Conversation } from "$lib/model/messaging/conversations";
 
 const conversationMessagesSchema = z.object({
@@ -83,6 +84,27 @@ export async function sendMessage({
 			body: toOutboundBody(message),
 		},
 	}).then((res) => res.jsonParsed(apiResponseMessageSchema));
+}
+
+export function sendExpiringVideoMessage({
+	toUserId,
+	mediaId,
+	looping,
+	maxViews,
+}: {
+	toUserId: number;
+	mediaId: number;
+	looping: boolean;
+	maxViews: 1 | 2;
+}): void {
+	ws.send("chat.v1.message.send", {
+		type: "Video",
+		target: {
+			type: "Direct",
+			targetId: toUserId,
+		},
+		body: { mediaId, looping, maxViews },
+	});
 }
 
 export async function reactToMessage({

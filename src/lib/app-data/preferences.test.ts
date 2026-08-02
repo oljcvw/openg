@@ -6,6 +6,7 @@ import {
 	developerSettingsSchema,
 	gridColumnsSchema,
 	parsePreferences,
+	videoCallQualityPresetSchema,
 } from "$lib/app-data/preferences.svelte";
 
 describe("preference migration", () => {
@@ -44,6 +45,10 @@ describe("preference migration", () => {
 			profileResolutionBatchSize: 30,
 			profileResolutionWindowMs: 16,
 			reconcileThrottleMs: 2_000,
+			shortVideoCacheMb: 30,
+			shortVideoLooping: false,
+			videoCallQualityPreset: "auto",
+			mediaDiagnostics: false,
 		});
 		expect(
 			developerSettingsSchema.safeParse({ profileResolutionBatchSize: 31 })
@@ -63,11 +68,21 @@ describe("preference migration", () => {
 			developerSettingsSchema.safeParse({ reconcileThrottleMs: 1_999 }).success,
 		).toBe(false);
 		expect(
+			developerSettingsSchema.safeParse({ shortVideoCacheMb: 501 }).success,
+		).toBe(false);
+		expect(
 			developerSettingsSchema.safeParse({
 				apiCircuitWindowSize: 20,
 				apiCircuitMinimumSamples: 21,
 			}).success,
 		).toBe(false);
+	});
+
+	it("accepts supported video-call quality presets", () => {
+		for (const preset of ["auto", "high", "low"]) {
+			expect(videoCallQualityPresetSchema.parse(preset)).toBe(preset);
+		}
+		expect(videoCallQualityPresetSchema.safeParse("ultra").success).toBe(false);
 	});
 
 	it("keeps a legacy geohash as Browse-only state", () => {

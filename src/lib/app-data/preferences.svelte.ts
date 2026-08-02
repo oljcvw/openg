@@ -24,6 +24,11 @@ export type GridColumns = z.infer<typeof gridColumnsSchema>;
 export const contrastModeSchema = z.enum(["standard", "high"]);
 export type ContrastMode = z.infer<typeof contrastModeSchema>;
 
+export const videoCallQualityPresetSchema = z.enum(["auto", "high", "low"]);
+export type VideoCallQualityPreset = z.infer<
+	typeof videoCallQualityPresetSchema
+>;
+
 export const developerSettingsSchema = z
 	.object({
 		albumPreloadConcurrency: z.number().int().min(1).max(8).default(3),
@@ -53,6 +58,10 @@ export const developerSettingsSchema = z
 		profileResolutionBatchSize: z.number().int().min(1).max(30).default(30),
 		profileResolutionWindowMs: z.number().int().min(0).max(1_000).default(16),
 		reconcileThrottleMs: z.number().int().min(2_000).max(30_000).default(2_000),
+		shortVideoCacheMb: z.number().int().min(10).max(500).default(30),
+		shortVideoLooping: z.boolean().default(false),
+		videoCallQualityPreset: videoCallQualityPresetSchema.default("auto"),
+		mediaDiagnostics: z.boolean().default(false),
 	})
 	.refine(
 		(settings) =>

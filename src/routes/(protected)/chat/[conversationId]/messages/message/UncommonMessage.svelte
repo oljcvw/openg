@@ -3,7 +3,6 @@
 	import type {
 		GaymojiMessage,
 		ProfilePhotoReplyMessage,
-		VideoCallMessage,
 	} from "$lib/model/messaging/messages";
 	import RichMessageCard from "./RichMessageCard.svelte";
 
@@ -11,12 +10,7 @@
 		type,
 		body,
 	}: {
-		type:
-			| "Gaymoji"
-			| "Generative"
-			| "ProfileLink"
-			| "ProfilePhotoReply"
-			| "VideoCall";
+		type: "Gaymoji" | "Generative" | "ProfileLink" | "ProfilePhotoReply";
 		body: unknown;
 	} = $props();
 
@@ -37,21 +31,6 @@
 			}
 		}
 		return null;
-	}
-
-	function callLabel(result: string | null): string {
-		const normalized = result?.replaceAll("_", " ").trim().toLocaleLowerCase();
-		const labels: Record<string, string> = {
-			busy: "Video call busy",
-			cancelled: "Video call cancelled",
-			canceled: "Video call cancelled",
-			declined: "Video call declined",
-			missed: "Missed video call",
-			"no answer": "Unanswered video call",
-			successful: "Video call completed",
-			unanswered: "Unanswered video call",
-		};
-		return normalized ? (labels[normalized] ?? "Video call") : "Video call";
 	}
 
 	const profileId = $derived(profileIdFromBody(body));
@@ -87,9 +66,6 @@
 		description={profileId ? "Open profile" : "Profile unavailable"}
 		href={profileId ? `/profile/${profileId}` : null}
 	/>
-{:else if type === "VideoCall"}
-	{@const call = body as VideoCallMessage["body"]}
-	<RichMessageCard title={callLabel(call.result)} />
 {:else}
 	<RichMessageCard title="Generated content unavailable" />
 {/if}

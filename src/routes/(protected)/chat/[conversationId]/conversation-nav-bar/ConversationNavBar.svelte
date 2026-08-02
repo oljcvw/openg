@@ -3,6 +3,7 @@
 
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import VideoCallButton from "$lib/video-call/components/VideoCallButton.svelte";
 	import { getConversationState } from "../conversation-state.svelte";
 	import ConversationNavBarProfile from "./ConversationNavBarProfile.svelte";
 
@@ -31,5 +32,9 @@
 		<span class="flex-1">Failed to load conversation</span>
 	{:else}
 		<ConversationNavBarProfile profile={conversationState.profile} />
+		<VideoCallButton
+			peerProfileId={conversationState.profile.profileId}
+			peerLabel={conversationState.profile.name}
+		/>
 	{/if}
 </ProgressiveBlur>

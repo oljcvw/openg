@@ -9,6 +9,7 @@
 	} from "$lib/app-data/preferences.svelte";
 	import CommandCenter from "$lib/components/command-center/CommandCenter.svelte";
 	import { reconcilePendingProfileLocation } from "$lib/location/profile-location";
+	import VideoCallHost from "$lib/video-call/components/VideoCallHost.svelte";
 
 	let {
 		children,
@@ -39,3 +40,4 @@
 
 {@render children()}
 <CommandCenter />
+<VideoCallHost />

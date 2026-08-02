@@ -4,9 +4,14 @@
 
 	import { getSingleMessage } from "$lib/api/messaging/messages";
 	import {
+		cacheShortVideo,
+		getCachedShortVideo,
+	} from "$lib/app-data/short-video-cache";
+	import {
 		type VideoMessage,
 		videoMessageSchema,
 	} from "$lib/model/messaging/messages";
+	import { toBase64 } from "$lib/util/base64";
 	import { activateMedia, releaseMedia } from "./media-playback";
 	import { MessageMediaState } from "./message-media.svelte";
 
@@ -14,11 +19,13 @@
 		message,
 		conversationId,
 		messageId,
+		isOut,
 		privateMedia = false,
 	}: {
 		message: VideoMessage["body"];
 		conversationId: string;
 		messageId: string;
+		isOut: boolean;
 		privateMedia?: boolean;
 	} = $props();
 
@@ -28,10 +35,11 @@
 	let source: string | null = $state(null);
 	let refreshed = $state(false);
 	let unavailable = $state(false);
+	const consumptive = $derived(message.maxViews !== null);
 	$effect(() => {
 		if (
 			source === null &&
-			(message.url === null || message.viewsRemaining === 0)
+			(message.viewsRemaining === 0 || (!consumptive && message.url === null))
 		) {
 			unavailable = true;
 		}
@@ -39,12 +47,65 @@
 
 	async function activate(): Promise<void> {
 		if (unavailable) return;
+		try {
+			if (consumptive) {
+				const authorizedBody = isOut ? message : await authorizeRecipientView();
+				if (authorizedBody === null) {
+					unavailable = true;
+					return;
+				}
+				source = await resolveConsumptiveSource(authorizedBody);
+			} else {
+				source ??= message.url;
+			}
+		} catch (error) {
+			console.error("Video authorization or cache lookup failed", error);
+			unavailable = true;
+			return;
+		}
+		if (source === null) {
+			unavailable = true;
+			return;
+		}
 		activated = true;
-		source ??= message.url;
 		await tick();
 		if (video) {
 			activateMedia(video);
 			await video.play();
+		}
+	}
+
+	async function authorizeRecipientView(): Promise<
+		VideoMessage["body"] | null
+	> {
+		const response = await getSingleMessage({ conversationId, messageId });
+		return response.message.type === "Video" ||
+			response.message.type === "PrivateVideo"
+			? response.message.body
+			: null;
+	}
+
+	async function resolveConsumptiveSource(
+		body: VideoMessage["body"],
+	): Promise<string | null> {
+		if (body.mediaId !== null) {
+			const cached = await getCachedShortVideo(body.mediaId);
+			if (cached.found) {
+				return `data:${cached.contentType};base64,${cached.dataBase64}`;
+			}
+		}
+		if (body.url === null) return null;
+		if (body.mediaId === null) return body.url;
+		try {
+			const response = await fetch(body.url);
+			if (!response.ok) return body.url;
+			const bytes = new Uint8Array(await response.arrayBuffer());
+			const dataBase64 = toBase64(bytes);
+			await cacheShortVideo(body.mediaId, dataBase64);
+			return `data:video/mp4;base64,${dataBase64}`;
+		} catch (error) {
+			console.error("Received short-video cache fill failed", error);
+			return body.url;
 		}
 	}
 
@@ -129,15 +190,25 @@
 			{/if}
 		</button>
 	{:else}
+		<!-- svelte-ignore a11y_media_has_caption (user-generated chat video has no caption track in the service contract) -->
 		<video
 			bind:this={video}
 			src={source ?? undefined}
-			controls
+			controls={!consumptive}
 			playsinline
 			preload="none"
 			class="size-full object-contain"
 			onplay={() => video && activateMedia(video)}
-			onerror={() => void refreshSource()}
+			onerror={() => {
+				if (consumptive) unavailable = true;
+				else void refreshSource();
+			}}
+			onended={() => {
+				if (consumptive) {
+					activated = false;
+					source = null;
+				}
+			}}
 		></video>
 	{/if}
 	{@render media.adornments?.()}

@@ -122,7 +122,7 @@ export const videoMessageSchema = messageBaseSchema.safeExtend({
 		fileCacheKey: z.string().optional(),
 		contentType: z.string().nullable(),
 		length: z.int().nonnegative().nullable(),
-		maxViews: z.int().nonnegative().nullable(),
+		maxViews: z.union([z.literal(1), z.literal(2)]).nullable(),
 		looping: z.boolean().nullable(),
 		viewsRemaining: z.int().nonnegative().optional(),
 	}),

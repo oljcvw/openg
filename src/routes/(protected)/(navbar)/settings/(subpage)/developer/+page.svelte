@@ -5,8 +5,11 @@
 	import { showErrorToast } from "$lib/api/error";
 	import { syncApiRuntimeSettings } from "$lib/api/runtime-settings";
 	import { resetDeveloperSettings } from "$lib/app-data/preferences.svelte";
+	import { trimShortVideoCache } from "$lib/app-data/short-video-cache";
 	import { Button } from "$lib/components/ui/button";
+	import DeveloperBooleanSetting from "./DeveloperBooleanSetting.svelte";
 	import DeveloperNumberSetting from "./DeveloperNumberSetting.svelte";
+	import DeveloperQualitySetting from "./DeveloperQualitySetting.svelte";
 
 	let resetting = $state(false);
 
@@ -18,6 +21,10 @@
 
 	async function applyApiRuntimeSettings(): Promise<void> {
 		await syncApiRuntimeSettings();
+	}
+
+	async function applyShortVideoCacheLimit(): Promise<void> {
+		await trimShortVideoCache();
 	}
 
 	async function reset(): Promise<void> {
@@ -58,12 +65,36 @@
 
 <h2>Chat media</h2>
 <DeveloperNumberSetting
+	setting="shortVideoCacheMb"
+	title="Short-video cache"
+	description="Maximum encrypted app-private storage used for sent and received short videos."
+	min={10}
+	max={500}
+	unit="MB"
+	onsaved={applyShortVideoCacheLimit}
+/>
+<DeveloperBooleanSetting
+	setting="shortVideoLooping"
+	title="Loop short videos"
+	description="Request looping playback for newly recorded short videos."
+/>
+<DeveloperNumberSetting
 	setting="albumPreloadConcurrency"
 	title="Album preload concurrency"
 	description="Maximum album photos and videos inspected at the same time before opening the viewer."
 	min={1}
 	max={8}
 	unit="media items"
+/>
+
+<h2>Video calls</h2>
+<DeveloperQualitySetting />
+
+<h2>Diagnostics</h2>
+<DeveloperBooleanSetting
+	setting="mediaDiagnostics"
+	title="Media diagnostics"
+	description="Write detailed capture, upload, playback, and call lifecycle events to logcat without media contents or credentials."
 />
 
 <h2>Search and sync</h2>

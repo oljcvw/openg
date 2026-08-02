@@ -14,6 +14,7 @@
 	import { pickMultipleMedia } from "$lib/platform/media-picker";
 	import { SelectionSet } from "$lib/util/selection.svelte";
 	import { getMessageComposerContext } from "../message-composer-context.svelte";
+	import ComposerCaptureActions from "./ComposerCaptureActions.svelte";
 
 	let {
 		onClose,
@@ -102,6 +103,13 @@
 </script>
 
 <div class="@container/photo-grid flex flex-col rounded-grid">
+	<ComposerCaptureActions
+		disabled={composer().disabled}
+		onPhotoAdded={(added) => {
+			media = [added, ...(media ?? []).filter(({ id }) => id !== added.id)];
+		}}
+		{onClose}
+	/>
 	{#if error !== null}
 		<div class="flex flex-1">
 			<ApiErrorDisplay {error} onRetry={() => void load()} class="m-auto" />

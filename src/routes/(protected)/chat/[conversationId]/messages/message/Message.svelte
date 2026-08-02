@@ -22,6 +22,7 @@
 	import UncommonMessage from "./UncommonMessage.svelte";
 	import UnsentMessage from "./UnsentMessage.svelte";
 	import UnsupportedMessage from "./UnsupportedMessage.svelte";
+	import VideoCallHistoryMessage from "./VideoCallHistoryMessage.svelte";
 	import VideoMessage from "./VideoMessage.svelte";
 
 	let {
@@ -208,6 +209,7 @@
 				message={message.body}
 				conversationId={message.conversationId}
 				messageId={message.messageId}
+				{isOut}
 				privateMedia={message.type === "PrivateVideo" ||
 					message.body.maxViews !== null}
 			/>
@@ -218,14 +220,17 @@
 					message={video.data}
 					conversationId={message.conversationId}
 					messageId={message.messageId}
+					{isOut}
 				/>
 			{:else}
 				<UnsupportedMessage type="Video" />
 			{/if}
 		{:else if message.type === "Giphy"}
 			<GiphyMessage message={message.body} />
-		{:else if message.type === "Gaymoji" || message.type === "Generative" || message.type === "ProfileLink" || message.type === "ProfilePhotoReply" || message.type === "VideoCall"}
+		{:else if message.type === "Gaymoji" || message.type === "Generative" || message.type === "ProfileLink" || message.type === "ProfilePhotoReply"}
 			<UncommonMessage type={message.type} body={message.body} />
+		{:else if message.type === "VideoCall"}
+			<VideoCallHistoryMessage message={message.body} outgoing={isOut} />
 		{:else if message.type === "ExpiringImage"}
 			<ExpiringImageMessage
 				message={message.body}

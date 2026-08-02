@@ -11,6 +11,11 @@ import {
 	removeAppDataFile,
 	writeAppDataFileAtomic,
 } from ".";
+import {
+	clearShortVideoCache,
+	getShortVideoCacheStats,
+	subscribeShortVideoCacheStats,
+} from "./short-video-cache";
 
 export const cacheKindSchema = z.enum([
 	"profile",
@@ -45,6 +50,7 @@ const DEFAULT_LIMIT_MB = 100;
 let manifest: CacheManifest | null = null;
 let queue: Promise<unknown> = Promise.resolve();
 let limitMb = DEFAULT_LIMIT_MB;
+let shortVideoCacheBytes = 0;
 const listeners = new Set<(usage: CacheUsage) => void>();
 
 export function parseCacheManifest(value: unknown): CacheManifest {
@@ -95,10 +101,12 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
 function usageOf(value: CacheManifest): CacheUsage {
 	return {
 		limitBytes: limitMb * 1024 * 1024,
-		usedBytes: Object.values(value.entries).reduce(
-			(total, entry) => total + entry.sizeBytes,
-			0,
-		),
+		usedBytes:
+			shortVideoCacheBytes +
+			Object.values(value.entries).reduce(
+				(total, entry) => total + entry.sizeBytes,
+				0,
+			),
 	};
 }
 
@@ -204,6 +212,7 @@ export async function removeCacheEntry(
 }
 
 export async function removeAccountCache(accountId: number): Promise<void> {
+	await clearShortVideoCache(accountId);
 	await enqueue(async () => {
 		const value = await loadManifest();
 		for (const [id, entry] of Object.entries(value.entries)) {
@@ -216,6 +225,7 @@ export async function removeAccountCache(accountId: number): Promise<void> {
 }
 
 export async function clearAllCachedData(): Promise<void> {
+	await clearShortVideoCache();
 	await enqueue(async () => {
 		const value = await loadManifest();
 		for (const entry of Object.values(value.entries)) {
@@ -235,6 +245,7 @@ export async function setCacheLimitMb(value: number): Promise<void> {
 }
 
 export async function getCacheUsage(): Promise<CacheUsage> {
+	shortVideoCacheBytes = (await getShortVideoCacheStats()).byteLength;
 	return usageOf(await loadManifest());
 }
 
@@ -251,3 +262,8 @@ export function subscribeCacheUsage(
 export function clearCacheManagerMemory(): void {
 	manifest = null;
 }
+
+subscribeShortVideoCacheStats((stats) => {
+	shortVideoCacheBytes = stats.byteLength;
+	if (manifest) notify(manifest);
+});
