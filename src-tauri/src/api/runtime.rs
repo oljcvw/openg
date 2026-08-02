@@ -43,6 +43,7 @@ struct CircuitState {
 	last_block: Option<Instant>,
 	escalation: usize,
 	half_open: bool,
+	retrying: bool,
 }
 
 struct RequestRecovery {
@@ -107,18 +108,16 @@ impl ApiRuntime {
 		Fut: Future<Output = Result<T, grindr::GrindrError>>,
 	{
 		let half_open = loop {
+			let notified = self.recovery.notify.notified();
 			match self.recovery.admit(policy).await {
 				Admission::Proceed { half_open } => break half_open,
 				Admission::Cooldown { retry_at_ms } => {
 					return Err(RuntimeError::Cooldown { retry_at_ms })
 				}
 				Admission::Wait => {
-					if tokio::time::timeout(
-						HALF_OPEN_WAIT,
-						self.recovery.notify.notified(),
-					)
-					.await
-					.is_err()
+					if tokio::time::timeout(HALF_OPEN_WAIT, notified)
+						.await
+						.is_err()
 					{
 						let retry_at_ms = system_time_ms() + 1_000;
 						return Err(RuntimeError::Cooldown { retry_at_ms });
@@ -136,9 +135,27 @@ impl ApiRuntime {
 			Err(grindr::GrindrError::Blocked)
 				if policy == RetryPolicy::SafeRead && !half_open =>
 			{
+				if !self.recovery.begin_retry().await {
+					let notified = self.recovery.notify.notified();
+					if self.recovery.is_retrying().await {
+						let _ = tokio::time::timeout(HALF_OPEN_WAIT, notified)
+							.await;
+					}
+					return match self.recovery.admit(policy).await {
+						Admission::Cooldown { retry_at_ms } => {
+							Err(RuntimeError::Cooldown { retry_at_ms })
+						}
+						_ => Err(RuntimeError::Grindr(
+							grindr::GrindrError::Blocked,
+						)),
+					};
+				}
 				tokio::time::sleep(retry_jitter()).await;
 				match self.recovery.call(&operation).await {
-					Ok(value) => Ok(value),
+					Ok(value) => {
+						self.recovery.finish_retry().await;
+						Ok(value)
+					}
 					Err(error @ grindr::GrindrError::Blocked) => {
 						self.recovery.note_block().await;
 						Err(RuntimeError::Grindr(error))
@@ -147,7 +164,10 @@ impl ApiRuntime {
 						self.recovery.note_block().await;
 						Err(RuntimeError::Grindr(error))
 					}
-					Err(error) => Err(RuntimeError::Grindr(error)),
+					Err(error) => {
+						self.recovery.finish_retry().await;
+						Err(RuntimeError::Grindr(error))
+					}
 				}
 			}
 			Err(error @ grindr::GrindrError::Blocked)
@@ -164,6 +184,25 @@ impl ApiRuntime {
 }
 
 impl RequestRecovery {
+	async fn begin_retry(&self) -> bool {
+		let mut state = self.state.lock().await;
+		if state.retrying || state.open_until.is_some() {
+			return false;
+		}
+		state.retrying = true;
+		true
+	}
+
+	async fn is_retrying(&self) -> bool {
+		self.state.lock().await.retrying
+	}
+
+	async fn finish_retry(&self) {
+		let mut state = self.state.lock().await;
+		state.retrying = false;
+		self.notify.notify_waiters();
+	}
+
 	async fn call<F, Fut, T>(
 		&self,
 		operation: &F,
@@ -237,6 +276,7 @@ impl RequestRecovery {
 		state.last_block = Some(now);
 		state.open_until = Some(now + COOLDOWNS[state.escalation]);
 		state.half_open = false;
+		state.retrying = false;
 		self.notify.notify_waiters();
 	}
 }

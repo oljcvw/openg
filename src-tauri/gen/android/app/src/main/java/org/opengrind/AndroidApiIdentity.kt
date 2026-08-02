@@ -12,7 +12,12 @@ object AndroidApiIdentity {
 	@Keep
 	fun snapshot(context: Context): String {
 		val resources = context.resources
+		val displayMode = context.display.mode
 		val display = resources.displayMetrics
+		val width = displayMode?.physicalWidth ?: display.widthPixels
+		val height = displayMode?.physicalHeight ?: display.heightPixels
+		val longEdge = maxOf(width, height)
+		val shortEdge = minOf(width, height)
 		val locale = resources.configuration.locales[0]
 		val memory = ActivityManager.MemoryInfo().also { info ->
 			context.getSystemService(ActivityManager::class.java).getMemoryInfo(info)
@@ -29,7 +34,7 @@ object AndroidApiIdentity {
 			.put("os", "Android ${Build.VERSION.RELEASE}")
 			.put("deviceModel", Build.MODEL)
 			.put("manufacturer", Build.MANUFACTURER)
-			.put("screenResolution", "${display.heightPixels}x${display.widthPixels}")
+			.put("screenResolution", "${longEdge}x${shortEdge}")
 			.put("totalRam", memory.totalMem.toString())
 			.put("timezone", TimeZone.getDefault().id)
 			.put("locale", localeName)

@@ -200,10 +200,6 @@ pub fn run() {
 			} else {
 				tracing::info!(
 					target: "open_grind_lib::api::identity",
-					os = device.os,
-					model = device.device_model,
-					manufacturer = device.manufacturer,
-					screen = device.screen_resolution,
 					"[api-identity] physical fields aligned"
 				);
 			}

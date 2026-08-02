@@ -366,7 +366,7 @@ fn poll_notifications() -> PollResponse {
 			}
 		}
 	};
-	let storage_guard = runtime.block_on(account_storage_lock().lock());
+	let _storage_guard = runtime.block_on(account_storage_lock().lock());
 	let session = match AuthStorage::get_session() {
 		Ok(Some(session)) => session,
 		Ok(None) => return PollResponse::SignedOut,
@@ -407,8 +407,6 @@ fn poll_notifications() -> PollResponse {
 			}
 		}
 	};
-	drop(storage_guard);
-
 	runtime.block_on(async move {
 		let api_runtime =
 			match ApiRuntime::get_or_try_init(device, Some(session)) {
