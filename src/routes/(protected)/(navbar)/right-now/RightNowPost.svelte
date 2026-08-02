@@ -8,17 +8,21 @@
 	} from "phosphor-svelte";
 
 	import DistanceFormatted from "$lib/components/profile/DistanceFormatted.svelte";
+	import ProfileFacts from "$lib/components/profile/ProfileFacts.svelte";
 	import RelativeTimeDynamic from "$lib/components/shared/RelativeTimeDynamic.svelte";
 	import { Button } from "$lib/components/ui/button";
+	import type { ProfileSummary } from "$lib/api/users/profiles";
 	import type { FeedPost } from "$lib/right-now/posts";
 	import RightNowAvatar from "./RightNowAvatar.svelte";
 
 	let {
 		post,
 		ourProfileId,
+		summary,
 	}: {
 		post: FeedPost;
 		ourProfileId: number;
+		summary: ProfileSummary | null;
 	} = $props();
 
 	const conversationId = $derived(
@@ -27,7 +31,7 @@
 </script>
 
 <article
-	class="flex w-full gap-3 rounded-2xl border bg-card p-3 text-muted-foreground"
+	class="flex w-full gap-2 rounded-2xl border bg-card p-2 text-muted-foreground md:gap-3 md:p-3"
 	aria-label="Right Now post by {post.displayName ?? 'someone'}"
 >
 	<RightNowAvatar
@@ -46,6 +50,11 @@
 			{post.text ??
 				(post.displayName ? `${post.displayName} joined` : "Joined")}
 		</p>
+		<ProfileFacts
+			profileId={post.profileId}
+			{summary}
+			class="mt-1 hidden md:flex"
+		/>
 		{#if post.media.length > 0}
 			<div class="mt-2 grid gap-1">
 				{#each post.media as image (image.mediaId)}

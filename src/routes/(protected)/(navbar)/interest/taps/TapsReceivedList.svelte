@@ -10,6 +10,7 @@
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import { nearestScrollableAncestor } from "$lib/components/feedback/refresh/scroll-chain";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
+	import { ProfileSummariesState } from "$lib/profile/profile-summaries.svelte";
 	import EmptyTapsList from "./EmptyTapsList.svelte";
 	import TapReceivedProfile from "./TapReceivedProfile.svelte";
 	import { TapsState } from "./taps-state.svelte";
@@ -21,7 +22,12 @@
 	} = $props();
 
 	const taps = untrack(() => new TapsState({ ourProfileId }));
+	const summaries = new ProfileSummariesState();
 	onDestroy(() => taps.destroy());
+
+	$effect(() => {
+		void summaries.load(taps.taps.map((tap) => tap.profileId));
+	});
 
 	let container: HTMLDivElement | null = $state(null);
 
@@ -58,7 +64,7 @@
 <div class="screen-nav-host">
 	<div bind:this={container} class="pull-scroller">
 		<div
-			class="mx-auto flex min-h-overscrollable w-full max-w-120 flex-col gap-1 px-4 pt-16 pb-nav-clear"
+			class="mx-auto flex min-h-overscrollable w-full max-w-360 flex-col gap-2 px-2 pt-16 pb-nav-clear"
 		>
 			{#if taps.loading}
 				{#each Array(8)}
@@ -74,7 +80,7 @@
 				</div>
 			{:else}
 				{#each taps.taps as tap (tap.profileId)}
-					<TapReceivedProfile {tap} />
+					<TapReceivedProfile {tap} summary={summaries.get(tap.profileId)} />
 				{:else}
 					<EmptyTapsList />
 				{/each}

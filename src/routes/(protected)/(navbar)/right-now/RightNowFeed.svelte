@@ -7,6 +7,7 @@
 	import { nearestScrollableAncestor } from "$lib/components/feedback/refresh/scroll-chain";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+	import { ProfileSummariesState } from "$lib/profile/profile-summaries.svelte";
 	import { rightNowState } from "$lib/right-now/right-now-state.svelte";
 	import { getNow } from "$lib/util/now.svelte";
 	import RightNowEmptyFeed from "./RightNowEmptyFeed.svelte";
@@ -22,6 +23,11 @@
 	let lightbox: PhotoSwipeLightbox | null = null;
 	const posts = $derived(rightNowState.visiblePosts(getNow()));
 	const hasMore = $derived(rightNowState.hasMore(getNow()));
+	const summaries = new ProfileSummariesState();
+
+	$effect(() => {
+		void summaries.load(posts.map((post) => post.profileId));
+	});
 
 	function observeSentinel(node: HTMLElement) {
 		const observer = new IntersectionObserver(
@@ -103,7 +109,11 @@
 			</p>
 		{/if}
 		{#each posts as post (post.id)}
-			<RightNowPost {post} {ourProfileId} />
+			<RightNowPost
+				{post}
+				{ourProfileId}
+				summary={summaries.get(post.profileId)}
+			/>
 		{:else}
 			<RightNowEmptyFeed />
 		{/each}

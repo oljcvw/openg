@@ -52,7 +52,7 @@
 		onscroll={() => (rightNowState.scrollY = feedContainer?.scrollTop ?? 0)}
 	>
 		<div
-			class="mx-auto flex min-h-overscrollable w-full max-w-160 flex-col gap-4 px-4 pt-17 pb-nav-clear"
+			class="mx-auto flex min-h-overscrollable w-full max-w-360 flex-col gap-4 px-2 pt-17 pb-nav-clear"
 		>
 			<p class="sr-only" aria-live="polite">{status}</p>
 			<RightNowFeed {ourProfileId} />
