@@ -104,6 +104,9 @@ async fn account_request(
 			super::runtime::RuntimeError::Cooldown { retry_at_ms } => {
 				AppError::RequestCooldown { retry_at_ms }
 			}
+			super::runtime::RuntimeError::Cancelled => {
+				AppError::RequestCancelled
+			}
 		})?;
 	if (200..300).contains(&response.status) {
 		return Ok(());

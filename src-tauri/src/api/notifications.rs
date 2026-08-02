@@ -10,7 +10,7 @@ use std::str::FromStr;
 #[cfg(target_os = "android")]
 use jni::objects::{JClass, JString};
 #[cfg(target_os = "android")]
-use jni::sys::jstring;
+use jni::sys::{jboolean, jstring};
 #[cfg(target_os = "android")]
 use jni::JNIEnv;
 #[cfg(target_os = "android")]
@@ -19,7 +19,7 @@ use tauri::plugin::PluginHandle;
 use tauri::{Manager, Wry};
 
 #[cfg(target_os = "android")]
-use super::runtime::{ApiRuntime, RetryPolicy, RuntimeError};
+use super::runtime::{ApiRuntime, RequestClass, RetryPolicy, RuntimeError};
 use crate::error::AppError;
 #[cfg(target_os = "android")]
 use crate::storage::{
@@ -144,17 +144,39 @@ pub async fn notification_test(app: tauri::AppHandle) -> Result<(), AppError> {
 }
 
 #[tauri::command]
-pub async fn notification_sync(app: tauri::AppHandle) -> Result<(), AppError> {
+pub async fn notification_sync(
+	app: tauri::AppHandle,
+	interval_minutes: u64,
+) -> Result<(), AppError> {
+	if !(15..=1_440).contains(&interval_minutes) {
+		return Err(AppError::Api {
+			code: 400,
+			message: "Notification polling interval must be between 15 and 1440 minutes"
+				.to_owned(),
+		});
+	}
 	#[cfg(target_os = "android")]
 	{
-		let _: Value = run_mobile(&app, "syncSchedule", ()).await?;
+		let _: Value = run_mobile(
+			&app,
+			"syncSchedule",
+			NotificationScheduleInput { interval_minutes },
+		)
+		.await?;
 		return Ok(());
 	}
 	#[cfg(not(target_os = "android"))]
 	{
-		let _ = app;
+		let _ = (app, interval_minutes);
 		Ok(())
 	}
+}
+
+#[cfg(target_os = "android")]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct NotificationScheduleInput {
+	interval_minutes: u64,
 }
 
 #[tauri::command]
@@ -240,9 +262,9 @@ struct PollTap {
 	timestamp: u64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "state", rename_all = "camelCase")]
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", test))]
 enum PollResponse {
 	Ok {
 		account_id: String,
@@ -252,8 +274,36 @@ enum PollResponse {
 	SignedOut,
 	Deferred,
 	Retry {
-		error: String,
+		code: PollFailureCode,
 	},
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+#[cfg(any(target_os = "android", test))]
+enum PollFailureCode {
+	RuntimeUnavailable,
+	SessionUnavailable,
+	DeviceUnavailable,
+	SigningKeyUnavailable,
+	ClientUnavailable,
+	InboxRequest,
+	InboxResponse,
+	InboxDecode,
+	TapsRequest,
+	TapsResponse,
+	TapsDecode,
+	PollPanicked,
+	ResponseEncoding,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg(any(target_os = "android", test))]
+enum PollHttpDisposition {
+	Success,
+	Deferred,
+	SignedOut,
+	Retry(&'static str),
 }
 
 #[cfg(any(target_os = "android", test))]
@@ -332,7 +382,7 @@ fn value_u64(value: &Value) -> Option<u64> {
 		.or_else(|| value.as_str().and_then(|raw| raw.parse().ok()))
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", test))]
 fn notification_error_kind(error: &grindr::GrindrError) -> &'static str {
 	match error {
 		grindr::GrindrError::Http(_) => "http",
@@ -346,12 +396,37 @@ fn notification_error_kind(error: &grindr::GrindrError) -> &'static str {
 	}
 }
 
+#[cfg(any(target_os = "android", test))]
+fn classify_poll_http_response(
+	status: u16,
+	body: &[u8],
+) -> PollHttpDisposition {
+	if (200..300).contains(&status) {
+		return PollHttpDisposition::Success;
+	}
+
+	match grindr::GrindrError::from_response(status, body) {
+		grindr::GrindrError::Blocked | grindr::GrindrError::RateLimited => {
+			PollHttpDisposition::Deferred
+		}
+		grindr::GrindrError::Unauthorized { .. } => {
+			PollHttpDisposition::SignedOut
+		}
+		ref error => PollHttpDisposition::Retry(notification_error_kind(error)),
+	}
+}
+
 #[cfg(target_os = "android")]
-fn poll_notifications() -> PollResponse {
+fn poll_notifications(
+	messages_enabled: bool,
+	taps_enabled: bool,
+) -> PollResponse {
 	crate::storage::init_keyring();
 	let poll_started = std::time::Instant::now();
 	tracing::info!(
 		active_foreground_requests = super::rest::active_foreground_requests(),
+		messages_enabled,
+		taps_enabled,
 		"[notification-poll] start"
 	);
 
@@ -360,9 +435,9 @@ fn poll_notifications() -> PollResponse {
 		.build()
 	{
 		Ok(runtime) => runtime,
-		Err(error) => {
+		Err(_) => {
 			return PollResponse::Retry {
-				error: format!("background runtime failed: {error}"),
+				code: PollFailureCode::RuntimeUnavailable,
 			}
 		}
 	};
@@ -370,9 +445,9 @@ fn poll_notifications() -> PollResponse {
 	let session = match AuthStorage::get_session() {
 		Ok(Some(session)) => session,
 		Ok(None) => return PollResponse::SignedOut,
-		Err(error) => {
+		Err(_) => {
 			return PollResponse::Retry {
-				error: format!("session unavailable: {error}"),
+				code: PollFailureCode::SessionUnavailable,
 			}
 		}
 	};
@@ -381,12 +456,12 @@ fn poll_notifications() -> PollResponse {
 		Ok(Some(device)) => device,
 		Ok(None) => {
 			return PollResponse::Retry {
-				error: "device identity unavailable".to_owned(),
+				code: PollFailureCode::DeviceUnavailable,
 			}
 		}
-		Err(error) => {
+		Err(_) => {
 			return PollResponse::Retry {
-				error: format!("device identity unavailable: {error}"),
+				code: PollFailureCode::DeviceUnavailable,
 			}
 		}
 	};
@@ -401,9 +476,9 @@ fn poll_notifications() -> PollResponse {
 	}
 	let saved_key = match SigningKeyStorage::load() {
 		Ok(key) => key,
-		Err(error) => {
+		Err(_) => {
 			return PollResponse::Retry {
-				error: format!("device signing key unavailable: {error}"),
+				code: PollFailureCode::SigningKeyUnavailable,
 			}
 		}
 	};
@@ -411,9 +486,9 @@ fn poll_notifications() -> PollResponse {
 		let api_runtime =
 			match ApiRuntime::get_or_try_init(device, Some(session)) {
 				Ok(runtime) => runtime,
-				Err(error) => {
+				Err(_) => {
 					return PollResponse::Retry {
-						error: format!("background client failed: {error}"),
+						code: PollFailureCode::ClientUnavailable,
 					}
 				}
 			};
@@ -428,97 +503,228 @@ fn poll_notifications() -> PollResponse {
 
 		let post = grindr::Method::from_str("POST").expect("valid method");
 		let get = grindr::Method::from_str("GET").expect("valid method");
-		let inbox_client = client.clone();
-		let inbox = match api_runtime
-			.request(RetryPolicy::SafeRead, move || {
-				let client = inbox_client.clone();
-				let method = post.clone();
-				async move {
-					client
-						.request_authenticated_raw(
-							method,
-							"/v4/inbox?page=1",
-							None,
-						)
-						.await
+		let messages = if messages_enabled {
+			let inbox_client = client.clone();
+			let inbox = match api_runtime
+				.request_raw_classified(
+					RetryPolicy::SafeRead,
+					RequestClass::BackgroundPoll,
+					"/v4/inbox?page",
+					move || {
+						let client = inbox_client.clone();
+						let method = post.clone();
+						async move {
+							client
+								.request_authenticated_raw(
+									method,
+									"/v4/inbox?page=1",
+									None,
+								)
+								.await
+						}
+					},
+				)
+				.await
+			{
+				Ok(response) => {
+					tracing::info!(
+						route = "/v4/inbox?page",
+						status = response.status,
+						response_bytes = response.body.len(),
+						elapsed_ms = poll_started.elapsed().as_millis() as u64,
+						"[notification-poll] request_complete"
+					);
+					response
 				}
-			})
-			.await
-		{
-			Ok(response) => {
-				tracing::info!(
-					route = "/v4/inbox?page",
-					status = response.status,
-					response_bytes = response.body.len(),
-					elapsed_ms = poll_started.elapsed().as_millis() as u64,
-					"[notification-poll] request_complete"
-				);
-				response
+				Err(RuntimeError::Cooldown { .. })
+				| Err(RuntimeError::Cancelled)
+				| Err(RuntimeError::Grindr(grindr::GrindrError::Blocked))
+				| Err(RuntimeError::Grindr(grindr::GrindrError::RateLimited)) => {
+					persist_client_state(client);
+					return PollResponse::Deferred;
+				}
+				Err(RuntimeError::Grindr(
+					error @ grindr::GrindrError::Unauthorized { .. },
+				)) => {
+					tracing::warn!(
+						route = "/v4/inbox?page",
+						elapsed_ms = poll_started.elapsed().as_millis() as u64,
+						error_kind = notification_error_kind(&error),
+						"[notification-poll] signed_out"
+					);
+					persist_client_state(client);
+					return PollResponse::SignedOut;
+				}
+				Err(RuntimeError::Grindr(error)) => {
+					tracing::warn!(
+						route = "/v4/inbox?page",
+						elapsed_ms = poll_started.elapsed().as_millis() as u64,
+						error_kind = notification_error_kind(&error),
+						"[notification-poll] request_failed"
+					);
+					persist_client_state(client);
+					return PollResponse::Retry {
+						code: PollFailureCode::InboxRequest,
+					};
+				}
+			};
+			match classify_poll_http_response(inbox.status, &inbox.body) {
+				PollHttpDisposition::Success => {}
+				PollHttpDisposition::Deferred => {
+					tracing::warn!(
+						route = "/v4/inbox?page",
+						status = inbox.status,
+						"[notification-poll] response_deferred"
+					);
+					persist_client_state(client);
+					return PollResponse::Deferred;
+				}
+				PollHttpDisposition::SignedOut => {
+					tracing::warn!(
+						route = "/v4/inbox?page",
+						status = inbox.status,
+						"[notification-poll] signed_out"
+					);
+					persist_client_state(client);
+					return PollResponse::SignedOut;
+				}
+				PollHttpDisposition::Retry(error_kind) => {
+					tracing::warn!(
+						route = "/v4/inbox?page",
+						status = inbox.status,
+						error_kind,
+						"[notification-poll] response_failed"
+					);
+					persist_client_state(client);
+					return PollResponse::Retry {
+						code: PollFailureCode::InboxResponse,
+					};
+				}
 			}
-			Err(RuntimeError::Cooldown { .. })
-			| Err(RuntimeError::Grindr(grindr::GrindrError::Blocked))
-			| Err(RuntimeError::Grindr(grindr::GrindrError::RateLimited)) => {
-				persist_client_state(client);
-				return PollResponse::Deferred;
+			match parse_messages(&inbox.body) {
+				Ok(messages) => messages,
+				Err(_) => {
+					persist_client_state(client);
+					return PollResponse::Retry {
+						code: PollFailureCode::InboxDecode,
+					};
+				}
 			}
-			Err(RuntimeError::Grindr(error)) => {
-				tracing::warn!(
-					route = "/v4/inbox?page",
-					elapsed_ms = poll_started.elapsed().as_millis() as u64,
-					error_kind = notification_error_kind(&error),
-					"[notification-poll] request_failed"
-				);
-				persist_client_state(client);
-				return PollResponse::Retry {
-					error: format!("inbox request failed: {error}"),
-				};
-			}
+		} else {
+			Vec::new()
 		};
-		let taps_client = client.clone();
-		let taps = match api_runtime
-			.request(RetryPolicy::SafeRead, move || {
-				let client = taps_client.clone();
-				let method = get.clone();
-				async move {
-					client
-						.request_authenticated_raw(
-							method,
-							"/v2/taps/received",
-							None,
-						)
-						.await
+		let taps = if taps_enabled {
+			let taps_client = client.clone();
+			let taps_response = match api_runtime
+				.request_raw_classified(
+					RetryPolicy::SafeRead,
+					RequestClass::BackgroundPoll,
+					"/v2/taps/received",
+					move || {
+						let client = taps_client.clone();
+						let method = get.clone();
+						async move {
+							client
+								.request_authenticated_raw(
+									method,
+									"/v2/taps/received",
+									None,
+								)
+								.await
+						}
+					},
+				)
+				.await
+			{
+				Ok(response) => {
+					tracing::info!(
+						route = "/v2/taps/received",
+						status = response.status,
+						response_bytes = response.body.len(),
+						elapsed_ms = poll_started.elapsed().as_millis() as u64,
+						"[notification-poll] request_complete"
+					);
+					response
 				}
-			})
-			.await
-		{
-			Ok(response) => {
-				tracing::info!(
-					route = "/v2/taps/received",
-					status = response.status,
-					response_bytes = response.body.len(),
-					elapsed_ms = poll_started.elapsed().as_millis() as u64,
-					"[notification-poll] request_complete"
-				);
-				response
+				Err(RuntimeError::Cooldown { .. })
+				| Err(RuntimeError::Cancelled)
+				| Err(RuntimeError::Grindr(grindr::GrindrError::Blocked))
+				| Err(RuntimeError::Grindr(grindr::GrindrError::RateLimited)) => {
+					persist_client_state(client);
+					return PollResponse::Deferred;
+				}
+				Err(RuntimeError::Grindr(
+					error @ grindr::GrindrError::Unauthorized { .. },
+				)) => {
+					tracing::warn!(
+						route = "/v2/taps/received",
+						elapsed_ms = poll_started.elapsed().as_millis() as u64,
+						error_kind = notification_error_kind(&error),
+						"[notification-poll] signed_out"
+					);
+					persist_client_state(client);
+					return PollResponse::SignedOut;
+				}
+				Err(RuntimeError::Grindr(error)) => {
+					tracing::warn!(
+						route = "/v2/taps/received",
+						elapsed_ms = poll_started.elapsed().as_millis() as u64,
+						error_kind = notification_error_kind(&error),
+						"[notification-poll] request_failed"
+					);
+					persist_client_state(client);
+					return PollResponse::Retry {
+						code: PollFailureCode::TapsRequest,
+					};
+				}
+			};
+			match classify_poll_http_response(
+				taps_response.status,
+				&taps_response.body,
+			) {
+				PollHttpDisposition::Success => {}
+				PollHttpDisposition::Deferred => {
+					tracing::warn!(
+						route = "/v2/taps/received",
+						status = taps_response.status,
+						"[notification-poll] response_deferred"
+					);
+					persist_client_state(client);
+					return PollResponse::Deferred;
+				}
+				PollHttpDisposition::SignedOut => {
+					tracing::warn!(
+						route = "/v2/taps/received",
+						status = taps_response.status,
+						"[notification-poll] signed_out"
+					);
+					persist_client_state(client);
+					return PollResponse::SignedOut;
+				}
+				PollHttpDisposition::Retry(error_kind) => {
+					tracing::warn!(
+						route = "/v2/taps/received",
+						status = taps_response.status,
+						error_kind,
+						"[notification-poll] response_failed"
+					);
+					persist_client_state(client);
+					return PollResponse::Retry {
+						code: PollFailureCode::TapsResponse,
+					};
+				}
 			}
-			Err(RuntimeError::Cooldown { .. })
-			| Err(RuntimeError::Grindr(grindr::GrindrError::Blocked))
-			| Err(RuntimeError::Grindr(grindr::GrindrError::RateLimited)) => {
-				persist_client_state(client);
-				return PollResponse::Deferred;
+			match parse_taps(&taps_response.body) {
+				Ok(taps) => taps,
+				Err(_) => {
+					persist_client_state(client);
+					return PollResponse::Retry {
+						code: PollFailureCode::TapsDecode,
+					};
+				}
 			}
-			Err(RuntimeError::Grindr(error)) => {
-				tracing::warn!(
-					route = "/v2/taps/received",
-					elapsed_ms = poll_started.elapsed().as_millis() as u64,
-					error_kind = notification_error_kind(&error),
-					"[notification-poll] request_failed"
-				);
-				persist_client_state(client);
-				return PollResponse::Retry {
-					error: format!("taps request failed: {error}"),
-				};
-			}
+		} else {
+			Vec::new()
 		};
 		persist_client_state(client);
 		tracing::info!(
@@ -526,13 +732,10 @@ fn poll_notifications() -> PollResponse {
 			"[notification-poll] complete"
 		);
 
-		match (parse_messages(&inbox.body), parse_taps(&taps.body)) {
-			(Ok(messages), Ok(taps)) => PollResponse::Ok {
-				account_id,
-				messages,
-				taps,
-			},
-			(Err(error), _) | (_, Err(error)) => PollResponse::Retry { error },
+		PollResponse::Ok {
+			account_id,
+			messages,
+			taps,
 		}
 	})
 }
@@ -563,13 +766,22 @@ fn persist_client_state(client: &grindr::GrindrClient) {
 pub extern "system" fn Java_org_opengrind_notifications_NotificationBridge_nativePoll(
 	env: JNIEnv,
 	_class: JClass,
+	messages_enabled: jboolean,
+	taps_enabled: jboolean,
 ) -> jstring {
-	let response = catch_unwind(AssertUnwindSafe(poll_notifications))
-		.unwrap_or_else(|_| PollResponse::Retry {
-			error: "background poll panicked".to_owned(),
-		});
+	crate::logging::init();
+	let response = catch_unwind(AssertUnwindSafe(|| {
+		poll_notifications(messages_enabled != 0, taps_enabled != 0)
+	}))
+	.unwrap_or_else(|_| PollResponse::Retry {
+		code: PollFailureCode::PollPanicked,
+	});
 	let json = serde_json::to_string(&response).unwrap_or_else(|_| {
-		r#"{"state":"retry","error":"response encoding failed"}"#.to_owned()
+		serde_json::json!({
+			"state": "retry",
+			"code": PollFailureCode::ResponseEncoding,
+		})
+		.to_string()
 	});
 	env.new_string(json)
 		.map(JString::into_raw)
@@ -642,5 +854,35 @@ mod tests {
 				},
 			]
 		);
+	}
+
+	#[test]
+	fn classifies_raw_notification_statuses_before_body_parsing() {
+		assert_eq!(
+			classify_poll_http_response(200, br#"{"entries":[]}"#),
+			PollHttpDisposition::Success
+		);
+		assert_eq!(
+			classify_poll_http_response(401, br#"{"message":"expired"}"#),
+			PollHttpDisposition::SignedOut
+		);
+		assert_eq!(
+			classify_poll_http_response(429, br#"{"message":"slow down"}"#),
+			PollHttpDisposition::Deferred
+		);
+	}
+
+	#[test]
+	fn hostile_server_body_never_enters_worker_response() {
+		let hostile = "private-token=secret user@example.com";
+		let disposition = classify_poll_http_response(500, hostile.as_bytes());
+		assert_eq!(disposition, PollHttpDisposition::Retry("api"));
+
+		let response = PollResponse::Retry {
+			code: PollFailureCode::InboxResponse,
+		};
+		let serialized = serde_json::to_string(&response).unwrap();
+		assert!(!serialized.contains(hostile));
+		assert_eq!(serialized, r#"{"state":"retry","code":"inbox_response"}"#);
 	}
 }

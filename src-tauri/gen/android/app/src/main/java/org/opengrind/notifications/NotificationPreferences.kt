@@ -31,6 +31,16 @@ class NotificationPreferences(context: Context) {
 			.apply()
 	}
 
+	fun pollIntervalMinutes(): Long = normalizedNotificationPollInterval(
+		preferences.getLong(KEY_POLL_INTERVAL_MINUTES, DEFAULT_POLL_INTERVAL_MINUTES),
+	)
+
+	fun savePollIntervalMinutes(minutes: Long) {
+		preferences.edit()
+			.putLong(KEY_POLL_INTERVAL_MINUTES, normalizedNotificationPollInterval(minutes))
+			.apply()
+	}
+
 	fun isInitialized(accountId: String): Boolean =
 		preferences.getBoolean(accountKey(accountId, "initialized"), false)
 
@@ -107,11 +117,18 @@ class NotificationPreferences(context: Context) {
 		const val KEY_MESSAGES = "messages"
 		const val KEY_TAPS = "taps"
 		const val KEY_PREVIEWS = "previews"
+		const val KEY_POLL_INTERVAL_MINUTES = "poll_interval_minutes"
 		const val KEY_LAST_SUCCESS = "last_success"
 		const val KEY_LAST_ERROR = "last_error"
 		val ACCOUNT_ID = Regex("^[0-9]+$")
 	}
 }
+
+internal const val DEFAULT_POLL_INTERVAL_MINUTES = 15L
+internal const val MAX_POLL_INTERVAL_MINUTES = 1_440L
+
+internal fun normalizedNotificationPollInterval(minutes: Long): Long =
+	minutes.coerceIn(DEFAULT_POLL_INTERVAL_MINUTES, MAX_POLL_INTERVAL_MINUTES)
 
 internal fun notificationAccountKeys(accountId: String): Set<String> {
 	require(accountId.matches(Regex("^[0-9]+$"))) { "Invalid account id" }

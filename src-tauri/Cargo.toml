@@ -32,6 +32,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 grindr = "0.7.0+26.12.0.169415"
 tokio = { version = "1", features = ["sync", "time", "rt", "macros"] }
+tokio-util = { version = "0.7", features = ["rt"] }
 tauri-plugin-fs = "2"
 tauri-plugin-geolocation = "2"
 tauri-plugin-os = "2"
@@ -72,4 +73,5 @@ strip = "symbols"
 
 # See https://github.com/tauri-apps/tauri/pull/15777
 [patch.crates-io]
+grindr = { path = "patches/grindr" }
 tauri-codegen = { path = "patches/tauri-codegen" }

@@ -1,7 +1,6 @@
 package org.opengrind.notifications
 
 import android.content.Context
-import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -11,23 +10,16 @@ import java.util.concurrent.TimeUnit
 
 object NotificationScheduler {
 	internal const val UNIQUE_WORK_NAME = "open-grind-notification-poll"
-	internal const val REPEAT_MINUTES = 15L
-	internal const val BACKOFF_SECONDS = 30L
 
-	fun schedule(context: Context) {
+	fun schedule(context: Context, repeatMinutes: Long) {
 		val constraints = Constraints.Builder()
 			.setRequiredNetworkType(NetworkType.CONNECTED)
 			.build()
 		val request = PeriodicWorkRequestBuilder<NotificationWorker>(
-			REPEAT_MINUTES,
+			normalizedNotificationPollInterval(repeatMinutes),
 			TimeUnit.MINUTES,
 		)
 			.setConstraints(constraints)
-			.setBackoffCriteria(
-				BackoffPolicy.EXPONENTIAL,
-				BACKOFF_SECONDS,
-				TimeUnit.SECONDS,
-			)
 			.addTag(UNIQUE_WORK_NAME)
 			.build()
 		WorkManager.getInstance(context.applicationContext).enqueueUniquePeriodicWork(

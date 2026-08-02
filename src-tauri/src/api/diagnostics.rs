@@ -70,12 +70,46 @@ pub struct MediaOriginObservation {
 	surface: MediaSurface,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ClientDiagnosticLevel {
+	Info,
+	Warning,
+	Error,
+}
+
+impl ClientDiagnosticLevel {
+	fn as_str(self) -> &'static str {
+		match self {
+			Self::Info => "info",
+			Self::Warning => "warning",
+			Self::Error => "error",
+		}
+	}
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClientDiagnostic {
+	category: String,
+	component: String,
+	code: String,
+	level: ClientDiagnosticLevel,
+}
+
 #[derive(Eq, Hash, PartialEq)]
 struct MediaOriginKey {
 	origin: String,
 	element_kind: MediaElementKind,
 	outcome: MediaLoadOutcome,
 	surface: MediaSurface,
+}
+
+fn record_media_origin(
+	reported: &mut HashSet<MediaOriginKey>,
+	key: MediaOriginKey,
+) -> bool {
+	reported.insert(key)
 }
 
 static REPORTED_MEDIA_ORIGINS: OnceLock<Mutex<HashSet<MediaOriginKey>>> =
@@ -117,7 +151,7 @@ pub fn report_media_origin(observation: MediaOriginObservation) {
 		.get_or_init(|| Mutex::new(HashSet::new()))
 		.lock()
 		.unwrap_or_else(|poisoned| poisoned.into_inner());
-	if !reported.insert(key) {
+	if !record_media_origin(&mut reported, key) {
 		return;
 	}
 	tracing::info!(
@@ -127,6 +161,58 @@ pub fn report_media_origin(observation: MediaOriginObservation) {
 		surface = observation.surface.as_str(),
 		"[media-origin] observed"
 	);
+}
+
+fn sanitized_label(value: &str) -> Option<&str> {
+	(!value.is_empty()
+		&& value.len() <= 48
+		&& value.bytes().all(|byte| {
+			byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-')
+		}))
+	.then_some(value)
+}
+
+/// Writes an allowlisted frontend diagnostic taxonomy to tracing/logcat.
+#[tauri::command]
+pub fn report_client_diagnostic(diagnostic: ClientDiagnostic) {
+	let Some(category) = sanitized_label(&diagnostic.category) else {
+		tracing::warn!("[client-error] rejected_invalid_category");
+		return;
+	};
+	let Some(component) = sanitized_label(&diagnostic.component) else {
+		tracing::warn!("[client-error] rejected_invalid_component");
+		return;
+	};
+	let Some(code) = sanitized_label(&diagnostic.code) else {
+		tracing::warn!("[client-error] rejected_invalid_code");
+		return;
+	};
+	match diagnostic.level {
+		ClientDiagnosticLevel::Info => tracing::info!(
+			target: "open_grind_lib::api::diagnostics",
+			category,
+			component,
+			level = diagnostic.level.as_str(),
+			code,
+			"[client-error] reported"
+		),
+		ClientDiagnosticLevel::Warning => tracing::warn!(
+			target: "open_grind_lib::api::diagnostics",
+			category,
+			component,
+			level = diagnostic.level.as_str(),
+			code,
+			"[client-error] reported"
+		),
+		ClientDiagnosticLevel::Error => tracing::error!(
+			target: "open_grind_lib::api::diagnostics",
+			category,
+			component,
+			level = diagnostic.level.as_str(),
+			code,
+			"[client-error] reported"
+		),
+	}
 }
 
 #[cfg(test)]
@@ -157,6 +243,43 @@ mod tests {
 			"not a URL",
 		] {
 			assert_eq!(canonical_https_origin(value), None, "{value}");
+		}
+	}
+
+	#[test]
+	fn accepts_only_bounded_diagnostic_labels() {
+		assert_eq!(sanitized_label("api_error"), Some("api_error"));
+		assert_eq!(sanitized_label(""), None);
+		assert_eq!(sanitized_label("api/error"), None);
+		assert_eq!(sanitized_label(&"x".repeat(49)), None);
+	}
+
+	#[test]
+	fn rejects_free_form_diagnostic_values() {
+		for value in [
+			"person@example.com",
+			"/private/path",
+			"token=secret",
+			"a value with spaces",
+			"https://example.com",
+		] {
+			assert_eq!(sanitized_label(value), None, "{value}");
+		}
+	}
+
+	#[test]
+	fn deduplicates_successful_and_failed_media_origin_observations() {
+		let mut reported = HashSet::new();
+		for outcome in [MediaLoadOutcome::Loaded, MediaLoadOutcome::Failed] {
+			let key = || MediaOriginKey {
+				origin: "https://media.example.com".to_owned(),
+				element_kind: MediaElementKind::Image,
+				outcome,
+				surface: MediaSurface::Chat,
+			};
+
+			assert!(record_media_origin(&mut reported, key()));
+			assert!(!record_media_origin(&mut reported, key()));
 		}
 	}
 }

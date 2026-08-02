@@ -61,8 +61,10 @@ class NotificationsPlugin(private val activity: Activity) : Plugin(activity) {
 
 	@Command
 	fun syncSchedule(invoke: Invoke) {
+		val interval = invoke.parseArgs(ScheduleArgs::class.java).intervalMinutes
+		preferences.savePollIntervalMinutes(interval)
 		if (preferences.settings().enabled && hasPermission()) {
-			NotificationScheduler.schedule(activity)
+			NotificationScheduler.schedule(activity, preferences.pollIntervalMinutes())
 		} else {
 			NotificationScheduler.cancel(activity)
 		}
@@ -90,7 +92,7 @@ class NotificationsPlugin(private val activity: Activity) : Plugin(activity) {
 		preferences.save(settings)
 		notifier.createChannel()
 		if (settings.enabled && hasPermission()) {
-			NotificationScheduler.schedule(activity)
+			NotificationScheduler.schedule(activity, preferences.pollIntervalMinutes())
 		} else {
 			NotificationScheduler.cancel(activity)
 		}
@@ -134,6 +136,11 @@ class NotificationsPlugin(private val activity: Activity) : Plugin(activity) {
 			showPreviews = showPreviews,
 		)
 	}
+
+	@InvokeArg
+	data class ScheduleArgs(
+		val intervalMinutes: Long = DEFAULT_POLL_INTERVAL_MINUTES,
+	)
 
 	@InvokeArg
 	data class AccountArgs(

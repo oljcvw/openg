@@ -22,4 +22,11 @@ class NotificationPreferencesTest {
 	fun `account polling keys reject non numeric ids`() {
 		notificationAccountKeys("../other")
 	}
+
+	@Test
+	fun `notification polling interval stays within WorkManager bounds`() {
+		assertTrue(normalizedNotificationPollInterval(1) == 15L)
+		assertTrue(normalizedNotificationPollInterval(90) == 90L)
+		assertTrue(normalizedNotificationPollInterval(2_000) == 1_440L)
+	}
 }

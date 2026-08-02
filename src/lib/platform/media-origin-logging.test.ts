@@ -118,14 +118,14 @@ describe("media origin logging privacy boundary", () => {
 		expect(invokeMock).toHaveBeenCalledTimes(2);
 	});
 
-	it("lets detached media use the same sanitized reporter and dedupe path", () => {
+	it("reports every detached media failure through the sanitized path", () => {
 		const privateUrl =
 			"https://d-detached.cloudfront.net/private/media-id?Signature=secret";
 
 		reportMediaOrigin(privateUrl, "video", "failed");
 		reportMediaOrigin(privateUrl, "video", "failed");
 
-		expect(invokeMock).toHaveBeenCalledTimes(1);
+		expect(invokeMock).toHaveBeenCalledTimes(2);
 		expect(invokeMock).toHaveBeenCalledWith("report_media_origin", {
 			observation: {
 				origin: "https://d-detached.cloudfront.net",

@@ -6,6 +6,7 @@ import {
 	getPreferences,
 	setPreferences,
 } from "$lib/app-data/preferences.svelte";
+import { reportPresentedError } from "$lib/platform/client-diagnostics";
 
 export function getErrorText(error: unknown): string {
 	if (error instanceof ApiError) {
@@ -48,6 +49,21 @@ export function showErrorToast({
 	error: unknown;
 	onRetry?: () => void;
 }) {
+	reportPresentedError(error, "error_toast");
+	if (
+		error instanceof ApiError &&
+		(error.kind === "RequestBlocked" || error.kind === "RequestCooldown") &&
+		!isSafeRead(error.request.method, error.request.path)
+	) {
+		toast.error(label, {
+			description: "The action was not sent and was not retried.",
+			action: {
+				label: "Copy details",
+				onClick: () => copyError(error),
+			},
+		});
+		return;
+	}
 	if (onRetry && error instanceof ApiError && error.retryable) {
 		toast.error(label, {
 			action: {
@@ -67,4 +83,13 @@ export function showErrorToast({
 			onClick: () => copyError(error),
 		},
 	});
+}
+
+function isSafeRead(method: string, path: string): boolean {
+	const route = path.split("?", 1)[0];
+	return (
+		method === "GET" ||
+		method === "HEAD" ||
+		(method === "POST" && (route === "/v4/inbox" || route === "/v3/profiles"))
+	);
 }

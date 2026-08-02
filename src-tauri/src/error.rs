@@ -53,6 +53,7 @@ pub enum AppError {
 		#[serde(rename = "retryAtMs")]
 		retry_at_ms: u64,
 	},
+	RequestCancelled,
 	NotInitialized,
 }
 
@@ -77,6 +78,7 @@ impl fmt::Display for AppError {
 			AppError::RequestCooldown { retry_at_ms } => {
 				write!(f, "Requests paused until {retry_at_ms}")
 			}
+			AppError::RequestCancelled => write!(f, "Request cancelled"),
 			AppError::NotInitialized => {
 				write!(f, "GrindrClient not initialized")
 			}

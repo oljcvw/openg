@@ -12,6 +12,7 @@ use crate::state::AppState;
 use crate::storage::{
 	account_storage_lock, AuthStorage, DeviceStorage, SigningKeyStorage,
 };
+use tauri::Emitter;
 
 // Mirrors MIN_SUPPORTED_WEBVIEW_MAJOR in gen/android/app/build.gradle.kts and the
 // CSS feature floor in src/app.html (Tailwind v4: Chromium 111 / WebKitGTK 2.42 /
@@ -41,6 +42,23 @@ fn open_grind_platform_plugin<R: tauri::Runtime>(
 		.js_init_script(format!(
 			r#"window.__OPEN_GRIND_PLATFORM = "{OPEN_GRIND_PLATFORM}";"#
 		))
+		.on_event(|_app, event| match event {
+			tauri::RunEvent::Ready => api::ws::set_app_foreground(true),
+			tauri::RunEvent::Exit | tauri::RunEvent::ExitRequested { .. } => {
+				api::ws::set_app_foreground(false);
+			}
+			#[cfg(mobile)]
+			tauri::RunEvent::WindowEvent { event, .. } => match event {
+				tauri::WindowEvent::Resumed => {
+					api::ws::set_app_foreground(true);
+				}
+				tauri::WindowEvent::Suspended => {
+					api::ws::set_app_foreground(false);
+				}
+				_ => {}
+			},
+			_ => {}
+		})
 		.build()
 }
 
@@ -122,8 +140,10 @@ pub fn run() {
             api::auth::logout,
             api::auth::auth_state,
             api::auth::account_restriction,
-            api::auth::recaptcha_first_party_enabled,
+			api::auth::recaptcha_first_party_enabled,
+			api::runtime::api_runtime_configure,
             api::rest::request,
+            api::rest::cancel_request,
             api::media_upload::upload_album_media,
             api::media_upload::upload_chat_media,
             api::notifications::notification_get_settings,
@@ -140,6 +160,7 @@ pub fn run() {
             api::ws::ws_connect,
             api::ws::ws_send,
             api::diagnostics::report_media_origin,
+			api::diagnostics::report_client_diagnostic,
         ])
         .setup(|app| {
             let user_agent = format!(
@@ -215,7 +236,18 @@ pub fn run() {
             let candidate =
                 grindr::GrindrClient::new(device, session).expect("failed to build GrindrClient");
             let runtime = api::runtime::ApiRuntime::install(candidate);
+			let mitigation_handle = app.handle().clone();
+			runtime.set_event_sink(std::sync::Arc::new(
+				move |event: &api::runtime::ApiMitigationEvent| {
+					if let Err(error) =
+						mitigation_handle.emit("api:runtime-status", event)
+					{
+						tracing::warn!(error = %error, "[api-mitigation] frontend_event_failed");
+					}
+				},
+			));
             let client = runtime.client().clone();
+			api::ws::install_realtime_controller(client.clone());
 			tracing::info!(target: "open_grind_lib::api::runtime", runtime_id = runtime.id(), "[api-runtime] initialized");
 
             {

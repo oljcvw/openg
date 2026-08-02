@@ -21,6 +21,7 @@ import io.crates.keyring.Keyring
 import org.json.JSONObject
 import org.opengrind.notifications.NotificationNotifier
 import org.opengrind.notifications.NotificationRoute
+import org.opengrind.realtime.RealtimeNetworkMonitor
 
 class MainActivity : TauriActivity() {
 	private var insetsTop = 0
@@ -93,6 +94,7 @@ class MainActivity : TauriActivity() {
 			minSupportedMajor = BuildConfig.MIN_SUPPORTED_WEBVIEW_MAJOR,
 		).takeIf { it.disposition == WebViewSupport.Disposition.WARNING }
 		super.onCreate(savedInstanceState)
+		RealtimeNetworkMonitor.initialize(applicationContext)
 
 		onBackPressedDispatcher.addCallback(this, backGestureCallback)
 

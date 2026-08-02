@@ -15,6 +15,26 @@ class NotificationBridgeTest {
 	}
 
 	@Test
+	fun `retains only allowlisted failure code for logcat`() {
+		assertEquals(
+			PollResult.Failed(PollFailureCode.InboxResponse),
+			NotificationBridge.parse(
+				"""{"state":"retry","code":"inbox_response"}""",
+			),
+		)
+	}
+
+	@Test
+	fun `rejects hostile native failure text`() {
+		assertEquals(
+			PollResult.Failed(PollFailureCode.BackgroundCheckFailed),
+			NotificationBridge.parse(
+				"""{"state":"retry","error":"secret user@example.com"}""",
+			),
+		)
+	}
+
+	@Test
 	fun `keeps reflection parsed plugin arguments in minified builds`() {
 		assertTrue(
 			NotificationsPlugin.SettingsArgs::class.java.isAnnotationPresent(

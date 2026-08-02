@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { toast } from "svelte-sonner";
 
 type MediaElementKind = "image" | "video" | "audio";
 type MediaLoadOutcome = "loaded" | "failed";
@@ -11,6 +12,7 @@ type MediaSurface =
 	| "other";
 
 const reported = new Set<string>();
+let lastMediaFailureNotice = 0;
 
 export function networkMediaOrigin(source: string): string | null {
 	try {
@@ -58,8 +60,17 @@ export function reportMediaOrigin(
 	if (origin === null) return;
 	const surface = mediaSurface(window.location.pathname);
 	const key = `${origin}\n${kind}\n${outcome}\n${surface}`;
-	if (reported.has(key)) return;
-	reported.add(key);
+	if (outcome === "loaded") {
+		if (reported.has(key)) return;
+		reported.add(key);
+	}
+	if (outcome === "failed" && Date.now() - lastMediaFailureNotice >= 10_000) {
+		lastMediaFailureNotice = Date.now();
+		toast.error("Some media could not be loaded", {
+			description: "The failure was recorded for diagnostics.",
+			id: "media-load-failure",
+		});
+	}
 	void invoke("report_media_origin", {
 		observation: {
 			origin,
@@ -68,7 +79,7 @@ export function reportMediaOrigin(
 			surface,
 		},
 	}).catch(() => {
-		reported.delete(key);
+		if (outcome === "loaded") reported.delete(key);
 		// Diagnostics must never affect media rendering.
 	});
 }

@@ -190,6 +190,7 @@ fn runtime_error(error: super::runtime::RuntimeError) -> AppError {
 		super::runtime::RuntimeError::Cooldown { retry_at_ms } => {
 			AppError::RequestCooldown { retry_at_ms }
 		}
+		super::runtime::RuntimeError::Cancelled => AppError::RequestCancelled,
 	}
 }
 

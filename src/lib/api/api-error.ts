@@ -7,6 +7,8 @@ export type ApiErrorKind =
 	| "RateLimited"
 	| "RequestBlocked"
 	| "RequestCooldown"
+	| "RequestCancelled"
+	| "RequestTimeout"
 	| "NotInitialized";
 
 export class ApiError extends Error {
@@ -37,6 +39,7 @@ export class ApiError extends Error {
 
 	get retryable(): boolean {
 		if (this.kind === "Http") return true;
+		if (this.kind === "RequestTimeout") return true;
 		if (this.kind === "Auth" || this.kind === "Unauthorized") return true;
 		if (this.response !== null) {
 			const { status } = this.response;
@@ -47,7 +50,11 @@ export class ApiError extends Error {
 	}
 
 	copyableText(): string {
-		if (this.kind === "RequestBlocked" || this.kind === "RequestCooldown") {
+		if (
+			this.kind === "RequestBlocked" ||
+			this.kind === "RequestCooldown" ||
+			this.kind === "RequestTimeout"
+		) {
 			return JSON.stringify(
 				{
 					error: this.message,

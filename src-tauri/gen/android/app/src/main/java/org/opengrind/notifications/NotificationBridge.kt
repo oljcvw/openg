@@ -8,16 +8,23 @@ object NotificationBridge {
 	@Volatile private var initialized = false
 	private val pollLock = Any()
 
-	fun poll(context: Context): PollResult = synchronized(pollLock) {
+	fun poll(
+		context: Context,
+		messagesEnabled: Boolean,
+		tapsEnabled: Boolean,
+	): PollResult = synchronized(pollLock) {
 		if (!initialized) {
 			System.loadLibrary("open_grind_lib")
 			Keyring.initializeNdkContext(context.applicationContext)
 			initialized = true
 		}
-		parse(nativePoll())
+		parse(nativePoll(messagesEnabled, tapsEnabled))
 	}
 
-	private external fun nativePoll(): String
+	private external fun nativePoll(
+		messagesEnabled: Boolean,
+		tapsEnabled: Boolean,
+	): String
 
 	internal fun parse(raw: String): PollResult {
 		val root = JSONObject(raw)
@@ -55,8 +62,34 @@ object NotificationBridge {
 			)
 			"signedOut" -> PollResult.SignedOut
 			"deferred" -> PollResult.Deferred
-			else -> PollResult.Retry
+			else -> PollResult.Failed(
+				PollFailureCode.fromWireName(root.optString("code")),
+			)
 		}
+	}
+}
+
+enum class PollFailureCode(val wireName: String) {
+	RuntimeUnavailable("runtime_unavailable"),
+	SessionUnavailable("session_unavailable"),
+	DeviceUnavailable("device_unavailable"),
+	SigningKeyUnavailable("signing_key_unavailable"),
+	ClientUnavailable("client_unavailable"),
+	InboxRequest("inbox_request"),
+	InboxResponse("inbox_response"),
+	InboxDecode("inbox_decode"),
+	TapsRequest("taps_request"),
+	TapsResponse("taps_response"),
+	TapsDecode("taps_decode"),
+	PollPanicked("poll_panicked"),
+	ResponseEncoding("response_encoding"),
+	AndroidBridge("android_bridge"),
+	BackgroundCheckFailed("background_check_failed"),
+	;
+
+	companion object {
+		fun fromWireName(value: String): PollFailureCode =
+			entries.firstOrNull { it.wireName == value } ?: BackgroundCheckFailed
 	}
 }
 
@@ -69,7 +102,7 @@ sealed interface PollResult {
 
 	data object SignedOut : PollResult
 	data object Deferred : PollResult
-	data object Retry : PollResult
+	data class Failed(val code: PollFailureCode) : PollResult
 }
 
 data class PollMessage(

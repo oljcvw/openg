@@ -83,6 +83,7 @@ export function demoCallMethod(method: string): unknown {
 		case "notification_test":
 		case "notification_sync":
 		case "notification_cancel":
+		case "api_runtime_configure":
 			return undefined;
 		case "validate_password_complexity":
 		case "update_account_password":

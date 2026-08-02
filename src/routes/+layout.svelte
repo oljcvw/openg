@@ -10,6 +10,7 @@
 	import { onMount } from "svelte";
 	import { Toaster } from "svelte-sonner";
 
+	import { registerApiHealthListener } from "$lib/api/api-health-state.svelte";
 	import {
 		getContrastModeSnapshot,
 		getStayAwakeSnapshot,
@@ -21,6 +22,7 @@
 		registerAndroidBackButtonListener,
 	} from "$lib/platform/android-native-bridge";
 	import { blockZoom } from "$lib/platform/block-zoom";
+	import { registerGlobalErrorReporting } from "$lib/platform/client-diagnostics";
 	import { registerMediaOriginLogging } from "$lib/platform/media-origin-logging";
 	import {
 		applyStayAwake,
@@ -68,11 +70,15 @@
 			console.error("Failed to hydrate preferences", error);
 		});
 		const releaseStayAwake = registerStayAwakeVisibilityListener();
+		const releaseApiHealth = registerApiHealthListener();
+		const releaseErrorReporting = registerGlobalErrorReporting();
 		const releaseMediaOriginLogging = isTauri()
 			? registerMediaOriginLogging()
 			: () => {};
 		return () => {
 			releaseMediaOriginLogging();
+			releaseErrorReporting();
+			releaseApiHealth();
 			releaseStayAwake();
 			releaseZoomBlock();
 		};
@@ -82,6 +88,7 @@
 
 	import favicon from "$lib/assets/favicon.png";
 	import AccountStatusAlert from "$lib/components/feedback/AccountStatusAlert.svelte";
+	import ApiMitigationBanner from "$lib/components/feedback/ApiMitigationBanner.svelte";
 	import SessionErrorAlert from "$lib/components/feedback/SessionErrorAlert.svelte";
 
 	let {
@@ -133,6 +140,7 @@
 	}}
 	expand
 />
+<ApiMitigationBanner />
 <IconContext values={{}}>
 	{@render children?.()}
 </IconContext>
