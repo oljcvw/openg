@@ -967,10 +967,10 @@ fn system_time_ms() -> u64 {
 
 pub fn retry_policy(method: &grindr::Method, path: &str) -> RetryPolicy {
 	let route = path.split_once('?').map_or(path, |(route, _)| route);
-	if method == grindr::Method::GET || method == grindr::Method::HEAD {
-		RetryPolicy::SafeRead
-	} else if method == grindr::Method::POST
-		&& matches!(route, "/v4/inbox" | "/v3/profiles")
+	if method == grindr::Method::GET
+		|| method == grindr::Method::HEAD
+		|| (method == grindr::Method::POST
+			&& matches!(route, "/v4/inbox" | "/v3/profiles"))
 	{
 		RetryPolicy::SafeRead
 	} else {

@@ -2,6 +2,11 @@ bun.lock
 flake.lock
 node_modules
 /.claude
+/.codanna
+/.codex
+/graphify-out
+/.idea
+/.local-review
 /build
 /.svelte-kit
 /static

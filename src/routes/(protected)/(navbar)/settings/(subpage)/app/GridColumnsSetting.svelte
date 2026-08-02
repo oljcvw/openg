@@ -3,9 +3,9 @@
 
 	import { showErrorToast } from "$lib/api/error";
 	import {
-		type GridColumns,
 		getGridColumnsSnapshot,
 		getPreferences,
+		type GridColumns,
 		setPreferences,
 	} from "$lib/app-data/preferences.svelte";
 	import * as Item from "$lib/components/ui/item";

@@ -28,6 +28,11 @@ export default defineConfig(
 	{
 		ignores: [
 			"build/",
+			".codanna/",
+			".codex/",
+			"graphify-out/",
+			".idea/",
+			".local-review/",
 			".svelte-kit/",
 			"src-tauri/",
 			"reverse/",

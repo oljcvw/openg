@@ -20,13 +20,13 @@ describe("applyStayAwake", () => {
 	});
 
 	it("requests and releases the browser screen wake lock", async () => {
-		const release = vi.fn(async () => undefined);
+		const release = vi.fn(() => Promise.resolve());
 		const sentinel = {
 			released: false,
 			release,
 			addEventListener: vi.fn(),
 		} as unknown as WakeLockSentinel;
-		const request = vi.fn(async () => sentinel);
+		const request = vi.fn(() => Promise.resolve(sentinel));
 		Object.defineProperty(navigator, "wakeLock", {
 			configurable: true,
 			value: { request },

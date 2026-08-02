@@ -265,6 +265,7 @@ struct PollTap {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "state", rename_all = "camelCase")]
 #[cfg(any(target_os = "android", test))]
+#[cfg_attr(all(test, not(target_os = "android")), allow(dead_code))]
 enum PollResponse {
 	Ok {
 		account_id: String,
@@ -281,6 +282,7 @@ enum PollResponse {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 #[cfg(any(target_os = "android", test))]
+#[cfg_attr(all(test, not(target_os = "android")), allow(dead_code))]
 enum PollFailureCode {
 	RuntimeUnavailable,
 	SessionUnavailable,

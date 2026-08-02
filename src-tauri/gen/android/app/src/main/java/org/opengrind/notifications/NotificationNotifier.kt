@@ -57,8 +57,12 @@ class NotificationNotifier(private val context: Context) {
 			.setAutoCancel(true)
 			.setContentIntent(pendingIntent)
 			.build()
-		NotificationManagerCompat.from(context).notify(notification.id, built)
-		return true
+		return try {
+			NotificationManagerCompat.from(context).notify(notification.id, built)
+			true
+		} catch (_: SecurityException) {
+			false
+		}
 	}
 
 	fun showTest(): Boolean = show(

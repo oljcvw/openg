@@ -11,10 +11,10 @@
 		getVoicePermissionStatus,
 		onVoiceRecordingError,
 		onVoiceRecordingMaxDuration,
+		type ReadyVoiceRecording,
 		requestVoicePermission,
 		startVoiceRecording,
 		stopVoiceRecording,
-		type ReadyVoiceRecording,
 	} from "$lib/api/voice-recorder";
 	import { fromBase64 } from "$lib/util/base64";
 	import { getMessageComposerContext } from "../message-composer-context.svelte";

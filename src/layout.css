@@ -122,6 +122,7 @@
 
 	--spacing-avatar: 37.5px;
 	--spacing-list-rail: 117px;
+	--spacing-unread-badge-inline: 5.5px;
 }
 
 /* Keep in sync with src/lib/util/breakpoints.svelte.ts */
