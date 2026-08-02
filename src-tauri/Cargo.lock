@@ -3564,6 +3564,7 @@ dependencies = [
  "grindr",
  "jni",
  "keyring-core",
+ "ndk-context",
  "rmp-serde",
  "serde",
  "serde_bytes",

@@ -16,6 +16,7 @@ class NotificationWorker(
 
 		return when (val result = tryPoll()) {
 			PollResult.SignedOut -> Result.success()
+			PollResult.Deferred -> Result.retry()
 			PollResult.Retry -> {
 				preferences.recordFailure()
 				Result.retry()

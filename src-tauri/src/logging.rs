@@ -1,7 +1,7 @@
 use tracing_subscriber::EnvFilter;
 
 const DEFAULT_FILTER: &str =
-	"open_grind_lib::api::diagnostics=info,open_grind_lib=warn,grindr=warn";
+	"open_grind_lib::api::diagnostics=info,open_grind_lib::api::identity=info,open_grind_lib::api::notifications=info,open_grind_lib::api::rest=info,open_grind_lib::api::runtime=info,open_grind_lib=warn,grindr=warn";
 
 pub fn init() {
 	let filter = EnvFilter::try_from_default_env()
@@ -78,6 +78,21 @@ mod tests {
 		assert!(output.contains("[session] persist failed"));
 		assert!(output.contains("connection error"));
 		assert!(output.contains("[media-origin] observed"));
+	}
+
+	#[test]
+	fn default_filter_keeps_privacy_safe_request_diagnostics() {
+		let output = capture_with_default_filter(|| {
+			tracing::info!(
+				target: "open_grind_lib::api::rest",
+				request_id = 7,
+				route = "/v4/inbox?page",
+				"[api-request] complete"
+			);
+		});
+
+		assert!(output.contains("[api-request] complete"));
+		assert!(output.contains("/v4/inbox?page"));
 	}
 
 	#[test]

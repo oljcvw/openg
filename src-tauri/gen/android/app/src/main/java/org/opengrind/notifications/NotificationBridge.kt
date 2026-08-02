@@ -54,6 +54,7 @@ object NotificationBridge {
 				},
 			)
 			"signedOut" -> PollResult.SignedOut
+			"deferred" -> PollResult.Deferred
 			else -> PollResult.Retry
 		}
 	}
@@ -67,6 +68,7 @@ sealed interface PollResult {
 	) : PollResult
 
 	data object SignedOut : PollResult
+	data object Deferred : PollResult
 	data object Retry : PollResult
 }
 

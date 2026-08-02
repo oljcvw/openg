@@ -1,13 +1,15 @@
-use std::sync::OnceLock;
-
 use crate::error::AppError;
 
-pub struct AppState {
-	pub client: OnceLock<grindr::GrindrClient>,
-}
+pub struct AppState;
 
 impl AppState {
 	pub fn client(&self) -> Result<&grindr::GrindrClient, AppError> {
-		self.client.get().ok_or(AppError::NotInitialized)
+		Ok(self.runtime()?.client())
+	}
+
+	pub fn runtime(
+		&self,
+	) -> Result<&'static crate::api::runtime::ApiRuntime, AppError> {
+		crate::api::runtime::ApiRuntime::get().ok_or(AppError::NotInitialized)
 	}
 }

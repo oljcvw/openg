@@ -66,8 +66,6 @@ export function demoCallMethod(method: string): unknown {
 		case "google_sign_in":
 		case "refresh_token":
 			return { profileId: demoMeProfileId };
-		case "rotate_api_params":
-			return { "user-agent": "demo", "l-device-info": "demo" };
 		case "recaptcha_first_party_enabled":
 			return false;
 		case "notification_get_settings":

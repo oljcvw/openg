@@ -1,10 +1,10 @@
 import { decode, encode } from "@msgpack/msgpack";
 import { invoke } from "@tauri-apps/api/core";
 import { goto } from "$app/navigation";
+import { toast } from "svelte-sonner";
 import z from "zod";
 
 import { ApiError } from "$lib/api/api-error";
-import { requestBlockedAlertState } from "$lib/api/request-blocked-state.svelte";
 import { demoCallMethod, demoEnabled, demoRoute } from "$lib/demo";
 import { fromBase64, toBase64 } from "$lib/util/base64";
 
@@ -77,13 +77,6 @@ export const methods = {
 		response: z.object({
 			profileId: z.coerce.number().int().nonnegative(),
 			restriction: restrictionSchema.nullish(),
-		}),
-	},
-	rotate_api_params: {
-		request: z.undefined(),
-		response: z.object({
-			"user-agent": z.string(),
-			"l-device-info": z.string(),
 		}),
 	},
 	logout: {
@@ -161,17 +154,22 @@ export async function callMethod<T extends keyof typeof methods>(
 	try {
 		return await invoke(method, args[0]);
 	} catch (error) {
-		if (asAppError(error)?.kind === "RequestBlocked") {
-			markRequestBlocked();
-		}
+		notifyRequestPause(asAppError(error)?.kind);
 		throw error;
 	}
 }
 
-function markRequestBlocked(): void {
-	if (!requestBlockedAlertState.disable) {
-		requestBlockedAlertState.open = true;
-	}
+let lastRequestPauseNotice = 0;
+
+function notifyRequestPause(kind: string | undefined): void {
+	if (kind !== "RequestBlocked" && kind !== "RequestCooldown") return;
+	const now = Date.now();
+	if (now - lastRequestPauseNotice < 60_000) return;
+	lastRequestPauseNotice = now;
+	toast.warning(
+		"Grindr temporarily refused requests. Open Grind paused automatic reads for about a minute. Sending and changes were not retried.",
+		{ id: "grindr-request-pause" },
+	);
 }
 
 export function asBanned(error: unknown): BanInfo | null {
@@ -192,6 +190,7 @@ export function asAppError(error: unknown) {
 				"Banned",
 				"RateLimited",
 				"RequestBlocked",
+				"RequestCooldown",
 				"NotInitialized",
 			]),
 			message: z
@@ -202,6 +201,7 @@ export function asAppError(error: unknown) {
 						message: z.string(),
 					}),
 				)
+				.or(z.object({ retryAtMs: z.number().int().nonnegative() }))
 				.optional(),
 		})
 		.safeParse(error);
@@ -210,7 +210,10 @@ export function asAppError(error: unknown) {
 		if (typeof data.message === "string") {
 			prettyMessage = data.message;
 		} else if (data.message) {
-			prettyMessage = `Error ${data.message.code}: ${data.message.message}`;
+			prettyMessage =
+				"retryAtMs" in data.message
+					? "Requests are temporarily paused"
+					: `Error ${data.message.code}: ${data.message.message}`;
 		} else {
 			prettyMessage = "An unknown error occurred";
 		}
@@ -340,12 +343,22 @@ export async function fetchRest(
 		if (error instanceof ApiError) throw error;
 		const appError = asAppError(error);
 		if (appError?.kind === "RequestBlocked") {
-			markRequestBlocked();
+			notifyRequestPause(appError.kind);
 			throw new ApiError({
-				message: "Request blocked",
+				message: "Grindr temporarily refused this request",
 				request: requestInfo,
-				response: { status: 403, body: "Blocked by Cloudflare" },
+				response: { status: 403, body: "" },
 				kind: "RequestBlocked",
+				cause: error,
+			});
+		}
+		if (appError?.kind === "RequestCooldown") {
+			notifyRequestPause(appError.kind);
+			throw new ApiError({
+				message: "Grindr requests are temporarily paused",
+				request: requestInfo,
+				response: null,
+				kind: "RequestCooldown",
 				cause: error,
 			});
 		}

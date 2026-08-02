@@ -5,8 +5,7 @@ mod logging;
 mod state;
 mod storage;
 
-use std::sync::OnceLock;
-
+#[cfg(not(target_os = "android"))]
 use tauri::Manager;
 
 use crate::state::AppState;
@@ -110,9 +109,7 @@ pub fn run() {
         .plugin(api::google_oauth::plugin())
         .plugin(api::notifications::plugin())
         .plugin(api::voice_recorder::plugin())
-        .manage(AppState {
-            client: OnceLock::new(),
-        })
+        .manage(AppState)
         .invoke_handler(tauri::generate_handler![
             api::account::validate_password_complexity,
             api::account::update_account_password,
@@ -142,7 +139,6 @@ pub fn run() {
             api::voice_recorder::voice_recorder_cancel,
             api::ws::ws_connect,
             api::ws::ws_send,
-            api::client::rotate_api_params,
             api::diagnostics::report_media_origin,
         ])
         .setup(|app| {
@@ -182,7 +178,7 @@ pub fn run() {
 
             storage::init_keyring();
 
-            let device = match DeviceStorage::load() {
+            let mut device = match DeviceStorage::load() {
                 Ok(Some(d)) => d,
                 Ok(None) => {
                     let d = grindr::DeviceInfo::generate();
@@ -197,6 +193,21 @@ pub fn run() {
                 }
             };
 
+			if let Err(error) = api::identity::align_device(&mut device) {
+				tracing::warn!(target: "open_grind_lib::api::identity", "[api-identity] physical field alignment failed: {error}");
+			} else if let Err(error) = DeviceStorage::save(&device) {
+				tracing::error!(target: "open_grind_lib::api::identity", "[api-identity] aligned identity persist failed: {error}");
+			} else {
+				tracing::info!(
+					target: "open_grind_lib::api::identity",
+					os = device.os,
+					model = device.device_model,
+					manufacturer = device.manufacturer,
+					screen = device.screen_resolution,
+					"[api-identity] physical fields aligned"
+				);
+			}
+
             let session = match AuthStorage::get_session() {
                 Ok(s) => s,
                 Err(e) => {
@@ -205,8 +216,11 @@ pub fn run() {
                 }
             };
 
-            let client =
+            let candidate =
                 grindr::GrindrClient::new(device, session).expect("failed to build GrindrClient");
+            let runtime = api::runtime::ApiRuntime::install(candidate);
+            let client = runtime.client().clone();
+			tracing::info!(target: "open_grind_lib::api::runtime", runtime_id = runtime.id(), "[api-runtime] initialized");
 
             {
                 let mut session_rx = client.session_receiver();
@@ -246,12 +260,6 @@ pub fn run() {
                     }
                 });
             }
-
-            app.state::<AppState>()
-                .client
-                .set(client)
-                .ok()
-                .expect("client already set");
 
             api::ws::spawn_ws_task(app.handle().clone());
 

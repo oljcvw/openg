@@ -7,6 +7,14 @@ import org.junit.Test
 
 class NotificationBridgeTest {
 	@Test
+	fun `parses deferred poll result`() {
+		assertEquals(
+			PollResult.Deferred,
+			NotificationBridge.parse("""{"state":"deferred"}"""),
+		)
+	}
+
+	@Test
 	fun `keeps reflection parsed plugin arguments in minified builds`() {
 		assertTrue(
 			NotificationsPlugin.SettingsArgs::class.java.isAnnotationPresent(

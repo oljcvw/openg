@@ -115,7 +115,12 @@ pub async fn logout(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
 	let _storage_guard = account_storage_lock().lock().await;
 	AuthStorage::delete_session();
 
-	let new_device = grindr::DeviceInfo::generate();
+	let mut new_device = grindr::DeviceInfo::generate();
+	if let Err(error) = super::identity::align_device(&mut new_device) {
+		tracing::warn!(
+			"[auth] physical identity alignment failed during sign out: {error}"
+		);
+	}
 	if let Err(e) = DeviceStorage::save(&new_device) {
 		tracing::error!(
 			"[auth] could not persist rotated device info on sign out: {e}"

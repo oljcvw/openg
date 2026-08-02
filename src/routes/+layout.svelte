@@ -82,7 +82,6 @@
 
 	import favicon from "$lib/assets/favicon.png";
 	import AccountStatusAlert from "$lib/components/feedback/AccountStatusAlert.svelte";
-	import RequestBlockedAlert from "$lib/components/feedback/RequestBlockedAlert.svelte";
 	import SessionErrorAlert from "$lib/components/feedback/SessionErrorAlert.svelte";
 
 	let {
@@ -137,6 +136,5 @@
 <IconContext values={{}}>
 	{@render children?.()}
 </IconContext>
-<RequestBlockedAlert />
 <SessionErrorAlert />
 <AccountStatusAlert />

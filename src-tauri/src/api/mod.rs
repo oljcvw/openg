@@ -1,10 +1,11 @@
 pub mod account;
 pub mod auth;
-pub mod client;
 pub mod diagnostics;
 pub mod google_oauth;
+pub mod identity;
 pub mod media_upload;
 pub mod notifications;
 pub mod rest;
+pub mod runtime;
 pub mod voice_recorder;
 pub mod ws;

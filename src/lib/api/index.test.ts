@@ -34,6 +34,19 @@ describe("asAppError", () => {
 	it("ignores unknown errors", () => {
 		expect(asAppError(new Error("network failed"))).toBeUndefined();
 	});
+
+	it("formats request cooldown errors", () => {
+		expect(
+			asAppError({
+				kind: "RequestCooldown",
+				message: { retryAtMs: 1234 },
+			}),
+		).toEqual({
+			kind: "RequestCooldown",
+			message: { retryAtMs: 1234 },
+			prettyMessage: "Requests are temporarily paused",
+		});
+	});
 });
 
 describe("simulated account-status responses", () => {

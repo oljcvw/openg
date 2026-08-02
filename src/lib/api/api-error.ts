@@ -6,6 +6,7 @@ export type ApiErrorKind =
 	| "Banned"
 	| "RateLimited"
 	| "RequestBlocked"
+	| "RequestCooldown"
 	| "NotInitialized";
 
 export class ApiError extends Error {
@@ -46,6 +47,21 @@ export class ApiError extends Error {
 	}
 
 	copyableText(): string {
+		if (this.kind === "RequestBlocked" || this.kind === "RequestCooldown") {
+			return JSON.stringify(
+				{
+					error: this.message,
+					kind: this.kind,
+					request: {
+						method: this.request.method,
+						route: sanitizedRoute(this.request.path),
+					},
+					status: this.response?.status ?? null,
+				},
+				null,
+				2,
+			);
+		}
 		return JSON.stringify(
 			{
 				error: this.message,
@@ -57,4 +73,23 @@ export class ApiError extends Error {
 			2,
 		);
 	}
+}
+
+function sanitizedRoute(path: string): string {
+	const [pathname, query = ""] = path.split("?", 2);
+	const route = pathname
+		.split("/")
+		.map((segment) => {
+			if (!segment) return segment;
+			if (/^\d+$/.test(segment)) return "<id>";
+			if (/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(segment)) return "<id>";
+			return /^[a-z0-9._-]{1,32}$/i.test(segment) ? segment : "<id>";
+		})
+		.join("/");
+	const keys = query
+		.split("&")
+		.map((part) => part.split("=", 1)[0])
+		.filter((key) => /^[a-z0-9_-]{1,32}$/i.test(key))
+		.sort();
+	return keys.length > 0 ? `${route}?${[...new Set(keys)].join("&")}` : route;
 }
