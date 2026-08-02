@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { platform } from "@tauri-apps/plugin-os";
 	import { divIcon } from "leaflet";
-	import { GpsFixIcon } from "phosphor-svelte";
+	import { GpsFixIcon, MagnifyingGlassIcon } from "phosphor-svelte";
 	import { ControlAttribution, Map, Marker, TileLayer } from "sveaflet";
+	import { onDestroy } from "svelte";
 	import { toast } from "svelte-sonner";
 	import type {
 		DragEndEvent,
@@ -13,6 +14,7 @@
 
 	import { getPlaces } from "$lib/api/browse/location";
 	import { showErrorToast } from "$lib/api/error";
+	import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { Input } from "$lib/components/ui/input";
@@ -22,6 +24,7 @@
 		getDeviceLocation,
 		LocationPermissionDeniedError,
 	} from "$lib/platform/geolocation";
+	import { PlaceSearchCache } from "./place-search-cache";
 
 	let {
 		pinPos = $bindable(),
@@ -47,12 +50,61 @@
 
 	let searchQuery = $state("");
 	let showSearchResults = $state(false);
-	let searchPlaces = $derived.by(async () => {
-		let query = searchQuery.trim();
-		if (!query) return;
-		const response = await getPlaces({ query });
-		return response;
+	let searchResponse = $state<Awaited<ReturnType<typeof getPlaces>> | null>(
+		null,
+	);
+	let searchError = $state<unknown>(null);
+	let searchInProgress = $state(false);
+	let searchAbortController: AbortController | null = null;
+	let searchEpoch = 0;
+	const placeSearchCache = new PlaceSearchCache<
+		Awaited<ReturnType<typeof getPlaces>>
+	>(getDeveloperSettingsSnapshot().placeSearchCacheEntries);
+
+	onDestroy(() => {
+		searchEpoch += 1;
+		searchAbortController?.abort();
+		searchAbortController = null;
 	});
+
+	async function submitSearch(): Promise<void> {
+		const query = searchQuery.trim();
+		if (!query) {
+			showSearchResults = false;
+			return;
+		}
+		showSearchResults = true;
+		searchError = null;
+		placeSearchCache.setCapacity(
+			getDeveloperSettingsSnapshot().placeSearchCacheEntries,
+		);
+		const cached = placeSearchCache.get(query);
+		if (cached) {
+			searchResponse = cached;
+			searchInProgress = false;
+			return;
+		}
+
+		searchAbortController?.abort();
+		const abortController = new AbortController();
+		searchAbortController = abortController;
+		const epoch = ++searchEpoch;
+		searchInProgress = true;
+		try {
+			const response = await getPlaces({
+				query,
+				signal: abortController.signal,
+			});
+			if (epoch !== searchEpoch || abortController.signal.aborted) return;
+			placeSearchCache.set(query, response);
+			searchResponse = response;
+		} catch (error) {
+			if (abortController.signal.aborted || epoch !== searchEpoch) return;
+			searchError = error;
+		} finally {
+			if (epoch === searchEpoch) searchInProgress = false;
+		}
+	}
 
 	let pendingCenter: { lat: number; lon: number; zoom: number } | undefined =
 		$state();
@@ -135,73 +187,78 @@
 			/>
 		{/if}
 	</Map>
-	<div
+	<form
 		class={[
-			"absolute bottom-4 z-1010 w-full p-2",
+			"absolute bottom-4 z-1010 flex w-full gap-2 p-2",
 			{
 				"max-w-[calc(100%-2.5rem)]": gpsAvailable,
 			},
 		]}
+		onsubmit={(event) => {
+			event.preventDefault();
+			void submitSearch();
+		}}
 	>
 		<Input
 			id="search-place"
 			type="search"
 			placeholder="Search places..."
-			bind:value={
-				() => searchQuery,
-				(v: string) => {
-					searchQuery = v;
-					showSearchResults = v.length > 0;
-				}
-			}
+			bind:value={searchQuery}
 			class="bg-popover-foreground text-background shadow-md"
 			maxlength={100}
-			onfocus={() => {
-				if (searchQuery.trim()) {
-					showSearchResults = true;
-				}
-			}}
-			onblur={() => {
-				setTimeout(() => {
-					showSearchResults = false;
-				}, 200);
+			oninput={() => {
+				searchAbortController?.abort();
+				searchEpoch += 1;
+				searchInProgress = false;
+				showSearchResults = false;
+				searchResponse = null;
+				searchError = null;
 			}}
 		/>
-		<!-- bottom-2 w-[calc(100%-8rem)]  -->
-	</div>
+		<Button
+			type="submit"
+			size="icon"
+			aria-label="Search places"
+			disabled={searchInProgress || !searchQuery.trim()}
+		>
+			<MagnifyingGlassIcon class="size-5" />
+		</Button>
+	</form>
 	{#if showSearchResults}
 		<div class="absolute top-0 left-0 z-1000 size-full p-1">
 			<div
 				class="flex h-full w-full flex-col gap-2 overflow-auto rounded-md bg-popover-foreground px-1 py-3 text-popover shadow-md backdrop-blur-xl"
 			>
-				{#await searchPlaces}
+				{#if searchInProgress}
 					<Spinner class="m-auto size-8" />
-				{:then response}
-					{#if response}
-						{#each response.places.toSorted((a, b) => b.importance - a.importance) as place}
-							<Button
-								class="flex h-auto cursor-pointer flex-col items-start justify-start gap-0 text-left text-current"
-								variant="link"
-								onclick={() => {
-									pinPos = { lat: place.lat, lon: place.lon };
-									map?.setView([place.lat, place.lon], 17);
-									showSearchResults = false;
-								}}
+				{:else if searchError}
+					<ApiErrorDisplay
+						error={searchError}
+						buttonVariant="secondary"
+						class="m-auto"
+					/>
+				{:else if searchResponse}
+					{#each searchResponse.places.toSorted((a, b) => b.importance - a.importance) as place}
+						<Button
+							class="flex h-auto cursor-pointer flex-col items-start justify-start gap-0 text-left text-current"
+							variant="link"
+							onclick={() => {
+								pinPos = { lat: place.lat, lon: place.lon };
+								map?.setView([place.lat, place.lon], 17);
+								showSearchResults = false;
+							}}
+						>
+							<span class="line-clamp-1 block max-w-full truncate">
+								{place.name}
+							</span>
+							<span
+								class="line-clamp-1 block max-w-full truncate text-sm text-popover/40"
 							>
-								<span class="line-clamp-1 block max-w-full truncate">
-									{place.name}
-								</span>
-								<span
-									class="line-clamp-1 block max-w-full truncate text-sm text-popover/40"
-								>
-									{place.address}
-								</span>
-							</Button>
-						{/each}
-					{/if}
-				{:catch error}
-					<ApiErrorDisplay {error} buttonVariant="secondary" class="m-auto" />
-				{/await}
+								{place.address}
+							</span>
+						</Button>
+					{/each}
+				{/if}
 			</div>
 		</div>
 	{/if}

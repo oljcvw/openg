@@ -15,12 +15,19 @@ const placesResponseSchema = z.object({
 	),
 });
 
-export async function getPlaces({ query }: { query: string }) {
+export async function getPlaces({
+	query,
+	signal,
+}: {
+	query: string;
+	signal?: AbortSignal;
+}) {
 	const response = await fetchRest(
 		"/v3/places/search?" +
 			new URLSearchParams({
 				placeName: query,
 			}).toString(),
+		{ signal },
 	).then((res) => res.jsonParsed(placesResponseSchema));
 	return response;
 }
