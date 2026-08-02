@@ -3,6 +3,8 @@ package org.opengrind
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
+import android.hardware.display.DisplayManager
+import android.view.Display
 import androidx.annotation.Keep
 import org.json.JSONObject
 import java.util.TimeZone
@@ -12,7 +14,10 @@ object AndroidApiIdentity {
 	@Keep
 	fun snapshot(context: Context): String {
 		val resources = context.resources
-		val displayMode = context.display.mode
+		val displayMode = context
+			.getSystemService(DisplayManager::class.java)
+			.getDisplay(Display.DEFAULT_DISPLAY)
+			?.mode
 		val display = resources.displayMetrics
 		val width = displayMode?.physicalWidth ?: display.widthPixels
 		val height = displayMode?.physicalHeight ?: display.heightPixels
