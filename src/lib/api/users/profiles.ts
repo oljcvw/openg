@@ -1,11 +1,17 @@
 import z from "zod";
 
 import { fetchRest } from "$lib/api";
-import { registerAccountCache } from "$lib/api/account-caches";
+import {
+	type AccountSessionSnapshot,
+	getAccountSessionSnapshot,
+	isAccountSessionCurrent,
+	registerAccountCache,
+} from "$lib/api/account-caches";
 import { ApiError } from "$lib/api/api-error";
 import { getBlockedUsers } from "$lib/api/browse/blocks";
+import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
 import {
-	readCachedProfile,
+	readCachedProfileEntry,
 	removeCachedProfile,
 	writeCachedProfile,
 } from "$lib/app-data/profile-cache";
@@ -19,6 +25,7 @@ import {
 	profileShortSchema,
 	pronounSchema,
 } from "$lib/model/users/profiles";
+import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 import { now } from "$lib/util/clock";
 
 function isProbablyUnavailable(profile: Profile) {
@@ -102,19 +109,46 @@ const profilesCache = new Map<
 	{ profile: Profile; updatedAt: number }
 >();
 
-const profilesInFlight = new Map<number, Promise<Profile>>();
+const profilesInFlight = new Map<string, Promise<Profile>>();
+const profileFreshnessHints = new Map<number, number>();
+
+function profileCacheIsFresh(
+	profileId: number,
+	cached: { profile: Profile; updatedAt: number },
+): boolean {
+	if (now() - cached.updatedAt >= 1000 * 60) return false;
+	const hint = profileFreshnessHints.get(profileId);
+	if (hint === undefined) return true;
+	return (
+		cached.profile.lastUpdatedTime !== null &&
+		cached.profile.lastUpdatedTime >= hint
+	);
+}
+
+export function noteProfileFreshness(
+	profileId: number,
+	lastUpdatedTime: number | null,
+): void {
+	if (lastUpdatedTime === null) return;
+	const current = profileFreshnessHints.get(profileId) ?? 0;
+	if (lastUpdatedTime > current) {
+		profileFreshnessHints.set(profileId, lastUpdatedTime);
+	}
+}
 
 export async function getProfile(profileId: number): Promise<Profile> {
+	const session = getAccountSessionSnapshot();
 	const cached = profilesCache.get(profileId);
-	if (cached && now() - cached.updatedAt < 1000 * 60) {
+	if (cached && profileCacheIsFresh(profileId, cached)) {
 		return cached.profile;
 	}
-	let request = profilesInFlight.get(profileId);
+	const requestKey = profileRequestKey(profileId, session);
+	let request = profilesInFlight.get(requestKey);
 	if (!request) {
-		request = fetchProfile(profileId).finally(() => {
-			profilesInFlight.delete(profileId);
+		request = fetchProfile(profileId, session).finally(() => {
+			profilesInFlight.delete(requestKey);
 		});
-		profilesInFlight.set(profileId, request);
+		profilesInFlight.set(requestKey, request);
 	}
 	return request;
 }
@@ -122,17 +156,34 @@ export async function getProfile(profileId: number): Promise<Profile> {
 export async function getPersistedProfile(
 	profileId: number,
 ): Promise<Profile | null> {
-	const cached = profilesCache.get(profileId)?.profile;
-	return cached ? structuredClone(cached) : await readCachedProfile(profileId);
+	const session = getAccountSessionSnapshot();
+	const cached = profilesCache.get(profileId);
+	if (cached) return structuredClone(cached.profile);
+	const persisted = await readCachedProfileEntry(profileId, now()).catch(() => {
+		console.error("Profile cache hydration failed");
+		reportClientDiagnostic({
+			category: "cache_recovery",
+			component: "profile",
+			code: "bypassed_unreadable_cache",
+			level: "warning",
+		});
+		return null;
+	});
+	assertAccountSessionCurrent(session);
+	if (!persisted) return null;
+	profilesCache.set(profileId, persisted);
+	return structuredClone(persisted.profile);
 }
 
 export async function refreshProfile(profileId: number): Promise<Profile> {
-	let request = profilesInFlight.get(profileId);
+	const session = getAccountSessionSnapshot();
+	const requestKey = profileRequestKey(profileId, session);
+	let request = profilesInFlight.get(requestKey);
 	if (!request) {
-		request = fetchProfile(profileId).finally(() => {
-			profilesInFlight.delete(profileId);
+		request = fetchProfile(profileId, session).finally(() => {
+			profilesInFlight.delete(requestKey);
 		});
-		profilesInFlight.set(profileId, request);
+		profilesInFlight.set(requestKey, request);
 	}
 	return await request;
 }
@@ -140,17 +191,22 @@ export async function refreshProfile(profileId: number): Promise<Profile> {
 const MAGIC_PROFILE_UNAVAILABLE_DISPLAY_NAME = "3";
 const MAGIC_PROFILE_BLOCK_DISPLAY_NAME = "4";
 
-async function fetchProfile(profileId: number): Promise<Profile> {
+async function fetchProfile(
+	profileId: number,
+	session: AccountSessionSnapshot,
+): Promise<Profile> {
 	const profile = (
 		await fetchRest(`/v7/profiles/${profileId}`, {
 			method: "GET",
 		}).then((res) => res.jsonParsed(profileResponseSchema))
 	).profiles[0];
+	assertAccountSessionCurrent(session);
 	if (isProbablyUnavailable(profile)) {
 		if (profile.displayName === MAGIC_PROFILE_BLOCK_DISPLAY_NAME) {
 			const blockedByUs = await getBlockedUsers().then((blocking) =>
 				blocking.some((blocked) => blocked.profileId === profileId),
 			);
+			assertAccountSessionCurrent(session);
 			throw new BlockedProfileError({ blockedByUs });
 		} else if (profile.displayName === MAGIC_PROFILE_UNAVAILABLE_DISPLAY_NAME) {
 			throw new ProfileUnavailableError();
@@ -177,12 +233,34 @@ export async function getProfiles(
 	profileIds: number[],
 ): Promise<z.infer<typeof getProfilesResponseSchema>["profiles"]> {
 	if (profileIds.length === 0) return [];
-	return await fetchRest("/v3/profiles", {
-		method: "POST",
-		body: {
-			targetProfileIds: profileIds,
-		},
-	}).then((res) => res.jsonParsed(getProfilesResponseSchema).profiles);
+	const session = getAccountSessionSnapshot();
+	const batchSize = Math.min(
+		30,
+		Math.max(1, getDeveloperSettingsSnapshot().profileResolutionBatchSize),
+	);
+	const requestedProfileIds = [...new Set(profileIds)];
+	const profilesById = new Map<
+		number,
+		z.infer<typeof getProfilesResponseSchema>["profiles"][number]
+	>();
+	for (let index = 0; index < requestedProfileIds.length; index += batchSize) {
+		const batch = requestedProfileIds.slice(index, index + batchSize);
+		const resolved = await fetchRest("/v3/profiles", {
+			method: "POST",
+			body: { targetProfileIds: batch },
+		}).then((res) => res.jsonParsed(getProfilesResponseSchema).profiles);
+		for (const profile of resolved)
+			profilesById.set(profile.profileId, profile);
+		assertAccountSessionCurrent(session);
+	}
+	const profiles = requestedProfileIds.flatMap((profileId) => {
+		const profile = profilesById.get(profileId);
+		return profile ? [profile] : [];
+	});
+	for (const profile of profiles) {
+		noteProfileFreshness(profile.profileId, profile.lastUpdatedTime);
+	}
+	return profiles;
 }
 
 let myProfileCache: {
@@ -194,9 +272,11 @@ export async function getMyProfile() {
 	if (myProfileCache && now() - myProfileCache.updatedAt < 1000 * 60) {
 		return myProfileCache.profile;
 	}
+	const session = getAccountSessionSnapshot();
 	const profile = await fetchRest("/v4/me/profile").then(
 		(res) => res.jsonParsed(getProfilesResponseSchema).profiles[0],
 	);
+	assertAccountSessionCurrent(session);
 	myProfileCache = { profile, updatedAt: now() };
 	return profile;
 }
@@ -205,9 +285,23 @@ export function clearProfileCaches() {
 	myProfileCache = null;
 	profilesCache.clear();
 	profilesInFlight.clear();
+	profileFreshnessHints.clear();
 }
 
 registerAccountCache(clearProfileCaches);
+
+function profileRequestKey(
+	profileId: number,
+	session: AccountSessionSnapshot,
+): string {
+	return `${session.generation}:${profileId}`;
+}
+
+function assertAccountSessionCurrent(session: AccountSessionSnapshot): void {
+	if (!isAccountSessionCurrent(session)) {
+		throw new DOMException("Account session changed", "AbortError");
+	}
+}
 
 export function invalidateProfile(profileId: number) {
 	profilesCache.delete(profileId);

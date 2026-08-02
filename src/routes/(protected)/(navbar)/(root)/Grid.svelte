@@ -29,16 +29,25 @@
 		gridState.load(geohash);
 	});
 
-	function observeSentinel(node: HTMLElement) {
+	function observePageTrigger(node: HTMLElement, params: { enabled: boolean }) {
+		let enabled = params.enabled;
 		const observer = new IntersectionObserver(
 			(entries) => {
-				if (entries[0].isIntersecting)
+				if (enabled && entries[0].isIntersecting)
 					gridState.loadMore().catch((error) => console.error(error));
 			},
-			{ root: nearestScrollableAncestor(node), rootMargin: "400px" },
+			{ root: nearestScrollableAncestor(node) },
 		);
 		observer.observe(node);
 		return {
+			update(next: { enabled: boolean }) {
+				const becameEnabled = !enabled && next.enabled;
+				enabled = next.enabled;
+				if (becameEnabled) {
+					observer.unobserve(node);
+					observer.observe(node);
+				}
+			},
 			destroy() {
 				observer.disconnect();
 			},
@@ -85,28 +94,37 @@
 			/>
 		</div>
 	{:else}
-		{#each gridProfiles as item (item.id)}
-			{#if item.type === "rendered"}
-				<GridProfileMiniCard
-					id={item.id}
-					displayName={item.displayName}
-					distance={item.distance}
-					unread={item.unread}
-					onlineUntil={item.onlineUntil}
-					isFavorite={item.isFavorite}
-					isRightNow={item.isRightNow}
-					isVisiting={item.isVisiting}
-					hadRecentChat={item.hasChattedInLast24Hrs}
-					medias={item.profilePhotosHashes?.map((mediaHash) => ({
-						mediaHash,
-					})) ?? []}
-				/>
-			{:else}
-				<div
-					class="aspect-square animate-pulse bg-stone-700"
-					use:observeLazy={{ id: item.id }}
-				></div>
-			{/if}
+		{#each gridProfiles as item, index (item.id)}
+			<div
+				class="aspect-square"
+				use:observePageTrigger={{
+					enabled:
+						gridState.hasMoreProfiles &&
+						index === Math.max(0, gridProfiles.length - 5),
+				}}
+			>
+				{#if item.type === "rendered"}
+					<GridProfileMiniCard
+						id={item.id}
+						displayName={item.displayName}
+						distance={item.distance}
+						unread={item.unread}
+						onlineUntil={item.onlineUntil}
+						isFavorite={item.isFavorite}
+						isRightNow={item.isRightNow}
+						isVisiting={item.isVisiting}
+						hadRecentChat={item.hasChattedInLast24Hrs}
+						medias={item.profilePhotosHashes?.map((mediaHash) => ({
+							mediaHash,
+						})) ?? []}
+					/>
+				{:else}
+					<div
+						class="aspect-square animate-pulse bg-stone-700"
+						use:observeLazy={{ id: item.id }}
+					></div>
+				{/if}
+			</div>
 		{:else}
 			<EmptyGrid />
 		{/each}
@@ -114,12 +132,6 @@
 			{#each Array.from({ length: 20 })}
 				<div class="aspect-square animate-pulse bg-stone-700"></div>
 			{/each}
-		{/if}
-		{#if gridState.nextPage !== 0 && gridState.nextPage !== null}
-			<div
-				class="pointer-events-none absolute inset-x-0 bottom-0 h-px"
-				use:observeSentinel
-			></div>
 		{/if}
 	{/if}
 </div>

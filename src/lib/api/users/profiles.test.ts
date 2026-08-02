@@ -1,21 +1,47 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchRestMock } = vi.hoisted(() => ({
+const {
+	fetchRestMock,
+	getDeveloperSettingsSnapshotMock,
+	readCachedProfileEntryMock,
+	removeCachedProfileMock,
+	writeCachedProfileMock,
+} = vi.hoisted(() => ({
 	fetchRestMock:
-		vi.fn<(path: string, options?: { method?: string }) => unknown>(),
+		vi.fn<
+			(path: string, options?: { method?: string; body?: unknown }) => unknown
+		>(),
+	getDeveloperSettingsSnapshotMock: vi.fn(() => ({
+		profileResolutionBatchSize: 30,
+	})),
+	readCachedProfileEntryMock: vi.fn(),
+	removeCachedProfileMock: vi.fn(),
+	writeCachedProfileMock: vi.fn(),
 }));
 
 vi.mock("$lib/api", async (importOriginal) => ({
 	...(await importOriginal<typeof import("$lib/api")>()),
 	fetchRest: fetchRestMock,
 }));
+vi.mock("$lib/app-data/profile-cache", () => ({
+	readCachedProfileEntry: readCachedProfileEntryMock,
+	removeCachedProfile: removeCachedProfileMock,
+	writeCachedProfile: writeCachedProfileMock,
+}));
+vi.mock("$lib/app-data/preferences.svelte", () => ({
+	getDeveloperSettingsSnapshot: getDeveloperSettingsSnapshotMock,
+}));
 
+import { activateAccountSession } from "$lib/api/account-caches";
 import {
 	applyProfileEdit,
 	clearProfileCaches,
 	deleteProfilePhotos,
 	getMyProfile,
+	getPersistedProfile,
 	getProfile,
+	getProfiles,
+	noteProfileFreshness,
 	patchOwnProfile,
 	ProfileModerationError,
 	type ProfileUpdate,
@@ -75,6 +101,7 @@ function fullProfile() {
 			facebook: { userId: "fb" },
 		},
 		medias: [{ mediaHash: "a" }, { mediaHash: "b" }],
+		lastUpdatedTime: 1_000,
 	};
 }
 
@@ -87,8 +114,13 @@ function shortProfile() {
 }
 
 beforeEach(() => {
+	activateAccountSession(1);
 	clearProfileCaches();
 	fetchRestMock.mockReset();
+	readCachedProfileEntryMock.mockReset().mockResolvedValue(null);
+	removeCachedProfileMock.mockReset().mockResolvedValue(undefined);
+	writeCachedProfileMock.mockReset().mockResolvedValue(undefined);
+	getDeveloperSettingsSnapshotMock.mockClear();
 	fetchRestMock.mockImplementation(
 		(path: string, opts?: { method?: string }) => {
 			const method = opts?.method ?? "GET";
@@ -123,6 +155,14 @@ function countRequests(pathPrefix: string): number {
 }
 
 describe("cache TTL", () => {
+	it("ignores an unreadable persisted profile cache", async () => {
+		readCachedProfileEntryMock.mockRejectedValueOnce(
+			new Error("corrupt cache"),
+		);
+
+		await expect(getPersistedProfile(PROFILE_ID)).resolves.toBeNull();
+	});
+
 	it("serves getProfile from cache within the TTL and refetches after it", async () => {
 		let clock = 1_000;
 		setNowForTesting(() => clock);
@@ -151,6 +191,140 @@ describe("cache TTL", () => {
 		clock += 60_000;
 		await getMyProfile();
 		expect(countRequests("/v4/me/profile")).toBe(2);
+	});
+
+	it("refetches when a profile summary reports newer server data", async () => {
+		setNowForTesting(() => 10_000);
+		await getProfile(PROFILE_ID);
+		noteProfileFreshness(PROFILE_ID, 2_000);
+
+		await getProfile(PROFILE_ID);
+
+		expect(countRequests("/v7/profiles/")).toBe(2);
+	});
+
+	it("does not reuse or persist a late profile response across accounts", async () => {
+		let resolveFirst!: (value: ReturnType<typeof ok>) => void;
+		fetchRestMock.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					resolveFirst = resolve;
+				}),
+		);
+		const first = getProfile(PROFILE_ID);
+		await vi.waitFor(() => expect(fetchRestMock).toHaveBeenCalledOnce());
+
+		activateAccountSession(2);
+		fetchRestMock.mockResolvedValueOnce(
+			ok({ profiles: [{ ...fullProfile(), displayName: "Account B" }] }),
+		);
+		await expect(getProfile(PROFILE_ID)).resolves.toMatchObject({
+			displayName: "Account B",
+		});
+
+		resolveFirst(
+			ok({ profiles: [{ ...fullProfile(), displayName: "Account A" }] }),
+		);
+		await expect(first).rejects.toMatchObject({ name: "AbortError" });
+		await vi.waitFor(() =>
+			expect(writeCachedProfileMock).toHaveBeenCalledOnce(),
+		);
+		expect(writeCachedProfileMock).toHaveBeenCalledWith(
+			expect.objectContaining({ displayName: "Account B" }),
+			expect.any(Number),
+		);
+	});
+});
+
+describe("getProfiles batching", () => {
+	it.each([31, 60, 150])(
+		"caps every /v3/profiles request for %i IDs at the configured official limit",
+		async (count) => {
+			const profileIds = Array.from({ length: count }, (_, index) => index + 1);
+			fetchRestMock.mockImplementation(
+				(_path: string, options?: { body?: unknown }) => {
+					const targetProfileIds = (
+						options?.body as { targetProfileIds: number[] }
+					).targetProfileIds;
+					return Promise.resolve(
+						ok({
+							profiles: targetProfileIds.map((profileId) => ({
+								...shortProfile(),
+								profileId,
+							})),
+						}),
+					);
+				},
+			);
+
+			const profiles = await getProfiles(profileIds);
+
+			expect(profiles.map((profile) => profile.profileId)).toEqual(profileIds);
+			expect(
+				fetchRestMock.mock.calls.map(
+					([, options]) =>
+						(options?.body as { targetProfileIds: number[] }).targetProfileIds
+							.length,
+				),
+			).toEqual(
+				Array.from({ length: Math.ceil(count / 30) }, (_, index) =>
+					Math.min(30, count - index * 30),
+				),
+			);
+		},
+	);
+
+	it("honors a lower configured batch size", async () => {
+		getDeveloperSettingsSnapshotMock.mockReturnValueOnce({
+			profileResolutionBatchSize: 12,
+		});
+		fetchRestMock.mockImplementation(
+			(_path: string, options?: { body?: unknown }) =>
+				Promise.resolve(
+					ok({
+						profiles: (
+							options?.body as { targetProfileIds: number[] }
+						).targetProfileIds.map((profileId) => ({
+							...shortProfile(),
+							profileId,
+						})),
+					}),
+				),
+		);
+
+		await getProfiles(Array.from({ length: 31 }, (_, index) => index + 1));
+
+		expect(
+			fetchRestMock.mock.calls.map(
+				([, options]) =>
+					(options?.body as { targetProfileIds: number[] }).targetProfileIds
+						.length,
+			),
+		).toEqual([12, 12, 7]);
+	});
+
+	it("deduplicates IDs and restores caller order across server responses", async () => {
+		fetchRestMock.mockImplementation(
+			(_path: string, options?: { body?: unknown }) =>
+				Promise.resolve(
+					ok({
+						profiles: [
+							...(options?.body as { targetProfileIds: number[] })
+								.targetProfileIds,
+						]
+							.reverse()
+							.map((profileId) => ({ ...shortProfile(), profileId })),
+					}),
+				),
+		);
+
+		const profiles = await getProfiles([3, 1, 3, 2]);
+
+		expect(profiles.map((profile) => profile.profileId)).toEqual([3, 1, 2]);
+		expect(fetchRestMock).toHaveBeenCalledOnce();
+		expect(fetchRestMock.mock.calls[0][1]?.body).toEqual({
+			targetProfileIds: [3, 1, 2],
+		});
 	});
 });
 

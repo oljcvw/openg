@@ -11,7 +11,6 @@
 		getProfile,
 		mergeProfileEditIntoCaches,
 		ProfileUnavailableError,
-		refreshProfile,
 	} from "$lib/api/users/profiles";
 	import {
 		getPreferences,
@@ -126,7 +125,7 @@
 				profile = cached;
 				loading = false;
 			}
-			const result = cached ? await refreshProfile(id) : await getProfile(id);
+			const result = await getProfile(id);
 			if (id !== profileId) return;
 			profile = result;
 			loadError = null;
