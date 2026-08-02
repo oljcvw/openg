@@ -28,7 +28,10 @@
 	let clearing = $state(false);
 
 	onMount(() => {
-		const unsubscribe = subscribeCacheUsage((next) => (usage = next));
+		const unsubscribe = subscribeCacheUsage(
+			(next) => (usage = next),
+			(error) => showErrorToast({ label: "Failed to load cache usage", error }),
+		);
 		void getPreferences()
 			.then((preferences) => {
 				value = preferences.cacheSizeMb;

@@ -1,9 +1,14 @@
-import { decode } from "@msgpack/msgpack";
+import { decode, encode } from "@msgpack/msgpack";
 import z from "zod";
 
 import { registerAccountCache } from "$lib/api/account-caches";
 import { type Profile, profileSchema } from "$lib/model/users/profiles";
-import { existsAppDataFile, readAppDataFile, removeAppDataFile } from ".";
+import {
+	existsAppDataFile,
+	readAppDataFile,
+	removeAppDataFile,
+	writeAppDataFileAtomic,
+} from ".";
 import {
 	readCacheEntry,
 	removeCacheEntry,
@@ -51,15 +56,22 @@ function accountKey(): string | null {
 async function migrateLegacyCache(): Promise<void> {
 	if (migration) return await migration;
 	migration = (async () => {
+		const owner = accountKey();
+		if (owner === null) return;
 		if (!(await existsAppDataFile(FILE_NAME))) return;
 		try {
 			const legacy = parseProfileCache(
 				decode(await readAppDataFile(FILE_NAME)),
 			);
-			for (const [accountId, profiles] of Object.entries(legacy.accounts)) {
-				for (const [profileId, entry] of Object.entries(profiles)) {
-					await writeCacheEntry(Number(accountId), "profile", profileId, entry);
-				}
+			const profiles = legacy.accounts[owner];
+			if (profiles === undefined) return;
+			for (const [profileId, entry] of Object.entries(profiles)) {
+				await writeCacheEntry(Number(owner), "profile", profileId, entry);
+			}
+			delete legacy.accounts[owner];
+			if (Object.keys(legacy.accounts).length > 0) {
+				await writeAppDataFileAtomic(FILE_NAME, encode(legacy));
+				return;
 			}
 		} catch (error) {
 			console.error("Profile cache migration failed", error);
@@ -74,6 +86,13 @@ export async function readCachedProfile(
 	profileId: number,
 	now: number = Date.now(),
 ): Promise<Profile | null> {
+	return (await readCachedProfileEntry(profileId, now))?.profile ?? null;
+}
+
+export async function readCachedProfileEntry(
+	profileId: number,
+	now: number = Date.now(),
+): Promise<{ profile: Profile; updatedAt: number } | null> {
 	const owner = accountKey();
 	if (owner === null) return null;
 	await migrateLegacyCache();
@@ -84,7 +103,7 @@ export async function readCachedProfile(
 		(value) => cachedProfileSchema.parse(value),
 	);
 	if (!entry || now - entry.updatedAt > MAX_PROFILE_AGE_MS) return null;
-	return structuredClone(entry.profile);
+	return structuredClone(entry);
 }
 
 export async function writeCachedProfile(

@@ -2,6 +2,10 @@ import { decode, encode } from "@msgpack/msgpack";
 import z from "zod";
 
 import {
+	getAccountSessionSnapshot,
+	isAccountSessionCurrent,
+} from "$lib/api/account-caches";
+import {
 	existsAppDataFile,
 	readAppDataFile,
 	removeAppDataFile,
@@ -13,6 +17,8 @@ export const cacheKindSchema = z.enum([
 	"grid",
 	"inbox",
 	"conversation",
+	"taps",
+	"views",
 ]);
 export type CacheKind = z.infer<typeof cacheKindSchema>;
 
@@ -126,13 +132,17 @@ export async function readCacheEntry<T>(
 	key: string,
 	parse: (value: unknown) => T,
 ): Promise<T | null> {
+	const session = getAccountSessionSnapshot();
+	if (session.accountId !== accountId) return null;
 	return await enqueue(async () => {
+		if (!isAccountSessionCurrent(session)) return null;
 		const value = await loadManifest();
 		const id = entryId(accountId, kind, key);
 		const entry = value.entries[id];
 		if (!entry) return null;
 		try {
 			const parsed = parse(decode(await readAppDataFile(entry.path)));
+			if (!isAccountSessionCurrent(session)) return null;
 			entry.lastAccessedAt = Date.now();
 			await persistManifest(value);
 			return parsed;
@@ -152,11 +162,18 @@ export async function writeCacheEntry(
 	key: string,
 	payload: unknown,
 ): Promise<void> {
+	const session = getAccountSessionSnapshot();
+	if (session.accountId !== accountId) return;
 	await enqueue(async () => {
+		if (!isAccountSessionCurrent(session)) return;
 		const value = await loadManifest();
 		const bytes = encode(payload);
 		const path = entryPath(accountId, kind, key);
 		await writeAppDataFileAtomic(path, bytes);
+		if (!isAccountSessionCurrent(session)) {
+			await removeAppDataFile(path);
+			return;
+		}
 		value.entries[entryId(accountId, kind, key)] = {
 			accountId,
 			kind,
@@ -223,9 +240,11 @@ export async function getCacheUsage(): Promise<CacheUsage> {
 
 export function subscribeCacheUsage(
 	listener: (usage: CacheUsage) => void,
+	onError: (error: unknown) => void = (error) =>
+		console.error("Cache usage hydration failed", error),
 ): () => void {
 	listeners.add(listener);
-	void getCacheUsage().then(listener);
+	void getCacheUsage().then(listener).catch(onError);
 	return () => listeners.delete(listener);
 }
 
