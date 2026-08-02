@@ -30,6 +30,8 @@ function returnElementFor(
 
 function albumSlide(
 	overrides: Partial<{
+		contentId: number;
+		contentType: string;
 		processing: boolean | null;
 		rejectionId: unknown;
 		url: string;
@@ -93,8 +95,131 @@ describe("detached album media preload diagnostics", () => {
 		]);
 	});
 
+	it("bounds concurrent media inspection and preserves slide order", async () => {
+		const images = Array.from({ length: 4 }, () => {
+			const image = createElement("img");
+			Object.defineProperties(image, {
+				complete: { configurable: true, value: false },
+				naturalHeight: { configurable: true, value: 480 },
+				naturalWidth: { configurable: true, value: 640 },
+			});
+			return image;
+		});
+		let created = 0;
+		vi.spyOn(document, "createElement").mockImplementation(
+			(name: string, options?: ElementCreationOptions) => {
+				if (name === "img") return images[created++];
+				return createElement(name, options);
+			},
+		);
+
+		const pending = preloadAlbumSlides(
+			images.map((_, index) =>
+				albumSlide({
+					contentId: index + 1,
+					url: `https://d-album-concurrency.cloudfront.net/${index + 1}`,
+				}),
+			),
+			{ concurrency: 2 },
+		);
+		expect(created).toBe(2);
+
+		images[1].dispatchEvent(new Event("load"));
+		await vi.waitFor(() => expect(created).toBe(3));
+		images[0].dispatchEvent(new Event("load"));
+		await vi.waitFor(() => expect(created).toBe(4));
+		images[2].dispatchEvent(new Event("load"));
+		images[3].dispatchEvent(new Event("load"));
+
+		await expect(pending).resolves.toEqual(
+			[1, 2, 3, 4].map((contentId) =>
+				expect.objectContaining({ contentId, width: 640, height: 480 }),
+			),
+		);
+	});
+
+	it("cancels in-flight media inspection", async () => {
+		const image = createElement("img");
+		const removeSource = vi.spyOn(image, "removeAttribute");
+		const removeElement = vi.spyOn(image, "remove");
+		Object.defineProperty(image, "complete", {
+			configurable: true,
+			value: false,
+		});
+		returnElementFor("img", image);
+		const controller = new AbortController();
+
+		const pending = preloadAlbumSlides([albumSlide()], {
+			concurrency: 1,
+			signal: controller.signal,
+		});
+		controller.abort();
+
+		await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+		expect(removeSource).toHaveBeenCalledWith("src");
+		expect(removeElement).toHaveBeenCalledOnce();
+	});
+
+	it("cancels sibling media inspection after the first failure", async () => {
+		const images = [createElement("img"), createElement("img")];
+		for (const image of images) {
+			Object.defineProperty(image, "complete", {
+				configurable: true,
+				value: false,
+			});
+		}
+		const siblingRemoveSource = vi.spyOn(images[1], "removeAttribute");
+		let created = 0;
+		vi.spyOn(document, "createElement").mockImplementation(
+			(name: string, options?: ElementCreationOptions) => {
+				if (name === "img") return images[created++];
+				return createElement(name, options);
+			},
+		);
+
+		const pending = preloadAlbumSlides(
+			[albumSlide({ contentId: 1 }), albumSlide({ contentId: 2 })],
+			{ concurrency: 2 },
+		);
+		images[0].dispatchEvent(new Event("error"));
+
+		await expect(pending).rejects.toThrow("Failed to load album image");
+		expect(siblingRemoveSource).toHaveBeenCalledWith("src");
+	});
+
+	it("stops and unloads an aborted detached video", async () => {
+		const video = createElement("video");
+		const pause = vi.fn();
+		const load = vi.fn();
+		const removeSource = vi.spyOn(video, "removeAttribute");
+		Object.defineProperties(video, {
+			load: { configurable: true, value: load },
+			pause: { configurable: true, value: pause },
+			readyState: { configurable: true, value: 0 },
+		});
+		returnElementFor("video", video);
+		const controller = new AbortController();
+
+		const pending = preloadAlbumVideo(
+			"https://d-album-video.cloudfront.net/private/id",
+			controller.signal,
+		);
+		controller.abort();
+
+		await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+		expect(pause).toHaveBeenCalledOnce();
+		expect(removeSource).toHaveBeenCalledWith("src");
+		expect(load).toHaveBeenCalledTimes(2);
+	});
+
 	it("reports a successful detached image preload without private URL data", async () => {
 		const image = createElement("img");
+		vi.spyOn(image, "removeAttribute").mockImplementation(() => {
+			Object.defineProperties(image, {
+				naturalHeight: { configurable: true, value: 0 },
+				naturalWidth: { configurable: true, value: 0 },
+			});
+		});
 		Object.defineProperties(image, {
 			complete: { configurable: true, value: false },
 			naturalHeight: { configurable: true, value: 480 },
@@ -149,8 +274,16 @@ describe("detached album media preload diagnostics", () => {
 
 	it("reports successful and failed detached video preloads", async () => {
 		const loadedVideo = createElement("video");
+		const load = vi.fn(() => {
+			if (load.mock.calls.length < 2) return;
+			Object.defineProperties(loadedVideo, {
+				videoHeight: { configurable: true, value: 0 },
+				videoWidth: { configurable: true, value: 0 },
+			});
+		});
 		Object.defineProperties(loadedVideo, {
-			load: { configurable: true, value: vi.fn() },
+			load: { configurable: true, value: load },
+			pause: { configurable: true, value: vi.fn() },
 			readyState: { configurable: true, value: 0 },
 			videoHeight: { configurable: true, value: 720 },
 			videoWidth: { configurable: true, value: 1280 },
@@ -167,6 +300,7 @@ describe("detached album media preload diagnostics", () => {
 		const failedVideo = createElement("video");
 		Object.defineProperties(failedVideo, {
 			load: { configurable: true, value: vi.fn() },
+			pause: { configurable: true, value: vi.fn() },
 			readyState: { configurable: true, value: 0 },
 		});
 		returnElementFor("video", failedVideo);

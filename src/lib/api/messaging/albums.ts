@@ -27,10 +27,13 @@ const albumResponseSchema = z.object({
 	),
 });
 
-export async function getAlbumContent(albumId: number) {
-	return await fetchRest(`/v2/albums/${albumId}`).then((res) =>
-		res.jsonParsed(albumResponseSchema),
-	);
+export async function getAlbumContent(
+	albumId: number,
+	options: { signal?: AbortSignal } = {},
+) {
+	return await fetchRest(`/v2/albums/${albumId}`, {
+		signal: options.signal,
+	}).then((res) => res.jsonParsed(albumResponseSchema));
 }
 
 export type AlbumContentResponse = Awaited<ReturnType<typeof getAlbumContent>>;

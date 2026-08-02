@@ -13,6 +13,7 @@
 		type AlbumContentResponse,
 		getAlbumContent,
 	} from "$lib/api/messaging/albums";
+	import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 	import { getNow, subscribeNow } from "$lib/util/now.svelte";
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
@@ -72,16 +73,22 @@
 
 	$effect(() => {
 		if (albumState.status !== "loading") return;
+		const abortController = new AbortController();
 		(async () => {
-			const loaded = await getAlbumContent(message.albumId).then(
-				async (res) => ({
-					...res,
-					content: await preloadAlbumSlides(res.content),
+			const loaded = await getAlbumContent(message.albumId, {
+				signal: abortController.signal,
+			}).then(async (res) => ({
+				...res,
+				content: await preloadAlbumSlides(res.content, {
+					concurrency: getDeveloperSettingsSnapshot().albumPreloadConcurrency,
+					signal: abortController.signal,
 				}),
-			);
+			}));
+			if (abortController.signal.aborted) return;
 			cachedAlbum = loaded;
 			albumState = { status: "open", album: loaded };
 		})().catch((error) => {
+			if (abortController.signal.aborted) return;
 			console.error(error);
 			showErrorToast({
 				label: "Failed to load album content",
@@ -89,6 +96,7 @@
 			});
 			albumState = { status: "idle" };
 		});
+		return () => abortController.abort();
 	});
 
 	$effect(() => {

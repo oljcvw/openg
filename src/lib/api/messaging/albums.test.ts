@@ -20,6 +20,7 @@ import {
 	createAlbum,
 	deleteAlbum,
 	deleteAlbumContent,
+	getAlbumContent,
 	getAlbumLimits,
 	getAlbumShares,
 	getAlbumsSharedByProfile,
@@ -76,6 +77,25 @@ beforeEach(() => {
 	fetchRestMock.mockReset();
 	invokeMock.mockReset();
 	readMediaBytesMock.mockReset();
+});
+
+describe("getAlbumContent", () => {
+	it("forwards cancellation to album metadata loading", async () => {
+		fetchRestMock.mockResolvedValue(
+			response({
+				...myAlbum(42),
+				hasUnseenContent: false,
+				albumViewable: true,
+			}),
+		);
+		const controller = new AbortController();
+
+		await getAlbumContent(42, { signal: controller.signal });
+
+		expect(fetchRestMock).toHaveBeenCalledWith("/v2/albums/42", {
+			signal: controller.signal,
+		});
+	});
 });
 
 describe("getMyAlbums", () => {
