@@ -157,6 +157,7 @@ Signed uploads register an ephemeral P-256 device key on first use. Persist it t
 | --------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | `upload_profile_image(jpeg, thumb_coords, taken_on_grindr) -> Result<UploadProfileImageResponse>`         | Signed `POST /v5/media/upload`           |
 | `upload_chat_media(bytes, content_type, length, looping, taken_on_grindr) -> Result<MediaUploadResponse>` | Signed `POST /v6/chat/media/upload`      |
+| `upload_expiring_chat_video(mp4, length_ms, looping) -> Result<MediaUploadResponse>` | Signed `POST /v5/chat/media/upload` |
 | `restore_signing_key(key)`                                                                                | Restore a persisted `DeviceSigningKey`   |
 | `signing_key_receiver() -> watch::Receiver<Option<DeviceSigningKey>>`                                     | Watch the signing key so you can save it |
 

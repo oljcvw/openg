@@ -111,6 +111,56 @@ pub async fn upload_chat_media(
 	})
 }
 
+/// Uploads an expiring MP4 with the protocol-specific V5 contract. This is a
+/// separate command so ordinary V6 media uploads cannot accidentally acquire
+/// consumptive-video semantics.
+#[tauri::command]
+pub async fn upload_expiring_chat_video(
+	state: tauri::State<'_, AppState>,
+	length: i64,
+	looping: bool,
+	data: String,
+) -> Result<MediaUploadResponse, AppError> {
+	if !(1..=15_000).contains(&length) {
+		return Err(AppError::Api {
+			code: 400,
+			message: "Expiring video length must be between 1 and 15000 ms"
+				.to_owned(),
+		});
+	}
+	let bytes = STANDARD.decode(&data).map_err(|error| {
+		AppError::Http(format!("Failed to decode base64 media: {error}"))
+	})?;
+	if bytes.is_empty() {
+		return Err(AppError::Api {
+			code: 400,
+			message: "Expiring video is empty".to_owned(),
+		});
+	}
+
+	let runtime = super::runtime::ApiRuntime::get()
+		.ok_or_else(|| AppError::Http("API runtime unavailable".to_owned()))?;
+	let client = state.client()?.clone();
+	let response = runtime
+		.request(super::runtime::RetryPolicy::NeverReplay, move || {
+			let client = client.clone();
+			let bytes = bytes.clone();
+			async move {
+				client
+					.upload_expiring_chat_video(bytes, length, looping)
+					.await
+			}
+		})
+		.await
+		.map_err(runtime_error)?;
+
+	Ok(MediaUploadResponse {
+		media_id: response.media_id,
+		url: response.url,
+		media_hash: response.media_hash,
+	})
+}
+
 /// Uploads an image or video to an owned album. This endpoint expects a
 /// multipart body but ordinary session authentication, unlike signed chat
 /// uploads. Media bytes stay behind Tauri IPC and never enter the REST debug

@@ -26,6 +26,31 @@ fun expandHome(path: String): String =
 
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val hasKeystore = keystorePropertiesFile.exists()
+val agoraAppId = providers.gradleProperty("OPEN_GRIND_AGORA_APP_ID")
+    .orElse(providers.environmentVariable("OPEN_GRIND_AGORA_APP_ID"))
+    .orElse("fb9ba023bdf9430b8f75856a1bb011b9")
+    .get()
+val generatedWatermarkResDir = layout.buildDirectory.dir("generated/openGrindWatermark/res")
+val generatedWatermarkResPath = generatedWatermarkResDir.get().asFile
+val configuredWatermarkPath = providers.environmentVariable("OPEN_GRIND_CAPTURE_WATERMARK_ASSET")
+    .orElse("")
+    .get()
+    .let(::expandHome)
+val configuredWatermarkFile = configuredWatermarkPath.takeIf(String::isNotBlank)?.let(::File)
+val generateOpenGrindWatermark by tasks.registering(Sync::class) {
+    inputs.property("configuredAsset", configuredWatermarkPath)
+    into(File(generatedWatermarkResPath, "drawable"))
+    configuredWatermarkFile?.let { source ->
+        require(source.isFile) {
+            "OPEN_GRIND_CAPTURE_WATERMARK_ASSET does not reference a readable file"
+        }
+        require(source.extension.lowercase() in setOf("jpg", "jpeg", "png", "webp", "xml")) {
+            "OPEN_GRIND_CAPTURE_WATERMARK_ASSET must be an Android-compatible drawable"
+        }
+        from(source)
+        rename { "capture_watermark.${source.extension.lowercase()}" }
+    }
+}
 
 android {
     compileSdk = prop("opengrind.android.compileSdk").toInt()
@@ -41,6 +66,7 @@ android {
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
         // Mirror of MIN_CHROMIUM_MAJOR in src-tauri/src/lib.rs.
         buildConfigField("int", "MIN_SUPPORTED_WEBVIEW_MAJOR", "111")
+        buildConfigField("String", "OPEN_GRIND_AGORA_APP_ID", "\"${agoraAppId.replace("\"", "\\\"")}\"")
     }
 	signingConfigs {
 		if (hasKeystore) {
@@ -93,6 +119,11 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    sourceSets.getByName("main").res.srcDir(generatedWatermarkResDir)
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(generateOpenGrindWatermark)
 }
 
 // Reproducibility: disable assets/dexopt/baseline.prof[m] and kotlin-tooling-metadata.json
@@ -115,6 +146,13 @@ dependencies {
     // 2.11.x is compiled with Kotlin 2.1 metadata; this project is pinned to
     // Kotlin 1.9.25. 2.10.5 is the newest WorkManager line compatible with it.
     implementation("androidx.work:work-runtime:2.10.5")
+    implementation("androidx.camera:camera-camera2:1.4.2")
+    implementation("androidx.camera:camera-lifecycle:1.4.2")
+    implementation("androidx.camera:camera-video:1.4.2")
+    implementation("androidx.camera:camera-view:1.4.2")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    implementation("com.vanniktech:android-image-cropper:4.5.0")
+    implementation("io.agora.rtc:full-sdk:4.6.3")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20250517")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")

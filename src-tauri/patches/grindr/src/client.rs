@@ -564,6 +564,22 @@ impl GrindrClient {
 		parse_json(resp)
 	}
 
+	/// Uploads an expiring chat video via signed `POST /v5/chat/media/upload`.
+	pub async fn upload_expiring_chat_video(
+		&self,
+		mp4: impl Into<Bytes>,
+		length_ms: i64,
+		looping: bool,
+	) -> Result<MediaUploadResponse, GrindrError> {
+		let path = format!(
+			"/v5/chat/media/upload?length={length_ms}&looping={looping}&takenOnGrindr=false"
+		);
+		let resp = self
+			.request_signed_bytes(Method::POST, &path, "video/mp4", mp4)
+			.await?;
+		parse_json(resp)
+	}
+
 	/// Replaces the device identity and the underlying HTTP/TLS transport while
 	/// keeping the session, and returns the old device. Building new `wreq`
 	/// clients also drops the connection pool and TLS session-resumption cache,

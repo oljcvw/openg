@@ -125,8 +125,10 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(api::google_oauth::plugin())
+		.plugin(api::media_capture::plugin())
         .plugin(api::notifications::plugin())
         .plugin(api::voice_recorder::plugin())
+		.plugin(api::video_call::plugin())
         .manage(AppState)
         .invoke_handler(tauri::generate_handler![
             api::account::validate_password_complexity,
@@ -146,6 +148,15 @@ pub fn run() {
             api::rest::cancel_request,
             api::media_upload::upload_album_media,
             api::media_upload::upload_chat_media,
+            api::media_upload::upload_expiring_chat_video,
+			api::media_capture::media_capture_photo,
+			api::media_capture::media_capture_short_video,
+			api::media_capture::media_capture_delete_short_video,
+			api::media_capture::short_video_cache_put,
+			api::media_capture::short_video_cache_get,
+			api::media_capture::short_video_cache_clear,
+			api::media_capture::short_video_cache_trim,
+			api::media_capture::short_video_cache_stats,
             api::notifications::notification_get_settings,
             api::notifications::notification_set_settings,
             api::notifications::notification_test,
@@ -157,6 +168,10 @@ pub fn run() {
             api::voice_recorder::voice_recorder_start,
             api::voice_recorder::voice_recorder_stop,
             api::voice_recorder::voice_recorder_cancel,
+			api::video_call::video_call_availability,
+			api::video_call::video_call_start,
+			api::video_call::video_call_renew_token,
+			api::video_call::video_call_stop,
             api::ws::ws_connect,
             api::ws::ws_send,
             api::diagnostics::report_media_origin,
