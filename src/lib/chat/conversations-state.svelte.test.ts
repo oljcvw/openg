@@ -1,5 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+type ReconcileEventInput = {
+	reasons: ReadonlySet<
+		"reconnected" | "events-dropped" | "foreground" | "server-signal"
+	>;
+	scopes: ReadonlySet<"inbox" | "conversation" | "taps" | "views">;
+	allConversations: boolean;
+	conversationIds: ReadonlySet<string>;
+};
+
 const {
 	getConversationsMock,
 	getConversationMessagesMock,
@@ -9,6 +18,8 @@ const {
 	setConversationMutedMock,
 	showErrorToastMock,
 	showIncomingMessageToastMock,
+	readCachedConversationMock,
+	writeCachedInboxMock,
 	reconcileHandlers,
 	messageSentHandlers,
 } = vi.hoisted(() => ({
@@ -20,7 +31,11 @@ const {
 	setConversationMutedMock: vi.fn(() => Promise.resolve()),
 	showErrorToastMock: vi.fn(),
 	showIncomingMessageToastMock: vi.fn(),
-	reconcileHandlers: [] as (() => void | Promise<void>)[],
+	readCachedConversationMock: vi.fn(),
+	writeCachedInboxMock: vi.fn(),
+	reconcileHandlers: [] as ((
+		event: ReconcileEventInput,
+	) => void | Promise<void>)[],
 	messageSentHandlers: [] as ((event: unknown) => void)[],
 }));
 
@@ -36,6 +51,13 @@ vi.mock("$lib/api/messaging/conversations", () => ({
 vi.mock("$lib/api/messaging/messages", () => ({
 	getConversationMessages: getConversationMessagesMock,
 }));
+vi.mock("$lib/app-data/chat-cache", () => ({
+	readCachedInbox: vi.fn(() => Promise.resolve(null)),
+	readCachedConversation: readCachedConversationMock,
+	removeCachedConversation: vi.fn(() => Promise.resolve()),
+	writeCachedInbox: writeCachedInboxMock,
+	writeCachedConversation: vi.fn(() => Promise.resolve()),
+}));
 vi.mock(
 	"$lib/components/incoming-message-toast/incoming-message-toast-manager",
 	() => ({ showIncomingMessageToast: showIncomingMessageToastMock }),
@@ -45,7 +67,10 @@ vi.mock("$lib/util/breakpoints.svelte", () => ({
 }));
 vi.mock("$lib/util/reconcile", () => ({
 	reconciler: {
-		subscribe(handler: () => void | Promise<void>) {
+		subscribe(
+			_scope: string,
+			handler: (event: ReconcileEventInput) => void | Promise<void>,
+		) {
 			reconcileHandlers.push(handler);
 			return vi.fn();
 		},
@@ -151,6 +176,37 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	reconcileHandlers.length = 0;
 	messageSentHandlers.length = 0;
+	readCachedConversationMock.mockReset().mockResolvedValue(null);
+	writeCachedInboxMock.mockReset().mockResolvedValue(undefined);
+});
+
+describe("ConversationsState cache recovery", () => {
+	it("ignores an unreadable persisted conversation", async () => {
+		getConversationsMock.mockResolvedValue({ entries: [], nextPage: null });
+		readCachedConversationMock.mockRejectedValueOnce(
+			new Error("corrupt cache"),
+		);
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+
+		await expect(state.getCachedConversation("1:2")).resolves.toBeUndefined();
+	});
+
+	it("does not persist a deferred inbox response after destruction", async () => {
+		const gate = deferred<{
+			entries: Conversation[];
+			nextPage: number | null;
+		}>();
+		getConversationsMock.mockReturnValueOnce(gate.promise);
+		const state = new ConversationsState(OUR_ID);
+
+		void state.destroy();
+		gate.resolve({ entries: [conversation("late", 1)], nextPage: null });
+		await state.initial;
+
+		expect(state.entries).toEqual([]);
+		expect(writeCachedInboxMock).not.toHaveBeenCalled();
+	});
 });
 
 describe("ConversationsState #syncLatest single-flight (P1.8)", () => {
@@ -233,7 +289,7 @@ describe("ConversationsState epoch guards (P1.7)", () => {
 			entries: [conversation("a:1", 1000)],
 			nextPage: null,
 		});
-		await reconcileHandlers[0]?.();
+		await state.refresh();
 		expect(state.nextPage).toBeNull();
 
 		loadGate.resolve({ entries: [conversation("b:2", 500)], nextPage: 3 });
@@ -251,7 +307,7 @@ describe("ConversationsState epoch guards (P1.7)", () => {
 		getConversationsMock.mockReturnValueOnce(initGate.promise);
 		const state = new ConversationsState(OUR_ID);
 
-		const reconcilePromise = reconcileHandlers[0]?.();
+		const reconcilePromise = state.refresh();
 		await microtasks();
 
 		getConversationsMock.mockRejectedValueOnce(new Error("network"));
@@ -277,7 +333,7 @@ describe("ConversationsState epoch guards (P1.7)", () => {
 			nextPage: number | null;
 		}>();
 		getConversationsMock.mockReturnValueOnce(reconcileGate.promise);
-		const reconcilePromise = reconcileHandlers[0]?.();
+		const reconcilePromise = state.refresh();
 		await microtasks();
 
 		getConversationsMock.mockResolvedValueOnce({
@@ -295,195 +351,41 @@ describe("ConversationsState epoch guards (P1.7)", () => {
 
 		expect(state.nextPage).toBe(5);
 	});
+
+	it("fully reconciles the inbox after dropped events", async () => {
+		getConversationsMock.mockResolvedValueOnce({
+			entries: [conversation("a:1", 1000), conversation("b:2", 500)],
+			nextPage: null,
+		});
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+		getConversationsMock.mockResolvedValueOnce({
+			entries: [conversation("a:1", 1000)],
+			nextPage: null,
+		});
+
+		await reconcileHandlers[0]({
+			reasons: new Set<
+				"reconnected" | "events-dropped" | "foreground" | "server-signal"
+			>(["events-dropped"]),
+			scopes: new Set<"inbox" | "conversation" | "taps" | "views">([
+				"inbox",
+				"conversation",
+				"taps",
+				"views",
+			]),
+			allConversations: true,
+			conversationIds: new Set(),
+		});
+
+		expect(state.entries.map((entry) => entry.data.conversationId)).toEqual([
+			"a:1",
+		]);
+	});
 });
 
-describe("ConversationsState loaded-chat message search", () => {
-	it("searches every message page, deduplicates overlaps, and reuses the completed corpus", async () => {
-		getConversationsMock.mockResolvedValue({
-			entries: [conversation("a:1", 1000)],
-			nextPage: null,
-		});
-		const state = new ConversationsState(OUR_ID);
-		await state.initial;
-
-		getConversationMessagesMock.mockImplementation(
-			({ pageKey }: { pageKey?: string }) => {
-				if (pageKey === undefined) {
-					return Promise.resolve({
-						lastReadTimestamp: null,
-						messages: [
-							{
-								...incomingMessage("a:1", 3000, PEER_ID),
-								messageId: "m-1",
-								body: { text: "ordinary text" },
-							},
-						],
-						profile: {},
-					});
-				}
-				if (pageKey === "m-1") {
-					return Promise.resolve({
-						lastReadTimestamp: null,
-						messages: [
-							{
-								...incomingMessage("a:1", 3000, PEER_ID),
-								messageId: "m-1",
-								body: { text: "ordinary text" },
-							},
-							{
-								...incomingMessage("a:1", 2000, PEER_ID),
-								messageId: "m-2",
-								body: { text: "the old needle is here" },
-							},
-						],
-						profile: {},
-					});
-				}
-				return Promise.resolve({
-					lastReadTimestamp: null,
-					messages: [],
-					profile: {},
-				});
-			},
-		);
-
-		await state.searchLoadedMessages("needle");
-
-		expect(
-			getConversationMessagesMock.mock.calls.map(([args]) => args.pageKey),
-		).toEqual([undefined, "m-1", "m-2"]);
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
-		expect(state.messageSearchStatus).toBe("complete");
-		expect(state.messageSearchScanned).toBe(1);
-		expect(state.messageSearchTotal).toBe(1);
-
-		getConversationMessagesMock.mockClear();
-		await state.searchLoadedMessages("ordinary");
-
-		expect(getConversationMessagesMock).not.toHaveBeenCalled();
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
-	});
-
-	it("limits concurrent history hydration to three loaded chats", async () => {
-		getConversationsMock.mockResolvedValue({
-			entries: Array.from({ length: 5 }, (_, index) =>
-				conversation(`c:${index}`, 1000 - index),
-			),
-			nextPage: null,
-		});
-		const state = new ConversationsState(OUR_ID);
-		await state.initial;
-
-		let active = 0;
-		let maxActive = 0;
-		getConversationMessagesMock.mockImplementation(
-			async ({ pageKey }: { pageKey?: string }) => {
-				active += 1;
-				maxActive = Math.max(maxActive, active);
-				await new Promise((resolve) => setTimeout(resolve, 1));
-				active -= 1;
-				return {
-					lastReadTimestamp: null,
-					messages:
-						pageKey === undefined
-							? [
-									{
-										...incomingMessage("unused", 1, PEER_ID),
-										messageId: crypto.randomUUID(),
-									},
-								]
-							: [],
-					profile: {},
-				};
-			},
-		);
-
-		await state.searchLoadedMessages("not present");
-
-		expect(maxActive).toBe(3);
-		expect(state.messageSearchStatus).toBe("complete");
-		expect(state.messageSearchScanned).toBe(5);
-	});
-
-	it("reports partial results when one loaded chat cannot be searched", async () => {
-		getConversationsMock.mockResolvedValue({
-			entries: [conversation("a:1", 1000), conversation("b:2", 900)],
-			nextPage: null,
-		});
-		const state = new ConversationsState(OUR_ID);
-		await state.initial;
-
-		getConversationMessagesMock.mockImplementation(
-			({ conversationId }: { conversationId: string }) =>
-				conversationId === "a:1"
-					? Promise.reject(new Error("rate limited"))
-					: Promise.resolve({
-							lastReadTimestamp: null,
-							messages: [],
-							profile: {},
-						}),
-		);
-
-		await state.searchLoadedMessages("needle");
-
-		expect(state.messageSearchStatus).toBe("partial");
-		expect(state.messageSearchFailureCount).toBe(1);
-		expect(state.messageSearchScanned).toBe(2);
-		expect(state.messageSearchMatchIds).toEqual([]);
-	});
-
-	it("resumes an incomplete corpus from the failed page on retry", async () => {
-		getConversationsMock.mockResolvedValue({
-			entries: [conversation("a:1", 1000)],
-			nextPage: null,
-		});
-		const state = new ConversationsState(OUR_ID);
-		await state.initial;
-
-		getConversationMessagesMock
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [
-					{
-						...incomingMessage("a:1", 3000, PEER_ID),
-						messageId: "m-1",
-						body: { text: "ordinary text" },
-					},
-				],
-				profile: {},
-			})
-			.mockRejectedValueOnce(new Error("temporary failure"))
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [
-					{
-						...incomingMessage("a:1", 2000, PEER_ID),
-						messageId: "m-2",
-						body: { text: "the needle is here" },
-					},
-				],
-				profile: {},
-			})
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [],
-				profile: {},
-			});
-
-		await state.searchLoadedMessages("needle");
-		expect(state.messageSearchStatus).toBe("partial");
-
-		await state.searchLoadedMessages("needle");
-
-		expect(
-			getConversationMessagesMock.mock.calls.map(([args]) => args.pageKey),
-		).toEqual([undefined, "m-1", "m-1", "m-2"]);
-		expect(state.messageSearchStatus).toBe("complete");
-		expect(state.messageSearchFailureCount).toBe(0);
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
-	});
-
-	it("continues from messages already cached by an open chat", async () => {
+describe("ConversationsState cached-message search", () => {
+	it("searches downloaded messages without requesting chat history", async () => {
 		getConversationsMock.mockResolvedValue({
 			entries: [conversation("a:1", 1000)],
 			nextPage: null,
@@ -493,8 +395,7 @@ describe("ConversationsState loaded-chat message search", () => {
 		state.setCachedConversation("a:1", {
 			messages: [
 				{
-					...incomingMessage("a:1", 3000, PEER_ID),
-					messageId: "m-cached",
+					...incomingMessage("a:1", 1000, PEER_ID),
 					body: { text: "cached needle" },
 				},
 			],
@@ -506,24 +407,35 @@ describe("ConversationsState loaded-chat message search", () => {
 				profileId: PEER_ID,
 				showDistance: false,
 			},
-			pageKey: "m-cached",
+			pageKey: "older-message",
 			lastReadTimestamp: null,
-		});
-		getConversationMessagesMock.mockResolvedValue({
-			lastReadTimestamp: null,
-			messages: [],
-			profile: {},
 		});
 
 		await state.searchLoadedMessages("needle");
 
-		expect(getConversationMessagesMock).toHaveBeenCalledWith(
-			expect.objectContaining({ pageKey: "m-cached" }),
-		);
+		expect(getConversationMessagesMock).not.toHaveBeenCalled();
 		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
+		expect(state.messageSearchStatus).toBe("complete");
+		expect(state.messageSearchScanned).toBe(1);
+		expect(state.messageSearchTotal).toBe(1);
 	});
 
-	it("updates active results when matching messages are deleted or unsent", async () => {
+	it("does not hydrate uncached conversations over the network", async () => {
+		getConversationsMock.mockResolvedValue({
+			entries: [conversation("a:1", 1000), conversation("b:2", 900)],
+			nextPage: null,
+		});
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+
+		await state.searchLoadedMessages("needle");
+
+		expect(getConversationMessagesMock).not.toHaveBeenCalled();
+		expect(state.messageSearchMatchIds).toEqual([]);
+		expect(state.messageSearchScanned).toBe(2);
+	});
+
+	it("updates current results when cached messages change", async () => {
 		getConversationsMock.mockResolvedValue({
 			entries: [conversation("a:1", 1000)],
 			nextPage: null,
@@ -531,44 +443,29 @@ describe("ConversationsState loaded-chat message search", () => {
 		const state = new ConversationsState(OUR_ID);
 		await state.initial;
 		const matchingMessage = {
-			...incomingMessage("a:1", 3000, PEER_ID),
+			...incomingMessage("a:1", 1000, PEER_ID),
 			messageId: "m-match",
 			body: { text: "needle" },
 		};
+		const profile = {
+			distance: null,
+			mediaHash: null,
+			name: null,
+			onlineUntil: null,
+			profileId: PEER_ID,
+			showDistance: false,
+		};
 		state.setCachedConversation("a:1", {
 			messages: [matchingMessage],
-			profile: {
-				distance: null,
-				mediaHash: null,
-				name: null,
-				onlineUntil: null,
-				profileId: PEER_ID,
-				showDistance: false,
-			},
+			profile,
 			pageKey: null,
 			lastReadTimestamp: null,
 		});
-
 		await state.searchLoadedMessages("needle");
 		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
 
 		state.removeMessageFromSearch("a:1", matchingMessage.messageId);
 		expect(state.messageSearchMatchIds).toEqual([]);
-
-		state.setCachedConversation("a:1", {
-			messages: [matchingMessage],
-			profile: {
-				distance: null,
-				mediaHash: null,
-				name: null,
-				onlineUntil: null,
-				profileId: PEER_ID,
-				showDistance: false,
-			},
-			pageKey: null,
-			lastReadTimestamp: null,
-		});
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
 
 		state.setCachedConversation("a:1", {
 			messages: [
@@ -579,273 +476,10 @@ describe("ConversationsState loaded-chat message search", () => {
 					body: null,
 				},
 			],
-			profile: {
-				distance: null,
-				mediaHash: null,
-				name: null,
-				onlineUntil: null,
-				profileId: PEER_ID,
-				showDistance: false,
-			},
+			profile,
 			pageKey: null,
 			lastReadTimestamp: null,
 		});
-		expect(state.messageSearchMatchIds).toEqual([]);
-	});
-
-	it("preserves older complete-history matches when an open chat caches a partial page", async () => {
-		getConversationsMock.mockResolvedValue({
-			entries: [conversation("a:1", 1000)],
-			nextPage: null,
-		});
-		const state = new ConversationsState(OUR_ID);
-		await state.initial;
-		getConversationMessagesMock
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [
-					{
-						...incomingMessage("a:1", 3000, PEER_ID),
-						messageId: "m-recent",
-						body: { text: "ordinary recent text" },
-					},
-					{
-						...incomingMessage("a:1", 1000, PEER_ID),
-						messageId: "m-old",
-						body: { text: "old needle" },
-					},
-				],
-				profile: {},
-			})
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [],
-				profile: {},
-			});
-		await state.searchLoadedMessages("needle");
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
-
-		state.setCachedConversation("a:1", {
-			messages: [
-				{
-					...incomingMessage("a:1", 3000, PEER_ID),
-					messageId: "m-recent",
-					body: { text: "ordinary recent text" },
-				},
-			],
-			profile: {
-				distance: null,
-				mediaHash: null,
-				name: null,
-				onlineUntil: null,
-				profileId: PEER_ID,
-				showDistance: false,
-			},
-			pageKey: "m-recent",
-			lastReadTimestamp: null,
-		});
-
-		expect(state.messageSearchStatus).toBe("complete");
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
-		getConversationMessagesMock.mockClear();
-		await state.searchLoadedMessages("needle");
-		expect(getConversationMessagesMock).not.toHaveBeenCalled();
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
-	});
-
-	it("invalidates a completed corpus when reconciliation advances activity", async () => {
-		getConversationsMock.mockResolvedValue({
-			entries: [conversation("a:1", 1000)],
-			nextPage: null,
-		});
-		const state = new ConversationsState(OUR_ID);
-		await state.initial;
-		getConversationMessagesMock
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [
-					{
-						...incomingMessage("a:1", 1000, PEER_ID),
-						messageId: "m-old",
-						body: { text: "old needle" },
-					},
-				],
-				profile: {},
-			})
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [],
-				profile: {},
-			});
-		await state.searchLoadedMessages("needle");
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
-
-		getConversationsMock.mockResolvedValueOnce({
-			entries: [conversation("a:1", 2000)],
-			nextPage: null,
-		});
-		await reconcileHandlers[0]?.();
-		getConversationMessagesMock
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [
-					{
-						...incomingMessage("a:1", 2000, PEER_ID),
-						messageId: "m-new",
-						body: { text: "new needle" },
-					},
-				],
-				profile: {},
-			})
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [],
-				profile: {},
-			});
-
-		await state.searchLoadedMessages("needle");
-
-		expect(getConversationMessagesMock).toHaveBeenCalledTimes(4);
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
-	});
-
-	it("globally bounds native history requests across query changes", async () => {
-		getConversationsMock.mockResolvedValue({
-			entries: Array.from({ length: 6 }, (_, index) =>
-				conversation(`c:${index}`, 1000 - index),
-			),
-			nextPage: null,
-		});
-		const state = new ConversationsState(OUR_ID);
-		await state.initial;
-		const gates = Array.from({ length: 3 }, () =>
-			deferred<{
-				lastReadTimestamp: null;
-				messages: [];
-				profile: Record<string, never>;
-			}>(),
-		);
-		let active = 0;
-		let maxActive = 0;
-		let gateIndex = 0;
-		getConversationMessagesMock.mockImplementation(() => {
-			active += 1;
-			maxActive = Math.max(maxActive, active);
-			const gate = gates[gateIndex++];
-			const result =
-				gate?.promise ??
-				Promise.resolve({
-					lastReadTimestamp: null,
-					messages: [],
-					profile: {},
-				});
-			return result.finally(() => {
-				active -= 1;
-			});
-		});
-
-		const firstSearch = state.searchLoadedMessages("first");
-		await microtasks();
-		expect(active).toBe(3);
-
-		const secondSearch = state.searchLoadedMessages("second");
-		await microtasks();
-		expect(active).toBe(3);
-		expect(maxActive).toBe(3);
-
-		for (const gate of gates) {
-			gate.resolve({
-				lastReadTimestamp: null,
-				messages: [],
-				profile: {},
-			});
-		}
-		await Promise.all([firstSearch, secondSearch]);
-
-		expect(maxActive).toBe(3);
-		expect(state.messageSearchQuery).toBe("second");
-		expect(state.messageSearchStatus).toBe("complete");
-	});
-
-	it("keeps changed queries pending and rejects stale search publication", async () => {
-		getConversationsMock.mockResolvedValue({
-			entries: [conversation("a:1", 1000)],
-			nextPage: null,
-		});
-		const state = new ConversationsState(OUR_ID);
-		await state.initial;
-		const oldGate = deferred<{
-			lastReadTimestamp: null;
-			messages: ReturnType<typeof incomingMessage>[];
-			profile: Record<string, never>;
-		}>();
-		getConversationMessagesMock
-			.mockReturnValueOnce(oldGate.promise)
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [
-					{
-						...incomingMessage("a:1", 2000, PEER_ID),
-						messageId: "m-new",
-						body: { text: "new needle" },
-					},
-				],
-				profile: {},
-			})
-			.mockResolvedValueOnce({
-				lastReadTimestamp: null,
-				messages: [],
-				profile: {},
-			});
-
-		const oldSearch = state.searchLoadedMessages("old needle");
-		await microtasks();
-		state.cancelMessageSearch("new needle");
-		expect(state.messageSearchStatus).toBe("searching");
-		const newSearch = state.searchLoadedMessages("new needle");
-
-		oldGate.resolve({
-			lastReadTimestamp: null,
-			messages: [incomingMessage("a:1", 3000, PEER_ID)],
-			profile: {},
-		});
-		await Promise.all([oldSearch, newSearch]);
-
-		expect(state.messageSearchQuery).toBe("new needle");
-		expect(state.messageSearchStatus).toBe("complete");
-		expect(state.messageSearchMatchIds).toEqual(["a:1"]);
-	});
-
-	it("aborts and clears account-scoped search state on destroy", async () => {
-		getConversationsMock.mockResolvedValue({
-			entries: [conversation("a:1", 1000)],
-			nextPage: null,
-		});
-		const state = new ConversationsState(OUR_ID);
-		await state.initial;
-
-		const gate = deferred<{
-			lastReadTimestamp: null;
-			messages: ReturnType<typeof incomingMessage>[];
-			profile: Record<string, never>;
-		}>();
-		getConversationMessagesMock.mockReturnValueOnce(gate.promise);
-		const search = state.searchLoadedMessages("needle");
-		await microtasks();
-
-		const abortController = getConversationMessagesMock.mock.calls[0][0]
-			.abortController as AbortController;
-		const destroy = state.destroy();
-		expect(abortController.signal.aborted).toBe(true);
-
-		gate.resolve({
-			lastReadTimestamp: null,
-			messages: [incomingMessage("a:1", 1000, PEER_ID)],
-			profile: {},
-		});
-		await Promise.all([search, destroy]);
-
-		expect(state.messageSearchStatus).toBe("idle");
 		expect(state.messageSearchMatchIds).toEqual([]);
 	});
 });

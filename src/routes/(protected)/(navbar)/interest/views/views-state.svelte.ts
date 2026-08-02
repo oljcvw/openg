@@ -1,11 +1,14 @@
 import { getViews } from "$lib/api/interest/views";
+import {
+	readCachedViews,
+	type ViewsSnapshot,
+	writeCachedViews,
+} from "$lib/app-data/interest-cache";
 import { ReconcilingListState } from "$lib/util/reconciling-list-state.svelte";
 import { viewedMeV1NewViewReceivedEventSchema, ws } from "$lib/ws.svelte";
 import type { ViewerProfile, ViewPreview } from "$lib/model/interest/views";
 
 const PAGE_SIZE = 24;
-
-type ViewsSnapshot = { profiles: ViewerProfile[]; previews: ViewPreview[] };
 
 export type ViewGridEntry =
 	| { type: "profile"; key: string; profile: ViewerProfile }
@@ -17,12 +20,15 @@ export class ViewsState extends ReconcilingListState<
 > {
 	#profiles: ViewerProfile[] = $state([]);
 	#previews: ViewPreview[] = $state([]);
+	readonly #ourProfileId: number;
 
-	constructor() {
+	constructor({ ourProfileId }: { ourProfileId: number }) {
 		super({
 			pageSize: PAGE_SIZE,
 			refreshErrorLabel: "Failed to refresh views",
+			reconcileScope: "views",
 		});
+		this.#ourProfileId = ourProfileId;
 		this.start();
 	}
 
@@ -52,6 +58,14 @@ export class ViewsState extends ReconcilingListState<
 
 	protected fetch(): Promise<ViewsSnapshot> {
 		return getViews();
+	}
+
+	protected readCached(): Promise<ViewsSnapshot | null> {
+		return readCachedViews(this.#ourProfileId);
+	}
+
+	protected writeCached(snapshot: ViewsSnapshot): Promise<void> {
+		return writeCachedViews(this.#ourProfileId, snapshot);
 	}
 
 	protected applySnapshot(snapshot: ViewsSnapshot): Set<number> {
@@ -87,6 +101,10 @@ export class ViewsState extends ReconcilingListState<
 
 	protected keyOf(view: ViewerProfile): number {
 		return view.profileId;
+	}
+
+	protected snapshot(): ViewsSnapshot {
+		return { profiles: this.#profiles, previews: this.#previews };
 	}
 
 	protected subscribeEvents(): Promise<() => void> {

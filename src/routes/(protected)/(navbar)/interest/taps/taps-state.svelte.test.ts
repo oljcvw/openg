@@ -25,9 +25,13 @@ vi.mock("$lib/api/error", () => ({ showErrorToast: showErrorToastMock }));
 vi.mock("$lib/api/interest/taps", () => ({
 	getReceivedTaps: getReceivedTapsMock,
 }));
+vi.mock("$lib/app-data/interest-cache", () => ({
+	readCachedTaps: vi.fn(() => Promise.resolve(null)),
+	writeCachedTaps: vi.fn(() => Promise.resolve()),
+}));
 vi.mock("$lib/util/reconcile", () => ({
 	reconciler: {
-		subscribe(handler: () => void | Promise<void>) {
+		subscribe(_scope: string, handler: () => void | Promise<void>) {
 			reconcileHandlers.push(handler);
 			return unsubscribeReconcileMock;
 		},

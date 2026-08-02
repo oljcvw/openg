@@ -15,7 +15,9 @@
 	import ViewedProfile from "./ViewedProfile.svelte";
 	import { ViewsState } from "./views-state.svelte";
 
-	const views = untrack(() => new ViewsState());
+	let { ourProfileId }: { ourProfileId: number } = $props();
+
+	const views = untrack(() => new ViewsState({ ourProfileId }));
 	onDestroy(() => views.destroy());
 
 	let container: HTMLDivElement | null = $state(null);

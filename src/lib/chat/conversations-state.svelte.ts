@@ -9,7 +9,6 @@ import {
 	setConversationMuted,
 	setConversationPinned,
 } from "$lib/api/messaging/conversations";
-import { getConversationMessages } from "$lib/api/messaging/messages";
 import {
 	type FailedCachedMessage,
 	readCachedInbox,
@@ -24,8 +23,9 @@ import {
 } from "$lib/app-data/preferences.svelte";
 import { showIncomingMessageToast } from "$lib/components/incoming-message-toast/incoming-message-toast-manager";
 import { previewFromMessage } from "$lib/model/messaging/messages";
+import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 import { below } from "$lib/util/breakpoints.svelte";
-import { reconciler } from "$lib/util/reconcile";
+import { type ReconcileEvent, reconciler } from "$lib/util/reconcile";
 import {
 	chatV1ConversationDeleteEventSchema,
 	chatV1MessageSentEventSchema,
@@ -41,18 +41,12 @@ import {
 } from "./conversation-filter";
 
 type OptimisticFlagField = "pinned" | "muted";
-type MessageSearchStatus = "idle" | "searching" | "complete" | "partial";
+type MessageSearchStatus = "idle" | "searching" | "complete";
 
 type MessageSearchCorpus = {
-	complete: boolean;
-	initialized: boolean;
-	nextPageKey?: string | null;
-	pageKeys: Set<string>;
 	textByMessageId: Map<string, string>;
 	retractedMessageIds: Set<string>;
 };
-
-const MESSAGE_SEARCH_CONCURRENCY = 3;
 
 export type CachedConversation = {
 	messages: ApiResponseMessage[];
@@ -82,7 +76,6 @@ class ConversationsState {
 	messageSearchStatus = $state<MessageSearchStatus>("idle");
 	messageSearchScanned = $state(0);
 	messageSearchTotal = $state(0);
-	messageSearchFailureCount = $state(0);
 	failedConversationIds = $state<string[]>([]);
 
 	readonly ourProfileId: number;
@@ -99,12 +92,8 @@ class ConversationsState {
 	#inFlightFetches = new Set<Promise<unknown>>();
 	#fetchEpoch = 0;
 	#syncLatestInFlight: Promise<void> | null = null;
-	#messageSearchAbortController: AbortController | null = null;
 	#messageSearchCorpora = new Map<string, MessageSearchCorpus>();
 	#messageSearchEpoch = 0;
-	#messageSearchFetches = new Map<string, Promise<void>>();
-	#messageSearchActiveRequests = 0;
-	#messageSearchSlotWaiters: (() => void)[] = [];
 	#unsubscribePreferences: () => void;
 
 	constructor(ourProfileId: number) {
@@ -112,8 +101,22 @@ class ConversationsState {
 		this.inboxLastViewedAt = this.#loadInboxLastViewed();
 		this.initial = this.#trackFetch(this.#initialize());
 
-		this.#unsubscribeReconcile = reconciler.subscribe(() =>
-			this.#trackFetch(this.#reconcile()),
+		this.#unsubscribeReconcile = reconciler.subscribe(
+			"inbox",
+			(event: ReconcileEvent) => {
+				const requiresFullReconcile =
+					event.reasons.has("events-dropped") ||
+					(event.reasons.has("server-signal") &&
+						event.scopes.size === 1 &&
+						event.scopes.has("inbox"));
+				return this.#trackFetch(
+					requiresFullReconcile
+						? this.#reconcile()
+						: this.#syncLatest({
+								errorLabel: "Failed to sync latest conversations",
+							}),
+				);
+			},
 		);
 		this.#unsubscribePreferences = subscribePreferences(() => {
 			for (const entry of this.entries) {
@@ -164,7 +167,6 @@ class ConversationsState {
 		this.#destroyed = true;
 		this.cancelMessageSearch();
 		this.#messageSearchCorpora.clear();
-		this.#messageSearchFetches.clear();
 		this.#unsubscribeReconcile();
 		this.#unsubscribePreferences();
 		const unlisteners = await Promise.all(this.#wsPromises);
@@ -342,7 +344,7 @@ class ConversationsState {
 	}
 
 	#isStale(fetchEpoch: number): boolean {
-		return fetchEpoch !== this.#fetchEpoch;
+		return this.#destroyed || fetchEpoch !== this.#fetchEpoch;
 	}
 
 	#trackFetch<T>(fetch: Promise<T>): Promise<T> {
@@ -717,6 +719,7 @@ class ConversationsState {
 	}
 
 	#persistInbox(): void {
+		if (this.#destroyed) return;
 		void writeCachedInbox(
 			this.ourProfileId,
 			this.entries,
@@ -730,7 +733,19 @@ class ConversationsState {
 	): Promise<CachedConversation | undefined> {
 		const memory = this.#messageCache.get(id);
 		if (memory) return memory;
-		const persisted = await readPersistedConversation(this.ourProfileId, id);
+		const persisted = await readPersistedConversation(
+			this.ourProfileId,
+			id,
+		).catch(() => {
+			console.error("Conversation cache hydration failed");
+			reportClientDiagnostic({
+				category: "cache_recovery",
+				component: "conversation",
+				code: "bypassed_unreadable_cache",
+				level: "warning",
+			});
+			return null;
+		});
 		if (!persisted) return undefined;
 		const cached = {
 			messages: persisted.messages,
@@ -762,23 +777,10 @@ class ConversationsState {
 		}).catch((error) =>
 			console.error("Conversation cache write failed", error),
 		);
-		const existingCorpus = this.#messageSearchCorpora.get(id);
-		if (existingCorpus && data.pageKey === null) {
-			const corpus: MessageSearchCorpus = {
-				complete: true,
-				initialized: true,
-				nextPageKey: null,
-				pageKeys: new Set(),
-				textByMessageId: new Map(),
-				retractedMessageIds: new Set(),
-			};
-			this.#messageSearchCorpora.set(id, corpus);
-		} else if (existingCorpus && !existingCorpus.initialized) {
-			existingCorpus.initialized = true;
-			existingCorpus.nextPageKey = data.pageKey;
-			if (data.pageKey !== null) {
-				existingCorpus.pageKeys.add(data.pageKey);
-			}
+		const corpus = this.#messageSearchCorpora.get(id);
+		if (corpus) {
+			corpus.textByMessageId.clear();
+			corpus.retractedMessageIds.clear();
 		}
 		this.#mergeSearchMessages(id, data.messages);
 	}
@@ -804,14 +806,11 @@ class ConversationsState {
 	cancelMessageSearch(nextQuery = ""): void {
 		const normalizedQuery = normalizeConversationSearchQuery(nextQuery);
 		this.#messageSearchEpoch += 1;
-		this.#messageSearchAbortController?.abort();
-		this.#messageSearchAbortController = null;
 		this.messageSearchQuery = normalizedQuery;
 		this.messageSearchMatchIds = [];
 		this.messageSearchStatus = normalizedQuery === "" ? "idle" : "searching";
 		this.messageSearchScanned = 0;
 		this.messageSearchTotal = 0;
-		this.messageSearchFailureCount = 0;
 	}
 
 	async searchLoadedMessages(query: string): Promise<void> {
@@ -820,8 +819,6 @@ class ConversationsState {
 		if (normalizedQuery === "" || this.#destroyed) return;
 
 		const searchEpoch = ++this.#messageSearchEpoch;
-		const abortController = new AbortController();
-		this.#messageSearchAbortController = abortController;
 		const candidates = this.entries.filter(
 			(entry) => !conversationRowMatchesQuery(entry, normalizedQuery),
 		);
@@ -838,15 +835,9 @@ class ConversationsState {
 		);
 		if (this.#isMessageSearchStale(searchEpoch)) return;
 
-		const targets: string[] = [];
 		for (const conversation of candidates) {
-			const conversationId = conversation.data.conversationId;
-			const corpus = this.#seedSearchCorpus(conversationId);
-			if (corpus.complete) {
-				this.messageSearchScanned += 1;
-			} else {
-				targets.push(conversationId);
-			}
+			this.#seedSearchCorpus(conversation.data.conversationId);
+			this.messageSearchScanned += 1;
 		}
 		this.#publishSearchMatches({
 			candidates,
@@ -854,42 +845,8 @@ class ConversationsState {
 			searchEpoch,
 		});
 
-		let targetIndex = 0;
-		const worker = async () => {
-			while (targetIndex < targets.length) {
-				const conversationId = targets[targetIndex++];
-				try {
-					await this.#ensureSearchCorpus(conversationId, abortController);
-				} catch {
-					if (
-						abortController.signal.aborted ||
-						this.#isMessageSearchStale(searchEpoch)
-					) {
-						return;
-					}
-					console.warn("Failed to search one loaded chat's message history");
-					this.messageSearchFailureCount += 1;
-				}
-				if (this.#isMessageSearchStale(searchEpoch)) return;
-				this.messageSearchScanned += 1;
-				this.#publishSearchMatches({
-					candidates,
-					normalizedQuery,
-					searchEpoch,
-				});
-			}
-		};
-
-		await Promise.all(
-			Array.from(
-				{ length: Math.min(MESSAGE_SEARCH_CONCURRENCY, targets.length) },
-				() => worker(),
-			),
-		);
 		if (this.#isMessageSearchStale(searchEpoch)) return;
-		this.messageSearchStatus =
-			this.messageSearchFailureCount > 0 ? "partial" : "complete";
-		this.#messageSearchAbortController = null;
+		this.messageSearchStatus = "complete";
 	}
 
 	#isMessageSearchStale(searchEpoch: number): boolean {
@@ -900,9 +857,6 @@ class ConversationsState {
 		let corpus = this.#messageSearchCorpora.get(conversationId);
 		if (!corpus) {
 			corpus = {
-				complete: false,
-				initialized: false,
-				pageKeys: new Set(),
 				textByMessageId: new Map(),
 				retractedMessageIds: new Set(),
 			};
@@ -910,13 +864,9 @@ class ConversationsState {
 		}
 		const cached = this.#messageCache.get(conversationId);
 		if (!cached) return corpus;
+		corpus.textByMessageId.clear();
+		corpus.retractedMessageIds.clear();
 		this.#mergeSearchMessages(conversationId, cached.messages);
-		if (!corpus.initialized || cached.pageKey === null) {
-			corpus.initialized = true;
-			corpus.nextPageKey = cached.pageKey;
-			corpus.complete = cached.pageKey === null;
-			if (cached.pageKey !== null) corpus.pageKeys.add(cached.pageKey);
-		}
 		return corpus;
 	}
 
@@ -968,101 +918,6 @@ class ConversationsState {
 			this.messageSearchMatchIds = this.messageSearchMatchIds.filter(
 				(id) => id !== conversationId,
 			);
-		}
-	}
-
-	async #ensureSearchCorpus(
-		conversationId: string,
-		abortController: AbortController,
-	): Promise<void> {
-		const existing = this.#messageSearchFetches.get(conversationId);
-		if (existing) {
-			try {
-				await existing;
-				return;
-			} catch {
-				if (abortController.signal.aborted) throw new Error("Search cancelled");
-			}
-		}
-		const fetch = this.#hydrateSearchCorpus(conversationId, abortController);
-		this.#messageSearchFetches.set(conversationId, fetch);
-		try {
-			await fetch;
-		} finally {
-			if (this.#messageSearchFetches.get(conversationId) === fetch) {
-				this.#messageSearchFetches.delete(conversationId);
-			}
-		}
-	}
-
-	async #hydrateSearchCorpus(
-		conversationId: string,
-		abortController: AbortController,
-	): Promise<void> {
-		const corpus = this.#seedSearchCorpus(conversationId);
-		while (!corpus.complete) {
-			if (abortController.signal.aborted || this.#destroyed) {
-				throw new Error("Search cancelled");
-			}
-			const pageKey = corpus.initialized
-				? (corpus.nextPageKey ?? undefined)
-				: undefined;
-			const result = await this.#runMessageSearchRequest(abortController, () =>
-				getConversationMessages({
-					abortController,
-					conversationId,
-					pageKey,
-				}),
-			);
-			if (abortController.signal.aborted || this.#destroyed) {
-				throw new Error("Search cancelled");
-			}
-			corpus.initialized = true;
-			this.#mergeSearchMessages(conversationId, result.messages);
-			const cachedConversation = this.#messageCache.get(conversationId);
-			if (cachedConversation) {
-				this.setCachedConversation(conversationId, {
-					...cachedConversation,
-					messages: [...cachedConversation.messages, ...result.messages],
-				});
-			}
-			const nextPageKey = result.messages.at(-1)?.messageId ?? null;
-			if (nextPageKey === null) {
-				corpus.complete = true;
-				corpus.nextPageKey = null;
-				continue;
-			}
-			if (corpus.pageKeys.has(nextPageKey)) {
-				throw new Error("Conversation message pagination did not advance");
-			}
-			corpus.pageKeys.add(nextPageKey);
-			corpus.nextPageKey = nextPageKey;
-		}
-	}
-
-	async #runMessageSearchRequest<T>(
-		abortController: AbortController,
-		request: () => Promise<T>,
-	): Promise<T> {
-		if (this.#messageSearchActiveRequests < MESSAGE_SEARCH_CONCURRENCY) {
-			this.#messageSearchActiveRequests += 1;
-		} else {
-			await new Promise<void>((resolve) => {
-				this.#messageSearchSlotWaiters.push(resolve);
-			});
-		}
-		try {
-			if (abortController.signal.aborted || this.#destroyed) {
-				throw new Error("Search cancelled");
-			}
-			return await request();
-		} finally {
-			const next = this.#messageSearchSlotWaiters.shift();
-			if (next) {
-				next();
-			} else {
-				this.#messageSearchActiveRequests -= 1;
-			}
 		}
 	}
 

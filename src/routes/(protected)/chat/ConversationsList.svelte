@@ -301,27 +301,6 @@
 						{conversations.messageSearchScanned}/{conversations.messageSearchTotal}
 						chats checked
 					</p>
-				{:else if normalizedSearchQuery !== "" && conversations.messageSearchStatus === "partial"}
-					<div
-						class="flex items-center justify-between gap-2 px-1 text-xs text-muted-foreground"
-						aria-live="polite"
-					>
-						<span>
-							Couldn’t search {conversations.messageSearchFailureCount}
-							{conversations.messageSearchFailureCount === 1
-								? "chat"
-								: "chats"}; results may be incomplete.
-						</span>
-						<Button
-							variant="ghost"
-							size="sm"
-							class="h-7 shrink-0 px-2 text-xs"
-							onclick={() =>
-								void conversations.searchLoadedMessages(searchQuery)}
-						>
-							Retry
-						</Button>
-					</div>
 				{/if}
 			</div>
 		{/if}
@@ -362,19 +341,13 @@
 							{#if normalizedSearchQuery !== "" && conversations.messageSearchStatus === "searching"}
 								<p class="font-medium">Searching loaded chats…</p>
 								<p class="text-sm text-muted-foreground">
-									Checking complete message history for chats already in your
-									Inbox.
+									Checking messages already downloaded to this device.
 								</p>
 							{:else}
 								<p class="font-medium">No matching chats</p>
 								<p class="text-sm text-muted-foreground">
-									{#if conversations.messageSearchStatus === "partial"}
-										Some message histories could not be searched. Retry, or try
-										another name, message, or filter.
-									{:else}
-										Try another name, message, or filter. More results may
-										appear as older chats load.
-									{/if}
+									Try another name, message, or filter. More results may appear
+									as older messages are downloaded.
 								</p>
 							{/if}
 						</div>

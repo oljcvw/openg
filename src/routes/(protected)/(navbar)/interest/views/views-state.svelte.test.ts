@@ -23,9 +23,13 @@ const {
 
 vi.mock("$lib/api/error", () => ({ showErrorToast: showErrorToastMock }));
 vi.mock("$lib/api/interest/views", () => ({ getViews: getViewsMock }));
+vi.mock("$lib/app-data/interest-cache", () => ({
+	readCachedViews: vi.fn(() => Promise.resolve(null)),
+	writeCachedViews: vi.fn(() => Promise.resolve()),
+}));
 vi.mock("$lib/util/reconcile", () => ({
 	reconciler: {
-		subscribe(handler: () => void | Promise<void>) {
+		subscribe(_scope: string, handler: () => void | Promise<void>) {
 			reconcileHandlers.push(handler);
 			return unsubscribeReconcileMock;
 		},
@@ -136,7 +140,7 @@ describe("ViewsState", () => {
 			previews: [preview()],
 		});
 
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		expect(state.error).toBeNull();
@@ -156,7 +160,7 @@ describe("ViewsState", () => {
 			.mockRejectedValueOnce(new Error("offline"))
 			.mockResolvedValueOnce({ profiles: [profile(1)], previews: [] });
 
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		expect(state.error?.message).toBe("offline");
@@ -180,7 +184,7 @@ describe("ViewsState", () => {
 			],
 			previews: [],
 		});
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		emitView({
@@ -214,7 +218,7 @@ describe("ViewsState", () => {
 			.mockResolvedValueOnce({ profiles: [profile(1)], previews: [] })
 			.mockResolvedValueOnce({ profiles: [profile(2)], previews: [] })
 			.mockRejectedValueOnce(new Error("refresh failed"));
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		await reconcileHandlers[0]?.();
@@ -237,7 +241,7 @@ describe("ViewsState", () => {
 			profiles: [profile(1)],
 			previews: [],
 		});
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		const gate = deferred<ViewsSnapshot>();
@@ -259,7 +263,7 @@ describe("ViewsState", () => {
 			profiles: [profile(1)],
 			previews: [],
 		});
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		const gate = deferred<ViewsSnapshot>();
@@ -288,7 +292,7 @@ describe("ViewsState", () => {
 
 	it("cleans up subscriptions on destroy", async () => {
 		getViewsMock.mockResolvedValue({ profiles: [profile(1)], previews: [] });
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		state.destroy();

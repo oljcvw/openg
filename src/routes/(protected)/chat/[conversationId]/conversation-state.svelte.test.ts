@@ -35,7 +35,7 @@ vi.mock("$lib/api/messaging/messages", () => ({
 }));
 vi.mock("$lib/util/reconcile", () => ({
 	reconciler: {
-		subscribe(handler: () => void | Promise<void>) {
+		subscribe(_scope: string, handler: () => void | Promise<void>) {
 			reconcileHandlers.push(handler);
 			return vi.fn();
 		},

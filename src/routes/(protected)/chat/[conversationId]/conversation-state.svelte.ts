@@ -77,8 +77,14 @@ export class ConversationState {
 		this.lastReadTimestamp = null;
 		void this.#initialLoad();
 
-		this.#unsubscribeReconcile = reconciler.subscribe(() =>
-			this.#reconcileMessages(),
+		this.#unsubscribeReconcile = reconciler.subscribe(
+			"conversation",
+			(event) =>
+				!event ||
+				event.conversationIds.size === 0 ||
+				event.conversationIds.has(this.conversationId)
+					? this.#reconcileMessages()
+					: undefined,
 		);
 		this.#unsubscribePreferences = subscribePreferences(() => {
 			this.#updatePreviewFromMessages();
