@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
 	contrastModeSchema,
+	DEFAULT_DEVELOPER_SETTINGS,
+	developerSettingsSchema,
 	gridColumnsSchema,
 	parsePreferences,
 } from "$lib/app-data/preferences.svelte";
@@ -17,6 +19,7 @@ describe("preference migration", () => {
 		expect(preferences).toMatchObject({
 			cacheSizeMb: 100,
 			contrastMode: "standard",
+			developerSettings: DEFAULT_DEVELOPER_SETTINGS,
 			gridColumns: "auto",
 			pendingProfileLocation: null,
 			profileSwipeNavigation: true,
@@ -25,6 +28,46 @@ describe("preference migration", () => {
 			stayAwake: false,
 			units: "imperial",
 		});
+	});
+
+	it("validates developer tuning boundaries", () => {
+		expect(developerSettingsSchema.parse({})).toEqual({
+			albumPreloadConcurrency: 3,
+			apiCircuitFailurePercent: 50,
+			apiCircuitMinimumSamples: 20,
+			apiCircuitOpenMs: 30_000,
+			apiCircuitWindowSize: 50,
+			apiProtectionCooldownMs: 30_000,
+			apiRequestTimeoutMs: 35_000,
+			notificationPollIntervalMinutes: 15,
+			placeSearchCacheEntries: 20,
+			profileResolutionBatchSize: 30,
+			profileResolutionWindowMs: 16,
+			reconcileThrottleMs: 2_000,
+		});
+		expect(
+			developerSettingsSchema.safeParse({ profileResolutionBatchSize: 31 })
+				.success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ apiRequestTimeoutMs: 4_999 }).success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ notificationPollIntervalMinutes: 14 })
+				.success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ albumPreloadConcurrency: 9 }).success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ reconcileThrottleMs: 1_999 }).success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({
+				apiCircuitWindowSize: 20,
+				apiCircuitMinimumSamples: 21,
+			}).success,
+		).toBe(false);
 	});
 
 	it("keeps a legacy geohash as Browse-only state", () => {

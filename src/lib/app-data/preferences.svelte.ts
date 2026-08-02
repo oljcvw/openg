@@ -24,10 +24,54 @@ export type GridColumns = z.infer<typeof gridColumnsSchema>;
 export const contrastModeSchema = z.enum(["standard", "high"]);
 export type ContrastMode = z.infer<typeof contrastModeSchema>;
 
+export const developerSettingsSchema = z
+	.object({
+		albumPreloadConcurrency: z.number().int().min(1).max(8).default(3),
+		apiCircuitFailurePercent: z.number().int().min(25).max(50).default(50),
+		apiCircuitMinimumSamples: z.number().int().min(5).max(20).default(20),
+		apiCircuitOpenMs: z.number().int().min(30_000).max(300_000).default(30_000),
+		apiCircuitWindowSize: z.number().int().min(20).max(100).default(50),
+		apiProtectionCooldownMs: z
+			.number()
+			.int()
+			.min(30_000)
+			.max(300_000)
+			.default(30_000),
+		apiRequestTimeoutMs: z
+			.number()
+			.int()
+			.min(5_000)
+			.max(120_000)
+			.default(35_000),
+		notificationPollIntervalMinutes: z
+			.number()
+			.int()
+			.min(15)
+			.max(1_440)
+			.default(15),
+		placeSearchCacheEntries: z.number().int().min(1).max(100).default(20),
+		profileResolutionBatchSize: z.number().int().min(1).max(30).default(30),
+		profileResolutionWindowMs: z.number().int().min(0).max(1_000).default(16),
+		reconcileThrottleMs: z.number().int().min(2_000).max(30_000).default(2_000),
+	})
+	.refine(
+		(settings) =>
+			settings.apiCircuitMinimumSamples <= settings.apiCircuitWindowSize,
+		{
+			message: "Circuit minimum samples cannot exceed the circuit window",
+			path: ["apiCircuitMinimumSamples"],
+		},
+	);
+export type DeveloperSettings = z.infer<typeof developerSettingsSchema>;
+export const DEFAULT_DEVELOPER_SETTINGS = developerSettingsSchema.parse({});
+
 const preferencesSchema = z
 	.object({
 		contrastMode: contrastModeSchema.default("standard"),
 		cacheSizeMb: z.number().int().min(10).max(1000).default(100),
+		developerSettings: developerSettingsSchema.default(
+			DEFAULT_DEVELOPER_SETTINGS,
+		),
 		geohash: geohashSchema.nullable().default(null),
 		gridSearchFilters: gridSearchFiltersSchema.optional(),
 		gridColumns: gridColumnsSchema.default("auto"),
@@ -159,6 +203,10 @@ export function getCacheSizeMbSnapshot(): number {
 	return preferencesSnapshot.cacheSizeMb;
 }
 
+export function getDeveloperSettingsSnapshot(): DeveloperSettings {
+	return preferencesSnapshot.developerSettings;
+}
+
 export function getProfileSwipeNavigationSnapshot(): boolean {
 	return preferencesSnapshot.profileSwipeNavigation;
 }
@@ -178,16 +226,39 @@ export async function hydratePreferences(): Promise<void> {
 export async function setPreferences(
 	newValues: Partial<Preferences>,
 ): Promise<void> {
+	await updatePreferences(() => newValues);
+}
+
+async function updatePreferences(
+	update: (current: Preferences) => Partial<Preferences>,
+): Promise<void> {
 	await enqueueWrite(async () => {
 		const oldValues = await getPreferences();
 		const preferences = parsePreferences({
 			...oldValues,
-			...newValues,
+			...update(oldValues),
 		});
 		await writeAppDataFileAtomic("preferences.data", encode(preferences));
 		cache = preferences;
 		preferencesSnapshot = preferences;
 		notifyPreferenceListeners();
+	});
+}
+
+export async function setDeveloperSettings(
+	newValues: Partial<DeveloperSettings>,
+): Promise<void> {
+	await updatePreferences((current) => ({
+		developerSettings: developerSettingsSchema.parse({
+			...current.developerSettings,
+			...newValues,
+		}),
+	}));
+}
+
+export async function resetDeveloperSettings(): Promise<void> {
+	await setPreferences({
+		developerSettings: structuredClone(DEFAULT_DEVELOPER_SETTINGS),
 	});
 }
 
