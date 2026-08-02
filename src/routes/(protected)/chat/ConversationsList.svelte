@@ -257,7 +257,7 @@
 	<div
 		bind:this={container}
 		class={[
-			"flex min-h-0 flex-1 flex-col gap-1 overflow-auto overscroll-contain p-4 pb-0",
+			"flex min-h-0 flex-1 flex-col gap-1 overflow-auto overscroll-contain px-2 pb-0",
 			selecting && "pt-(--selection-bar-height)",
 			className,
 		]}
@@ -265,7 +265,7 @@
 	>
 		{#if !selecting}
 			<div
-				class="sticky top-0 z-10 mb-3 flex shrink-0 flex-col gap-2 bg-background pb-2 shadow-md"
+				class="sticky top-0 z-10 mb-2 flex shrink-0 flex-col gap-2 bg-background pt-2 pb-2 shadow-md"
 			>
 				<InboxTabs />
 				<div class="relative">

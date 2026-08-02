@@ -48,7 +48,7 @@
 	{#if !mobile.current}
 		<Resizable.PaneGroup
 			direction="horizontal"
-			class="mx-auto h-auto! max-h-full max-w-300 max-split:hidden!"
+			class="mx-auto h-auto! max-h-full w-full max-w-360 max-split:hidden!"
 			bind:ref={paneGroup}
 			autoSaveId="/(protected)/chat/layout"
 		>
@@ -59,20 +59,20 @@
 				collapsible
 				class="min-w-list-rail"
 			>
-				<ConversationsList class="pe-0.75" />
+				<ConversationsList class="pe-0.5" />
 			</Resizable.Pane>
 			<Resizable.Handle
-				class="cursor-col-resize! bg-transparent px-2"
+				class="cursor-col-resize! bg-transparent px-1"
 				withHandle
 			/>
 			<Resizable.Pane
 				defaultSize={57}
 				minSize={pageContentMinWidthPercentage * 100}
 			>
-				<div class="h-full flex-1 self-stretch p-4 ps-1 pb-nav-clear">
+				<div class="h-full flex-1 self-stretch p-2 ps-0.5 pb-nav-clear">
 					<Card.Root
 						class={[
-							"relative h-full gap-0 rounded-[27px] p-0 dark:ring-neutral-800",
+							"relative h-full gap-0 rounded-chat-panel p-0 dark:ring-neutral-800",
 							{
 								"bg-card/20 ring-0": !isChatSelected,
 							},
