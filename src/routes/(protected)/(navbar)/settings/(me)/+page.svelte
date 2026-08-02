@@ -3,6 +3,7 @@
 
 	import AccountSettingsLink from "./AccountSettingsLink.svelte";
 	import AppSettingsLink from "./AppSettingsLink.svelte";
+	import DeveloperSettingsLink from "./DeveloperSettingsLink.svelte";
 	import ProfileLink from "./ProfileLink.svelte";
 	import SignOutButton from "./SignOutButton.svelte";
 	import Socials from "./Socials.svelte";
@@ -18,6 +19,7 @@
 				<span role="separator"></span>
 				<AccountSettingsLink />
 				<AppSettingsLink />
+				<DeveloperSettingsLink />
 				<SignOutButton />
 				<span role="separator"></span>
 				<Socials />
