@@ -181,7 +181,16 @@
               # this dir via the open-grind-gradle volume (see docker-compose.yml).
               export GRADLE_USER_HOME="''${OPEN_GRIND_GRADLE_USER_HOME:-$HOME/.gradle-opengrind}"
               mkdir -p "$GRADLE_USER_HOME"
-              printf 'android.aapt2FromMavenOverride=%s/aapt2\n' "${buildToolsBin}" > "$GRADLE_USER_HOME/gradle.properties"
+              {
+                printf 'android.aapt2FromMavenOverride=%s/aapt2\n' "${buildToolsBin}"
+                # AGP does not reliably invalidate a configuration-cache entry when
+                # the ignored keystore.properties file appears or disappears. A stale
+                # unsigned configuration silently emits an unsigned APK during a signed
+                # build, so signed builds configure Gradle afresh.
+                if [ -n "''${OPEN_GRIND_KEYSTORE_PROPERTIES:-}" ]; then
+                  printf 'org.gradle.configuration-cache=false\n'
+                fi
+              } > "$GRADLE_USER_HOME/gradle.properties"
 
               # OPEN_GRIND_KEYSTORE_PROPERTIES -> keystore.properties for signingConfig.
               # keystore.properties is gitignored; remove it on exit so the secret does
