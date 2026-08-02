@@ -15,6 +15,9 @@
 		link,
 		description,
 		actions,
+		actionsPlacement = "side",
+		compact = false,
+		class: className,
 		onToggleSelected,
 		onLongPress,
 	}: {
@@ -33,6 +36,9 @@
 		link: string;
 		description?: import("svelte").Snippet;
 		actions?: import("svelte").Snippet;
+		actionsPlacement?: "side" | "title";
+		compact?: boolean;
+		class?: import("svelte/elements").ClassValue;
 		onToggleSelected?: () => void;
 		onLongPress?: () => void;
 	} = $props();
@@ -42,7 +48,9 @@
 </script>
 
 {#snippet avatarNode()}
-	<Item.Media class="relative translate-y-0! rounded-2xl p-2">
+	<Item.Media
+		class={["relative translate-y-0! rounded-2xl", compact ? "p-1.5" : "p-2"]}
+	>
 		<Avatar.Root class="size-20 after:rounded-xl">
 			<UserAvatar
 				mediaHash={avatar.mediaHash}
@@ -52,23 +60,37 @@
 		{@render avatar.overlay?.()}
 	</Item.Media>
 {/snippet}
+{#snippet titleNode(className = "")}
+	<Item.Title
+		class={[
+			"flex w-auto min-w-0 items-center gap-1 truncate",
+			className,
+			{
+				"text-muted-foreground": !title.value,
+			},
+		]}
+	>
+		{@render title.badge?.()}
+		<ProfileStatusIndicator {onlineUntil} />
+		<DisplayName name={title.value} class="truncate" />
+	</Item.Title>
+{/snippet}
 {#snippet contentNode()}
-	<Item.Content class="min-w-0 flex-1">
-		<Item.Title
-			class={[
-				"flex w-auto min-w-0 items-center gap-1 truncate",
-				{
-					"text-muted-foreground": !title.value,
-				},
-			]}
-		>
-			{@render title.badge?.()}
-			<ProfileStatusIndicator {onlineUntil} />
-			<DisplayName name={title.value} class="truncate" />
-		</Item.Title>
-		{@render description?.()}
-	</Item.Content>
-	{@render actions?.()}
+	{#if actionsPlacement === "title"}
+		<Item.Content class="min-w-0 flex-1">
+			<div class="flex min-w-0 items-center gap-2">
+				{@render titleNode("flex-1")}
+				{@render actions?.()}
+			</div>
+			{@render description?.()}
+		</Item.Content>
+	{:else}
+		<Item.Content class="min-w-0 flex-1">
+			{@render titleNode()}
+			{@render description?.()}
+		</Item.Content>
+		{@render actions?.()}
+	{/if}
 {/snippet}
 <Item.Root
 	variant={active ? "muted" : "outline"}
@@ -80,6 +102,7 @@
 			"[-webkit-touch-callout:none] **:[-webkit-touch-callout:none]":
 				!!onLongPress,
 		},
+		className,
 	]}
 	{...longPress}
 >
@@ -93,7 +116,10 @@
 		</a>
 		<a
 			href={link}
-			class="content gap-0.5 rounded-r-2xl p-4 ps-2 @max-row:hidden!"
+			class={[
+				"content gap-0.5 rounded-r-2xl @max-row:hidden!",
+				compact ? "py-3 ps-1 pe-3" : "p-4 ps-2",
+			]}
 			tabindex={linkTabindex}
 		>
 			{@render contentNode()}

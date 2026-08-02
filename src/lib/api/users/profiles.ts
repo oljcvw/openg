@@ -219,19 +219,21 @@ async function fetchProfile(
 	return profile;
 }
 
-const getProfilesResponseSchema = z.object({
-	profiles: z.array(
-		z.object({
-			...profileShortSchema.shape,
-			...profileRightNowSchema.shape,
-			rightNowStatus: rightNowAttributionStatusSchema.nullish().catch("NONE"),
-		}),
-	),
+const profileSummarySchema = z.object({
+	...profileShortSchema.shape,
+	...profileRightNowSchema.shape,
+	rightNowStatus: rightNowAttributionStatusSchema.nullish().catch("NONE"),
 });
+
+const getProfilesResponseSchema = z.object({
+	profiles: z.array(profileSummarySchema),
+});
+
+export type ProfileSummary = z.infer<typeof profileSummarySchema>;
 
 export async function getProfiles(
 	profileIds: number[],
-): Promise<z.infer<typeof getProfilesResponseSchema>["profiles"]> {
+): Promise<ProfileSummary[]> {
 	if (profileIds.length === 0) return [];
 	const session = getAccountSessionSnapshot();
 	const batchSize = Math.min(
