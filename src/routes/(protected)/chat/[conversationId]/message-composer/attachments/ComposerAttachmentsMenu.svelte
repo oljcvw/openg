@@ -113,7 +113,7 @@
 				<div
 					data-slot="sheet-panel"
 					class={[
-						" rounded-t-4xl border border-border bg-popover px-4 pb-20 shadow-xl",
+						"rounded-t-4xl border border-border bg-popover px-4 pb-[calc(var(--nav-height)+0.75rem)] shadow-xl",
 						{
 							"min-h-full": isFullsizeTab,
 						},
@@ -152,7 +152,7 @@
 
 			{#if selectedCount > 0}
 				<div
-					class="pointer-events-none absolute inset-x-0 bottom-18 flex justify-center"
+					class="pointer-events-none absolute inset-x-0 bottom-[calc(var(--nav-height)+0.5rem)] flex justify-center"
 					in:fly={{ duration: 600, y: 100, easing: expoOut }}
 					out:fly={{ duration: 400, y: 100, easing: sineIn }}
 				>
@@ -175,9 +175,11 @@
 			{/if}
 
 			<Drawer.Footer
-				class="absolute inset-x-0 bottom-0 items-center rounded-b-4xl pt-1 pb-2 select-none"
+				class="absolute inset-x-0 bottom-0 items-center rounded-b-4xl px-[clamp(0.5rem,2vw,1.5rem)] pt-1 pb-2 select-none"
 			>
-				<Tabs.List>
+				<Tabs.List
+					class="min-h-[calc(var(--nav-height)-0.5rem)] w-full gap-[clamp(0.5rem,2vw,1rem)]"
+				>
 					{@render tab("media")}
 					{@render tab("albums")}
 					{@render tab("location")}
@@ -188,15 +190,24 @@
 </Drawer.Root>
 
 {#snippet tab(tab: Tab)}
-	<Tabs.Trigger value={tab} class="h-auto flex-col gap-0.5 px-4 py-1.5">
+	<Tabs.Trigger
+		value={tab}
+		class="h-auto min-w-0 flex-col gap-0.5 px-[clamp(0.5rem,2vw,1rem)] py-1 text-[clamp(0.75rem,2vw,0.9375rem)]"
+	>
 		{#if tab === "media"}
-			<ImageIcon weight="fill" class="size-5" />
+			<ImageIcon weight="fill" class="size-[clamp(1.25rem,3.5vw,1.75rem)]" />
 			Media
 		{:else if tab === "albums"}
-			<FolderOpenIcon weight="fill" class="size-5" />
+			<FolderOpenIcon
+				weight="fill"
+				class="size-[clamp(1.25rem,3.5vw,1.75rem)]"
+			/>
 			Albums
 		{:else if tab === "location"}
-			<NavigationArrowIcon weight="fill" class="size-5" />
+			<NavigationArrowIcon
+				weight="fill"
+				class="size-[clamp(1.25rem,3.5vw,1.75rem)]"
+			/>
 			Location
 		{/if}
 	</Tabs.Trigger>

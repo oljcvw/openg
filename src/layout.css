@@ -136,6 +136,7 @@
 @theme {
 	--radius-grid: 17px;
 
+	--radius-chat-panel: 27px;
 	--radius-composer: 19px;
 }
 
@@ -172,7 +173,7 @@ body {
 	overscroll-behavior: none;
 	user-select: none;
 	-webkit-user-select: none;
-	--nav-height: 4rem;
+	--nav-height: clamp(4rem, 11vw, 5rem);
 	--selection-bar-height: 4.75rem;
 	--content-pb: calc(var(--nav-height) + var(--safe-area-bottom));
 	--screen-safe: calc(100dvh - var(--safe-area-top) - var(--safe-area-bottom));

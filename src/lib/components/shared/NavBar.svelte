@@ -31,12 +31,12 @@
 	tag="nav"
 	class="fixed bottom-0 z-50 w-full pt-2 pb-fixed-nav"
 	bgClass="bg-linear-to-t from-background to-transparent"
-	contentClass="overflow-auto no-scrollbar left-1/2 -translate-x-1/2 m-auto flex justify-center gap-2 px-2"
+	contentClass="overflow-auto no-scrollbar mx-auto flex w-full max-w-5xl justify-center gap-[clamp(0.5rem,2vw,1rem)] px-[clamp(0.5rem,2vw,1.5rem)]"
 >
 	<div
 		class={[
 			tabsListVariants({ variant: "default" }),
-			"links shrink-0 [&>a>svg]:size-5!",
+			"links min-w-0 flex-1 [&>a>svg]:size-[clamp(1.25rem,3.5vw,1.75rem)]!",
 		]}
 	>
 		<a
@@ -80,7 +80,7 @@
 	<a
 		href="/settings"
 		class={[
-			"flex size-14 shrink-0 rounded-full border bg-muted p-1",
+			"flex size-[calc(var(--nav-height)-0.5rem)] shrink-0 rounded-full border bg-muted p-1",
 			{
 				"border-2 border-accent":
 					page.route.id === "/(protected)/(navbar)/settings/(me)",
@@ -106,6 +106,12 @@
 	@reference "$layout";
 
 	.links a {
-		@apply relative inline-flex h-[calc(100%-1px)] flex-1 flex-col items-center justify-center gap-0.5 rounded-full border border-transparent! px-3 py-1 text-xs whitespace-nowrap text-foreground/60 group-data-vertical/tabs:rounded-2xl group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 dark:text-muted-foreground dark:hover:bg-input/20 data-active:font-medium data-active:text-foreground dark:data-active:border-input dark:data-active:text-accent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+		@apply relative inline-flex h-[calc(100%-1px)] flex-1 flex-col items-center justify-center gap-0.5 rounded-full border border-transparent! px-[clamp(0.5rem,2vw,1rem)] py-1 whitespace-nowrap text-foreground/60 group-data-vertical/tabs:rounded-2xl group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 dark:text-muted-foreground dark:hover:bg-input/20 data-active:font-medium data-active:text-foreground dark:data-active:border-input dark:data-active:text-accent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+		font-size: clamp(0.75rem, 2vw, 0.9375rem);
+	}
+
+	.links {
+		width: 100%;
+		min-height: calc(var(--nav-height) - 0.5rem);
 	}
 </style>
