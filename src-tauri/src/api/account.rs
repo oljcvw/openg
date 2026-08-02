@@ -82,10 +82,29 @@ async fn account_request(
 	path: &str,
 	body: Option<Value>,
 ) -> Result<(), AppError> {
-	let response = client
-		.request_authenticated_raw(method, path, body)
+	let runtime = super::runtime::ApiRuntime::get()
+		.ok_or_else(|| AppError::Http("API runtime unavailable".to_owned()))?;
+	let client = client.clone();
+	let path = path.to_owned();
+	let response = runtime
+		.request(super::runtime::RetryPolicy::NeverReplay, move || {
+			let client = client.clone();
+			let method = method.clone();
+			let path = path.clone();
+			let body = body.clone();
+			async move {
+				client.request_authenticated_raw(method, &path, body).await
+			}
+		})
 		.await
-		.map_err(safe_account_error)?;
+		.map_err(|error| match error {
+			super::runtime::RuntimeError::Grindr(error) => {
+				safe_account_error(error)
+			}
+			super::runtime::RuntimeError::Cooldown { retry_at_ms } => {
+				AppError::RequestCooldown { retry_at_ms }
+			}
+		})?;
 	if (200..300).contains(&response.status) {
 		return Ok(());
 	}

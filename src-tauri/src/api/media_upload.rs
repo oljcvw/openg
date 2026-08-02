@@ -81,16 +81,28 @@ pub async fn upload_chat_media(
 		});
 	}
 
-	let response = state
-		.client()?
-		.upload_chat_media(
-			bytes,
-			&content_type,
-			length,
-			looping,
-			taken_on_grindr,
-		)
-		.await?;
+	let runtime = super::runtime::ApiRuntime::get()
+		.ok_or_else(|| AppError::Http("API runtime unavailable".to_owned()))?;
+	let client = state.client()?.clone();
+	let response = runtime
+		.request(super::runtime::RetryPolicy::NeverReplay, move || {
+			let client = client.clone();
+			let bytes = bytes.clone();
+			let content_type = content_type.clone();
+			async move {
+				client
+					.upload_chat_media(
+						bytes,
+						&content_type,
+						length,
+						looping,
+						taken_on_grindr,
+					)
+					.await
+			}
+		})
+		.await
+		.map_err(runtime_error)?;
 
 	Ok(MediaUploadResponse {
 		media_id: response.media_id,
@@ -138,15 +150,28 @@ pub async fn upload_album_media(
 	let multipart_content_type =
 		format!("multipart/form-data; boundary={boundary}");
 	let path = format!("/v1/albums/{album_id}/content");
-	let response = state
-		.client()?
-		.request_authenticated_bytes(
-			grindr::Method::POST,
-			&path,
-			&multipart_content_type,
-			body,
-		)
-		.await?;
+	let runtime = super::runtime::ApiRuntime::get()
+		.ok_or_else(|| AppError::Http("API runtime unavailable".to_owned()))?;
+	let client = state.client()?.clone();
+	let response = runtime
+		.request(super::runtime::RetryPolicy::NeverReplay, move || {
+			let client = client.clone();
+			let path = path.clone();
+			let content_type = multipart_content_type.clone();
+			let body = body.clone();
+			async move {
+				client
+					.request_authenticated_bytes(
+						grindr::Method::POST,
+						&path,
+						&content_type,
+						body,
+					)
+					.await
+			}
+		})
+		.await
+		.map_err(runtime_error)?;
 	if !(200..300).contains(&response.status) {
 		return Err(grindr::GrindrError::from_response(
 			response.status,
@@ -157,6 +182,15 @@ pub async fn upload_album_media(
 	serde_json::from_slice(&response.body).map_err(|e| {
 		AppError::Http(format!("Failed to decode album upload response: {e}"))
 	})
+}
+
+fn runtime_error(error: super::runtime::RuntimeError) -> AppError {
+	match error {
+		super::runtime::RuntimeError::Grindr(error) => error.into(),
+		super::runtime::RuntimeError::Cooldown { retry_at_ms } => {
+			AppError::RequestCooldown { retry_at_ms }
+		}
+	}
 }
 
 #[cfg(test)]
