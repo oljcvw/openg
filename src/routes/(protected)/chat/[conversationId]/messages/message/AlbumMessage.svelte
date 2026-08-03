@@ -33,6 +33,7 @@
 		subscribePreferences,
 	} from "$lib/app-data/preferences.svelte";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+	import { observeBackgroundTask } from "$lib/platform/client-diagnostics";
 	import { getNow, subscribeNow } from "$lib/util/now.svelte";
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
 	import { albumExpiry } from "./album-expiry";
@@ -56,13 +57,20 @@
 		const unsubscribePreferences = subscribePreferences(() => {
 			keepUnavailable = getKeepUnavailableCachedAlbumsSnapshot();
 		});
-		void discoverSharedAlbum({
-			albumId: message.albumId,
-			ownerProfileId: message.ownerProfileId,
-			expirationType: message.expirationType,
-			expiresAt: message.viewableUntil ?? message.expiresAt,
-			isViewable: message.isViewable,
-		});
+		observeBackgroundTask(
+			discoverSharedAlbum({
+				albumId: message.albumId,
+				ownerProfileId: message.ownerProfileId,
+				expirationType: message.expirationType,
+				expiresAt: message.viewableUntil ?? message.expiresAt,
+				isViewable: message.isViewable,
+			}),
+			{
+				category: "background_task",
+				component: "album_message",
+				code: "album_discovery_failed",
+			},
+		);
 		return () => {
 			unsubscribeAlbum();
 			unsubscribePreferences();
@@ -242,6 +250,24 @@
 							? false
 							: usePlaceholder,
 				);
+				lightbox.on("uiRegister", () => {
+					lightbox?.pswp?.ui?.registerElement({
+						name: "album-position",
+						order: 7,
+						isButton: false,
+						appendTo: "wrapper",
+						onInit: (element, pswp) => {
+							element.setAttribute("role", "status");
+							element.setAttribute("aria-live", "polite");
+							element.setAttribute("aria-atomic", "true");
+							const updatePosition = () => {
+								element.textContent = `${pswp.currIndex + 1} / ${pswp.getNumItems()}`;
+							};
+							updatePosition();
+							pswp.on("change", updatePosition);
+						},
+					});
+				});
 				const onBackGesture = () => {
 					lightbox?.pswp?.close();
 					return false;
@@ -465,6 +491,25 @@
 		padding: 0.25rem 0.75rem;
 		color: white;
 		font-size: 0.75rem;
+	}
+	:global(.pswp__album-position) {
+		position: absolute;
+		top: calc(var(--safe-area-top) + 0.75rem);
+		left: 50%;
+		z-index: 21;
+		transform: translateX(-50%);
+		border: 1px solid var(--color-border);
+		border-radius: 9999px;
+		background: var(--color-card);
+		padding: 0.25rem 0.75rem;
+		color: var(--color-card-foreground);
+		font-size: 0.875rem;
+		font-weight: 600;
+		line-height: 1.25rem;
+		box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
+	}
+	:global(.pswp__cached-album-status + .pswp__album-position) {
+		top: calc(var(--safe-area-top) + 3rem);
 	}
 	:global(.og-album-missing) {
 		display: flex;

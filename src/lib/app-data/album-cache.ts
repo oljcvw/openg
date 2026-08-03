@@ -16,6 +16,7 @@ import {
 	getDeveloperSettingsSnapshot,
 } from "$lib/app-data/preferences.svelte";
 import { albumContentSchema } from "$lib/model/messaging/albums";
+import { observeBackgroundTask } from "$lib/platform/client-diagnostics";
 import { lookupAlbumMedia, storeAlbumMedia } from "./album-media-cache";
 import {
 	listCacheEntries,
@@ -123,7 +124,13 @@ export function subscribeCachedAlbum(
 	albumListeners.add(listener);
 	listeners.set(albumId, albumListeners);
 	if (records.has(albumId)) listener(records.get(albumId) ?? null);
-	else void readCachedAlbum(albumId).then(listener);
+	else {
+		observeBackgroundTask(readCachedAlbum(albumId).then(listener), {
+			category: "cache_recovery",
+			component: "album",
+			code: "album_cache_hydration_failed",
+		});
+	}
 	return () => {
 		albumListeners.delete(listener);
 		if (albumListeners.size === 0) listeners.delete(albumId);
@@ -203,7 +210,11 @@ export async function discoverSharedAlbum(
 	if (queued.has(discovery.albumId)) return;
 	queued.add(discovery.albumId);
 	queue.push(discovery);
-	void processQueue();
+	observeBackgroundTask(processQueue(), {
+		category: "background_task",
+		component: "album",
+		code: "album_discovery_queue_failed",
+	});
 }
 
 export async function markAlbumUnavailable(
