@@ -126,6 +126,7 @@ const preferencesSchema = z
 		geohash: geohashSchema.nullable().default(null),
 		gridSearchFilters: gridSearchFiltersSchema.optional(),
 		gridColumns: gridColumnsSchema.default("auto"),
+		keepBottomNavigationBehindKeyboard: z.boolean().default(true),
 		keepUnavailableCachedAlbums: z.boolean().default(false),
 		profileSwipeNavigation: z.boolean().optional(),
 		pendingProfileLocation: reportedProfileLocationSchema
@@ -249,6 +250,10 @@ export function getGridColumnsSnapshot(): GridColumns {
 
 export function getKeepUnavailableCachedAlbumsSnapshot(): boolean {
 	return preferencesSnapshot.keepUnavailableCachedAlbums;
+}
+
+export function getKeepBottomNavigationBehindKeyboardSnapshot(): boolean {
+	return preferencesSnapshot.keepBottomNavigationBehindKeyboard;
 }
 
 export function getContrastModeSnapshot(): ContrastMode {

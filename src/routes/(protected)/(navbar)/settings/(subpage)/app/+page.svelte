@@ -3,6 +3,7 @@
 	import ContrastSetting from "./ContrastSetting.svelte";
 	import GridColumnsSetting from "./GridColumnsSetting.svelte";
 	import KeepUnavailableCachedAlbumsSetting from "./KeepUnavailableCachedAlbumsSetting.svelte";
+	import KeyboardNavigationSetting from "./KeyboardNavigationSetting.svelte";
 	import NotificationsLink from "./NotificationsLink.svelte";
 	import ProfileSwipeNavigationSetting from "./ProfileSwipeNavigationSetting.svelte";
 	import RevealMessageReadSetting from "./RevealMessageReadSetting.svelte";
@@ -24,6 +25,7 @@
 <ProfileSwipeNavigationSetting />
 <h2>Messages</h2>
 <ShowRetractedMessagesSetting />
+<KeyboardNavigationSetting />
 <h2>Notifications</h2>
 <NotificationsLink />
 <h2>Privacy</h2>

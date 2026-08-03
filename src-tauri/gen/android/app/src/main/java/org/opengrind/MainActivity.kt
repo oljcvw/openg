@@ -23,12 +23,31 @@ import org.opengrind.notifications.NotificationNotifier
 import org.opengrind.notifications.NotificationRoute
 import org.opengrind.realtime.RealtimeNetworkMonitor
 
+internal enum class ImeLayoutMode(val bridgeValue: String) {
+	RESIZE("resize"),
+	OVERLAY_CHAT_NAVIGATION("overlay-chat-navigation");
+
+	companion object {
+		fun fromBridgeValue(value: String): ImeLayoutMode =
+			entries.firstOrNull { it.bridgeValue == value } ?: RESIZE
+	}
+}
+
+internal fun webViewImeBottomMargin(
+	mode: ImeLayoutMode,
+	imeVisible: Boolean,
+	imeBottomPixels: Int,
+): Int = if (imeVisible && mode == ImeLayoutMode.RESIZE) imeBottomPixels else 0
+
 class MainActivity : TauriActivity() {
 	private var insetsTop = 0
 	private var insetsBottom = 0
 	private var insetsLeft = 0
 	private var insetsRight = 0
 	@Volatile private var imeVisibleState = false
+	@Volatile private var imeBottomInset = 0
+	@Volatile private var imeBottomPixels = 0
+	@Volatile private var imeLayoutMode = ImeLayoutMode.RESIZE
 	private var webViewRef: WebView? = null
 	private var pendingWebViewWarning: WebViewSupport.Status? = null
 	private var shownWebViewWarning = false
@@ -65,6 +84,14 @@ class MainActivity : TauriActivity() {
 		@JavascriptInterface fun left() = insetsLeft
 		@JavascriptInterface fun right() = insetsRight
 		@JavascriptInterface fun imeVisible() = imeVisibleState
+		@JavascriptInterface fun imeBottom() = imeBottomInset
+		@JavascriptInterface fun setImeLayoutMode(mode: String) {
+			val resolvedMode = ImeLayoutMode.fromBridgeValue(mode)
+			runOnUiThread {
+				imeLayoutMode = resolvedMode
+				applyWebViewImeMargin()
+			}
+		}
 	}
 
 	inner class BackInterface {
@@ -108,22 +135,16 @@ class MainActivity : TauriActivity() {
 			val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
 			val isImeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
 			imeVisibleState = isImeVisible
+			imeBottomPixels = if (isImeVisible) ime.bottom else 0
 			val density = resources.displayMetrics.density
 			
 			insetsTop = (bars.top / density).toInt()
 			insetsBottom = if (isImeVisible) 0 else (bars.bottom / density).toInt()
 			insetsLeft = (bars.left / density).toInt()
 			insetsRight = (bars.right / density).toInt()
+			imeBottomInset = (imeBottomPixels / density).toInt()
 			
-			val bottomMargin = if (isImeVisible) ime.bottom else 0
-			webViewRef?.let { wv ->
-				(wv.layoutParams as? ViewGroup.MarginLayoutParams)?.let { params ->
-					if (params.bottomMargin != bottomMargin) {
-						params.bottomMargin = bottomMargin
-						wv.layoutParams = params
-					}
-				}
-			}
+			applyWebViewImeMargin()
 			
 			webViewRef?.evaluateJavascript("window.__reapplyInsets?.()", null)
 			
@@ -139,6 +160,22 @@ class MainActivity : TauriActivity() {
 		webView.addJavascriptInterface(ScreenInterface(), "__AndroidScreen")
 		openPendingNotificationRoute()
 		maybeWarnAboutWebView()
+	}
+
+	private fun applyWebViewImeMargin() {
+		val bottomMargin = webViewImeBottomMargin(
+			mode = imeLayoutMode,
+			imeVisible = imeVisibleState,
+			imeBottomPixels = imeBottomPixels,
+		)
+		webViewRef?.let { webView ->
+			(webView.layoutParams as? ViewGroup.MarginLayoutParams)?.let { params ->
+				if (params.bottomMargin != bottomMargin) {
+					params.bottomMargin = bottomMargin
+					webView.layoutParams = params
+				}
+			}
+		}
 	}
 
 	override fun onNewIntent(intent: Intent) {

@@ -78,6 +78,7 @@
 			{ "h-full": isFullsizeTab, "h-fit": !isFullsizeTab },
 		]}
 		handle={null}
+		style:bottom="var(--chat-ime-offset, 0px)"
 		onclick={(e) => {
 			if (
 				e.target instanceof HTMLDivElement &&

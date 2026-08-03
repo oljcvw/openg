@@ -51,12 +51,16 @@
 				bottom() {
 					return 64;
 				},
+				imeBottom() {
+					return 0;
+				},
 				left() {
 					return 0;
 				},
 				right() {
 					return 0;
 				},
+				setImeLayoutMode() {},
 			};
 		}
 		applyAndroidInsets();

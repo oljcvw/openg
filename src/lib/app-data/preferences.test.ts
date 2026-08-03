@@ -22,6 +22,7 @@ describe("preference migration", () => {
 			contrastMode: "standard",
 			developerSettings: DEFAULT_DEVELOPER_SETTINGS,
 			gridColumns: "auto",
+			keepBottomNavigationBehindKeyboard: true,
 			pendingProfileLocation: null,
 			profileSwipeNavigation: true,
 			reportedProfileLocation: null,
@@ -124,6 +125,14 @@ describe("preference migration", () => {
 			parsePreferences({ keepUnavailableCachedAlbums: true })
 				.keepUnavailableCachedAlbums,
 		).toBe(true);
+	});
+
+	it("keeps bottom navigation behind the keyboard by default", () => {
+		expect(parsePreferences({}).keepBottomNavigationBehindKeyboard).toBe(true);
+		expect(
+			parsePreferences({ keepBottomNavigationBehindKeyboard: false })
+				.keepBottomNavigationBehindKeyboard,
+		).toBe(false);
 	});
 
 	it("removes the retired navigation-button preference", () => {

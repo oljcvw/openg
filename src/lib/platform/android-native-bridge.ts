@@ -21,8 +21,24 @@ export function applyAndroidInsets() {
 		else value = "0px";
 		document.documentElement.style.setProperty(`--safe-area-${side}`, value);
 	}
+	const imeBottom = window.__AndroidInsets?.imeBottom?.() ?? 0;
+	document.documentElement.style.setProperty(
+		"--ime-bottom",
+		`${Math.max(0, imeBottom)}px`,
+	);
 
 	window.__reapplyInsets = applyAndroidInsets;
+}
+
+export function setChatImeOverlayEnabled(enabled: boolean): void {
+	const mode = enabled ? "overlay-chat-navigation" : "resize";
+	window.__AndroidInsets?.setImeLayoutMode?.(mode);
+	document.documentElement.toggleAttribute("data-chat-ime-overlay", enabled);
+	document.documentElement.style.setProperty(
+		"--chat-ime-offset",
+		enabled ? "var(--ime-bottom)" : "0px",
+	);
+	applyAndroidInsets();
 }
 
 export function isSoftKeyboardVisible(): boolean | undefined {

@@ -2,6 +2,7 @@
 	import { page } from "$app/state";
 	import { untrack } from "svelte";
 
+	import { getKeepBottomNavigationBehindKeyboardSnapshot } from "$lib/app-data/preferences.svelte";
 	import {
 		getOrCreateConversationsState,
 		setConversations,
@@ -9,6 +10,7 @@
 	import NavBar from "$lib/components/shared/NavBar.svelte";
 	import * as Card from "$lib/components/ui/card";
 	import * as Resizable from "$lib/components/ui/resizable";
+	import { setChatImeOverlayEnabled } from "$lib/platform/android-native-bridge";
 	import { below } from "$lib/util/breakpoints.svelte";
 	import ConversationsList from "./ConversationsList.svelte";
 
@@ -40,6 +42,15 @@
 	const isChatSelected = $derived(page.params.conversationId !== undefined);
 
 	const mobile = below("split");
+
+	$effect(() => {
+		const enabled =
+			isChatSelected &&
+			!mobile.current &&
+			getKeepBottomNavigationBehindKeyboardSnapshot();
+		setChatImeOverlayEnabled(enabled);
+		return () => setChatImeOverlayEnabled(false);
+	});
 </script>
 
 <main
