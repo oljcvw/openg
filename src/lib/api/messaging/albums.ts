@@ -16,7 +16,7 @@ import {
 import { type PickedMedia, readMediaBytes } from "$lib/platform/media-picker";
 import { toBase64 } from "$lib/util/base64";
 
-const albumResponseSchema = z.object({
+export const albumContentResponseSchema = z.object({
 	...albumMinSchema.shape,
 	...albumDetailsSchema.shape,
 	content: z.array(
@@ -33,10 +33,26 @@ export async function getAlbumContent(
 ) {
 	return await fetchRest(`/v2/albums/${albumId}`, {
 		signal: options.signal,
-	}).then((res) => res.jsonParsed(albumResponseSchema));
+	}).then((res) => res.jsonParsed(albumContentResponseSchema));
 }
 
 export type AlbumContentResponse = Awaited<ReturnType<typeof getAlbumContent>>;
+
+const albumContentViewResponseSchema = z.object({
+	remainingViews: z.int(),
+});
+
+export async function recordAlbumContentView({
+	albumId,
+	contentId,
+}: {
+	albumId: number;
+	contentId: number;
+}) {
+	return await fetchRest(`/v1/albums/${albumId}/view/content/${contentId}`, {
+		method: "POST",
+	}).then((res) => res.jsonParsed(albumContentViewResponseSchema));
+}
 
 const albumNameResponseSchema = z.object({
 	albumId: z.int(),

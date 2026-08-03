@@ -12,6 +12,12 @@ import {
 	writeAppDataFileAtomic,
 } from ".";
 import {
+	clearAlbumMediaCache,
+	getAlbumMediaCacheStats,
+	subscribeAlbumMediaCacheStats,
+	trimAlbumMediaCache,
+} from "./album-media-cache";
+import {
 	clearShortVideoCache,
 	getShortVideoCacheStats,
 	subscribeShortVideoCacheStats,
@@ -22,6 +28,7 @@ export const cacheKindSchema = z.enum([
 	"grid",
 	"inbox",
 	"conversation",
+	"album",
 	"taps",
 	"views",
 ]);
@@ -51,6 +58,7 @@ let manifest: CacheManifest | null = null;
 let queue: Promise<unknown> = Promise.resolve();
 let limitMb = DEFAULT_LIMIT_MB;
 let shortVideoCacheBytes = 0;
+let albumMediaCacheBytes = 0;
 const listeners = new Set<(usage: CacheUsage) => void>();
 
 export function parseCacheManifest(value: unknown): CacheManifest {
@@ -102,6 +110,7 @@ function usageOf(value: CacheManifest): CacheUsage {
 	return {
 		limitBytes: limitMb * 1024 * 1024,
 		usedBytes:
+			albumMediaCacheBytes +
 			shortVideoCacheBytes +
 			Object.values(value.entries).reduce(
 				(total, entry) => total + entry.sizeBytes,
@@ -164,6 +173,32 @@ export async function readCacheEntry<T>(
 	});
 }
 
+export async function listCacheEntries<T>(
+	accountId: number,
+	kind: CacheKind,
+	parse: (value: unknown) => T,
+): Promise<T[]> {
+	const session = getAccountSessionSnapshot();
+	if (session.accountId !== accountId) return [];
+	return await enqueue(async () => {
+		if (!isAccountSessionCurrent(session)) return [];
+		const value = await loadManifest();
+		const results: T[] = [];
+		for (const [id, entry] of Object.entries(value.entries)) {
+			if (entry.accountId !== accountId || entry.kind !== kind) continue;
+			try {
+				results.push(parse(decode(await readAppDataFile(entry.path))));
+			} catch (error) {
+				console.error("Cache entry hydration failed", error);
+				await removeAppDataFile(entry.path);
+				delete value.entries[id];
+			}
+		}
+		await persistManifest(value);
+		return isAccountSessionCurrent(session) ? results : [];
+	});
+}
+
 export async function writeCacheEntry(
 	accountId: number,
 	kind: CacheKind,
@@ -212,6 +247,7 @@ export async function removeCacheEntry(
 }
 
 export async function removeAccountCache(accountId: number): Promise<void> {
+	await clearAlbumMediaCache();
 	await clearShortVideoCache(accountId);
 	await enqueue(async () => {
 		const value = await loadManifest();
@@ -225,6 +261,7 @@ export async function removeAccountCache(accountId: number): Promise<void> {
 }
 
 export async function clearAllCachedData(): Promise<void> {
+	await clearAlbumMediaCache();
 	await clearShortVideoCache();
 	await enqueue(async () => {
 		const value = await loadManifest();
@@ -237,6 +274,7 @@ export async function clearAllCachedData(): Promise<void> {
 
 export async function setCacheLimitMb(value: number): Promise<void> {
 	limitMb = Math.min(1000, Math.max(10, Math.round(value / 10) * 10));
+	await trimAlbumMediaCache(limitMb * 1024 * 1024);
 	await enqueue(async () => {
 		const current = await loadManifest();
 		await evictToLimit(current);
@@ -245,6 +283,7 @@ export async function setCacheLimitMb(value: number): Promise<void> {
 }
 
 export async function getCacheUsage(): Promise<CacheUsage> {
+	albumMediaCacheBytes = (await getAlbumMediaCacheStats()).byteLength;
 	shortVideoCacheBytes = (await getShortVideoCacheStats()).byteLength;
 	return usageOf(await loadManifest());
 }
@@ -265,5 +304,10 @@ export function clearCacheManagerMemory(): void {
 
 subscribeShortVideoCacheStats((stats) => {
 	shortVideoCacheBytes = stats.byteLength;
+	if (manifest) notify(manifest);
+});
+
+subscribeAlbumMediaCacheStats((stats) => {
+	albumMediaCacheBytes = stats.byteLength;
 	if (manifest) notify(manifest);
 });

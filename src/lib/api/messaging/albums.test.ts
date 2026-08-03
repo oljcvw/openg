@@ -25,6 +25,7 @@ import {
 	getAlbumShares,
 	getAlbumsSharedByProfile,
 	getMyAlbums,
+	recordAlbumContentView,
 	renameAlbum,
 	reorderAlbumContent,
 	shareAlbum,
@@ -94,6 +95,19 @@ describe("getAlbumContent", () => {
 
 		expect(fetchRestMock).toHaveBeenCalledWith("/v2/albums/42", {
 			signal: controller.signal,
+		});
+	});
+});
+
+describe("recordAlbumContentView", () => {
+	it("records the viewed item and returns remaining views", async () => {
+		fetchRestMock.mockResolvedValue(response({ remainingViews: 0 }));
+
+		await expect(
+			recordAlbumContentView({ albumId: 42, contentId: 7 }),
+		).resolves.toEqual({ remainingViews: 0 });
+		expect(fetchRestMock).toHaveBeenCalledWith("/v1/albums/42/view/content/7", {
+			method: "POST",
 		});
 	});
 });

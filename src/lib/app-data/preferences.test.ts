@@ -33,6 +33,10 @@ describe("preference migration", () => {
 
 	it("validates developer tuning boundaries", () => {
 		expect(developerSettingsSchema.parse({})).toEqual({
+			albumCacheCdnRetryLimit: 2,
+			albumCacheMediaConcurrency: 2,
+			albumCacheRequestIntervalMs: 2_000,
+			albumCacheValidationMinutes: 60,
 			albumPreloadConcurrency: 3,
 			apiCircuitFailurePercent: 50,
 			apiCircuitMinimumSamples: 20,
@@ -51,6 +55,10 @@ describe("preference migration", () => {
 			mediaDiagnostics: false,
 			logErrorsToLogcat: false,
 		});
+		expect(
+			developerSettingsSchema.safeParse({ albumCacheRequestIntervalMs: 499 })
+				.success,
+		).toBe(false);
 		expect(
 			developerSettingsSchema.safeParse({ profileResolutionBatchSize: 31 })
 				.success,
@@ -96,6 +104,14 @@ describe("preference migration", () => {
 	it("preserves an explicit retracted-message opt-in", () => {
 		expect(
 			parsePreferences({ showRetractedMessages: true }).showRetractedMessages,
+		).toBe(true);
+	});
+
+	it("keeps unavailable cached albums locked by default", () => {
+		expect(parsePreferences({}).keepUnavailableCachedAlbums).toBe(false);
+		expect(
+			parsePreferences({ keepUnavailableCachedAlbums: true })
+				.keepUnavailableCachedAlbums,
 		).toBe(true);
 	});
 

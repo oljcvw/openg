@@ -129,12 +129,18 @@ pub fn run() {
         .plugin(api::notifications::plugin())
         .plugin(api::voice_recorder::plugin())
 		.plugin(api::video_call::plugin())
+		.plugin(api::album_cache::plugin())
         .manage(AppState)
         .invoke_handler(tauri::generate_handler![
             api::account::validate_password_complexity,
             api::account::update_account_password,
             api::account::update_account_email,
             api::account::delete_account,
+			api::album_cache::album_cache_store,
+			api::album_cache::album_cache_lookup,
+			api::album_cache::album_cache_stats,
+			api::album_cache::album_cache_trim,
+			api::album_cache::album_cache_clear,
             api::auth::login,
             api::auth::login_with_google,
             api::auth::google_sign_in,

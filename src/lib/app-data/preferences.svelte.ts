@@ -31,6 +31,15 @@ export type VideoCallQualityPreset = z.infer<
 
 export const developerSettingsSchema = z
 	.object({
+		albumCacheCdnRetryLimit: z.number().int().min(0).max(5).default(2),
+		albumCacheMediaConcurrency: z.number().int().min(1).max(4).default(2),
+		albumCacheRequestIntervalMs: z
+			.number()
+			.int()
+			.min(500)
+			.max(30_000)
+			.default(2_000),
+		albumCacheValidationMinutes: z.number().int().min(5).max(1_440).default(60),
 		albumPreloadConcurrency: z.number().int().min(1).max(8).default(3),
 		apiCircuitFailurePercent: z.number().int().min(25).max(50).default(50),
 		apiCircuitMinimumSamples: z.number().int().min(5).max(20).default(20),
@@ -85,6 +94,7 @@ const preferencesSchema = z
 		geohash: geohashSchema.nullable().default(null),
 		gridSearchFilters: gridSearchFiltersSchema.optional(),
 		gridColumns: gridColumnsSchema.default("auto"),
+		keepUnavailableCachedAlbums: z.boolean().default(false),
 		profileSwipeNavigation: z.boolean().optional(),
 		pendingProfileLocation: reportedProfileLocationSchema
 			.nullable()
@@ -203,6 +213,10 @@ export function getLocationActivitySnapshot(): LocationActivity {
 
 export function getGridColumnsSnapshot(): GridColumns {
 	return preferencesSnapshot.gridColumns;
+}
+
+export function getKeepUnavailableCachedAlbumsSnapshot(): boolean {
+	return preferencesSnapshot.keepUnavailableCachedAlbums;
 }
 
 export function getContrastModeSnapshot(): ContrastMode {

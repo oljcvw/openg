@@ -1,4 +1,5 @@
 pub mod account;
+pub mod album_cache;
 pub mod auth;
 pub mod diagnostics;
 pub mod google_oauth;
