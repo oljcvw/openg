@@ -7,28 +7,43 @@ import AlbumMessage from "./AlbumMessage.svelte";
 
 type LightboxHandler = () => void;
 
-const harness = vi.hoisted(() => ({
-	handlers: new Map<string, LightboxHandler[]>(),
-	registeredElement: null as {
-		name?: string;
-		onInit?: (element: HTMLElement, pswp: typeof harness.pswp) => void;
-	} | null,
-	pswp: {
-		currIndex: 0,
-		getNumItems: () => 3,
-		on(name: string, handler: LightboxHandler) {
-			harness.handlers.set(name, [
-				...(harness.handlers.get(name) ?? []),
-				handler,
-			]);
-		},
-		ui: {
-			registerElement(element: typeof harness.registeredElement) {
-				harness.registeredElement = element;
+type PhotoSwipeHarness = {
+	currIndex: number;
+	getNumItems: () => number;
+	on: (name: string, handler: LightboxHandler) => void;
+	ui: { registerElement: (element: RegisteredElement | null) => void };
+};
+
+type RegisteredElement = {
+	name?: string;
+	onInit?: (element: HTMLElement, pswp: PhotoSwipeHarness) => void;
+};
+
+const harness = vi.hoisted(
+	(): {
+		handlers: Map<string, LightboxHandler[]>;
+		registeredElement: RegisteredElement | null;
+		pswp: PhotoSwipeHarness;
+	} => ({
+		handlers: new Map<string, LightboxHandler[]>(),
+		registeredElement: null,
+		pswp: {
+			currIndex: 0,
+			getNumItems: () => 3,
+			on(name: string, handler: LightboxHandler) {
+				harness.handlers.set(name, [
+					...(harness.handlers.get(name) ?? []),
+					handler,
+				]);
+			},
+			ui: {
+				registerElement(element: RegisteredElement | null) {
+					harness.registeredElement = element;
+				},
 			},
 		},
-	},
-}));
+	}),
+);
 
 vi.mock("photoswipe/lightbox", () => ({
 	default: class PhotoSwipeLightboxMock {
