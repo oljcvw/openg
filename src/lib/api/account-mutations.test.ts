@@ -8,6 +8,7 @@ import {
 } from "$lib/api/account-mutations";
 import { clearLocalAccountState } from "$lib/api/sign-out";
 import { deleteFavoriteNotesForAccount } from "$lib/app-data/favorite-notes";
+import { deleteSavedPhrasesForAccount } from "$lib/app-data/saved-phrases";
 
 vi.mock("$lib/api", () => ({
 	callMethod: vi.fn(),
@@ -18,11 +19,17 @@ vi.mock("$lib/api/sign-out", () => ({
 vi.mock("$lib/app-data/favorite-notes", () => ({
 	deleteFavoriteNotesForAccount: vi.fn(),
 }));
+vi.mock("$lib/app-data/saved-phrases", () => ({
+	deleteSavedPhrasesForAccount: vi.fn(),
+}));
 
 const callMethodMock = vi.mocked(callMethod);
 const clearLocalAccountStateMock = vi.mocked(clearLocalAccountState);
 const deleteFavoriteNotesForAccountMock = vi.mocked(
 	deleteFavoriteNotesForAccount,
+);
+const deleteSavedPhrasesForAccountMock = vi.mocked(
+	deleteSavedPhrasesForAccount,
 );
 
 describe("account mutation local cleanup", () => {
@@ -39,6 +46,7 @@ describe("account mutation local cleanup", () => {
 		expect(callMethodMock).toHaveBeenNthCalledWith(1, "auth_state");
 		expect(callMethodMock).toHaveBeenNthCalledWith(2, "delete_account");
 		expect(deleteFavoriteNotesForAccountMock).toHaveBeenCalledWith(100);
+		expect(deleteSavedPhrasesForAccountMock).toHaveBeenCalledWith(100);
 		expect(callMethodMock).toHaveBeenNthCalledWith(
 			3,
 			"notification_clear_account",
@@ -58,6 +66,7 @@ describe("account mutation local cleanup", () => {
 		});
 
 		expect(deleteFavoriteNotesForAccountMock).not.toHaveBeenCalled();
+		expect(deleteSavedPhrasesForAccountMock).not.toHaveBeenCalled();
 		expect(callMethodMock).not.toHaveBeenCalledWith(
 			"notification_clear_account",
 			expect.anything(),

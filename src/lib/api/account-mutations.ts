@@ -3,6 +3,7 @@ import z from "zod";
 import { callMethod } from "$lib/api";
 import { clearLocalAccountState } from "$lib/api/sign-out";
 import { deleteFavoriteNotesForAccount } from "$lib/app-data/favorite-notes";
+import { deleteSavedPhrasesForAccount } from "$lib/app-data/saved-phrases";
 
 export class AccountDeletionCleanupError extends Error {
 	constructor(options: ErrorOptions) {
@@ -48,6 +49,7 @@ export async function deleteAccount(): Promise<void> {
 	try {
 		await Promise.all([
 			deleteFavoriteNotesForAccount(accountProfileId),
+			deleteSavedPhrasesForAccount(accountProfileId),
 			callMethod("notification_clear_account", {
 				accountId: accountProfileId,
 			}),
