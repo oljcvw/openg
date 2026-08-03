@@ -3,7 +3,7 @@
 
 	import { showErrorToast } from "$lib/api/error";
 	import {
-		type DeveloperSettings,
+		type GeneralDeveloperSettings,
 		getDeveloperSettingsSnapshot,
 		setDeveloperSettings,
 	} from "$lib/app-data/preferences.svelte";
@@ -20,7 +20,7 @@
 		unit,
 		onsaved,
 	}: {
-		setting: keyof DeveloperSettings;
+		setting: keyof GeneralDeveloperSettings;
 		title: string;
 		description: string;
 		min: number;

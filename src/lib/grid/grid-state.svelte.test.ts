@@ -23,6 +23,7 @@ vi.mock("$lib/app-data/grid-cache", () => ({
 	writeCachedGrid,
 }));
 vi.mock("$lib/app-data/preferences.svelte", () => ({
+	getBrowseAgeScaleSnapshot: vi.fn(() => ({ min: 18, max: 102 })),
 	getDeveloperSettingsSnapshot: vi.fn(() => ({
 		apiRequestTimeoutMs: 35_000,
 		apiProtectionCooldownMs: 30_000,

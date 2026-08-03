@@ -3,7 +3,7 @@
 
 	import { showErrorToast } from "$lib/api/error";
 	import {
-		type DeveloperSettings,
+		type GeneralDeveloperSettings,
 		getDeveloperSettingsSnapshot,
 		setDeveloperSettings,
 	} from "$lib/app-data/preferences.svelte";
@@ -16,10 +16,10 @@
 		onsaved,
 	}: {
 		setting: {
-			[K in keyof DeveloperSettings]: DeveloperSettings[K] extends boolean
+			[K in keyof GeneralDeveloperSettings]: GeneralDeveloperSettings[K] extends boolean
 				? K
 				: never;
-		}[keyof DeveloperSettings];
+		}[keyof GeneralDeveloperSettings];
 		title: string;
 		description: string;
 		onsaved?: (value: boolean) => void | Promise<void>;

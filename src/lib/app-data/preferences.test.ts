@@ -38,6 +38,8 @@ describe("preference migration", () => {
 			albumCacheRequestIntervalMs: 2_000,
 			albumCacheValidationMinutes: 60,
 			albumPreloadConcurrency: 3,
+			browseAgeScaleMax: 102,
+			browseAgeScaleMin: 18,
 			apiCircuitFailurePercent: 50,
 			apiCircuitMinimumSamples: 20,
 			apiCircuitOpenMs: 30_000,
@@ -83,6 +85,15 @@ describe("preference migration", () => {
 			developerSettingsSchema.safeParse({
 				apiCircuitWindowSize: 20,
 				apiCircuitMinimumSamples: 21,
+			}).success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ browseAgeScaleMin: 102 }).success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({
+				browseAgeScaleMin: 60,
+				browseAgeScaleMax: 55,
 			}).success,
 		).toBe(false);
 	});

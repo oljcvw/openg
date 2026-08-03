@@ -90,6 +90,17 @@ export class GridState {
 		this.#queueFetch(this.#geohash);
 	}
 
+	invalidate(): void {
+		this.#fetchToken += 1;
+		this.#pendingFetch = null;
+		this.#pendingLoadMore = false;
+		this.#reset();
+		this.loading = false;
+		this.refreshing = false;
+		this.scrollY = 0;
+		this.#geohash = null;
+	}
+
 	async refresh(): Promise<void> {
 		if (!this.#geohash || this.refreshing) return;
 		this.refreshing = true;

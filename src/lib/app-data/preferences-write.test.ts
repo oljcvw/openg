@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { defaultFilters } from "$lib/components/filters/filters";
+
 const {
 	existsAppDataFileMock,
 	readAppDataFileMock,
@@ -38,5 +40,52 @@ describe("developer preference writes", () => {
 			profileResolutionWindowMs: 125,
 		});
 		expect(writeAppDataFileAtomicMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("updates the age scale and clamps the persisted Browse selection atomically", async () => {
+		const {
+			getDeveloperSettingsSnapshot,
+			getPreferences,
+			setBrowseAgeScale,
+			setPreferences,
+		} = await import("./preferences.svelte");
+		await setPreferences({
+			gridSearchFilters: {
+				...defaultFilters,
+				ageEnabled: true,
+				age: [20, 80],
+			},
+		});
+
+		const result = await setBrowseAgeScale({ min: 25, max: 55 });
+
+		expect(result).toMatchObject({
+			ageSelectionClamped: true,
+			previousAge: [20, 80],
+			nextAge: [25, 55],
+			scale: { min: 25, max: 55 },
+		});
+		expect(result.gridSearchFilters).toMatchObject({
+			ageEnabled: true,
+			age: [25, 55],
+		});
+		expect(getDeveloperSettingsSnapshot()).toMatchObject({
+			browseAgeScaleMin: 25,
+			browseAgeScaleMax: 55,
+		});
+		expect((await getPreferences()).gridSearchFilters).toMatchObject({
+			ageEnabled: true,
+			age: [25, 55],
+		});
+		expect(writeAppDataFileAtomicMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("rejects age scale updates through the generic developer setter", async () => {
+		const { setDeveloperSettings } = await import("./preferences.svelte");
+
+		await expect(
+			setDeveloperSettings({ browseAgeScaleMin: 30 } as never),
+		).rejects.toThrow("dedicated atomic setter");
+		expect(writeAppDataFileAtomicMock).not.toHaveBeenCalled();
 	});
 });

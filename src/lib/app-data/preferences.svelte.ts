@@ -3,6 +3,14 @@ import { toast } from "svelte-sonner";
 import z from "zod";
 
 import {
+	AGE_MAX,
+	AGE_MIN,
+	type BrowseAgeScale,
+	browseAgeScaleSchema,
+	clampAgeRange,
+	DEFAULT_BROWSE_AGE_SCALE,
+	defaultFilters,
+	type GridSearchFilters,
 	gridSearchFiltersSchema,
 	rightNowFiltersSchema,
 } from "$lib/components/filters/filters";
@@ -41,6 +49,18 @@ export const developerSettingsSchema = z
 			.default(2_000),
 		albumCacheValidationMinutes: z.number().int().min(5).max(1_440).default(60),
 		albumPreloadConcurrency: z.number().int().min(1).max(8).default(3),
+		browseAgeScaleMax: z
+			.number()
+			.int()
+			.min(AGE_MIN)
+			.max(AGE_MAX)
+			.default(AGE_MAX),
+		browseAgeScaleMin: z
+			.number()
+			.int()
+			.min(AGE_MIN)
+			.max(AGE_MAX - 1)
+			.default(AGE_MIN),
 		apiCircuitFailurePercent: z.number().int().min(25).max(50).default(50),
 		apiCircuitMinimumSamples: z.number().int().min(5).max(20).default(20),
 		apiCircuitOpenMs: z.number().int().min(30_000).max(300_000).default(30_000),
@@ -80,8 +100,20 @@ export const developerSettingsSchema = z
 			message: "Circuit minimum samples cannot exceed the circuit window",
 			path: ["apiCircuitMinimumSamples"],
 		},
+	)
+	.refine(
+		(settings) => settings.browseAgeScaleMin <= settings.browseAgeScaleMax,
+		{
+			message: "Browse age scale minimum cannot exceed its maximum",
+			path: ["browseAgeScaleMin"],
+		},
 	);
 export type DeveloperSettings = z.infer<typeof developerSettingsSchema>;
+type DedicatedDeveloperSetting = "browseAgeScaleMax" | "browseAgeScaleMin";
+export type GeneralDeveloperSettings = Omit<
+	DeveloperSettings,
+	DedicatedDeveloperSetting
+>;
 export const DEFAULT_DEVELOPER_SETTINGS = developerSettingsSchema.parse({});
 
 const preferencesSchema = z
@@ -231,6 +263,12 @@ export function getDeveloperSettingsSnapshot(): DeveloperSettings {
 	return preferencesSnapshot.developerSettings;
 }
 
+export function getBrowseAgeScaleSnapshot(): BrowseAgeScale {
+	const { browseAgeScaleMin: min, browseAgeScaleMax: max } =
+		preferencesSnapshot.developerSettings;
+	return { min, max };
+}
+
 export function getProfileSwipeNavigationSnapshot(): boolean {
 	return preferencesSnapshot.profileSwipeNavigation;
 }
@@ -270,14 +308,63 @@ async function updatePreferences(
 }
 
 export async function setDeveloperSettings(
-	newValues: Partial<DeveloperSettings>,
+	newValues: Partial<GeneralDeveloperSettings>,
 ): Promise<void> {
+	if ("browseAgeScaleMin" in newValues || "browseAgeScaleMax" in newValues) {
+		throw new Error("Browse age scale requires its dedicated atomic setter");
+	}
 	await updatePreferences((current) => ({
 		developerSettings: developerSettingsSchema.parse({
 			...current.developerSettings,
 			...newValues,
 		}),
 	}));
+}
+
+export interface BrowseAgeScaleUpdateResult {
+	ageSelectionClamped: boolean;
+	gridSearchFilters: GridSearchFilters;
+	previousAge: [number, number];
+	nextAge: [number, number];
+	scale: BrowseAgeScale;
+}
+
+export async function setBrowseAgeScale(
+	newScale: BrowseAgeScale,
+): Promise<BrowseAgeScaleUpdateResult> {
+	const scale = browseAgeScaleSchema.parse(newScale);
+	let result: BrowseAgeScaleUpdateResult | undefined;
+	await updatePreferences((current) => {
+		const filters = current.gridSearchFilters ?? defaultFilters;
+		const previousAge = [...filters.age] as [number, number];
+		const nextAge = clampAgeRange(previousAge, scale);
+		const gridSearchFilters = gridSearchFiltersSchema.parse({
+			...filters,
+			age: nextAge,
+		});
+		result = {
+			ageSelectionClamped:
+				previousAge[0] !== nextAge[0] || previousAge[1] !== nextAge[1],
+			gridSearchFilters,
+			previousAge,
+			nextAge,
+			scale,
+		};
+		return {
+			developerSettings: developerSettingsSchema.parse({
+				...current.developerSettings,
+				browseAgeScaleMin: scale.min,
+				browseAgeScaleMax: scale.max,
+			}),
+			gridSearchFilters,
+		};
+	});
+	if (!result) throw new Error("Browse age scale update did not complete");
+	return result;
+}
+
+export async function resetBrowseAgeScale(): Promise<BrowseAgeScaleUpdateResult> {
+	return await setBrowseAgeScale(DEFAULT_BROWSE_AGE_SCALE);
 }
 
 export async function resetDeveloperSettings(): Promise<void> {

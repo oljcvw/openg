@@ -8,6 +8,7 @@
 	import { trimShortVideoCache } from "$lib/app-data/short-video-cache";
 	import { Button } from "$lib/components/ui/button";
 	import { applyLogcatSetting } from "$lib/platform/logcat-settings";
+	import DeveloperAgeScaleSetting from "./DeveloperAgeScaleSetting.svelte";
 	import DeveloperBooleanSetting from "./DeveloperBooleanSetting.svelte";
 	import DeveloperNumberSetting from "./DeveloperNumberSetting.svelte";
 	import DeveloperQualitySetting from "./DeveloperQualitySetting.svelte";
@@ -47,6 +48,7 @@
 </p>
 
 <h2>Browse</h2>
+<DeveloperAgeScaleSetting />
 <DeveloperNumberSetting
 	setting="profileResolutionBatchSize"
 	title="Profile resolution batch size"
