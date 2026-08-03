@@ -34,7 +34,7 @@
 <Item.Root variant="outline" class="gap-3 p-4">
 	<Item.Content class="gap-1">
 		<Item.Title>Video-call quality</Item.Title>
-		<Item.Description>
+		<Item.Description class="line-clamp-none">
 			Choose automatic adaptation, higher detail, or lower bandwidth.
 		</Item.Description>
 	</Item.Content>

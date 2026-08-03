@@ -65,12 +65,12 @@
 <Item.Root variant="outline" class="gap-3 p-4">
 	<Item.Content class="gap-1">
 		<Item.Title>{title}</Item.Title>
-		<Item.Description>{description}</Item.Description>
+		<Item.Description class="line-clamp-none">{description}</Item.Description>
 	</Item.Content>
-	<label class="flex items-center gap-3">
+	<label class="flex w-full flex-wrap items-center gap-3">
 		<Input
 			type="number"
-			class="w-28"
+			class="w-28 max-w-full"
 			{min}
 			{max}
 			{step}
