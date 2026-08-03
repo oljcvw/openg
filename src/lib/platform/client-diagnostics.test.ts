@@ -16,6 +16,7 @@ vi.mock("$lib/app-data/preferences.svelte", () => ({
 vi.mock("svelte-sonner", () => ({ toast: { error: toastErrorMock } }));
 
 import {
+	observeBackgroundTask,
 	registerGlobalErrorReporting,
 	reportClientDiagnostic,
 } from "./client-diagnostics";
@@ -93,5 +94,26 @@ describe("client diagnostics logcat preference", () => {
 		expect(invokeMock).toHaveBeenCalledWith("report_client_diagnostic", {
 			diagnostic,
 		});
+	});
+
+	it("owns rejected background work without presenting it globally", async () => {
+		settings.logErrorsToLogcat = true;
+
+		observeBackgroundTask(Promise.reject(new Error("private detail")), {
+			category: "background_task",
+			component: "chat",
+			code: "initial_scroll_restore_failed",
+		});
+		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledOnce());
+
+		expect(invokeMock).toHaveBeenCalledWith("report_client_diagnostic", {
+			diagnostic: {
+				category: "background_task",
+				component: "chat",
+				code: "initial_scroll_restore_failed",
+				level: "warning",
+			},
+		});
+		expect(toastErrorMock).not.toHaveBeenCalled();
 	});
 });

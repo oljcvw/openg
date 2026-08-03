@@ -11,6 +11,13 @@ export type ClientDiagnostic = {
 	level: DiagnosticLevel;
 };
 
+export type BackgroundTaskDiagnostic = {
+	category: string;
+	component: string;
+	code: string;
+	level?: DiagnosticLevel;
+};
+
 const recentUserErrors = new Map<string, number>();
 
 function diagnosticCode(error: unknown): string {
@@ -46,6 +53,20 @@ export function reportPresentedError(
 		component,
 		code: diagnosticCode(error),
 		level: "error",
+	});
+}
+
+export function observeBackgroundTask(
+	task: Promise<unknown>,
+	diagnostic: BackgroundTaskDiagnostic,
+): void {
+	void task.catch(() => {
+		reportClientDiagnostic({
+			category: diagnostic.category,
+			component: diagnostic.component,
+			code: diagnostic.code,
+			level: diagnostic.level ?? "warning",
+		});
 	});
 }
 

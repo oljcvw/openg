@@ -17,6 +17,7 @@
 	import { Input } from "$lib/components/ui/input";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+	import { observeBackgroundTask } from "$lib/platform/client-diagnostics";
 	import { below } from "$lib/util/breakpoints.svelte";
 	import { SelectionSet } from "$lib/util/selection.svelte";
 	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
@@ -46,11 +47,18 @@
 	let container: HTMLDivElement | null = $state(null);
 
 	onMount(() => {
-		void conversations.initial.then(tick).then(() => {
-			if (container && conversations.listScrollY > 0) {
-				container.scrollTop = conversations.listScrollY;
-			}
-		});
+		observeBackgroundTask(
+			conversations.initial.then(tick).then(() => {
+				if (container && conversations.listScrollY > 0) {
+					container.scrollTop = conversations.listScrollY;
+				}
+			}),
+			{
+				category: "background_task",
+				component: "inbox",
+				code: "initial_scroll_restore_failed",
+			},
+		);
 	});
 
 	let {
