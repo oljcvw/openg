@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { untrack } from "svelte";
+	import { toast } from "svelte-sonner";
 
+	import { showErrorToast } from "$lib/api/error";
+	import { getBrowseAgeScaleSnapshot } from "$lib/app-data/preferences.svelte";
 	import AcceptNSFWPicsFilter from "$lib/components/filters/AcceptNSFWPicsFilter.svelte";
 	import AgeFilter from "$lib/components/filters/age/AgeFilterField.svelte";
 	import BodyTypeFilter from "$lib/components/filters/BodyTypeFilter.svelte";
 	import FilterBoolean from "$lib/components/filters/FilterBoolean.svelte";
 	import {
+		clampAgeRange,
 		defaultFilters,
 		type GridSearchFilters,
 	} from "$lib/components/filters/filters";
@@ -22,6 +26,7 @@
 	import WeightFilter from "$lib/components/filters/WeightFilter.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import * as Sheet from "$lib/components/ui/sheet";
+	import { restoreDefaultBrowseAgeScale } from "$lib/grid/browse-age-scale";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 
@@ -31,8 +36,11 @@
 		open: boolean;
 	} = $props();
 
+	const ageScale = $derived(getBrowseAgeScaleSnapshot());
+
 	function snapshotFilters(): GridSearchFilters {
-		return { ...(gridState.filters.value ?? defaultFilters) };
+		const current = gridState.filters.value ?? defaultFilters;
+		return { ...current, age: clampAgeRange(current.age, ageScale) };
 	}
 
 	let filters = $state(snapshotFilters());
@@ -57,6 +65,15 @@
 			};
 		}
 	});
+
+	async function resetScale(): Promise<void> {
+		try {
+			await restoreDefaultBrowseAgeScale();
+			toast.success("Browse age slider scale reset");
+		} catch (error) {
+			showErrorToast({ label: "Failed to reset Browse age scale", error });
+		}
+	}
 </script>
 
 {#snippet col1()}
@@ -69,7 +86,13 @@
 	<FilterBoolean id="right-now" bind:checked={filters.isRightNow}>
 		Right now
 	</FilterBoolean>
-	<AgeFilter bind:checked={filters.ageEnabled} bind:value={filters.age} />
+	<AgeFilter
+		bind:checked={filters.ageEnabled}
+		bind:value={filters.age}
+		scale={ageScale}
+		onresetscale={resetScale}
+		onsettings={() => (open = false)}
+	/>
 	<GendersFilter
 		bind:checked={filters.genderEnabled}
 		bind:value={filters.genders}

@@ -2,8 +2,11 @@ import type { CDPSession, Page } from "@playwright/test";
 
 export const DEMO_CONVERSATION = "/chat/100001:123456000";
 
-export async function installTauriShim(page: Page): Promise<void> {
-	await page.addInitScript(() => {
+export async function installTauriShim(
+	page: Page,
+	initialFiles: Record<string, number[]> = {},
+): Promise<void> {
+	await page.addInitScript((seedFiles) => {
 		interface FsArgs {
 			path?: string;
 			oldPath?: string;
@@ -13,7 +16,12 @@ export async function installTauriShim(page: Page): Promise<void> {
 			headers?: Record<string, string>;
 		}
 
-		const files = new Map<string, Uint8Array>();
+		const files = new Map<string, Uint8Array>(
+			Object.entries(seedFiles).map(([path, bytes]) => [
+				path,
+				new Uint8Array(bytes),
+			]),
+		);
 
 		const invoke = (cmd: string, args?: unknown, opts?: unknown): unknown => {
 			const fs = (args ?? {}) as FsArgs;
@@ -62,7 +70,7 @@ export async function installTauriShim(page: Page): Promise<void> {
 					Promise.resolve(invoke(cmd, args, opts)),
 			},
 		});
-	});
+	}, initialFiles);
 }
 
 export class TrustedTouch {
