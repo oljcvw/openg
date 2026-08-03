@@ -62,6 +62,7 @@ export const developerSettingsSchema = z
 		shortVideoLooping: z.boolean().default(false),
 		videoCallQualityPreset: videoCallQualityPresetSchema.default("auto"),
 		mediaDiagnostics: z.boolean().default(false),
+		logErrorsToLogcat: z.boolean().default(false),
 	})
 	.refine(
 		(settings) =>

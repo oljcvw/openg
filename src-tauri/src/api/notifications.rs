@@ -179,6 +179,32 @@ struct NotificationScheduleInput {
 	interval_minutes: u64,
 }
 
+#[cfg(target_os = "android")]
+#[derive(Debug, Serialize)]
+struct LogcatSettingsInput {
+	enabled: bool,
+}
+
+#[tauri::command]
+pub async fn set_logcat_enabled(
+	app: tauri::AppHandle,
+	enabled: bool,
+) -> Result<(), AppError> {
+	crate::logging::set_logcat_enabled(enabled);
+	#[cfg(target_os = "android")]
+	{
+		let _: Value = run_mobile(
+			&app,
+			"setLogcatEnabled",
+			LogcatSettingsInput { enabled },
+		)
+		.await?;
+	}
+	#[cfg(not(target_os = "android"))]
+	let _ = app;
+	Ok(())
+}
+
 #[tauri::command]
 pub async fn notification_cancel(
 	app: tauri::AppHandle,

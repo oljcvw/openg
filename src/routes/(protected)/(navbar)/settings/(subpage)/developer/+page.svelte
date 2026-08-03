@@ -7,6 +7,7 @@
 	import { resetDeveloperSettings } from "$lib/app-data/preferences.svelte";
 	import { trimShortVideoCache } from "$lib/app-data/short-video-cache";
 	import { Button } from "$lib/components/ui/button";
+	import { applyLogcatSetting } from "$lib/platform/logcat-settings";
 	import DeveloperBooleanSetting from "./DeveloperBooleanSetting.svelte";
 	import DeveloperNumberSetting from "./DeveloperNumberSetting.svelte";
 	import DeveloperQualitySetting from "./DeveloperQualitySetting.svelte";
@@ -91,6 +92,12 @@
 <DeveloperQualitySetting />
 
 <h2>Diagnostics</h2>
+<DeveloperBooleanSetting
+	setting="logErrorsToLogcat"
+	title="Log errors to logcat"
+	description="Allow Open Grind diagnostics and errors to be written to Android logcat. Disabled by default to reduce system log clutter."
+	onsaved={applyLogcatSetting}
+/>
 <DeveloperBooleanSetting
 	setting="mediaDiagnostics"
 	title="Media diagnostics"

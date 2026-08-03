@@ -4,8 +4,8 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
-import android.util.Log
 import androidx.annotation.Keep
+import org.opengrind.logging.AppLog
 
 @Keep
 object RealtimeNetworkMonitor {
@@ -54,7 +54,7 @@ object RealtimeNetworkMonitor {
 				connectivityManager.registerDefaultNetworkCallback(callback)
 			}) return
 		} catch (error: RuntimeException) {
-			Log.w(TAG, "realtime network monitor initialization failed", error)
+			AppLog.warn(context, TAG, "realtime network monitor initialization failed", error)
 			dispatch(synchronized(lock) { state.unavailable() })
 		}
 	}

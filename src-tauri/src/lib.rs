@@ -163,6 +163,7 @@ pub fn run() {
             api::notifications::notification_sync,
             api::notifications::notification_cancel,
             api::notifications::notification_clear_account,
+			api::notifications::set_logcat_enabled,
             api::voice_recorder::voice_recorder_permission_status,
             api::voice_recorder::voice_recorder_request_permission,
             api::voice_recorder::voice_recorder_start,

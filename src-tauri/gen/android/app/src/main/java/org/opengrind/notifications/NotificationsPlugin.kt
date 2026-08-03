@@ -13,6 +13,7 @@ import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
+import org.opengrind.logging.AppLog
 
 @TauriPlugin(
 	permissions = [
@@ -25,6 +26,13 @@ import app.tauri.plugin.Plugin
 class NotificationsPlugin(private val activity: Activity) : Plugin(activity) {
 	private val preferences by lazy { NotificationPreferences(activity.applicationContext) }
 	private val notifier by lazy { NotificationNotifier(activity.applicationContext) }
+
+	@Command
+	fun setLogcatEnabled(invoke: Invoke) {
+		val enabled = invoke.parseArgs(LogcatSettingsArgs::class.java).enabled
+		AppLog.setEnabled(activity, enabled)
+		invoke.resolve()
+	}
 
 	@Command
 	fun getSettings(invoke: Invoke) {
@@ -146,6 +154,9 @@ class NotificationsPlugin(private val activity: Activity) : Plugin(activity) {
 	data class AccountArgs(
 		val accountId: String = "",
 	)
+
+	@InvokeArg
+	data class LogcatSettingsArgs(val enabled: Boolean = false)
 
 	companion object {
 		const val PERMISSION_ALIAS = "notifications"

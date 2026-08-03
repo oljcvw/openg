@@ -23,6 +23,7 @@
 	} from "$lib/platform/android-native-bridge";
 	import { blockZoom } from "$lib/platform/block-zoom";
 	import { registerGlobalErrorReporting } from "$lib/platform/client-diagnostics";
+	import { applyLogcatSetting } from "$lib/platform/logcat-settings";
 	import { registerMediaOriginLogging } from "$lib/platform/media-origin-logging";
 	import {
 		applyStayAwake,
@@ -66,9 +67,11 @@
 				console.error("Failed to register back button listener", error);
 			});
 		}
-		void hydratePreferences().catch((error) => {
-			console.error("Failed to hydrate preferences", error);
-		});
+		void hydratePreferences()
+			.then(() => applyLogcatSetting())
+			.catch((error) => {
+				console.error("Failed to hydrate preferences", error);
+			});
 		const releaseStayAwake = registerStayAwakeVisibilityListener();
 		const releaseApiHealth = registerApiHealthListener();
 		const releaseErrorReporting = registerGlobalErrorReporting();

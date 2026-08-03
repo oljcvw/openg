@@ -1,11 +1,11 @@
 package org.opengrind.notifications
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import org.opengrind.logging.AppLog
 
 class NotificationWorker(
 	appContext: Context,
@@ -16,28 +16,28 @@ class NotificationWorker(
 		val settings = preferences.settings()
 		if (!settings.enabled) return Result.success()
 		if (!settings.messages && !settings.taps) {
-			Log.i(TAG, "poll skipped: no enabled categories")
+			AppLog.info(applicationContext, TAG, "poll skipped: no enabled categories")
 			return Result.success()
 		}
 		if (isForeground()) {
-			Log.i(TAG, "poll skipped: app foreground")
+			AppLog.info(applicationContext, TAG, "poll skipped: app foreground")
 			return Result.success()
 		}
 		val notifier = NotificationNotifier(applicationContext)
 		if (!notifier.canNotify()) {
-			Log.i(TAG, "poll skipped: notification permission unavailable")
+			AppLog.info(applicationContext, TAG, "poll skipped: notification permission unavailable")
 			return Result.success()
 		}
 
-		Log.i(TAG, "poll started")
+		AppLog.info(applicationContext, TAG, "poll started")
 		return when (val result = tryPoll(settings)) {
 			PollResult.SignedOut -> Result.success()
 			PollResult.Deferred -> {
-				Log.i(TAG, "poll deferred by API runtime")
+				AppLog.info(applicationContext, TAG, "poll deferred by API runtime")
 				Result.success()
 			}
 			is PollResult.Failed -> {
-				Log.w(TAG, "poll failed: ${result.code.wireName}")
+				AppLog.warn(applicationContext, TAG, "poll failed: ${result.code.wireName}")
 				preferences.recordFailure()
 				Result.success()
 			}
@@ -52,7 +52,7 @@ class NotificationWorker(
 			tapsEnabled = settings.taps,
 		)
 	} catch (error: Exception) {
-		Log.w(TAG, "notification bridge failed", error)
+		AppLog.warn(applicationContext, TAG, "notification bridge failed", error)
 		PollResult.Failed(PollFailureCode.AndroidBridge)
 	}
 
@@ -81,7 +81,7 @@ class NotificationWorker(
 			display = notifier::show,
 		)
 		if (processed == null) {
-			Log.i(TAG, "poll result suppressed by current notification state")
+			AppLog.info(applicationContext, TAG, "poll result suppressed by current notification state")
 			return Result.success()
 		}
 		val decision = processed.decision
@@ -91,7 +91,7 @@ class NotificationWorker(
 		if (!initialized) preferences.initialize(result.accountId)
 
 		preferences.recordSuccess(System.currentTimeMillis())
-		Log.i(TAG, "poll completed: displayed=${processed.displayedCount}")
+		AppLog.info(applicationContext, TAG, "poll completed: displayed=${processed.displayedCount}")
 		return Result.success()
 	}
 

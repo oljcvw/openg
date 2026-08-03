@@ -49,6 +49,7 @@ describe("preference migration", () => {
 			shortVideoLooping: false,
 			videoCallQualityPreset: "auto",
 			mediaDiagnostics: false,
+			logErrorsToLogcat: false,
 		});
 		expect(
 			developerSettingsSchema.safeParse({ profileResolutionBatchSize: 31 })

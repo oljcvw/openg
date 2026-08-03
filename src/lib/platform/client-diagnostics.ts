@@ -1,6 +1,7 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { toast } from "svelte-sonner";
 
+import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
 export type DiagnosticLevel = "info" | "warning" | "error";
 
 export type ClientDiagnostic = {
@@ -13,15 +14,23 @@ export type ClientDiagnostic = {
 const recentUserErrors = new Map<string, number>();
 
 function diagnosticCode(error: unknown): string {
+	if (error === undefined || error === null) return "empty_rejection";
 	if (error && typeof error === "object" && "kind" in error) {
 		const kind = String(error.kind).replaceAll(/[^a-z0-9_-]/gi, "_");
 		return `api_${kind}`.slice(0, 48);
 	}
-	return error instanceof Error ? "javascript_error" : "unknown_error";
+	if (error instanceof Error) return "javascript_error";
+	if (typeof error === "string") return "string_rejection";
+	return typeof error === "object" ? "opaque_rejection" : "primitive_rejection";
+}
+
+function shouldPresentUnexpectedError(error: unknown): boolean {
+	if (error === undefined || error === null) return false;
+	return error instanceof Error || typeof error !== "object" || "kind" in error;
 }
 
 export function reportClientDiagnostic(diagnostic: ClientDiagnostic): void {
-	if (!isTauri()) return;
+	if (!isTauri() || !getDeveloperSettingsSnapshot().logErrorsToLogcat) return;
 	void invoke("report_client_diagnostic", { diagnostic }).catch(() => {
 		// Diagnostics must never interfere with application behavior.
 	});
@@ -50,8 +59,9 @@ function showUnexpectedError(error: unknown, source: string): void {
 		category: "unexpected_error",
 		component: source,
 		code,
-		level: "error",
+		level: shouldPresentUnexpectedError(error) ? "error" : "warning",
 	});
+	if (!shouldPresentUnexpectedError(error)) return;
 	toast.error("Something went wrong", {
 		description: "The error was recorded for diagnostics.",
 		id: `unexpected-error-${source}`,
