@@ -86,6 +86,32 @@ export async function sendMessage({
 	}).then((res) => res.jsonParsed(apiResponseMessageSchema));
 }
 
+export async function sendReplyMessage({
+	toUserId,
+	message,
+	replyToMessageId,
+}: {
+	toUserId: number;
+	message: z.infer<typeof messageSchema>;
+	replyToMessageId: string;
+}) {
+	const ref = crypto.randomUUID();
+	return await ws.request(
+		"chat.v1.message.send",
+		{
+			type: message.type,
+			target: {
+				type: "Direct",
+				targetId: toUserId,
+			},
+			body: toOutboundBody(message),
+			ref,
+			replyToMessageId,
+		},
+		apiResponseMessageSchema,
+	);
+}
+
 export function sendExpiringVideoMessage({
 	toUserId,
 	mediaId,

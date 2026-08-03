@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchRestMock, wsSendMock } = vi.hoisted(() => ({
+const { fetchRestMock, wsRequestMock, wsSendMock } = vi.hoisted(() => ({
 	fetchRestMock: vi.fn(),
+	wsRequestMock: vi.fn(),
 	wsSendMock: vi.fn(),
 }));
 
@@ -9,7 +10,9 @@ vi.mock("$lib/api", async (importOriginal) => ({
 	...(await importOriginal<typeof import("$lib/api")>()),
 	fetchRest: fetchRestMock,
 }));
-vi.mock("$lib/ws.svelte", () => ({ ws: { send: wsSendMock } }));
+vi.mock("$lib/ws.svelte", () => ({
+	ws: { request: wsRequestMock, send: wsSendMock },
+}));
 
 import {
 	deleteMessageForMe,
@@ -18,6 +21,7 @@ import {
 	reactToMessage,
 	sendExpiringVideoMessage,
 	sendMessage,
+	sendReplyMessage,
 	unsendMessage,
 } from "$lib/api/messaging/messages";
 
@@ -62,6 +66,7 @@ function response({
 beforeEach(() => {
 	fetchRestMock.mockReset();
 	wsSendMock.mockReset();
+	wsRequestMock.mockReset();
 });
 
 afterEach(() => {
@@ -237,6 +242,65 @@ describe("message API wrappers", () => {
 			target: { type: "Direct", targetId: 99 },
 			body: { mediaId: 910_003, looping: false, maxViews: 2 },
 		});
+	});
+
+	it("sends replies over the exact WebSocket command contract", async () => {
+		vi.spyOn(crypto, "randomUUID").mockReturnValue(
+			"00000000-0000-4000-8000-000000000003",
+		);
+		const message = apiMessage({
+			refValue: "00000000-0000-4000-8000-000000000003",
+		});
+		wsRequestMock.mockResolvedValue(message);
+
+		await expect(
+			sendReplyMessage({
+				toUserId: 99,
+				message: { type: "Text", body: { text: "hello" } },
+				replyToMessageId: "original-message",
+			}),
+		).resolves.toEqual(message);
+
+		expect(wsRequestMock).toHaveBeenCalledWith(
+			"chat.v1.message.send",
+			{
+				type: "Text",
+				target: { type: "Direct", targetId: 99 },
+				body: { text: "hello" },
+				ref: "00000000-0000-4000-8000-000000000003",
+				replyToMessageId: "original-message",
+			},
+			expect.anything(),
+		);
+		expect(fetchRestMock).not.toHaveBeenCalled();
+	});
+
+	it("sends reply media by reference without changing plain sends", async () => {
+		vi.spyOn(crypto, "randomUUID").mockReturnValue(
+			"00000000-0000-4000-8000-000000000004",
+		);
+		wsRequestMock.mockResolvedValue(apiMessage({ type: "Image" }));
+		const imageBody = {
+			mediaId: 910_001,
+			width: null,
+			height: null,
+			url: "https://cdns.grindr.com/images/chat/a".padEnd(100, "b"),
+			imageHash: "a".repeat(64),
+			takenOnGrindr: false,
+			createdAt: 1_710_000_000_000,
+		};
+
+		await sendReplyMessage({
+			toUserId: 99,
+			message: { type: "Image", body: imageBody },
+			replyToMessageId: "original-message",
+		});
+
+		expect(wsRequestMock).toHaveBeenCalledWith(
+			"chat.v1.message.send",
+			expect.objectContaining({ body: { mediaId: 910_001 } }),
+			expect.anything(),
+		);
 	});
 
 	it("sends location coordinates unchanged", async () => {

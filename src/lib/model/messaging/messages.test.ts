@@ -111,6 +111,65 @@ describe("apiResponseMessageSchema", () => {
 		expect(message.type).toBe("Unknown");
 		expect(message.body).toEqual({ sourceType: "Audio" });
 	});
+
+	it("parses one reply level and preserves message correlation", () => {
+		const message = apiResponseMessageSchema.parse({
+			type: "Text",
+			body: { text: "reply" },
+			messageId: "msg-2",
+			conversationId: "conversation-1",
+			senderId: 42,
+			timestamp: 1_710_000_000_001,
+			unsent: false,
+			reactions: [],
+			refValue: "client-message-ref",
+			replyToMessage: {
+				type: "Text",
+				body: { text: "original" },
+				messageId: "msg-1",
+				conversationId: "conversation-1",
+				senderId: 99,
+				timestamp: 1_710_000_000_000,
+				unsent: false,
+				reactions: [],
+				replyToMessage: {
+					type: "Text",
+					body: { text: "must not recurse" },
+					messageId: "msg-0",
+					conversationId: "conversation-1",
+					senderId: 7,
+					timestamp: 1_709_999_999_999,
+					unsent: false,
+					reactions: [],
+				},
+			},
+		});
+
+		expect(message.refValue).toBe("client-message-ref");
+		expect(message.replyToMessage).toMatchObject({
+			type: "Text",
+			body: { text: "original" },
+			messageId: "msg-1",
+		});
+		expect(message.replyToMessage).not.toHaveProperty("replyToMessage");
+	});
+
+	it("accepts a nullable reply and correlation reference", () => {
+		const message = apiResponseMessageSchema.parse({
+			type: "Text",
+			body: { text: "plain" },
+			messageId: "msg-1",
+			conversationId: "conversation-1",
+			senderId: 42,
+			timestamp: 1_710_000_000_000,
+			unsent: false,
+			reactions: [],
+			refValue: null,
+			replyToMessage: null,
+		});
+
+		expect(message).toMatchObject({ refValue: null, replyToMessage: null });
+	});
 });
 
 describe("applyMessageRetractions", () => {

@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { toast } from "svelte-sonner";
 import z from "zod";
 
+import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
 import { tapTypeSchema } from "$lib/model/interest/taps";
 import { mediaHashPublicSchema } from "$lib/model/media";
 import { apiResponseMessageSchema } from "$lib/model/messaging/messages";
@@ -209,6 +210,73 @@ class WsState {
 				code: "send_failed",
 				level: "error",
 			});
+		});
+	}
+
+	request<T>(type: string, payload: unknown, schema: z.ZodType<T>): Promise<T> {
+		const ref_id = crypto.randomUUID();
+		const responseType = `${type}.response`;
+		const safeName = responseType.replaceAll(".", "_");
+		const responseSchema = z.object({
+			type: z.literal(responseType),
+			ref: z.string(),
+			status: z.number().int(),
+			payload: z.unknown(),
+		});
+		const { apiRequestTimeoutMs } = getDeveloperSettingsSnapshot();
+
+		return new Promise<T>((resolve, reject) => {
+			let settled = false;
+			let timeout: ReturnType<typeof setTimeout> | undefined;
+			let unlisten: (() => void) | undefined;
+
+			const finish = (result: { data: T } | { error: unknown }) => {
+				if (settled) return;
+				settled = true;
+				if (timeout !== undefined) clearTimeout(timeout);
+				unlisten?.();
+				if ("data" in result) resolve(result.data);
+				else {
+					reject(
+						result.error instanceof Error
+							? result.error
+							: new Error("WebSocket request failed"),
+					);
+				}
+			};
+
+			void listen<unknown>(`grindr:${safeName}`, (event) => {
+				const envelope = responseSchema.safeParse(event.payload);
+				if (!envelope.success || envelope.data.ref !== ref_id) return;
+				if (envelope.data.status < 200 || envelope.data.status >= 300) {
+					finish({
+						error: new Error(
+							`WebSocket request failed with status ${envelope.data.status}`,
+						),
+					});
+					return;
+				}
+				const parsed = schema.safeParse(envelope.data.payload);
+				if (!parsed.success) {
+					finish({ error: new Error("Invalid WebSocket response payload") });
+					return;
+				}
+				finish({ data: parsed.data });
+			})
+				.then((removeListener) => {
+					unlisten = removeListener;
+					if (settled) {
+						removeListener();
+						return;
+					}
+					timeout = setTimeout(() => {
+						finish({ error: new Error("WebSocket request timed out") });
+					}, apiRequestTimeoutMs);
+					return invoke("ws_send", {
+						command: { type, ref_id, payload },
+					});
+				})
+				.catch((error: unknown) => finish({ error }));
 		});
 	}
 

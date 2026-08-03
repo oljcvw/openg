@@ -1,18 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 
-const { invokeMock, listenMock, listeners, reportClientDiagnosticMock } =
-	vi.hoisted(() => ({
-		invokeMock: vi.fn(),
-		listenMock: vi.fn(
-			(eventName: string, handler: (event: { payload: unknown }) => void) => {
-				listeners.set(eventName, handler);
-				return Promise.resolve(vi.fn());
-			},
-		),
-		listeners: new Map<string, (event: { payload: unknown }) => void>(),
-		reportClientDiagnosticMock: vi.fn(),
-	}));
+const {
+	getDeveloperSettingsSnapshotMock,
+	invokeMock,
+	listenMock,
+	listeners,
+	reportClientDiagnosticMock,
+	unlistenMock,
+} = vi.hoisted(() => ({
+	getDeveloperSettingsSnapshotMock: vi.fn(() => ({
+		apiRequestTimeoutMs: 35_000,
+	})),
+	invokeMock: vi.fn(),
+	listenMock: vi.fn(
+		(eventName: string, handler: (event: { payload: unknown }) => void) => {
+			listeners.set(eventName, handler);
+			return Promise.resolve(unlistenMock);
+		},
+	),
+	listeners: new Map<string, (event: { payload: unknown }) => void>(),
+	reportClientDiagnosticMock: vi.fn(),
+	unlistenMock: vi.fn(),
+}));
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: invokeMock }));
 vi.mock("@tauri-apps/api/event", () => ({
@@ -20,6 +30,9 @@ vi.mock("@tauri-apps/api/event", () => ({
 }));
 vi.mock("$lib/platform/client-diagnostics", () => ({
 	reportClientDiagnostic: reportClientDiagnosticMock,
+}));
+vi.mock("$lib/app-data/preferences.svelte", () => ({
+	getDeveloperSettingsSnapshot: getDeveloperSettingsSnapshotMock,
 }));
 
 import { ws } from "./ws.svelte";
@@ -29,6 +42,10 @@ describe("WsState validation diagnostics", () => {
 		vi.restoreAllMocks();
 		invokeMock.mockReset();
 		reportClientDiagnosticMock.mockReset();
+		unlistenMock.mockReset();
+		getDeveloperSettingsSnapshotMock.mockReturnValue({
+			apiRequestTimeoutMs: 35_000,
+		});
 	});
 
 	afterEach(() => vi.restoreAllMocks());
@@ -122,5 +139,96 @@ describe("WsState validation diagnostics", () => {
 			"[ws] listener registration failed",
 			{ code: "subscribe_chat_v1_message_sent" },
 		);
+	});
+});
+
+describe("WsState request", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		invokeMock.mockReset();
+		unlistenMock.mockReset();
+		getDeveloperSettingsSnapshotMock.mockReturnValue({
+			apiRequestTimeoutMs: 35_000,
+		});
+		vi.spyOn(crypto, "randomUUID")
+			.mockReturnValueOnce("00000000-0000-4000-8000-000000000001")
+			.mockReturnValueOnce("00000000-0000-4000-8000-000000000002");
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		vi.restoreAllMocks();
+	});
+
+	it("matches the response command ref and cleans up its listener", async () => {
+		invokeMock.mockResolvedValue(undefined);
+		const request = ws.request(
+			"chat.v1.message.send",
+			{ body: { text: "hello" } },
+			z.object({ messageId: z.string() }),
+		);
+		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledTimes(1));
+
+		expect(invokeMock).toHaveBeenCalledWith("ws_send", {
+			command: {
+				type: "chat.v1.message.send",
+				ref_id: "00000000-0000-4000-8000-000000000001",
+				payload: { body: { text: "hello" } },
+			},
+		});
+
+		const response = listeners.get("grindr:chat_v1_message_send_response");
+		response?.({
+			payload: {
+				type: "chat.v1.message.send.response",
+				ref: "different-ref",
+				status: 200,
+				payload: { messageId: "wrong" },
+			},
+		});
+		response?.({
+			payload: {
+				type: "chat.v1.message.send.response",
+				ref: "00000000-0000-4000-8000-000000000001",
+				status: 200,
+				payload: { messageId: "msg-1" },
+			},
+		});
+
+		await expect(request).resolves.toEqual({ messageId: "msg-1" });
+		expect(unlistenMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("uses the configured timeout and removes the response listener", async () => {
+		getDeveloperSettingsSnapshotMock.mockReturnValue({
+			apiRequestTimeoutMs: 5_000,
+		});
+		invokeMock.mockResolvedValue(undefined);
+		const request = ws.request(
+			"chat.v1.message.send",
+			{},
+			z.object({ messageId: z.string() }),
+		);
+		const rejection = expect(request).rejects.toThrow(
+			"WebSocket request timed out",
+		);
+		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledTimes(1));
+
+		await vi.advanceTimersByTimeAsync(5_000);
+
+		await rejection;
+		expect(unlistenMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("cleans up when the native send fails", async () => {
+		invokeMock.mockRejectedValue(new Error("send failed"));
+		const request = ws.request(
+			"chat.v1.message.send",
+			{},
+			z.object({ messageId: z.string() }),
+		);
+
+		await expect(request).rejects.toThrow("send failed");
+		expect(unlistenMock).toHaveBeenCalledTimes(1);
 	});
 });

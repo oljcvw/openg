@@ -17,23 +17,51 @@ const messageBaseSchema = z.object({
 	body: z.unknown(),
 });
 
-export const apiResponseMessageOverlaySchema = z.object({
+const apiResponseMessageMetadataSchema = z.object({
 	messageId: z.string(),
 	conversationId: z.string(),
 	senderId: z.int().nonnegative(),
 	timestamp: unixTimestampMsSchema,
 	unsent: z.boolean(),
+	refValue: z.string().nullable().optional(),
 	reactions: z.array(
 		z.object({
 			profileId: z.int().nonnegative(),
 			reactionType: z.int().nonnegative(),
 		}),
 	),
-	// replyToMessage: z.unknown().nullable(),
 	// dynamic: z.boolean(),
 	// chat1Type: z.string(),
 	// replyPreview: z.unknown().nullable(),
 });
+
+const oneLevelApiResponseMessageSchema: z.ZodType = z.lazy(() =>
+	z.unknown().transform((value, ctx) => {
+		const parsed = strictOneLevelApiResponseMessageSchema.safeParse(value);
+		if (parsed.success) return parsed.data;
+		const metadata = apiResponseMessageMetadataSchema.safeParse(value);
+		if (!metadata.success) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Invalid reply message metadata",
+			});
+			return z.NEVER;
+		}
+		return {
+			...metadata.data,
+			type: "Unknown" as const,
+			body: { sourceType: safeSourceType(value) },
+		};
+	}),
+);
+
+export const apiResponseMessageOverlaySchema =
+	apiResponseMessageMetadataSchema.safeExtend({
+		replyToMessage: z
+			.lazy(() => oneLevelApiResponseMessageSchema)
+			.nullable()
+			.optional(),
+	});
 
 export const albumMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Album"),
@@ -302,6 +330,19 @@ export const messageSchema = z.discriminatedUnion("type", [
 	videoCallMessageSchema,
 	videoMessageSchema,
 ]);
+
+const oneLevelUnsentMessageSchema = z.intersection(
+	messageBaseSchema.safeExtend({
+		type: z.string().transform((): "Unsent" => "Unsent"),
+		unsent: z.literal(true),
+		body: z.null(),
+	}),
+	apiResponseMessageMetadataSchema,
+);
+
+const strictOneLevelApiResponseMessageSchema = z
+	.intersection(messageSchema, apiResponseMessageMetadataSchema)
+	.or(oneLevelUnsentMessageSchema);
 
 export const unsentMessageSchema = z.intersection(
 	messageBaseSchema.safeExtend({
