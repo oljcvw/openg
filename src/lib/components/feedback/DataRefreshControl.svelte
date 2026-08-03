@@ -83,6 +83,7 @@
 	const DISC_WINDOW = DISC_REST + DISC_TRAVEL + DISC_SIZE + DISC_SHADOW;
 	const discTop = new Tween(DISC_START, { duration: 250, easing: cubicOut });
 	let discOutro = $state(false);
+	const settleTween = (update: Promise<void>) => void update.catch(() => {});
 
 	function discDragTop(displayPx: number): number {
 		const drag = Math.min(1, displayPx / ARM_PX);
@@ -130,11 +131,11 @@
 
 	$effect(() => {
 		if (model.gestureActive && model.source === "touch") {
-			void discTop.set(discDragTop(model.displayPx), { duration: 0 });
+			settleTween(discTop.set(discDragTop(model.displayPx), { duration: 0 }));
 		} else if (busy) {
-			void discTop.set(DISC_REST);
+			settleTween(discTop.set(DISC_REST));
 		} else if (discShown) {
-			void discTop.set(DISC_START);
+			settleTween(discTop.set(DISC_START));
 		}
 	});
 
@@ -171,9 +172,9 @@
 
 	$effect(() => {
 		if (model.gestureActive && model.source === "overscroll") {
-			void reveal.set(model.displayPx, { duration: 0 });
+			settleTween(reveal.set(model.displayPx, { duration: 0 }));
 		} else if (!model.gestureActive) {
-			void reveal.set(busy || revealed ? REST_HEIGHT_PX : 0);
+			settleTween(reveal.set(busy || revealed ? REST_HEIGHT_PX : 0));
 		}
 	});
 
@@ -237,7 +238,7 @@
 				model.settledOutcome === "canceled" &&
 				reveal.current > 0
 			) {
-				void reveal.set(Math.max(0, overscrollPx()), { duration: 0 });
+				settleTween(reveal.set(Math.max(0, overscrollPx()), { duration: 0 }));
 			}
 			distance = boundaryDistance();
 			if (shouldRevealRestingButton()) revealed = true;
@@ -330,7 +331,7 @@
 				onoutrostart={() => (discOutro = true)}
 				onoutroend={() => {
 					discOutro = false;
-					void discTop.set(DISC_START, { duration: 0 });
+					settleTween(discTop.set(DISC_START, { duration: 0 }));
 				}}
 			>
 				<RefreshDisc progress={discProgress} spinning={discSpinning} />
