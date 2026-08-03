@@ -1,3 +1,38 @@
+<script module lang="ts">
+	import type { PickedMedia } from "$lib/platform/media-picker";
+
+	export function selectAlbumMedia({
+		existingContentTypes,
+		picked,
+		remaining,
+	}: {
+		existingContentTypes: string[];
+		picked: PickedMedia[];
+		remaining: number;
+	}) {
+		let videoAvailable = !existingContentTypes.some((contentType) =>
+			contentType.startsWith("video/"),
+		);
+		let skippedVideos = 0;
+		const permitted = picked.filter((media) => {
+			if (!media.mimeType?.startsWith("video/")) return true;
+			if (!videoAvailable) {
+				skippedVideos += 1;
+				return false;
+			}
+			videoAvailable = false;
+			return true;
+		});
+		const selected = permitted.slice(0, remaining);
+
+		return {
+			selected,
+			skippedForCapacity: permitted.length - selected.length,
+			skippedVideos,
+		};
+	}
+</script>
+
 <script lang="ts">
 	import { page } from "$app/state";
 	import {
@@ -10,6 +45,7 @@
 	} from "phosphor-svelte";
 	import { toast } from "svelte-sonner";
 
+	import { ApiError } from "$lib/api";
 	import { showErrorToast } from "$lib/api/error";
 	import {
 		type AlbumContentResponse,
@@ -21,6 +57,14 @@
 		reorderAlbumContent,
 		uploadAlbumMedia,
 	} from "$lib/api/messaging/albums";
+	import {
+		type AlbumAccess,
+		discoverSharedAlbum,
+		markAlbumUnavailable,
+		readCachedAlbum,
+		resolveCachedAlbum,
+	} from "$lib/app-data/album-cache";
+	import { getKeepUnavailableCachedAlbumsSnapshot } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
@@ -41,6 +85,8 @@
 
 	let album = $state<AlbumContentResponse | null>(null);
 	let error = $state<unknown>(null);
+	let retainedAccess = $state<AlbumAccess | null>(null);
+	let retainedLocked = $state(false);
 	let busy = $state(false);
 	let loadGeneration = 0;
 	let uploadProgress = $state<{ completed: number; total: number } | null>(
@@ -90,6 +136,8 @@
 		uploadProgress = null;
 		renameOpen = false;
 		deleteAlbumOpen = false;
+		retainedAccess = null;
+		retainedLocked = false;
 		if (!Number.isFinite(id)) {
 			if (generation === loadGeneration && id === albumId)
 				error = new Error("Invalid album");
@@ -99,8 +147,37 @@
 			const loaded = await getAlbumContent(id);
 			if (generation !== loadGeneration || id !== albumId) return;
 			album = loaded;
+			if (loaded.profileId !== data.ourProfileId) {
+				void discoverSharedAlbum({
+					albumId: loaded.albumId,
+					ownerProfileId: loaded.profileId,
+					isViewable: loaded.albumViewable,
+				});
+			}
 		} catch (err) {
 			if (generation !== loadGeneration || id !== albumId) return;
+			if (
+				err instanceof ApiError &&
+				err.response?.status === 403 &&
+				err.kind !== "RequestBlocked" &&
+				err.kind !== "RequestCooldown"
+			) {
+				await markAlbumUnavailable(id, "revoked_or_removed");
+				const cached = await readCachedAlbum(id);
+				if (cached && cached.media.length > 0) {
+					retainedAccess = {
+						status: "unavailable",
+						reason: "revoked_or_removed",
+						detectedAt: Date.now(),
+					};
+					if (getKeepUnavailableCachedAlbumsSnapshot()) {
+						album = await resolveCachedAlbum(cached);
+					} else {
+						retainedLocked = true;
+					}
+					return;
+				}
+			}
 			console.error(err);
 			error = err;
 		}
@@ -214,12 +291,26 @@
 			const picked = await pickMultipleMedia("media");
 			if (!isCurrentAction(context)) return;
 			if (picked.length === 0) return;
-			const selected = picked.slice(0, remaining);
-			if (picked.length > selected.length) {
+			const { selected, skippedForCapacity, skippedVideos } = selectAlbumMedia({
+				existingContentTypes: context.target.content.map(
+					(item) => item.contentType,
+				),
+				picked,
+				remaining,
+			});
+			if (skippedVideos > 0) {
+				toast.warning(
+					skippedVideos === 1
+						? "Albums can contain only one video; the extra video was not added"
+						: `Albums can contain only one video; ${skippedVideos} extra videos were not added`,
+				);
+			}
+			if (skippedForCapacity > 0) {
 				toast.warning(
 					`Only ${remaining} ${remaining === 1 ? "item fits" : "items fit"} in this album`,
 				);
 			}
+			if (selected.length === 0) return;
 			uploadProgress = { completed: 0, total: selected.length };
 			for (const media of selected) {
 				if (!isCurrentAction(context)) return;
@@ -311,7 +402,18 @@
 			<div
 				class="@container/photo-grid m-auto flex w-full max-w-200 flex-col gap-3 pb-16"
 			>
-				{#if error !== null}
+				{#if retainedLocked}
+					<div
+						class="m-auto mt-8 flex max-w-md flex-col items-center gap-3 rounded-3xl border p-6 text-center"
+					>
+						<p class="text-lg font-semibold">Access revoked</p>
+						<p class="text-sm text-muted-foreground">
+							The sender may have revoked access or removed this album. A cached
+							copy remains on this device.
+						</p>
+						<Button href="/settings/app">Open App Settings</Button>
+					</div>
+				{:else if error !== null}
 					<ApiErrorDisplay
 						{error}
 						onRetry={() => void load(albumId)}
@@ -324,6 +426,14 @@
 						{/each}
 					</div>
 				{:else}
+					{#if retainedAccess !== null}
+						<div
+							class="rounded-xl border border-accent/50 bg-accent/10 px-3 py-2 text-sm"
+							role="status"
+						>
+							Cached copy · Access revoked or album removed
+						</div>
+					{/if}
 					{#if uploadProgress !== null}
 						<p class="text-sm text-muted-foreground" role="status">
 							Uploading {uploadProgress.completed + 1} of

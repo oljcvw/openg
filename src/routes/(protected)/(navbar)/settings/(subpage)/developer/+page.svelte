@@ -87,6 +87,40 @@
 	max={8}
 	unit="media items"
 />
+<DeveloperNumberSetting
+	setting="albumCacheRequestIntervalMs"
+	title="Album cache request interval"
+	description="Minimum spacing between background album-detail requests while building the retained cache."
+	min={500}
+	max={30000}
+	step={500}
+	unit="milliseconds"
+/>
+<DeveloperNumberSetting
+	setting="albumCacheMediaConcurrency"
+	title="Album cache media concurrency"
+	description="Maximum album media downloads running together inside one background cache build."
+	min={1}
+	max={4}
+	unit="media items"
+/>
+<DeveloperNumberSetting
+	setting="albumCacheValidationMinutes"
+	title="Album cache validation age"
+	description="How old an active cached album may be before rediscovery queues an access refresh."
+	min={5}
+	max={1440}
+	step={5}
+	unit="minutes"
+/>
+<DeveloperNumberSetting
+	setting="albumCacheCdnRetryLimit"
+	title="Album cache CDN retries"
+	description="Maximum retries for transient signed-media download failures during one cache build."
+	min={0}
+	max={5}
+	unit="retries"
+/>
 
 <h2>Video calls</h2>
 <DeveloperQualitySetting />

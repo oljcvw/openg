@@ -80,7 +80,8 @@
 		<Item.Title>Cached data</Item.Title>
 		<Item.Description>
 			Using {formatBytes(usage.usedBytes)} of {value} MB. Cached profiles, Browse
-			results, and messages make the app faster and remain on this device.
+			results, messages, and encrypted shared albums make the app faster and remain
+			on this device.
 		</Item.Description>
 	</Item.Content>
 	<label class="flex items-center gap-3">
@@ -106,9 +107,9 @@
 		<AlertDialog.Header>
 			<AlertDialog.Title>Clear all cached data?</AlertDialog.Title>
 			<AlertDialog.Description>
-				Profiles, Browse results, Inbox history, and failed messages stored on
-				this device will be removed. Account data on the service will not
-				change.
+				Profiles, Browse results, Inbox history, failed messages, and retained
+				shared albums stored on this device will be removed. Account data on the
+				service will not change.
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>

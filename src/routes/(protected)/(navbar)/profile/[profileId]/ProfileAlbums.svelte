@@ -10,6 +10,12 @@
 		getAlbumsSharedByProfile,
 		getMyAlbums,
 	} from "$lib/api/messaging/albums";
+	import {
+		type AlbumAccess,
+		discoverSharedAlbum,
+		listCachedAlbumsByOwner,
+		markAlbumUnavailable,
+	} from "$lib/app-data/album-cache";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { Skeleton } from "$lib/components/ui/skeleton";
@@ -30,6 +36,7 @@
 		coverUrl: string | null;
 		itemCount: number | null;
 		hasUnseenContent: boolean;
+		access: AlbumAccess | null;
 	};
 
 	function fromMyAlbum(album: MyAlbum): AlbumEntry {
@@ -41,6 +48,7 @@
 			itemCount: album.content.length,
 			// Only shared albums carry this — nothing is ever unseen in your own.
 			hasUnseenContent: false,
+			access: null,
 		};
 	}
 
@@ -52,7 +60,21 @@
 			coverUrl: album.content?.coverUrl ?? null,
 			itemCount: counts ? counts.imageCount + counts.videoCount : null,
 			hasUnseenContent: album.hasUnseenContent,
+			access: album.albumViewable
+				? { status: "active", validatedAt: Date.now() }
+				: {
+						status: "unavailable",
+						reason: "views_exhausted",
+						detectedAt: Date.now(),
+					},
 		};
+	}
+
+	function accessLabel(access: AlbumAccess | null): string | null {
+		if (access?.status !== "unavailable") return null;
+		if (access.reason === "expired") return "Expired";
+		if (access.reason === "views_exhausted") return "View limit reached";
+		return "Access revoked";
 	}
 
 	let albums = $state<AlbumEntry[] | null>(null);
@@ -64,9 +86,46 @@
 		albums = null;
 		error = null;
 		try {
-			const loaded = isSelf
-				? (await getMyAlbums()).map(fromMyAlbum)
-				: (await getAlbumsSharedByProfile(id)).map(fromSharedAlbum);
+			let loaded: AlbumEntry[];
+			if (isSelf) {
+				loaded = (await getMyAlbums()).map(fromMyAlbum);
+			} else {
+				const shared = await getAlbumsSharedByProfile(id);
+				const remoteIds = new Set(shared.map((album) => album.albumId));
+				for (const album of shared) {
+					void discoverSharedAlbum({
+						albumId: album.albumId,
+						ownerProfileId: album.profileId,
+						expirationType: album.expirationType,
+						expiresAt: album.expiresAt,
+						isViewable: album.albumViewable,
+					});
+				}
+				const cached = await listCachedAlbumsByOwner(id);
+				const missing = cached.filter(
+					(record) => !remoteIds.has(record.albumId),
+				);
+				await Promise.all(
+					missing.map((record) =>
+						markAlbumUnavailable(record.albumId, "revoked_or_removed"),
+					),
+				);
+				loaded = [
+					...shared.map(fromSharedAlbum),
+					...missing.map((record) => ({
+						albumId: record.albumId,
+						albumName: record.album.albumName,
+						coverUrl: null,
+						itemCount: record.album.content.length,
+						hasUnseenContent: false,
+						access: {
+							status: "unavailable" as const,
+							reason: "revoked_or_removed" as const,
+							detectedAt: Date.now(),
+						},
+					})),
+				];
+			}
 			if (generation !== loadGeneration || id !== profileId || isSelf !== self)
 				return;
 			albums = loaded;
@@ -170,6 +229,11 @@
 							<span class="text-xs text-muted-foreground">
 								{album.itemCount}
 								{album.itemCount === 1 ? "item" : "items"}
+							</span>
+						{/if}
+						{#if accessLabel(album.access) !== null}
+							<span class="text-xs font-medium text-accent">
+								{accessLabel(album.access)}
 							</span>
 						{/if}
 					</a>

@@ -1,19 +1,37 @@
 <script lang="ts">
 	import "photoswipe/style.css";
+	import { goto } from "$app/navigation";
 	import {
 		ClockIcon,
 		ImageBrokenIcon,
 		ImagesIcon,
 		VideoIcon,
 	} from "phosphor-svelte";
+	import { toast } from "svelte-sonner";
 	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
+	import { ApiError } from "$lib/api";
 	import { showErrorToast } from "$lib/api/error";
 	import {
 		type AlbumContentResponse,
 		getAlbumContent,
+		recordAlbumContentView,
 	} from "$lib/api/messaging/albums";
-	import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
+	import {
+		type AlbumAccess,
+		type CachedAlbumRecord,
+		discoverSharedAlbum,
+		markAlbumUnavailable,
+		readCachedAlbum,
+		resolveCachedAlbum,
+		retainViewedAlbumContent,
+		subscribeCachedAlbum,
+	} from "$lib/app-data/album-cache";
+	import {
+		getDeveloperSettingsSnapshot,
+		getKeepUnavailableCachedAlbumsSnapshot,
+		subscribePreferences,
+	} from "$lib/app-data/preferences.svelte";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 	import { getNow, subscribeNow } from "$lib/util/now.svelte";
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
@@ -27,6 +45,61 @@
 	const media = new MessageMediaState();
 
 	const expiry = $derived(albumExpiry(message, getNow()));
+	let cachedRecord = $state<CachedAlbumRecord | null>(null);
+	let keepUnavailable = $state(getKeepUnavailableCachedAlbumsSnapshot());
+
+	$effect(() => {
+		const unsubscribeAlbum = subscribeCachedAlbum(
+			message.albumId,
+			(record) => (cachedRecord = record),
+		);
+		const unsubscribePreferences = subscribePreferences(() => {
+			keepUnavailable = getKeepUnavailableCachedAlbumsSnapshot();
+		});
+		void discoverSharedAlbum({
+			albumId: message.albumId,
+			ownerProfileId: message.ownerProfileId,
+			expirationType: message.expirationType,
+			expiresAt: message.viewableUntil ?? message.expiresAt,
+			isViewable: message.isViewable,
+		});
+		return () => {
+			unsubscribeAlbum();
+			unsubscribePreferences();
+		};
+	});
+
+	const unavailableAccess = $derived.by<AlbumAccess | null>(() => {
+		if (expiry?.expired)
+			return {
+				status: "unavailable",
+				reason: "expired",
+				detectedAt: Date.now(),
+			};
+		if (cachedRecord?.access.status === "unavailable")
+			return cachedRecord.access;
+		if (!message.isViewable)
+			return {
+				status: "unavailable",
+				reason: "views_exhausted",
+				detectedAt: Date.now(),
+			};
+		return null;
+	});
+	const cachedItemCount = $derived(cachedRecord?.media.length ?? 0);
+	const canOpenCached = $derived(
+		unavailableAccess !== null && keepUnavailable && cachedItemCount > 0,
+	);
+	const canOpen = $derived(
+		unavailableAccess === null ? message.isViewable : canOpenCached,
+	);
+
+	function accessLabel(access: AlbumAccess | null): string | null {
+		if (access?.status !== "unavailable") return null;
+		if (access.reason === "expired") return "Expired";
+		if (access.reason === "views_exhausted") return "View limit reached";
+		return "Access revoked";
+	}
 
 	// Only tick the shared clock while an expiring album is on screen.
 	$effect(() => {
@@ -64,6 +137,22 @@
 	let cachedAlbum: LoadedAlbum | null = null;
 
 	function openAlbum() {
+		if (!canOpen) {
+			toast.info(accessLabel(unavailableAccess) ?? "Album unavailable", {
+				description:
+					cachedItemCount > 0
+						? "A cached copy remains on this device. Enable it in App Settings."
+						: "No retained media is available on this device.",
+				action:
+					cachedItemCount > 0
+						? {
+								label: "App Settings",
+								onClick: () => void goto("/settings/app"),
+							}
+						: undefined,
+			});
+			return;
+		}
 		if (cachedAlbum) {
 			albumState = { status: "open", album: cachedAlbum };
 		} else {
@@ -75,15 +164,36 @@
 		if (albumState.status !== "loading") return;
 		const abortController = new AbortController();
 		(async () => {
-			const loaded = await getAlbumContent(message.albumId, {
+			let response: AlbumContentResponse;
+			let retained = false;
+			if (unavailableAccess !== null && keepUnavailable && cachedRecord) {
+				response = await resolveCachedAlbum(cachedRecord);
+				retained = true;
+			} else {
+				try {
+					response = await getAlbumContent(message.albumId, {
+						signal: abortController.signal,
+					});
+				} catch (error) {
+					if (
+						error instanceof ApiError &&
+						error.response?.status === 403 &&
+						error.kind !== "RequestBlocked" &&
+						error.kind !== "RequestCooldown"
+					) {
+						await markAlbumUnavailable(message.albumId, "revoked_or_removed");
+					}
+					const cached = await readCachedAlbum(message.albumId);
+					if (!keepUnavailable || !cached || cached.media.length === 0)
+						throw error;
+					response = await resolveCachedAlbum(cached);
+					retained = true;
+				}
+			}
+			const loaded = await preloadForViewer(response, {
+				retained,
 				signal: abortController.signal,
-			}).then(async (res) => ({
-				...res,
-				content: await preloadAlbumSlides(res.content, {
-					concurrency: getDeveloperSettingsSnapshot().albumPreloadConcurrency,
-					signal: abortController.signal,
-				}),
-			}));
+			});
 			if (abortController.signal.aborted) return;
 			cachedAlbum = loaded;
 			albumState = { status: "open", album: loaded };
@@ -111,11 +221,19 @@
 					showHideAnimationType: "fade",
 					pswpModule: () => import("photoswipe"),
 					mainClass: `pswp--buttons-visible`,
+					loop: false,
+					preload: message.expirationType === "ONCE" ? [0, 0] : [1, 2],
 				});
 				lightbox.addFilter("numItems", () => album.content.length);
 				lightbox.addFilter("itemData", (_, index) => {
 					const { url, width, height } = album.content[index];
-					return { src: url, width, height };
+					return url.length > 0
+						? { src: url, width, height }
+						: {
+								html: '<div class="og-album-missing">This item was not cached</div>',
+								width: 1,
+								height: 1,
+							};
 				});
 				lightbox.addFilter(
 					"useContentPlaceholder",
@@ -137,7 +255,7 @@
 				lightbox.on("contentLoad", (event) => {
 					const { content } = event;
 					const slide = album.content[content.index];
-					if (slide?.contentType.startsWith("video/")) {
+					if (slide?.url.length > 0 && slide.contentType.startsWith("video/")) {
 						event.preventDefault();
 						content.element = document.createElement("div");
 						const video = document.createElement("video");
@@ -156,6 +274,45 @@
 						}
 					}
 				});
+				if (message.expirationType === "ONCE" && unavailableAccess === null) {
+					const viewed = new Set<number>();
+					const recordCurrentView = () => {
+						const index = lightbox?.pswp?.currIndex ?? 0;
+						const item = album.content[index];
+						if (!item || viewed.has(item.contentId)) return;
+						viewed.add(item.contentId);
+						void recordAlbumContentView({
+							albumId: album.albumId,
+							contentId: item.contentId,
+						})
+							.then(() =>
+								retainViewedAlbumContent(
+									{
+										albumId: album.albumId,
+										ownerProfileId: message.ownerProfileId,
+										expirationType: message.expirationType,
+										expiresAt: message.viewableUntil ?? message.expiresAt,
+									},
+									album,
+									item.contentId,
+								),
+							)
+							.catch((error) => console.error(error));
+					};
+					lightbox.on("afterInit", recordCurrentView);
+					lightbox.on("change", recordCurrentView);
+				}
+				if (unavailableAccess !== null) {
+					lightbox.on("uiRegister", () => {
+						lightbox?.pswp?.ui?.registerElement({
+							name: "cached-album-status",
+							order: 8,
+							isButton: false,
+							appendTo: "wrapper",
+							html: `Cached copy · ${accessLabel(unavailableAccess)}`,
+						});
+					});
+				}
 				lightbox.on("closingAnimationEnd", () => {
 					albumState = { status: "idle" };
 				});
@@ -176,9 +333,39 @@
 			lightbox = undefined;
 		};
 	});
+
+	async function preloadForViewer(
+		album: AlbumContentResponse,
+		options: { retained: boolean; signal: AbortSignal },
+	): Promise<LoadedAlbum> {
+		if (!options.retained && message.expirationType !== "ONCE") {
+			return {
+				...album,
+				content: await preloadAlbumSlides(album.content, {
+					concurrency: getDeveloperSettingsSnapshot().albumPreloadConcurrency,
+					signal: options.signal,
+				}),
+			};
+		}
+		const available = options.retained
+			? album.content.filter((item) => item.url.length > 0)
+			: album.content.slice(0, 1).filter((item) => item.url.length > 0);
+		const loaded = await preloadAlbumSlides(available, {
+			concurrency: getDeveloperSettingsSnapshot().albumPreloadConcurrency,
+			signal: options.signal,
+		});
+		const loadedById = new Map(loaded.map((item) => [item.contentId, item]));
+		return {
+			...album,
+			content: album.content.map(
+				(item) =>
+					loadedById.get(item.contentId) ?? { ...item, width: 1, height: 1 },
+			),
+		};
+	}
 </script>
 
-{#if message.isViewable}
+{#if canOpen || cachedItemCount > 0}
 	<button
 		class={[
 			className,
@@ -211,6 +398,13 @@
 			</div>
 		{/if}
 		<div class={["@container absolute top-0 left-0 size-full", contentClass]}>
+			{#if unavailableAccess !== null}
+				<div
+					class="absolute top-1.5 right-1.5 z-10 rounded-full bg-black/75 px-2 py-0.5 text-xs font-medium text-white"
+				>
+					{accessLabel(unavailableAccess)}
+				</div>
+			{/if}
 			{#if expiry !== null}
 				<div
 					class={[
@@ -259,5 +453,26 @@
 <style>
 	:global(.pswp__img) {
 		object-fit: contain;
+	}
+	:global(.pswp__cached-album-status) {
+		position: absolute;
+		top: calc(var(--safe-area-top) + 0.75rem);
+		left: 50%;
+		z-index: 20;
+		transform: translateX(-50%);
+		border-radius: 9999px;
+		background: rgb(0 0 0 / 75%);
+		padding: 0.25rem 0.75rem;
+		color: white;
+		font-size: 0.75rem;
+	}
+	:global(.og-album-missing) {
+		display: flex;
+		height: 100%;
+		width: 100%;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-card);
+		color: var(--color-muted-foreground);
 	}
 </style>

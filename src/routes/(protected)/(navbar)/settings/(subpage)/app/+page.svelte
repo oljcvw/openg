@@ -2,6 +2,7 @@
 	import CacheSetting from "./CacheSetting.svelte";
 	import ContrastSetting from "./ContrastSetting.svelte";
 	import GridColumnsSetting from "./GridColumnsSetting.svelte";
+	import KeepUnavailableCachedAlbumsSetting from "./KeepUnavailableCachedAlbumsSetting.svelte";
 	import NotificationsLink from "./NotificationsLink.svelte";
 	import ProfileSwipeNavigationSetting from "./ProfileSwipeNavigationSetting.svelte";
 	import RevealMessageReadSetting from "./RevealMessageReadSetting.svelte";
@@ -18,6 +19,7 @@
 <StayAwakeSetting />
 <h2>Storage</h2>
 <CacheSetting />
+<KeepUnavailableCachedAlbumsSetting />
 <h2>Accessibility</h2>
 <ProfileSwipeNavigationSetting />
 <h2>Messages</h2>
