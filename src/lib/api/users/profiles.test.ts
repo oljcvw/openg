@@ -146,6 +146,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	resetNowForTesting();
+	vi.restoreAllMocks();
 });
 
 function countRequests(pathPrefix: string): number {
@@ -156,11 +157,15 @@ function countRequests(pathPrefix: string): number {
 
 describe("cache TTL", () => {
 	it("ignores an unreadable persisted profile cache", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
 		readCachedProfileEntryMock.mockRejectedValueOnce(
 			new Error("corrupt cache"),
 		);
 
 		await expect(getPersistedProfile(PROFILE_ID)).resolves.toBeNull();
+		expect(consoleError).toHaveBeenCalledWith("Profile cache hydration failed");
 	});
 
 	it("serves getProfile from cache within the TTL and refetches after it", async () => {

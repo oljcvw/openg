@@ -26,6 +26,7 @@ beforeEach(() => {
 afterEach(() => {
 	clearAlbumShareState();
 	resetNowForTesting();
+	vi.restoreAllMocks();
 });
 
 describe("album share state", () => {
@@ -102,8 +103,12 @@ describe("ensureAlbumSharesSwept", () => {
 	});
 
 	it("keeps going when one album's lookup fails", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+		const lookupError = new Error("nope");
 		getAlbumSharesMock.mockImplementation((albumId: number) =>
-			albumId === 1 ? Promise.reject(new Error("nope")) : Promise.resolve([42]),
+			albumId === 1 ? Promise.reject(lookupError) : Promise.resolve([42]),
 		);
 
 		await ensureAlbumSharesSwept(42, ALBUMS);
@@ -115,11 +120,16 @@ describe("ensureAlbumSharesSwept", () => {
 		await ensureAlbumSharesSwept(42, ALBUMS);
 		expect(getAlbumSharesMock).toHaveBeenCalledTimes(4);
 		expect(getAlbumShared(1, 42)).toBe(false);
+		expect(consoleError).toHaveBeenCalledWith(lookupError);
 	});
 
 	it("retries after a wholesale failure instead of caching it as checked", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+		const offlineError = new Error("offline");
 		setNowForTesting(() => 1_000);
-		getAlbumSharesMock.mockRejectedValue(new Error("offline"));
+		getAlbumSharesMock.mockRejectedValue(offlineError);
 
 		await ensureAlbumSharesSwept(42, ALBUMS);
 		expect(getAlbumSharesMock).toHaveBeenCalledTimes(2);
@@ -130,6 +140,8 @@ describe("ensureAlbumSharesSwept", () => {
 
 		expect(getAlbumSharesMock).toHaveBeenCalledTimes(4);
 		expect(getAlbumShared(1, 42)).toBe(true);
+		expect(consoleError).toHaveBeenCalledTimes(2);
+		expect(consoleError).toHaveBeenCalledWith(offlineError);
 	});
 
 	it("tracks profiles separately", async () => {

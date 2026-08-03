@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type ReconcileEventInput = {
 	reasons: ReadonlySet<
@@ -180,8 +180,13 @@ beforeEach(() => {
 	writeCachedInboxMock.mockReset().mockResolvedValue(undefined);
 });
 
+afterEach(() => vi.restoreAllMocks());
+
 describe("ConversationsState cache recovery", () => {
 	it("ignores an unreadable persisted conversation", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
 		getConversationsMock.mockResolvedValue({ entries: [], nextPage: null });
 		readCachedConversationMock.mockRejectedValueOnce(
 			new Error("corrupt cache"),
@@ -190,6 +195,9 @@ describe("ConversationsState cache recovery", () => {
 		await state.initial;
 
 		await expect(state.getCachedConversation("1:2")).resolves.toBeUndefined();
+		expect(consoleError).toHaveBeenCalledWith(
+			"Conversation cache hydration failed",
+		);
 	});
 
 	it("does not persist a deferred inbox response after destruction", async () => {
@@ -245,6 +253,10 @@ describe("ConversationsState #syncLatest single-flight (P1.8)", () => {
 
 describe("ConversationsState markRead rollback (P1.9)", () => {
 	it("restores unread additively when mark-read fails after a concurrent increment", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+		const markReadError = new Error("mark-read failed");
 		getConversationsMock.mockResolvedValue({
 			entries: [conversation("a:1", 1000, { unreadCount: 3 })],
 			nextPage: null,
@@ -261,10 +273,11 @@ describe("ConversationsState markRead rollback (P1.9)", () => {
 		emitMessageSent(incomingMessage("a:1", 2000, PEER_ID));
 		expect(entryFor(state, "a:1").data.unreadCount).toBe(1);
 
-		gate.reject(new Error("mark-read failed"));
+		gate.reject(markReadError);
 		await markPromise;
 
 		expect(entryFor(state, "a:1").data.unreadCount).toBe(4);
+		expect(consoleError).toHaveBeenCalledWith(markReadError);
 	});
 });
 
@@ -300,6 +313,10 @@ describe("ConversationsState epoch guards (P1.7)", () => {
 	});
 
 	it("keeps the initial load's result when a reconcile races it and then fails", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+		const networkError = new Error("network");
 		const initGate = deferred<{
 			entries: Conversation[];
 			nextPage: number | null;
@@ -310,13 +327,14 @@ describe("ConversationsState epoch guards (P1.7)", () => {
 		const reconcilePromise = state.refresh();
 		await microtasks();
 
-		getConversationsMock.mockRejectedValueOnce(new Error("network"));
+		getConversationsMock.mockRejectedValueOnce(networkError);
 		initGate.resolve({ entries: [conversation("a:1", 1000)], nextPage: 2 });
 		await state.initial;
 		await reconcilePromise;
 
 		expect(state.entries.map((e) => e.data.conversationId)).toEqual(["a:1"]);
 		expect(state.nextPage).toBe(2);
+		expect(consoleError).toHaveBeenCalledWith(networkError);
 	});
 
 	it("discards a reconcile's stale writes when a loadMore supersedes it mid-paging", async () => {

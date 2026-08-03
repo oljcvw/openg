@@ -94,6 +94,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.useRealTimers();
+	vi.restoreAllMocks();
 });
 
 describe("GridState profile resolution", () => {
@@ -121,6 +122,9 @@ describe("GridState profile resolution", () => {
 	});
 
 	it("retries failed current lazy profiles after a bounded delay", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
 		vi.useFakeTimers();
 		resolveLazyProfiles
 			.mockRejectedValueOnce(new Error("temporary"))
@@ -150,9 +154,16 @@ describe("GridState profile resolution", () => {
 
 		expect(resolveLazyProfiles).toHaveBeenCalledTimes(2);
 		expect(state.items[0]).toMatchObject({ type: "rendered", id: 1 });
+		expect(consoleError).toHaveBeenCalledOnce();
+		expect(consoleError).toHaveBeenCalledWith(
+			"Browse lazy-profile batch failed",
+		);
 	});
 
 	it("honors native cooldown timing before retrying", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
 		vi.useFakeTimers();
 		vi.setSystemTime(0);
 		resolveLazyProfiles.mockRejectedValueOnce(
@@ -176,9 +187,16 @@ describe("GridState profile resolution", () => {
 
 		expect(resolveLazyProfiles).toHaveBeenCalledTimes(2);
 		expect(showErrorToast).not.toHaveBeenCalled();
+		expect(consoleError).toHaveBeenCalledOnce();
+		expect(consoleError).toHaveBeenCalledWith(
+			"Browse lazy-profile batch failed",
+		);
 	});
 
 	it("does not retry a lazy profile removed from the current grid", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
 		vi.useFakeTimers();
 		resolveLazyProfiles.mockRejectedValueOnce(new Error("temporary"));
 		const state = new GridState();
@@ -194,9 +212,16 @@ describe("GridState profile resolution", () => {
 
 		expect(resolveLazyProfiles).toHaveBeenCalledOnce();
 		expect(state.items[0]).toMatchObject({ type: "rendered", id: 2 });
+		expect(consoleError).toHaveBeenCalledOnce();
+		expect(consoleError).toHaveBeenCalledWith(
+			"Browse lazy-profile batch failed",
+		);
 	});
 
 	it("caps automatic retries for a persistently failing lazy profile", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
 		vi.useFakeTimers();
 		resolveLazyProfiles.mockRejectedValue(new Error("temporary"));
 		const state = new GridState();
@@ -210,11 +235,18 @@ describe("GridState profile resolution", () => {
 
 		expect(resolveLazyProfiles).toHaveBeenCalledTimes(3);
 		expect(state.items[0]).toMatchObject({ type: "lazy", id: 1 });
+		expect(consoleError).toHaveBeenCalledTimes(3);
+		expect(consoleError).toHaveBeenCalledWith(
+			"Browse lazy-profile batch failed",
+		);
 	});
 });
 
 describe("GridState Cascade coordination", () => {
 	it("falls back to the network when the disk cache cannot be read", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
 		readCachedGrid.mockRejectedValueOnce(new Error("corrupt cache"));
 		getGrid.mockResolvedValueOnce(page(1));
 		const state = new GridState();
@@ -225,6 +257,7 @@ describe("GridState Cascade coordination", () => {
 		await vi.waitFor(() => expect(state.items).toHaveLength(1));
 		expect(getGrid).toHaveBeenCalledOnce();
 		expect(state.error).toBeNull();
+		expect(consoleError).toHaveBeenCalledWith("Browse cache hydration failed");
 	});
 
 	it("serializes requests and applies only the newest location", async () => {

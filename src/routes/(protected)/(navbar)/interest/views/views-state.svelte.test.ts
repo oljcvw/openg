@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
 	getViewsMock,
@@ -133,6 +133,8 @@ beforeEach(() => {
 	viewHandlers.length = 0;
 });
 
+afterEach(() => vi.restoreAllMocks());
+
 describe("ViewsState", () => {
 	it("loads profiles before previews and pages visible results", async () => {
 		getViewsMock.mockResolvedValue({
@@ -214,10 +216,14 @@ describe("ViewsState", () => {
 	});
 
 	it("reconciles after initial load and reports refresh failures", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+		const refreshError = new Error("refresh failed");
 		getViewsMock
 			.mockResolvedValueOnce({ profiles: [profile(1)], previews: [] })
 			.mockResolvedValueOnce({ profiles: [profile(2)], previews: [] })
-			.mockRejectedValueOnce(new Error("refresh failed"));
+			.mockRejectedValueOnce(refreshError);
 		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
@@ -234,6 +240,7 @@ describe("ViewsState", () => {
 			label: "Failed to refresh views",
 			error: expect.any(Error),
 		});
+		expect(consoleError).toHaveBeenCalledWith(refreshError);
 	});
 
 	it("keeps a websocket view that lands while a reconcile fetch is in flight", async () => {

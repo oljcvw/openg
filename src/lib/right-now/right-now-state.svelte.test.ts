@@ -5,6 +5,10 @@ const { showErrorToastMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("$lib/api/error", () => ({ showErrorToast: showErrorToastMock }));
+vi.mock("$lib/app-data/preferences.svelte", () => ({
+	getPreferences: vi.fn(() => Promise.resolve({})),
+	setPreferences: vi.fn(() => Promise.resolve(undefined)),
+}));
 
 import {
 	defaultRightNowFilters,

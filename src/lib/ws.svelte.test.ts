@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import z from "zod";
 
 const { invokeMock, listenMock, listeners, reportClientDiagnosticMock } =
@@ -31,9 +31,14 @@ describe("WsState validation diagnostics", () => {
 		reportClientDiagnosticMock.mockReset();
 	});
 
+	afterEach(() => vi.restoreAllMocks());
+
 	it("redacts transport failure details from logs and diagnostics", async () => {
 		const consoleError = vi
 			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+		const consoleLog = vi
+			.spyOn(console, "log")
 			.mockImplementation(() => undefined);
 		invokeMock.mockRejectedValue(new Error("private transport failure"));
 
@@ -57,6 +62,7 @@ describe("WsState validation diagnostics", () => {
 		expect(recorded).not.toContain("private transport failure");
 		expect(recorded).not.toContain("private payload");
 		expect(recorded).not.toContain("private server response");
+		expect(consoleLog).toHaveBeenCalledWith("[ws] connecting...");
 	});
 
 	it("does not log malformed payload values or schema paths", async () => {
@@ -91,6 +97,9 @@ describe("WsState validation diagnostics", () => {
 	});
 
 	it("degrades listener registration failures without rejecting", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
 		listenMock.mockRejectedValueOnce("private native failure details");
 
 		const unlisten = await ws.on(
@@ -108,6 +117,10 @@ describe("WsState validation diagnostics", () => {
 		});
 		expect(JSON.stringify(reportClientDiagnosticMock.mock.calls)).not.toContain(
 			"private native failure details",
+		);
+		expect(consoleError).toHaveBeenCalledWith(
+			"[ws] listener registration failed",
+			{ code: "subscribe_chat_v1_message_sent" },
 		);
 	});
 });

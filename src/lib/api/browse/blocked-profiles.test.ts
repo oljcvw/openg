@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { getBlockedUsersMock, getProfilesMock } = vi.hoisted(() => ({
 	getBlockedUsersMock: vi.fn(),
@@ -39,6 +39,8 @@ describe("getBlockedProfiles", () => {
 		getBlockedUsersMock.mockReset();
 		getProfilesMock.mockReset();
 	});
+
+	afterEach(() => vi.restoreAllMocks());
 
 	it("keeps block-list order while adding display names and primary thumbnails", async () => {
 		getBlockedUsersMock.mockResolvedValue([
@@ -100,6 +102,9 @@ describe("getBlockedProfiles", () => {
 	});
 
 	it("keeps every unblock target when one enrichment batch fails", async () => {
+		const consoleWarning = vi
+			.spyOn(console, "warn")
+			.mockImplementation(() => undefined);
 		const blocked = Array.from({ length: 151 }, (_, index) => ({
 			profileId: index + 1,
 			blockedTime: 0,
@@ -129,5 +134,8 @@ describe("getBlockedProfiles", () => {
 			displayName: "Last profile",
 			mediaHash: "last-photo",
 		});
+		expect(consoleWarning).toHaveBeenCalledWith(
+			"Failed to enrich a blocked-profile summary batch",
+		);
 	});
 });
