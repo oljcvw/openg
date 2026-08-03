@@ -5,14 +5,16 @@ mod logging;
 mod state;
 mod storage;
 
-#[cfg(not(target_os = "android"))]
-use tauri::Manager;
-
 use crate::state::AppState;
 use crate::storage::{
 	account_storage_lock, AuthStorage, DeviceStorage, SigningKeyStorage,
 };
 use tauri::Emitter;
+#[cfg(any(
+	target_os = "linux",
+	all(target_os = "macos", not(feature = "keychain"))
+))]
+use tauri::Manager;
 
 // Mirrors MIN_SUPPORTED_WEBVIEW_MAJOR in gen/android/app/build.gradle.kts and the
 // CSS feature floor in src/app.html (Tailwind v4: Chromium 111 / WebKitGTK 2.42 /
