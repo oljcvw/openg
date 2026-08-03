@@ -16,6 +16,7 @@
 		addSavedPhrase,
 		DuplicateSavedPhraseError,
 	} from "$lib/app-data/saved-phrases";
+	import { canUnsendMessage } from "$lib/chat/message-actions";
 	import {
 		applyMessageRetractions,
 		canReplyToMessage,
@@ -153,12 +154,7 @@
 				});
 			}
 		}}
-		onUnsend={isOut &&
-		message.status === "sent" &&
-		!message.messageId.startsWith("pending-") &&
-		!message.unsent &&
-		message.type !== "Retract" &&
-		message.type !== "VideoCall"
+		onUnsend={canUnsendMessage(message, isOut)
 			? async () => {
 					let revert: (() => void) | undefined;
 					try {
