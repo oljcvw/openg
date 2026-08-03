@@ -2,6 +2,7 @@
 	import FolderOpenIcon from "phosphor-svelte/lib/FolderOpenIcon";
 	import ImageIcon from "phosphor-svelte/lib/ImageIcon";
 	import NavigationArrowIcon from "phosphor-svelte/lib/NavigationArrowIcon";
+	import QuotesIcon from "phosphor-svelte/lib/QuotesIcon";
 	import { expoOut, sineIn } from "svelte/easing";
 	import { fly } from "svelte/transition";
 
@@ -13,6 +14,7 @@
 	import ComposerAlbumsTab from "./ComposerAlbumsTab.svelte";
 	import ComposerLocationTab from "./ComposerLocationTab.svelte";
 	import ComposerMediaTab from "./ComposerMediaTab.svelte";
+	import ComposerSavedPhrasesTab from "./ComposerSavedPhrasesTab.svelte";
 
 	const FULLSIZE_TABS: Tab[] = ["media"];
 
@@ -22,7 +24,7 @@
 		open: boolean;
 	} = $props();
 
-	type Tab = "media" | "albums" | "location";
+	type Tab = "media" | "albums" | "location" | "phrases";
 
 	let selectedTab = $state("media");
 
@@ -78,7 +80,7 @@
 			{ "h-full": isFullsizeTab, "h-fit": !isFullsizeTab },
 		]}
 		handle={null}
-		style:bottom="var(--chat-ime-offset, 0px)"
+		style="bottom: var(--chat-ime-offset, 0px)"
 		onclick={(e) => {
 			if (
 				e.target instanceof HTMLDivElement &&
@@ -148,6 +150,12 @@
 							onClose={() => (open = false)}
 						/>
 					</Tabs.Content>
+					<Tabs.Content value="phrases">
+						<ComposerSavedPhrasesTab
+							active={open && selectedTab === "phrases"}
+							onClose={() => (open = false)}
+						/>
+					</Tabs.Content>
 				</div>
 			</div>
 
@@ -184,6 +192,7 @@
 					{@render tab("media")}
 					{@render tab("albums")}
 					{@render tab("location")}
+					{@render tab("phrases")}
 				</Tabs.List>
 			</Drawer.Footer>
 		</Tabs.Root>
@@ -210,6 +219,9 @@
 				class="size-[clamp(1.25rem,3.5vw,1.75rem)]"
 			/>
 			Location
+		{:else if tab === "phrases"}
+			<QuotesIcon weight="fill" class="size-[clamp(1.25rem,3.5vw,1.75rem)]" />
+			Phrases
 		{/if}
 	</Tabs.Trigger>
 {/snippet}

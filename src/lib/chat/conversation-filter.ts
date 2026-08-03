@@ -28,16 +28,26 @@ export function searchableMessageText(
 	if (!showRetractedMessages && retractedMessageIds.has(message.messageId)) {
 		return null;
 	}
+	let text: string | null;
 	switch (message.type) {
 		case "Text":
-			return message.body.text.toLocaleLowerCase();
+			text = message.body.text;
+			break;
 		case "AlbumContentReply":
-			return message.body.albumContentReply.toLocaleLowerCase();
+			text = message.body.albumContentReply;
+			break;
 		case "ProfilePhotoReply":
-			return message.body.photoContentReply.toLocaleLowerCase();
+			text = message.body.photoContentReply;
+			break;
 		default:
-			return null;
+			text = null;
 	}
+	const replyText =
+		message.replyToMessage?.type === "Text"
+			? message.replyToMessage.body.text
+			: null;
+	const combined = [text, replyText].filter(Boolean).join(" ");
+	return combined === "" ? null : combined.toLocaleLowerCase();
 }
 
 export function messageCorpusMatchesQuery(

@@ -5,6 +5,7 @@ const {
 	markReadMock,
 	markConversationAsReadMock,
 	sendMessageMock,
+	sendReplyMessageMock,
 	readHandlers,
 	messageSentHandlers,
 	reconcileHandlers,
@@ -14,6 +15,7 @@ const {
 	markReadMock: vi.fn(),
 	markConversationAsReadMock: vi.fn(() => Promise.resolve()),
 	sendMessageMock: vi.fn(),
+	sendReplyMessageMock: vi.fn(),
 	readHandlers: [] as ((event: unknown) => void)[],
 	messageSentHandlers: [] as ((event: unknown) => void)[],
 	reconcileHandlers: [] as (() => void | Promise<void>)[],
@@ -32,6 +34,7 @@ vi.mock("$lib/api/messaging/conversations", () => ({
 vi.mock("$lib/api/messaging/messages", () => ({
 	reactToMessage: vi.fn(),
 	sendMessage: sendMessageMock,
+	sendReplyMessage: sendReplyMessageMock,
 }));
 vi.mock("$lib/util/reconcile", () => ({
 	reconciler: {
@@ -281,6 +284,45 @@ describe("ConversationState send echo matching", () => {
 		emitMessageSent(echo("real-text", "Text", { text: "hello" }));
 		expect(text().messageId).toBe("real-text");
 		expect(text().status).toBe("sent");
+	});
+});
+
+describe("ConversationState replies", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		readHandlers.length = 0;
+		messageSentHandlers.length = 0;
+		reconcileHandlers.length = 0;
+		sendReplyMessageMock.mockReturnValue(new Promise(() => {}));
+	});
+
+	it("links an optimistic reply and clears the composer target", async () => {
+		const target = { ...message("target", 1000), senderId: PEER_ID };
+		getConversationMock.mockResolvedValue({
+			messages: [target],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		state.setReplyTarget(target);
+		state.send(outbound("Text", { text: "answer" }));
+
+		const optimistic = state.messages[0];
+		expect(state.replyTarget).toBeNull();
+		expect(optimistic.replyToMessage).toEqual(
+			expect.objectContaining({ messageId: "target" }),
+		);
+		expect(optimistic.replyToMessage).not.toHaveProperty("replyToMessage");
+		expect(optimistic.refValue).toEqual(expect.any(String));
+		expect(sendReplyMessageMock).toHaveBeenCalledWith({
+			toUserId: PEER_ID,
+			message: { type: "Text", body: { text: "answer" } },
+			replyToMessageId: "target",
+			ref: optimistic.refValue,
+		});
 	});
 });
 

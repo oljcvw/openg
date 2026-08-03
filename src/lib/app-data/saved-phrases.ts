@@ -23,6 +23,7 @@ let cache: SavedPhrases | null = null;
 let hydrating: Promise<SavedPhrases> | null = null;
 let writeQueue: Promise<unknown> = Promise.resolve();
 let cacheGeneration = 0;
+const listeners = new Map<number, Set<() => void>>();
 
 export class DuplicateSavedPhraseError extends Error {
 	constructor() {
@@ -110,6 +111,33 @@ async function persist(
 	if (generation === cacheGeneration) cache = validated;
 }
 
+function notify(accountProfileId: number): void {
+	for (const listener of listeners.get(accountProfileId) ?? []) listener();
+}
+
+export function subscribeSavedPhrases(
+	accountProfileId: number,
+	listener: () => void,
+): () => void {
+	const accountListeners = listeners.get(accountProfileId) ?? new Set();
+	accountListeners.add(listener);
+	listeners.set(accountProfileId, accountListeners);
+	return () => {
+		accountListeners.delete(listener);
+		if (accountListeners.size === 0) listeners.delete(accountProfileId);
+	};
+}
+
+export function filterSavedPhrases(
+	phrases: readonly SavedPhrase[],
+	query: string,
+): SavedPhrase[] {
+	const normalizedQuery = query.trimStart().normalize("NFC").toLowerCase();
+	return phrases.filter((phrase) =>
+		phrase.text.normalize("NFC").toLowerCase().startsWith(normalizedQuery),
+	);
+}
+
 export async function listSavedPhrases(
 	accountProfileId: number,
 ): Promise<SavedPhrase[]> {
@@ -133,6 +161,7 @@ export async function addSavedPhrase(
 		accountPhrases.push(phrase);
 		phrases.accounts[ownerKey] = accountPhrases;
 		await persist(generation, phrases);
+		notify(accountProfileId);
 		return structuredClone(phrase);
 	});
 }
@@ -155,6 +184,7 @@ export async function updateSavedPhrase(
 		accountPhrases[index] = savedPhraseSchema.parse({ id: phraseId, text });
 		phrases.accounts[ownerKey] = accountPhrases;
 		await persist(generation, phrases);
+		notify(accountProfileId);
 		return structuredClone(accountPhrases);
 	});
 }
@@ -176,6 +206,7 @@ export async function deleteSavedPhrase(
 		if (remaining.length === 0) delete phrases.accounts[ownerKey];
 		else phrases.accounts[ownerKey] = remaining;
 		await persist(generation, phrases);
+		notify(accountProfileId);
 		return structuredClone(remaining);
 	});
 }
@@ -206,6 +237,7 @@ export async function moveSavedPhrase(
 		accountPhrases.splice(destinationIndex, 0, phrase);
 		phrases.accounts[ownerKey] = accountPhrases;
 		await persist(generation, phrases);
+		notify(accountProfileId);
 		return structuredClone(accountPhrases);
 	});
 }
@@ -226,6 +258,7 @@ export async function deleteSavedPhrasesForAccount(
 			generation,
 			removeAccountSavedPhrases(current, accountProfileId),
 		);
+		notify(accountProfileId);
 	});
 }
 

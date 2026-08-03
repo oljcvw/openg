@@ -12,7 +12,14 @@
 		unsendMessage,
 	} from "$lib/api/messaging/messages";
 	import { getShowRetractedMessagesSnapshot } from "$lib/app-data/preferences.svelte";
-	import { applyMessageRetractions } from "$lib/model/messaging/messages";
+	import {
+		addSavedPhrase,
+		DuplicateSavedPhraseError,
+	} from "$lib/app-data/saved-phrases";
+	import {
+		applyMessageRetractions,
+		canReplyToMessage,
+	} from "$lib/model/messaging/messages";
 	import type { DisplayMessage } from "$lib/model/messaging/messages";
 	import { getConversationState } from "../conversation-state.svelte";
 	import { processMessages } from "../messages";
@@ -27,6 +34,30 @@
 	const conversationState = $derived(getConversationState()());
 
 	const ALBUM_MESSAGE_TYPES = ["Album", "ExpiringAlbum", "ExpiringAlbumV2"];
+	let highlightedMessageId: string | null = $state(null);
+	let highlightTimer: ReturnType<typeof setTimeout> | null = null;
+
+	async function revealReplyTarget(messageId: string) {
+		for (let page = 0; page < 5; page++) {
+			const target = document.querySelector<HTMLElement>(
+				`[data-message-id="${CSS.escape(messageId)}"]`,
+			);
+			if (target) {
+				target.scrollIntoView({ behavior: "smooth", block: "center" });
+				highlightedMessageId = messageId;
+				if (highlightTimer !== null) clearTimeout(highlightTimer);
+				highlightTimer = setTimeout(() => {
+					highlightedMessageId = null;
+					highlightTimer = null;
+				}, 1600);
+				return;
+			}
+			if (conversationState.pageKey === null) break;
+			await conversationState.loadMore();
+			await new Promise(requestAnimationFrame);
+		}
+		toast.info("Original message is no longer available");
+	}
 
 	/**
 	 * The album to offer unsharing for, or null when the message isn't an album
@@ -77,6 +108,9 @@
 		stackLength={message.stackLength}
 		dayStart={message.dayStart}
 		status={message.status}
+		ourProfileId={conversationState.ourProfileId}
+		otherName={conversationState.profile?.name}
+		highlighted={highlightedMessageId === message.messageId}
 		onRetry={() => conversationState.retryFailedMessage(message.messageId)}
 		onMarkHandled={() =>
 			conversationState.markFailedMessageHandled(message.messageId)}
@@ -119,7 +153,12 @@
 				});
 			}
 		}}
-		onUnsend={isOut && !message.unsent
+		onUnsend={isOut &&
+		message.status === "sent" &&
+		!message.messageId.startsWith("pending-") &&
+		!message.unsent &&
+		message.type !== "Retract" &&
+		message.type !== "VideoCall"
 			? async () => {
 					let revert: (() => void) | undefined;
 					try {
@@ -157,6 +196,29 @@
 						});
 					}
 				}
+			: undefined}
+		onSavePhrase={message.type === "Text" && !message.unsent
+			? async () => {
+					try {
+						await addSavedPhrase(
+							conversationState.ourProfileId,
+							message.body.text,
+						);
+						toast.success("Phrase saved");
+					} catch (error) {
+						if (error instanceof DuplicateSavedPhraseError) {
+							toast.info(error.message);
+						} else {
+							showErrorToast({ label: "Failed to save phrase", error });
+						}
+					}
+				}
+			: undefined}
+		onReply={message.status === "sent" && canReplyToMessage(message)
+			? () => conversationState.setReplyTarget(message)
+			: undefined}
+		onReplySelect={message.replyToMessage
+			? () => void revealReplyTarget(message.replyToMessage!.messageId)
 			: undefined}
 	/>
 {/each}

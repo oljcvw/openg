@@ -7,10 +7,12 @@ import {
 	deleteSavedPhrase,
 	deleteSavedPhrasesForAccount,
 	DuplicateSavedPhraseError,
+	filterSavedPhrases,
 	listSavedPhrases,
 	moveSavedPhrase,
 	parseSavedPhrases,
 	removeAccountSavedPhrases,
+	subscribeSavedPhrases,
 	updateSavedPhrase,
 } from "$lib/app-data/saved-phrases";
 
@@ -191,5 +193,33 @@ describe("saved phrases persistence", () => {
 		);
 
 		expect(result.accounts).toEqual({ "101": [] });
+	});
+
+	it("notifies only the account changed by a mutation", async () => {
+		const accountOne = vi.fn();
+		const accountTwo = vi.fn();
+		const unsubscribeOne = subscribeSavedPhrases(100, accountOne);
+		const unsubscribeTwo = subscribeSavedPhrases(101, accountTwo);
+
+		await addSavedPhrase(100, "Hello");
+
+		expect(accountOne).toHaveBeenCalledOnce();
+		expect(accountTwo).not.toHaveBeenCalled();
+		unsubscribeOne();
+		unsubscribeTwo();
+	});
+
+	it("filters suggestions by a normalized case-insensitive prefix", () => {
+		const phrases = [
+			{ id: "00000000-0000-4000-8000-000000000001", text: "Hey there" },
+			{ id: "00000000-0000-4000-8000-000000000002", text: "Hosting tonight" },
+			{ id: "00000000-0000-4000-8000-000000000003", text: "Honey, no thanks" },
+		];
+
+		expect(filterSavedPhrases(phrases, " HO").map(({ text }) => text)).toEqual([
+			"Hosting tonight",
+			"Honey, no thanks",
+		]);
+		expect(filterSavedPhrases(phrases, "h")).toHaveLength(3);
 	});
 });

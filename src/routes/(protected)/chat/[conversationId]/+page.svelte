@@ -67,6 +67,10 @@
 	<MessageComposer
 		onSend={(message: Message) => conversationState.send(message)}
 		disabled={conversationState.loading || conversationState.error !== null}
+		accountProfileId={conversationState.ourProfileId}
+		replyTarget={conversationState.replyTarget}
+		otherName={conversationState.profile?.name}
+		onCancelReply={() => conversationState.clearReplyTarget()}
 		bind:height={composerHeight}
 	/>
 </Card.Content>

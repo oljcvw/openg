@@ -40,6 +40,12 @@
 		onUnshareAlbum,
 		onRetry,
 		onMarkHandled,
+		onSavePhrase,
+		onReply,
+		onReplySelect,
+		ourProfileId,
+		otherName,
+		highlighted = false,
 	}: {
 		message: DisplayMessage;
 		isOut: boolean;
@@ -55,6 +61,12 @@
 		onUnshareAlbum?: () => void;
 		onRetry?: () => void;
 		onMarkHandled?: () => void;
+		onSavePhrase?: () => void;
+		onReply?: () => void;
+		onReplySelect?: () => void;
+		ourProfileId: number;
+		otherName?: string | null;
+		highlighted?: boolean;
 	} = $props();
 
 	const firstInStack = $derived(indexInStack === 0);
@@ -77,6 +89,9 @@
 				height: number;
 		  } = $state(false);
 	let messageElement: HTMLElement | null = $state(null);
+	let swipeStart: { x: number; y: number } | null = $state(null);
+	let swipeOffset = $state(0);
+	let swipeLocked = $state(false);
 
 	function setRef(el: HTMLElement | null) {
 		messageElement = el ?? null;
@@ -193,7 +208,15 @@
 {/snippet}
 
 {#snippet content(clone?: boolean)}
-	<MessageWrapper {clone} {setRef} {adornments}>
+	<MessageWrapper
+		{clone}
+		{setRef}
+		{adornments}
+		replyToMessage={message.replyToMessage}
+		{ourProfileId}
+		{otherName}
+		{onReplySelect}
+	>
 		{#if message.type === "Text"}
 			<TextMessage message={message.body} />
 		{:else if message.type === "Image"}
@@ -274,6 +297,47 @@
 		role="button"
 		tabindex="0"
 		aria-label="Message"
+		data-message-id={message.messageId}
+		class:ring-2={highlighted}
+		class:ring-primary={highlighted}
+		style:transform={`translateX(${swipeOffset}px)`}
+		style:transition={swipeStart ? "none" : "transform 180ms ease-out"}
+		onpointerdown={(event) => {
+			if (isOut || !onReply || event.button !== 0) return;
+			if (
+				(event.target as HTMLElement).closest(
+					"button, a, input, textarea, audio, video",
+				)
+			)
+				return;
+			swipeStart = { x: event.clientX, y: event.clientY };
+			swipeOffset = 0;
+			swipeLocked = false;
+		}}
+		onpointermove={(event) => {
+			if (!swipeStart || isOut || !onReply) return;
+			const dx = event.clientX - swipeStart.x;
+			const dy = event.clientY - swipeStart.y;
+			if (!swipeLocked && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+			if (!swipeLocked && Math.abs(dy) > Math.abs(dx)) {
+				swipeStart = null;
+				swipeOffset = 0;
+				return;
+			}
+			swipeLocked = true;
+			swipeOffset = Math.min(72, Math.max(0, dx));
+		}}
+		onpointerup={() => {
+			if (swipeOffset >= 48) onReply?.();
+			swipeStart = null;
+			swipeOffset = 0;
+			swipeLocked = false;
+		}}
+		onpointercancel={() => {
+			swipeStart = null;
+			swipeOffset = 0;
+			swipeLocked = false;
+		}}
 		ondblclick={(event) => {
 			const selection = window.getSelection();
 			if (
@@ -348,5 +412,15 @@
 		{onDelete}
 		{onUnsend}
 		{onUnshareAlbum}
+		{onSavePhrase}
+		{onReply}
 	/>
 {/if}
+
+<style>
+	@media (prefers-reduced-motion: reduce) {
+		[role="button"] {
+			transition: none !important;
+		}
+	}
+</style>

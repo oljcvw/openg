@@ -3,7 +3,11 @@ import { createContext } from "svelte";
 import { ApiError } from "$lib/api";
 import { showErrorToast } from "$lib/api/error";
 import { markConversationAsRead } from "$lib/api/messaging/conversations";
-import { reactToMessage, sendMessage } from "$lib/api/messaging/messages";
+import {
+	reactToMessage,
+	sendMessage,
+	sendReplyMessage,
+} from "$lib/api/messaging/messages";
 import {
 	getPreferences,
 	getShowRetractedMessagesSnapshot,
@@ -34,6 +38,14 @@ export type OptimisticMessage = ApiResponseMessage & {
 	lastAttemptAt?: number;
 };
 
+function stripNestedReply(
+	message: ApiResponseMessage,
+): NonNullable<ApiResponseMessage["replyToMessage"]> {
+	const { replyToMessage: _nested, ...preview } = message;
+	void _nested;
+	return preview;
+}
+
 const READ_DEBOUNCE_MS = 500;
 const READ_MAX_WAIT_MS = 2000;
 
@@ -50,6 +62,7 @@ export class ConversationState {
 	refreshing = $state(false);
 	error: Error | null = $state(null);
 	lastReadTimestamp: number | null = $state(null);
+	replyTarget: ApiResponseMessage | null = $state(null);
 
 	readonly conversationId: string;
 	readonly ourProfileId: number;
@@ -359,9 +372,19 @@ export class ConversationState {
 		}
 	}
 
+	setReplyTarget(message: ApiResponseMessage): void {
+		this.replyTarget = message;
+	}
+
+	clearReplyTarget(): void {
+		this.replyTarget = null;
+	}
+
 	send(message: MessageType): void {
 		if (!this.profile) return;
 		const tempId = `pending-${crypto.randomUUID()}`;
+		const replyTarget = this.replyTarget;
+		const ref = replyTarget ? crypto.randomUUID() : undefined;
 		const optimistic: OptimisticMessage = {
 			...message,
 			messageId: tempId,
@@ -370,29 +393,47 @@ export class ConversationState {
 			timestamp: Date.now(),
 			unsent: false,
 			reactions: [],
+			refValue: ref ?? null,
+			replyToMessage: replyTarget ? stripNestedReply(replyTarget) : null,
 			status: "pending" as const,
 		};
 		this.messages = removeDuplicateMessages([optimistic, ...this.messages]);
 		this.#updatePreview(optimistic);
-		void this.#resolveMessage({ tempId, message });
+		this.replyTarget = null;
+		void this.#resolveMessage({
+			tempId,
+			message,
+			replyToMessageId: replyTarget?.messageId,
+			ref,
+		});
 	}
 
 	async #resolveMessage({
 		tempId,
 		message,
+		replyToMessageId,
+		ref,
 	}: {
 		tempId: string;
 		message: MessageType;
+		replyToMessageId?: string;
+		ref?: string;
 	}): Promise<void> {
 		try {
-			const { messageId } = await sendMessage({
-				toUserId: this.profile!.profileId,
-				message,
-			});
+			const sent = replyToMessageId
+				? await sendReplyMessage({
+						toUserId: this.profile!.profileId,
+						message,
+						replyToMessageId,
+						ref,
+					})
+				: await sendMessage({
+						toUserId: this.profile!.profileId,
+						message,
+					});
 			const msg = this.messages.find((m) => m.messageId === tempId);
 			if (msg) {
-				msg.status = "sent";
-				msg.messageId = messageId;
+				Object.assign(msg, sent, { status: "sent" as const });
 			}
 			this.#syncCache();
 			void this.#conversations.ensureLoaded(this.conversationId);
@@ -453,6 +494,8 @@ export class ConversationState {
 			timestamp: _timestamp,
 			unsent: _unsent,
 			reactions: _reactions,
+			refValue: _refValue,
+			replyToMessage,
 			...payload
 		} = message;
 		void [
@@ -464,6 +507,7 @@ export class ConversationState {
 			_timestamp,
 			_unsent,
 			_reactions,
+			_refValue,
 		];
 		message.status = "pending";
 		message.lastAttemptAt = Date.now();
@@ -471,6 +515,8 @@ export class ConversationState {
 		void this.#resolveMessage({
 			tempId: message.messageId,
 			message: payload as MessageType,
+			replyToMessageId: replyToMessage?.messageId,
+			ref: message.refValue ?? undefined,
 		});
 	}
 
@@ -479,6 +525,14 @@ export class ConversationState {
 	#matchPendingEcho(
 		incoming: ApiResponseMessage,
 	): OptimisticMessage | undefined {
+		if (incoming.refValue) {
+			const correlated = this.messages.find(
+				(candidate) =>
+					candidate.status === "pending" &&
+					candidate.refValue === incoming.refValue,
+			);
+			if (correlated) return correlated;
+		}
 		let fallback: OptimisticMessage | undefined;
 		for (let i = this.messages.length - 1; i >= 0; i--) {
 			const candidate = this.messages[i];

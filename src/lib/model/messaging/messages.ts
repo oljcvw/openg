@@ -360,6 +360,16 @@ const strictApiResponseMessageSchema = z
 	.or(unsentMessageSchema);
 
 type StrictApiResponseMessage = z.infer<typeof strictApiResponseMessageSchema>;
+export type ReplyMessage = z.infer<
+	typeof strictOneLevelApiResponseMessageSchema
+>;
+export type ApiResponseMessage = StrictApiResponseMessage extends infer Variant
+	? Variant extends StrictApiResponseMessage
+		? Omit<Variant, "replyToMessage"> & {
+				replyToMessage?: ReplyMessage | null;
+			}
+		: never
+	: never;
 
 function safeSourceType(value: unknown): string {
 	if (
@@ -374,23 +384,24 @@ function safeSourceType(value: unknown): string {
 	return "Unknown";
 }
 
-export const apiResponseMessageSchema = z.unknown().transform((value, ctx) => {
-	const parsed = strictApiResponseMessageSchema.safeParse(value);
-	if (parsed.success) return parsed.data;
-	const overlay = apiResponseMessageOverlaySchema.safeParse(value);
-	if (!overlay.success) {
-		ctx.addIssue({ code: "custom", message: "Invalid message metadata" });
-		return z.NEVER;
-	}
-	return {
-		...overlay.data,
-		type: "Unknown" as const,
-		body: { sourceType: safeSourceType(value) },
-	} satisfies StrictApiResponseMessage;
-});
+export const apiResponseMessageSchema: z.ZodType<ApiResponseMessage> = z
+	.unknown()
+	.transform((value, ctx): ApiResponseMessage => {
+		const parsed = strictApiResponseMessageSchema.safeParse(value);
+		if (parsed.success) return parsed.data as ApiResponseMessage;
+		const overlay = apiResponseMessageOverlaySchema.safeParse(value);
+		if (!overlay.success) {
+			ctx.addIssue({ code: "custom", message: "Invalid message metadata" });
+			return z.NEVER;
+		}
+		return {
+			...overlay.data,
+			type: "Unknown" as const,
+			body: { sourceType: safeSourceType(value) },
+		} as ApiResponseMessage;
+	});
 
 export type Message = z.infer<typeof messageSchema>;
-export type ApiResponseMessage = z.infer<typeof apiResponseMessageSchema>;
 
 export type RetractedDisplayMessage<
 	T extends ApiResponseMessage = ApiResponseMessage,
@@ -403,6 +414,24 @@ export type RetractedDisplayMessage<
 	: never;
 
 export type DisplayMessage = ApiResponseMessage | RetractedDisplayMessage;
+
+const REPLYABLE_MESSAGE_TYPES = new Set([
+	"Audio",
+	"Gaymoji",
+	"Giphy",
+	"Image",
+	"Location",
+	"NonExpiringVideo",
+	"PrivateVideo",
+	"Text",
+	"Video",
+]);
+
+export function canReplyToMessage(
+	message: DisplayMessage,
+): message is ApiResponseMessage {
+	return !message.unsent && REPLYABLE_MESSAGE_TYPES.has(message.type);
+}
 
 function asRetractedMessage<T extends ApiResponseMessage>(
 	message: T,

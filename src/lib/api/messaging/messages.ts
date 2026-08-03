@@ -90,12 +90,13 @@ export async function sendReplyMessage({
 	toUserId,
 	message,
 	replyToMessageId,
+	ref = crypto.randomUUID(),
 }: {
 	toUserId: number;
 	message: z.infer<typeof messageSchema>;
 	replyToMessageId: string;
+	ref?: string;
 }) {
-	const ref = crypto.randomUUID();
 	return await ws.request(
 		"chat.v1.message.send",
 		{
