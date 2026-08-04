@@ -22,3 +22,9 @@ keystore.properties
 
 .local
 /coverage
+.local-review
+.codex
+.husky
+.idea
+java_pid*.hprof
+.cargo-ok
