@@ -11,9 +11,7 @@
 		value = $bindable(""),
 		class: className,
 		...restProps
-	}: CommandPrimitive.RootProps & {
-		api?: CommandRootApi | null;
-	} = $props();
+	}: CommandPrimitive.RootProps & { api?: CommandRootApi | null } = $props();
 </script>
 
 <CommandPrimitive.Root
@@ -21,6 +19,9 @@
 	bind:value
 	bind:ref
 	data-slot="command"
-	class={cn("bg-popover text-popover-foreground rounded-4xl p-1 flex size-full flex-col overflow-hidden", className)}
+	class={cn(
+		"flex size-full flex-col overflow-hidden rounded-4xl bg-popover p-1 text-popover-foreground",
+		className,
+	)}
 	{...restProps}
 />

@@ -1,17 +1,20 @@
 import z from "zod";
 
-import { fetchRest } from "$lib/api";
-import { registerAccountCache } from "$lib/api/account-caches";
 import { ApiError } from "$lib/api/api-error";
 import { getBlockedUsers } from "$lib/api/browse/blocks";
-import { mediaHashPublicSchema } from "$lib/model/media";
+import { FetchCache } from "$lib/api/cache";
+import { fetchRest } from "$lib/api/transport";
 import {
-	genderSchema,
+	ProfileModerationError,
+	readBannedTerms,
+} from "$lib/api/users/profile-moderation";
+import { mediaHashPublicSchema } from "$lib/model/media";
+import { rightNowAttributionStatusSchema } from "$lib/model/right-now";
+import {
 	type Profile,
 	profileRightNowSchema,
 	profileSchema,
 	profileShortSchema,
-	pronounSchema,
 } from "$lib/model/users/profiles";
 
 function isProbablyUnavailable(profile: Profile) {
@@ -38,7 +41,7 @@ function isProbablyUnavailable(profile: Profile) {
 		"genders",
 		"pronouns",
 		"tapType",
-	];
+	] as const satisfies readonly (keyof Profile)[];
 	const falseFields = [
 		"showAge",
 		"showDistance",
@@ -46,7 +49,7 @@ function isProbablyUnavailable(profile: Profile) {
 		"isFavorite",
 		"isNew",
 		"tapped",
-	];
+	] as const satisfies readonly (keyof Profile)[];
 	const emptyArrayFields = [
 		"grindrTribes",
 		"lookingFor",
@@ -54,15 +57,14 @@ function isProbablyUnavailable(profile: Profile) {
 		"hashtags",
 		"profileTags",
 		"meetAt",
-	];
+	] as const satisfies readonly (keyof Profile)[];
 	const probablyBlocked =
-		nullFields.every((field) => profile[field as keyof Profile] === null) &&
-		falseFields.every((field) => profile[field as keyof Profile] === false) &&
-		emptyArrayFields.every(
-			(field) =>
-				Array.isArray(profile[field as keyof Profile]) &&
-				(profile[field as keyof Profile] as unknown[]).length === 0,
-		) &&
+		nullFields.every((field) => profile[field] === null) &&
+		falseFields.every((field) => profile[field] === false) &&
+		emptyArrayFields.every((field) => {
+			const value = profile[field];
+			return Array.isArray(value) && value.length === 0;
+		}) &&
 		profile.vaccines &&
 		profile.vaccines.length === 0 &&
 		Object.keys(profile.socialNetworks).length === 0 &&
@@ -91,58 +93,45 @@ const profileResponseSchema = z.object({
 	profiles: z.array(profileSchema).length(1),
 });
 
-const profilesCache = new Map<
-	number,
-	{ profile: Profile; updatedAt: number }
->();
-
-const profilesInFlight = new Map<number, Promise<Profile>>();
-
-export async function getProfile(profileId: number): Promise<Profile> {
-	const cached = profilesCache.get(profileId);
-	if (cached && Date.now() - cached.updatedAt < 1000 * 60) {
-		return cached.profile;
-	}
-	let request = profilesInFlight.get(profileId);
-	if (!request) {
-		request = fetchProfile(profileId).finally(() => {
-			profilesInFlight.delete(profileId);
-		});
-		profilesInFlight.set(profileId, request);
-	}
-	return request;
-}
-
 const MAGIC_PROFILE_UNAVAILABLE_DISPLAY_NAME = "3";
 const MAGIC_PROFILE_BLOCK_DISPLAY_NAME = "4";
 
 async function fetchProfile(profileId: number): Promise<Profile> {
-	const profile = (
-		await fetchRest(`/v7/profiles/${profileId}`, {
-			method: "GET",
-		}).then((res) => res.jsonParsed(profileResponseSchema))
-	).profiles[0];
+	const [profile] = (
+		await fetchRest(`/v7/profiles/${profileId}`, { method: "GET" }).then(
+			(res) => res.jsonParsed(profileResponseSchema),
+		)
+	).profiles;
+	if (!profile) throw new ProfileUnavailableError();
 	if (isProbablyUnavailable(profile)) {
 		if (profile.displayName === MAGIC_PROFILE_BLOCK_DISPLAY_NAME) {
 			const blockedByUs = await getBlockedUsers().then((blocking) =>
 				blocking.some((blocked) => blocked.profileId === profileId),
 			);
 			throw new BlockedProfileError({ blockedByUs });
-		} else if (profile.displayName === MAGIC_PROFILE_UNAVAILABLE_DISPLAY_NAME) {
+		} else if (
+			profile.displayName === MAGIC_PROFILE_UNAVAILABLE_DISPLAY_NAME
+		) {
 			throw new ProfileUnavailableError();
 		}
 	}
-	profilesCache.set(profileId, { profile, updatedAt: Date.now() });
 	return profile;
 }
 
+const profiles = new FetchCache(fetchProfile, { ttlMs: 60_000 });
+
+export function getProfile(profileId: number): Promise<Profile> {
+	return profiles.fetch(profileId);
+}
+
+const profileShortWithRightNowSchema = z.object({
+	...profileShortSchema.shape,
+	...profileRightNowSchema.shape,
+	rightNowStatus: rightNowAttributionStatusSchema.nullish().catch("NONE"),
+});
+
 const getProfilesResponseSchema = z.object({
-	profiles: z.array(
-		z.object({
-			...profileShortSchema.shape,
-			...profileRightNowSchema.shape,
-		}),
-	),
+	profiles: z.array(profileShortWithRightNowSchema),
 });
 
 export async function getProfiles(
@@ -151,41 +140,16 @@ export async function getProfiles(
 	if (profileIds.length === 0) return [];
 	return await fetchRest("/v3/profiles", {
 		method: "POST",
-		body: {
-			targetProfileIds: profileIds,
-		},
+		body: { targetProfileIds: profileIds },
 	}).then((res) => res.jsonParsed(getProfilesResponseSchema).profiles);
 }
 
-let myProfileCache: {
-	profile: z.infer<typeof getProfilesResponseSchema>["profiles"][0];
-	updatedAt: number;
-} | null = null;
-
-export async function getMyProfile() {
-	if (myProfileCache && Date.now() - myProfileCache.updatedAt < 1000 * 60) {
-		return myProfileCache.profile;
-	}
-	const profile = await fetchRest("/v4/me/profile").then(
-		(res) => res.jsonParsed(getProfilesResponseSchema).profiles[0],
-	);
-	myProfileCache = { profile, updatedAt: Date.now() };
-	return profile;
-}
-
 export function clearProfileCaches() {
-	myProfileCache = null;
-	profilesCache.clear();
-	profilesInFlight.clear();
+	profiles.clear();
 }
-
-registerAccountCache(clearProfileCaches);
 
 export function invalidateProfile(profileId: number) {
-	profilesCache.delete(profileId);
-	if (myProfileCache?.profile.profileId === profileId) {
-		myProfileCache = null;
-	}
+	profiles.delete(profileId);
 }
 
 export type ProfileEdit = Partial<
@@ -222,121 +186,81 @@ export type ProfileEdit = Partial<
 export type ProfileUpdate = ProfileEdit &
 	Pick<Profile, "approximateDistance" | "profileTags">;
 
-export function applyProfileEdit(
-	base: Profile,
-	patch: Partial<Profile>,
-): Profile {
+export function applyProfileEdit({
+	base,
+	patch,
+}: {
+	base: Profile;
+	patch: Partial<Profile>;
+}): Profile {
 	const merged = { ...base, ...patch };
 	if (patch.socialNetworks) {
-		merged.socialNetworks = { ...base.socialNetworks, ...patch.socialNetworks };
+		merged.socialNetworks = {
+			...base.socialNetworks,
+			...patch.socialNetworks,
+		};
 	}
 	return merged;
 }
 
-export function mergeProfileEditIntoCaches(
-	cacheProfileId: number,
-	patch: Partial<Profile>,
-) {
-	const cached = profilesCache.get(cacheProfileId);
-	if (cached) {
-		profilesCache.set(cacheProfileId, {
-			profile: applyProfileEdit(cached.profile, patch),
-			updatedAt: Date.now(),
-		});
-	}
-	if (myProfileCache && myProfileCache.profile.profileId === cacheProfileId) {
-		const next: Record<string, unknown> = { ...myProfileCache.profile };
-		for (const key of Object.keys(patch)) {
-			if (key in next) next[key] = patch[key as keyof Profile];
-		}
-		myProfileCache = {
-			profile: next as typeof myProfileCache.profile,
-			updatedAt: Date.now(),
-		};
+export type ProfileEditListener = (edit: {
+	profileId: number;
+	patch: Partial<Profile>;
+}) => void;
+
+const profileEditListeners = new Set<ProfileEditListener>();
+
+export function onProfileEdit(listener: ProfileEditListener): () => void {
+	profileEditListeners.add(listener);
+	return () => {
+		profileEditListeners.delete(listener);
+	};
+}
+
+export function mergeProfileEditIntoCaches({
+	cacheProfileId,
+	patch,
+}: {
+	cacheProfileId: number;
+	patch: Partial<Profile>;
+}) {
+	profiles.update(cacheProfileId, (profile) =>
+		applyProfileEdit({ base: profile, patch }),
+	);
+	for (const listener of profileEditListeners) {
+		listener({ profileId: cacheProfileId, patch });
 	}
 }
 
-export async function patchOwnProfile(
-	cacheProfileId: number,
-	patch: ProfileEdit,
-) {
+export async function patchOwnProfile({
+	cacheProfileId,
+	patch,
+}: {
+	cacheProfileId: number;
+	patch: ProfileEdit;
+}) {
 	const res = await fetchRest("/v4/me/profile", {
 		method: "PATCH",
 		body: patch,
 	});
 	res.assertOk();
-	mergeProfileEditIntoCaches(cacheProfileId, patch);
+	mergeProfileEditIntoCaches({ cacheProfileId, patch });
 }
 
-const bannedTermsSchema = z
-	.object({ terms: z.array(z.string()).nullish() })
-	.nullish();
-
-const bannedTermsErrorSchema = z.object({
-	type: z.literal("urn:gr:err:hit_banned_terms"),
-	display_name: bannedTermsSchema,
-	about_me: bannedTermsSchema,
-	gender_display: bannedTermsSchema,
-	pronouns_display: bannedTermsSchema,
-});
-
-const moderatedFieldKeys = [
-	"display_name",
-	"about_me",
-	"gender_display",
-	"pronouns_display",
-] as const;
-
-const moderatedFieldLabels: Record<
-	(typeof moderatedFieldKeys)[number],
-	string
-> = {
-	display_name: "Display name",
-	about_me: "About me",
-	gender_display: "Gender",
-	pronouns_display: "Pronouns",
-};
-
-export type ModeratedField = { field: string; terms: string[] };
-
-export class ProfileModerationError extends Error {
-	rejected: ModeratedField[];
-
-	constructor(rejected: ModeratedField[]) {
-		super(`Banned terms in: ${rejected.map((r) => r.field).join(", ")}`);
-		this.name = "ProfileModerationError";
-		this.rejected = rejected;
-	}
-}
-
-function readBannedTerms(body: string): ModeratedField[] | null {
-	let parsed: unknown;
-	try {
-		parsed = JSON.parse(body);
-	} catch {
-		return null;
-	}
-	const result = bannedTermsErrorSchema.safeParse(parsed);
-	if (!result.success) return null;
-	return moderatedFieldKeys
-		.map((key) => ({
-			field: moderatedFieldLabels[key],
-			terms: result.data[key]?.terms ?? [],
-		}))
-		.filter((entry) => entry.terms.length > 0);
-}
-
-export async function updateOwnProfile(
-	cacheProfileId: number,
-	profile: ProfileUpdate,
-) {
+export async function updateOwnProfile({
+	cacheProfileId,
+	profile,
+}: {
+	cacheProfileId: number;
+	profile: ProfileUpdate;
+}) {
 	const res = await fetchRest("/v3.1/me/profile", {
 		method: "PUT",
 		body: profile,
 	});
 
 	if (res.status === 200) {
-		mergeProfileEditIntoCaches(cacheProfileId, profile);
+		mergeProfileEditIntoCaches({ cacheProfileId, patch: profile });
 		return;
 	}
 
@@ -354,10 +278,13 @@ export async function updateOwnProfile(
 	});
 }
 
-export async function deleteProfilePhotos(
-	cacheProfileId: number,
-	mediaHashes: string[],
-) {
+export async function deleteProfilePhotos({
+	cacheProfileId,
+	mediaHashes,
+}: {
+	cacheProfileId: number;
+	mediaHashes: string[];
+}) {
 	if (mediaHashes.length === 0) return;
 	const res = await fetchRest("/v3/me/profile/images", {
 		method: "DELETE",
@@ -365,43 +292,10 @@ export async function deleteProfilePhotos(
 	});
 	res.assertOk();
 	const removed = new Set(mediaHashes);
-	const cached = profilesCache.get(cacheProfileId);
-	if (cached) {
-		profilesCache.set(cacheProfileId, {
-			profile: {
-				...cached.profile,
-				medias: cached.profile.medias.filter((m) => !removed.has(m.mediaHash)),
-			},
-			updatedAt: Date.now(),
-		});
-	}
-	if (myProfileCache && myProfileCache.profile.profileId === cacheProfileId) {
-		myProfileCache = {
-			profile: {
-				...myProfileCache.profile,
-				medias: myProfileCache.profile.medias.filter(
-					(m) => !removed.has(m.mediaHash),
-				),
-			},
-			updatedAt: Date.now(),
-		};
-	}
-}
-
-const gendersResponseSchema = z.array(genderSchema);
-
-export async function getGenders() {
-	return await fetchRest("/public/v2/genders").then((res) =>
-		res.jsonParsed(gendersResponseSchema),
-	);
-}
-
-const pronounsResponseSchema = z.array(pronounSchema);
-
-export async function getPronouns() {
-	return await fetchRest("/v1/pronouns").then((res) =>
-		res.jsonParsed(pronounsResponseSchema),
-	);
+	profiles.update(cacheProfileId, (profile) => ({
+		...profile,
+		medias: profile.medias.filter((m) => !removed.has(m.mediaHash)),
+	}));
 }
 
 export async function getProfileUploadedPhotos() {

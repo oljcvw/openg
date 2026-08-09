@@ -3,12 +3,12 @@
 	import { toast } from "svelte-sonner";
 	import z from "zod";
 
-	import { asAppError, asBanned, callMethod } from "$lib/api";
 	import {
 		accountStatusState,
 		showAccountRestriction,
 	} from "$lib/api/account-status-state.svelte";
-	import { showErrorToast } from "$lib/api/error";
+	import { showErrorToast } from "$lib/api/error-toast";
+	import { asAppError, asBanned, callMethod } from "$lib/api/methods";
 	import { clearProfileCaches } from "$lib/api/users/profiles";
 	import { Button } from "$lib/components/ui/button";
 	import * as Card from "$lib/components/ui/card";
@@ -39,10 +39,7 @@
 		event.preventDefault();
 		submitting = "password";
 		try {
-			const result = await callMethod("login", {
-				email,
-				password,
-			});
+			const result = await callMethod("login", { email, password });
 			if (showAccountRestriction(result.restriction)) return;
 			clearProfileCaches();
 			void goto("/");
@@ -60,7 +57,10 @@
 						}),
 					})
 					.safeParse(appError).success;
-				if (invalidInputParameters || appError.kind === "Unauthorized") {
+				if (
+					invalidInputParameters ||
+					appError.kind === "Unauthorized"
+				) {
 					toast.error("Invalid email or password");
 					void maybeCheckRecaptcha();
 				} else {
@@ -105,6 +105,16 @@
 				appError?.kind === "Auth" &&
 				appError.message === "companion-unavailable"
 			) {
+				void goto("/auth/sign-in/google");
+				return;
+			}
+			if (
+				appError?.kind === "Auth" &&
+				appError.message === "companion-untrusted"
+			) {
+				toast.error(
+					"An app using the companion's name is installed but isn't signed by Open Grind, so its token was refused. Uninstall it, or paste the OAuth token manually.",
+				);
 				void goto("/auth/sign-in/google");
 				return;
 			}
@@ -175,7 +185,11 @@
 			</div>
 		</Card.Content>
 		<Card.Footer class="flex-col gap-2">
-			<Button type="submit" class="w-full" disabled={submitting !== false}>
+			<Button
+				type="submit"
+				class="w-full"
+				disabled={submitting !== false}
+			>
 				{#if submitting === "password"}
 					<Spinner />
 				{/if}

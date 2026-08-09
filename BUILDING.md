@@ -6,22 +6,23 @@ To get started, choose one of the methods below (Docker, Nix or manual) and foll
 > Only Android release builds are tested as of June 23rd, 2026.
 
 - [Building Open Grind](#building-open-grind)
-  - [Build with Docker (easiest)](#build-with-docker-easiest)
-    - [Clean-up Docker](#clean-up-docker)
-  - [Build with Nix (builds everywhere)](#build-with-nix-builds-everywhere)
-  - [Build manually (advanced)](#build-manually-advanced)
-  - [Signing](#signing)
-    - [Sign \& build with Docker](#sign--build-with-docker)
-    - [Sign \& build with Nix](#sign--build-with-nix)
-    - [Sign \& build manually](#sign--build-manually)
-  - [Trusting the build environment](#trusting-the-build-environment)
-    - [Verifying Nix and flake.lock](#verifying-nix-and-flakelock)
-    - [Verifying the Gradle wrapper jar](#verifying-the-gradle-wrapper-jar)
-  - [Verifying a published release](#verifying-a-published-release)
-  - [Reproducible CI release](#reproducible-ci-release)
-  - [Reproducibility](#reproducibility)
-    - [Refreshing the lock](#refreshing-the-lock)
-    - [Cargo / JS hygiene](#cargo--js-hygiene)
+    - [Build with Docker (easiest)](#build-with-docker-easiest)
+        - [Clean-up Docker](#clean-up-docker)
+    - [Build with Nix (builds everywhere)](#build-with-nix-builds-everywhere)
+    - [Build manually (advanced)](#build-manually-advanced)
+    - [Credential storage](#credential-storage)
+    - [Signing](#signing)
+        - [Sign \& build with Docker](#sign--build-with-docker)
+        - [Sign \& build with Nix](#sign--build-with-nix)
+        - [Sign \& build manually](#sign--build-manually)
+    - [Trusting the build environment](#trusting-the-build-environment)
+        - [Verifying Nix and flake.lock](#verifying-nix-and-flakelock)
+        - [Verifying the Gradle wrapper jar](#verifying-the-gradle-wrapper-jar)
+    - [Verifying a published release](#verifying-a-published-release)
+    - [Reproducible CI release](#reproducible-ci-release)
+    - [Reproducibility](#reproducibility)
+        - [Refreshing the lock](#refreshing-the-lock)
+        - [Cargo / JS hygiene](#cargo--js-hygiene)
 
 ## Build with Docker (easiest)
 
@@ -41,7 +42,7 @@ Prerequisites:
 1. Install Docker on your host system and make sure to give it enough disk headroom (Settings &rarr; Resources &rarr; Disk): the toolchain is ~12 GB and its first realization needs ~15 GB of transient space.
 2. Build the thin image: `docker compose build`
 3. Build the apk: `docker compose run --rm build`
-4. Retrieve the apk from `src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk` on your host system
+4. Retrieve the apk from `src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<version>-unsigned.apk` on your host system
 5. Follow [Signing](#signing) steps to make the build installable on your Android device
 
 ### Clean-up Docker
@@ -53,14 +54,14 @@ docker image rm open-grind-build   # removes the thin image
 
 ## Build with Nix (builds everywhere)
 
-Open Grind ships a [Nix flake](./flake.nix) that pins the entire Android toolchain — Rust, the JDK, the Android SDK, the NDK, Gradle, and Bun — so any contributor on Linux or macOS can produce an identical build in an identical environment.
+Open Grind ships a [Nix flake](./flake.nix) that pins the entire Android toolchain — Rust, the JDK, the Android SDK, the NDK, Gradle, Bun, and Node.js — so any contributor on Linux or macOS can produce an identical build in an identical environment.
 
 - [Nix](https://nixos.org/download) >= 2.18
 - ~30 GB of disk space
 
 1. Install and configure Nix on your host system
 2. Run `nix run .#build-android`
-3. Retrieve the apk: `src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk` on your host system
+3. Retrieve the apk: `src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<version>-unsigned.apk` on your host system
 
 > [!NOTE]
 > First time you run `nix develop` or `nix run` in Open Grind's repository, Nix will download and setup about 3 GB environment, which might take some time, depending on your internet connection speed.
@@ -96,6 +97,22 @@ bun run tauri android build --apk
 
 3. Retrieve the apk from `src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk` on your host system
 4. Follow [Signing](#signing) to make the build installable on your Android device
+
+## Credential storage
+
+Open Grind keeps the session, device identity, and media signing key in the platform's own credential store: Keychain on iOS, Keystore on Android, Credential Manager on Windows, and the Secret Service (GNOME Keyring, KWallet, etc) over D-Bus on Linux.
+
+Two targets fall back to a file store: `credentials/` in the app data directory, each file `0600` inside a `0700` directory.
+
+- macOS, by default. Keychain entries are tied to the code-signing identity, so an unsigned build cannot read back what an earlier build wrote, which breaks local development ([`ac38b2c`](https://git.opengrind.org/open-grind/open-grind/commit/ac38b2c)).
+- Linux, only when no Secret Service is reachable, such as a headless box with no D-Bus session bus.
+
+> [!IMPORTANT]
+> A macOS build that is distributed must be code-signed and built with the `keychain` feature, which swaps the file store for the Keychain:
+>
+> ```bash
+> bun run tauri build --features keychain
+> ```
 
 ## Signing
 
@@ -159,7 +176,7 @@ Before running any build or verification steps, you are trusting several compone
 
 ### Verifying Nix and flake.lock
 
-[flake.lock](./flake.lock) pins every flake input to an exact content hash: JDK, Android SDK, NDK, Rust, Bun.
+[flake.lock](./flake.lock) pins every flake input to an exact content hash: JDK, Android SDK, NDK, Rust, Bun, Node.js.
 
 1. Confirm the nixpkgs revision in flake.lock resolves to a commit on the official NixOS/nixpkgs repository:
 
@@ -180,10 +197,9 @@ shasum -a 256 src-tauri/gen/android/gradle/wrapper/gradle-wrapper.jar
 
 Compare against [Gradle's published checksums](https://gradle.org/release-checksums/) for 8.14.5 (`7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172`).
 
-
 ## Verifying a published release
 
-Open Grind's official APK is signed with a [governance-held JKS](./KEYS.md), but anyone can verify that the published binary was built from the source in this repository — no access to that key required.
+Published artifacts carry a detached [minisign](https://jedisct1.github.io/minisign/) signature. Anyone can also check that the published binary was built from the source in this repository, no key required.
 
 Android's v2/v3 signing block lives in a dedicated region between the last zip entry and the central directory; v1 (JAR) signatures live in `META-INF/*.SF`, `*.{RSA,EC,DSA}`, and modify `MANIFEST.MF`. Everything else — dex, native libs, resources, manifest, assets — is byte-identical between a signed and an unsigned build of the same source on the same toolchain.
 
@@ -198,22 +214,18 @@ nix develop
 # 1. Reproduce the unsigned APK locally
 git checkout v<tag>
 nix run .#build-android
-LOCAL=src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
+LOCAL=src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<tag>-unsigned.apk
 
-# 2. Fetch the published signed APK
+# 2. Fetch the published signed APK and its signature, side by side
 #    (https://git.opengrind.org/open-grind/open-grind/releases)
-PUBLISHED=/path/to/open-grind-v<tag>.apk
+PUBLISHED=/path/to/open-grind-v<tag>.apk   # minisign reads "$PUBLISHED.minisig"
 
-# 3. Confirm JKS certificate
-EXPECTED="2805fdd8f0badb9424d3244c5e5b3473cef5b8798ec1117382e89eda45c3658c"
-ACTUAL=$(apksigner verify --print-certs "$PUBLISHED" \
-  | grep "Signer #1 certificate SHA-256 digest" \
-  | awk '{print $NF}')
-
-if [ "$ACTUAL" = "$EXPECTED" ]; then
-  echo "✓ APK certificate matches Open Grind's release JKS"
+# 3. Confirm the release signature
+#    Key and its provenance: KEYS.md
+if minisign -Vm "$PUBLISHED" -P RWReleaseOpenGrindurRQcmR+NovOaU5IEU3LM5l6TcXJvOGYw2m4O+; then
+  echo "✓ signature valid and verified"
 else
-  echo "✗ APK: certificate fingerprint mismatch" >&2
+  echo "✗ signature invalid, do not install this APK" >&2
   exit 1
 fi
 
@@ -228,7 +240,7 @@ apk_content_hash() {
       done
 }
 if diff <(apk_content_hash "$LOCAL") <(apk_content_hash "$PUBLISHED"); then
-  echo "✓ APK hash checksum matches, local build reproduces the published APK exactly"
+  echo "✓ APK hash checksum matches"
 else
   echo "✗ APK hash checksum mismatch, local build does not match the published APK" >&2
   exit 1
@@ -239,7 +251,7 @@ If steps 3 and 4 both succeed, the published APK was built from this commit and 
 
 ## Reproducible CI release
 
-See [ci/README.md](./ci/README.md).
+See [ci/](./ci/).
 
 ## Reproducibility
 
@@ -247,6 +259,7 @@ Every input that affects the output bytes is pinned in exactly one place:
 
 | Component                               | Where it's pinned                                                |
 | --------------------------------------- | ---------------------------------------------------------------- |
+| Docker base image (Docker build path)   | `Dockerfile` (`nixos/nix` pinned by `@sha256`)                   |
 | nixpkgs                                 | `flake.lock`                                                     |
 | Rust toolchain                          | `rust-toolchain.toml`                                            |
 | JDK                                     | `flake.nix` (`jdk21_headless`)                                   |
@@ -258,9 +271,11 @@ Every input that affects the output bytes is pinned in exactly one place:
 | Gradle distribution                     | `src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties` |
 | Kotlin                                  | `src-tauri/gen/android/build.gradle.kts`                         |
 | Bun                                     | nixpkgs pin (via `flake.lock`)                                   |
+| Node.js (runs `vite build`)             | nixpkgs pin (via `flake.lock`)                                   |
 | Tauri CLI                               | `package.json` / `bun.lock`                                      |
 | JS deps                                 | `bun.lock`                                                       |
 | Cargo deps                              | `src-tauri/Cargo.lock`                                           |
+| Dependency patches                      | [patches/](./patches), [src-tauri/patches/](./src-tauri/patches) |
 
 The `opengrind.android.*` keys in `gradle.properties` are read by both Gradle and `flake.nix`. Bump them there once and both consumers pick up the new value.
 

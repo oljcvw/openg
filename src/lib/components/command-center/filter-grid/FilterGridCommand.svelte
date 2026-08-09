@@ -2,7 +2,7 @@
 	import { goto } from "$app/navigation";
 	import { FunnelIcon } from "phosphor-svelte";
 
-	import { showErrorToast } from "$lib/api/error";
+	import { showErrorToast } from "$lib/api/error-toast";
 	import { Badge } from "$lib/components/ui/badge";
 	import * as Command from "$lib/components/ui/command";
 	import { gridState } from "$lib/grid/grid-state.svelte";
@@ -13,7 +13,9 @@
 	import { parseFilterGridQuery } from "./filter-grid-query";
 
 	const result = $derived(parseFilterGridQuery(commandCenterState.query));
-	const canApply = $derived(result.validCount > 0 && result.invalidCount === 0);
+	const canApply = $derived(
+		result.validCount > 0 && result.invalidCount === 0,
+	);
 
 	async function apply() {
 		if (!canApply) return;
@@ -32,15 +34,17 @@
 	<Command.Item
 		value={commandCenterState.query || "?"}
 		disabled={!canApply}
-		class={canApply ? undefined : "text-muted-foreground"}
+		class={{ "text-muted-foreground": !canApply }}
 		onSelect={apply}
 	>
 		<FunnelIcon />
-		<div class="flex flex-col gap-2 min-w-0 flex-1">
+		<div class="flex min-w-0 flex-1 flex-col gap-2">
 			{#if result.parsed.length === 0}
 				<span>
 					Type a Grindr grid query, e.g.
-					<code class="bg-muted px-1 py-px rounded-xs font-mono text-sm">
+					<code
+						class="rounded-xs bg-muted px-1 py-px font-mono text-sm"
+					>
 						online=true&age=18-99&tribes=2,12
 					</code>
 				</span>

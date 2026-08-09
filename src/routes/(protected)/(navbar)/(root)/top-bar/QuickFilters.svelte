@@ -1,22 +1,17 @@
 <script lang="ts">
 	import { SlidersHorizontalIcon } from "phosphor-svelte";
 
-	import { defaultFilters } from "$lib/components/filters/filters";
 	import { Button, buttonVariants } from "$lib/components/ui/button";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
 	import { gridState } from "$lib/grid/grid-state.svelte";
+	import { defaultFilters } from "$lib/model/browse/grid/filters";
 	import AgeQuickFilter from "./AgeQuickFilter.svelte";
 	import PositionQuickFilter from "./PositionQuickFilter.svelte";
 
 	let {
 		openFilters = $bindable(),
-	}: {
-		openFilters: {
-			all: boolean;
-			age: boolean;
-			position: boolean;
-		};
-	} = $props();
+	}: { openFilters: { all: boolean; age: boolean; position: boolean } } =
+		$props();
 
 	const TOGGLE_FILTER_KEYS = ["isOnline", "isRightNow", "isFresh"] as const;
 
@@ -24,24 +19,24 @@
 	const { ageEnabled, positionEnabled } = $derived(filters);
 </script>
 
-<Button variant="secondary" onclick={() => (openFilters.all = true)}>
+<Button
+	variant="secondary"
+	aria-label="All filters"
+	onclick={() => (openFilters.all = true)}
+>
 	<SlidersHorizontalIcon />
 </Button>
 <Button
 	variant="secondary"
 	onclick={() => (openFilters.age = true)}
-	class={{
-		"bg-white hover:bg-neutral-200 text-popover": ageEnabled,
-	}}
+	class={{ "bg-white text-popover hover:bg-neutral-200": ageEnabled }}
 >
 	Age
 </Button>
 <Button
 	variant="secondary"
 	onclick={() => (openFilters.position = true)}
-	class={{
-		"bg-white hover:bg-neutral-200 text-popover": positionEnabled,
-	}}
+	class={{ "bg-white text-popover hover:bg-neutral-200": positionEnabled }}
 >
 	Position
 </Button>

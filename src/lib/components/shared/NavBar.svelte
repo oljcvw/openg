@@ -4,27 +4,26 @@
 	import DotsNineIcon from "phosphor-svelte/lib/DotsNineIcon";
 	import DropIcon from "phosphor-svelte/lib/DropIcon";
 	import FireIcon from "phosphor-svelte/lib/FireIcon";
+	import { untrack } from "svelte";
 
-	import { getMyProfile } from "$lib/api/users/profiles";
+	import { getProfile } from "$lib/api/users/profiles";
 	import { getOrCreateConversationsState } from "$lib/chat/conversations-context.svelte";
 	import BrokenUserAvatar from "$lib/components/profile/BrokenUserAvatar.svelte";
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { Badge } from "$lib/components/ui/badge";
 	import { tabsListVariants } from "$lib/components/ui/tabs";
-	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
 
-	const myProfilePhotos = $derived(
-		getMyProfile().then((profile) => profile.medias),
+	let { ourProfileId }: { ourProfileId: number } = $props();
+
+	const myProfilePhotos = untrack(() =>
+		getProfile(ourProfileId).then((profile) => profile.medias),
 	);
 
-	let conversations = $state<ConversationsState | null>(null);
-	$effect(() => {
-		void getMyProfile().then((profile) => {
-			conversations = getOrCreateConversationsState(profile.profileId);
-		});
-	});
-	const hasUnread = $derived(conversations?.hasUnread ?? false);
+	const conversations = untrack(() =>
+		getOrCreateConversationsState(ourProfileId),
+	);
+	const hasUnread = $derived(conversations.hasUnread);
 </script>
 
 <ProgressiveBlur
@@ -61,7 +60,9 @@
 		</a>
 		<a
 			href="/interest"
-			data-active={page.route.id?.startsWith("/(protected)/(navbar)/interest")}
+			data-active={page.route.id?.startsWith(
+				"/(protected)/(navbar)/interest",
+			)}
 		>
 			<FireIcon weight="fill" />
 			Interest
@@ -70,12 +71,15 @@
 			<ChatCircleIcon weight="fill" />
 			Inbox
 			{#if hasUnread}
-				<Badge class="absolute inset-e-2 top-1 size-2.5 rounded-full p-0" />
+				<Badge
+					class="absolute inset-e-2 top-1 size-2.5 rounded-full p-0"
+				/>
 			{/if}
 		</a>
 	</div>
 	<a
 		href="/settings"
+		aria-label="Me"
 		class={[
 			"flex size-14 shrink-0 rounded-full border bg-muted p-1",
 			{

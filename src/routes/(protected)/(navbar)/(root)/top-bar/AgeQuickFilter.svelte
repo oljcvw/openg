@@ -1,17 +1,16 @@
 <script lang="ts">
 	import AgeFilterSlider from "$lib/components/filters/age/AgeFilterSlider.svelte";
-	import { defaultFilters } from "$lib/components/filters/filters";
 	import { Button, buttonVariants } from "$lib/components/ui/button";
 	import * as Drawer from "$lib/components/ui/drawer";
 	import { Switch } from "$lib/components/ui/switch";
 	import { gridState } from "$lib/grid/grid-state.svelte";
+	import {
+		ageRangeLabel,
+		defaultFilters,
+	} from "$lib/model/browse/grid/filters";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 
-	let {
-		open = $bindable(),
-	}: {
-		open: boolean;
-	} = $props();
+	let { open = $bindable() }: { open: boolean } = $props();
 
 	let filters = $derived({ ...(gridState.filters.value ?? defaultFilters) });
 	let { ageEnabled: enabled, age: value } = $derived(filters);
@@ -35,16 +34,16 @@
 		}
 	});
 
-	let label = $state("");
+	const label = $derived(ageRangeLabel(value));
 </script>
 
 <Drawer.Root bind:open>
 	<Drawer.Content
 		preventOverflowTextSelection={false}
-		class="max-w-160 mx-auto"
+		class="mx-auto max-w-160"
 	>
-		<Drawer.Header class="flex flex-row justify-between items-center">
-			<div class="flex-1 flex justify-start">
+		<Drawer.Header class="flex flex-row items-center justify-between">
+			<div class="flex flex-1 justify-start">
 				<Button
 					variant="link"
 					class="cursor-pointer"
@@ -56,12 +55,12 @@
 				</Button>
 			</div>
 			<Drawer.Title>Age</Drawer.Title>
-			<div class="flex-1 flex justify-end">
-				<Switch id="age-filter-enabled" bind:checked={enabled} />
+			<div class="flex flex-1 justify-end">
+				<Switch aria-label="Filter by age" bind:checked={enabled} />
 			</div>
 		</Drawer.Header>
-		<div class="px-4 flex flex-col gap-1.5 mb-2">
-			<div class="w-full text-center mb-2">{label}</div>
+		<div class="mb-2 flex flex-col gap-1.5 px-4">
+			<div class="mb-2 w-full text-center">{label}</div>
 			<AgeFilterSlider
 				bind:value={
 					() => value,
@@ -70,17 +69,13 @@
 						value = v;
 					}
 				}
-				bind:label
 			/>
 		</div>
 		<Drawer.Footer>
 			<Drawer.Close
 				class={buttonVariants({ variant: "default" })}
 				onclick={() => {
-					gridState.filters.set({
-						ageEnabled: enabled,
-						age: value,
-					});
+					gridState.filters.set({ ageEnabled: enabled, age: value });
 					open = false;
 				}}
 			>

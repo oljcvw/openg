@@ -1,13 +1,13 @@
 import z from "zod";
 
-import { fetchRest } from "$lib/api";
+import { fetchRest } from "$lib/api/transport";
 import {
 	type ApiResponseMessage,
 	apiResponseMessageSchema,
-	messageSchema,
 } from "$lib/model/messaging/messages";
 import { unixTimestampMsSchema } from "$lib/model/types";
 import type { Conversation } from "$lib/model/messaging/conversations";
+import type { messageSchema } from "$lib/model/messaging/messages";
 
 const conversationMessagesSchema = z.object({
 	lastReadTimestamp: unixTimestampMsSchema.nullable(),
@@ -22,6 +22,30 @@ const conversationMessagesSchema = z.object({
 	}),
 });
 
+const unauthorizedActionSchema = z.object({
+	type: z.literal("urn:gr:err:unauthorized_action"),
+});
+
+export class ConversationUnavailableError extends Error {
+	readonly conversationId: string;
+
+	constructor(conversationId: string) {
+		super(`Conversation ${conversationId} is no longer available`);
+		this.name = "ConversationUnavailableError";
+		this.conversationId = conversationId;
+	}
+}
+
+function isUnauthorizedAction(body: string): boolean {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(body);
+	} catch {
+		return false;
+	}
+	return unauthorizedActionSchema.safeParse(parsed).success;
+}
+
 export async function getConversationMessages({
 	conversationId,
 	pageKey,
@@ -31,11 +55,15 @@ export async function getConversationMessages({
 }) {
 	const params = new URLSearchParams({ profile: "true" });
 	if (pageKey !== undefined) params.set("pageKey", pageKey);
-	const messages = await fetchRest(
+	const res = await fetchRest(
 		`/v5/chat/conversation/${conversationId}/message?` + params.toString(),
 		{ method: "GET" },
-	).then((res) => res.jsonParsed(conversationMessagesSchema));
-	return messages;
+	);
+	if (res.status === 403 && isUnauthorizedAction(res.text())) {
+		throw new ConversationUnavailableError(conversationId);
+	}
+	res.assertOk();
+	return res.jsonParsed(conversationMessagesSchema);
 }
 
 export async function getSingleMessage({
@@ -72,10 +100,7 @@ export async function sendMessage({
 		method: "POST",
 		body: {
 			type: message.type,
-			target: {
-				type: "Direct",
-				targetId: toUserId,
-			},
+			target: { type: "Direct", targetId: toUserId },
 			body: toOutboundBody(message),
 		},
 	}).then((res) => res.jsonParsed(apiResponseMessageSchema));
@@ -92,11 +117,7 @@ export async function reactToMessage({
 }) {
 	return await fetchRest("/v4/chat/message/reaction", {
 		method: "POST",
-		body: {
-			conversationId,
-			messageId,
-			reactionType,
-		},
+		body: { conversationId, messageId, reactionType },
 	});
 }
 
@@ -109,10 +130,7 @@ export async function deleteMessageForMe({
 }) {
 	return await fetchRest(`/v4/chat/message/delete`, {
 		method: "POST",
-		body: {
-			conversationId,
-			messageId,
-		},
+		body: { conversationId, messageId },
 	}).then((res) => res.assertOk());
 }
 
@@ -125,9 +143,6 @@ export async function unsendMessage({
 }) {
 	return await fetchRest(`/v4/chat/message/unsend`, {
 		method: "POST",
-		body: {
-			conversationId,
-			messageId,
-		},
+		body: { conversationId, messageId },
 	}).then((res) => res.assertOk());
 }

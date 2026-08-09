@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { fetchRest } from "$lib/api";
+import { fetchRest } from "$lib/api/transport";
 import { tapProfileSchema } from "$lib/model/interest/tap-profile";
 import { type TapType } from "$lib/model/interest/taps";
 import type { Profile } from "$lib/model/users/profiles";
@@ -15,9 +15,7 @@ export async function getReceivedTaps() {
 	);
 }
 
-const sendTapResponseSchema = z.object({
-	isMutual: z.boolean(),
-});
+const sendTapResponseSchema = z.object({ isMutual: z.boolean() });
 
 export async function sendTap({
 	recipientId,
@@ -28,9 +26,6 @@ export async function sendTap({
 }) {
 	return await fetchRest("/v2/taps/add", {
 		method: "POST",
-		body: {
-			recipientId,
-			tapType,
-		},
+		body: { recipientId, tapType },
 	}).then((res) => res.jsonParsed(sendTapResponseSchema));
 }

@@ -3,11 +3,7 @@
 	import ProfileField from "./ProfileField.svelte";
 	import ProfileValueLabel from "./ProfileValueLabel.svelte";
 
-	let {
-		hivStatus,
-	}: {
-		hivStatus: HivStatusId | null;
-	} = $props();
+	let { hivStatus }: { hivStatus: HivStatusId | null } = $props();
 </script>
 
 {#if hivStatus !== null}
@@ -17,6 +13,7 @@
 			width="1em"
 			height="1em"
 			viewBox="0 0 24 24"
+			aria-hidden="true"
 			class="shrink-0"
 		>
 			<!-- Icon from Sharp free icons by Streamline - https://creativecommons.org/licenses/by/4.0/ -->

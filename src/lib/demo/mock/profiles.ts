@@ -15,9 +15,16 @@ import {
 	Tribe,
 	type TribeId,
 } from "$lib/model/users/profiles";
+import {
+	chance,
+	hashString,
+	mulberry32,
+	pick,
+	type Rng,
+	subset,
+} from "$lib/util/random";
 import { DAY, demoMeProfileId, HOUR, MINUTE, NOW } from "../config";
 import { registerPhoto } from "./avatars";
-import { chance, hashString, mulberry32, pick, type Rng, subset } from "./random";
 
 export type DemoSeed = {
 	id: number;
@@ -43,20 +50,103 @@ export type DemoSeed = {
 };
 
 const FIRST_NAMES = [
-	"James", "Liam", "Noah", "Oliver", "Elijah", "Lucas", "Mason", "Logan",
-	"Ethan", "Jacob", "Henry", "Sebastian", "Jack", "Owen", "Theo", "Leo",
-	"Daniel", "Caleb", "Ryan", "Nathan", "Adam", "Isaac", "Aaron", "Marcus",
-	"Connor", "Eli", "Aiden", "Gabriel", "Julian", "Hunter", "Cameron", "Tyler",
-	"Brandon", "Cole", "Dylan", "Evan", "Felix", "George", "Harrison", "Ian",
-	"Jasper", "Kyle", "Levi", "Miles", "Nolan", "Oscar", "Parker", "Quinn",
-	"Reed", "Simon", "Tobias", "Victor", "Wesley", "Xavier", "Zane", "Adrian",
-	"Blake", "Chris", "Derek", "Emmett", "Finn", "Grant", "Hugo", "Ivan",
-	"Jonah", "Kevin", "Liam", "Max", "Nash", "Otto", "Pablo", "Rhys",
+	"James",
+	"Liam",
+	"Noah",
+	"Oliver",
+	"Elijah",
+	"Lucas",
+	"Mason",
+	"Logan",
+	"Ethan",
+	"Jacob",
+	"Henry",
+	"Sebastian",
+	"Jack",
+	"Owen",
+	"Theo",
+	"Leo",
+	"Daniel",
+	"Caleb",
+	"Ryan",
+	"Nathan",
+	"Adam",
+	"Isaac",
+	"Aaron",
+	"Marcus",
+	"Connor",
+	"Eli",
+	"Aiden",
+	"Gabriel",
+	"Julian",
+	"Hunter",
+	"Cameron",
+	"Tyler",
+	"Brandon",
+	"Cole",
+	"Dylan",
+	"Evan",
+	"Felix",
+	"George",
+	"Harrison",
+	"Ian",
+	"Jasper",
+	"Kyle",
+	"Levi",
+	"Miles",
+	"Nolan",
+	"Oscar",
+	"Parker",
+	"Quinn",
+	"Reed",
+	"Simon",
+	"Tobias",
+	"Victor",
+	"Wesley",
+	"Xavier",
+	"Zane",
+	"Adrian",
+	"Blake",
+	"Chris",
+	"Derek",
+	"Emmett",
+	"Finn",
+	"Grant",
+	"Hugo",
+	"Ivan",
+	"Jonah",
+	"Kevin",
+	"Liam",
+	"Max",
+	"Nash",
+	"Otto",
+	"Pablo",
+	"Rhys",
 ];
 
 const NAME_EMOJIS = [
-	"🐻", "🦊", "😎", "🔥", "🌊", "🌵", "🦅", "🐺", "💪", "🎧", "🍑", "🍆",
-	"💦", "👀", "🌈", "⚡", "🥃", "🌙", "🏖️", "🎬", "🍀", "🦴",
+	"🐻",
+	"🦊",
+	"😎",
+	"🔥",
+	"🌊",
+	"🌵",
+	"🦅",
+	"🐺",
+	"💪",
+	"🎧",
+	"🍑",
+	"🍆",
+	"💦",
+	"👀",
+	"🌈",
+	"⚡",
+	"🥃",
+	"🌙",
+	"🏖️",
+	"🎬",
+	"🍀",
+	"🦴",
 ];
 
 const LOREM =
@@ -101,13 +191,15 @@ function generatedName(rng: Rng): string | null {
 	if (style < 0.06) return null;
 	if (style < 0.11) {
 		const count = 1 + Math.floor(rng() * 3);
-		return Array.from({ length: count }, () => pick(rng, NAME_EMOJIS)).join("");
+		return Array.from({ length: count }, () =>
+			pick({ rng, items: NAME_EMOJIS }),
+		).join("");
 	}
-	const base = pick(rng, FIRST_NAMES);
+	const base = pick({ rng, items: FIRST_NAMES });
 	const variant = rng();
 	if (variant < 0.1) return base.toLowerCase();
 	if (variant < 0.17) return base.toUpperCase();
-	if (variant < 0.3) return `${base} ${pick(rng, NAME_EMOJIS)}`;
+	if (variant < 0.3) return `${base} ${pick({ rng, items: NAME_EMOJIS })}`;
 	if (variant < 0.38) return `${base}${10 + Math.floor(rng() * 89)}`;
 	return base;
 }
@@ -116,9 +208,9 @@ function generatedBio(rng: Rng): string | null {
 	const style = rng();
 	if (style < 0.18) return null;
 	if (style < 0.28) return "";
-	if (style < 0.4) return pick(rng, EMOJI_BIOS);
-	if (style < 0.48) return pick(rng, [LONG_WORD, LONG_WORD_2]);
-	return pick(rng, LOREM_BIOS);
+	if (style < 0.4) return pick({ rng, items: EMOJI_BIOS });
+	if (style < 0.48) return pick({ rng, items: [LONG_WORD, LONG_WORD_2] });
+	return pick({ rng, items: LOREM_BIOS });
 }
 
 function generatedPhotoCount(rng: Rng): number {
@@ -215,7 +307,13 @@ const featuredOverrides = new Map<number, Partial<DemoSeed>>([
 	[100012, { name: "😎🔥💯", age: 29, photos: 1, bio: "", distanceM: 12 }],
 	[
 		100013,
-		{ name: "Alexander", photos: 5, bio: LOREM, distanceM: 13, favorite: true },
+		{
+			name: "Alexander",
+			photos: 5,
+			bio: LOREM,
+			distanceM: 13,
+			favorite: true,
+		},
 	],
 	[
 		100014,
@@ -233,7 +331,12 @@ const featuredOverrides = new Map<number, Partial<DemoSeed>>([
 
 export function distanceForId(id: number): number {
 	const override = featuredOverrides.get(id);
-	if (override && override.distanceM != null) return override.distanceM;
+	if (
+		override &&
+		override.distanceM !== null &&
+		override.distanceM !== undefined
+	)
+		return override.distanceM;
 	return Math.floor(mulberry32(hashString(`dist:${id}`))() * 40000);
 }
 
@@ -272,33 +375,47 @@ export function profileSeed(id: number): DemoSeed {
 
 function buildSeed(id: number): DemoSeed {
 	const rng = mulberry32(hashString(`profile:${id}`));
-	const hasAge = chance(rng, 0.92);
+	const hasAge = chance({ rng, probability: 0.92 });
 	const base: DemoSeed = {
 		id,
 		name: generatedName(rng),
 		age: hasAge ? 18 + Math.floor(rng() * 47) : null,
-		showAge: hasAge ? chance(rng, 0.9) : false,
-		position: pick(rng, POSITIONS),
+		showAge: hasAge ? chance({ rng, probability: 0.9 }) : false,
+		position: pick({ rng, items: POSITIONS }),
 		photos: generatedPhotoCount(rng),
 		bio: generatedBio(rng),
-		tribes: subset(rng, TRIBES, 3),
-		lookingFor: subset(rng, LOOKING_FOR, 3),
-		body: chance(rng, 0.7) ? pick(rng, BODIES) : null,
-		ethnicity: chance(rng, 0.6) ? pick(rng, ETHNICITIES) : null,
-		relationship: chance(rng, 0.4) ? pick(rng, RELATIONSHIPS) : null,
-		hiv: chance(rng, 0.45) ? pick(rng, HIV) : null,
-		heightCm: chance(rng, 0.6) ? 160 + Math.floor(rng() * 40) : null,
-		weightG: chance(rng, 0.5) ? (60 + Math.floor(rng() * 45)) * 1000 : null,
+		tribes: subset({ rng, items: TRIBES, max: 3 }),
+		lookingFor: subset({ rng, items: LOOKING_FOR, max: 3 }),
+		body: chance({ rng, probability: 0.7 })
+			? pick({ rng, items: BODIES })
+			: null,
+		ethnicity: chance({ rng, probability: 0.6 })
+			? pick({ rng, items: ETHNICITIES })
+			: null,
+		relationship: chance({ rng, probability: 0.4 })
+			? pick({ rng, items: RELATIONSHIPS })
+			: null,
+		hiv: chance({ rng, probability: 0.45 })
+			? pick({ rng, items: HIV })
+			: null,
+		heightCm: chance({ rng, probability: 0.6 })
+			? 160 + Math.floor(rng() * 40)
+			: null,
+		weightG: chance({ rng, probability: 0.5 })
+			? (60 + Math.floor(rng() * 45)) * 1000
+			: null,
 		distanceM: distanceForId(id),
-		online: chance(rng, 0.45),
-		favorite: chance(rng, 0.12),
+		online: chance({ rng, probability: 0.45 }),
+		favorite: chance({ rng, probability: 0.12 }),
 		unread: 0,
-		instagram: chance(rng, 0.25)
-			? `${pick(rng, FIRST_NAMES).toLowerCase()}_${id % 1000}`
+		instagram: chance({ rng, probability: 0.25 })
+			? `${pick({ rng, items: FIRST_NAMES }).toLowerCase()}_${id % 1000}`
 			: null,
 	};
 	base.unread =
-		base.favorite && chance(rng, 0.5) ? 1 + Math.floor(rng() * 5) : 0;
+		base.favorite && chance({ rng, probability: 0.5 })
+			? 1 + Math.floor(rng() * 5)
+			: 0;
 	const override = featuredOverrides.get(id);
 	return override ? { ...base, ...override } : base;
 }

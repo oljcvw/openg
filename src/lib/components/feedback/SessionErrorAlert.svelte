@@ -4,7 +4,7 @@
 	import { toast } from "svelte-sonner";
 	import z from "zod";
 
-	import { callMethod } from "$lib/api";
+	import { asAppError, callMethod } from "$lib/api/methods";
 	import { sessionErrorState } from "$lib/api/session-error-state.svelte";
 	import { signOut } from "$lib/api/sign-out";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
@@ -47,7 +47,8 @@
 
 	async function copyError() {
 		try {
-			const clipboard = await import("@tauri-apps/plugin-clipboard-manager");
+			const clipboard =
+				await import("@tauri-apps/plugin-clipboard-manager");
 			await clipboard.writeText(sessionErrorState.message);
 			toast.success("Error copied to clipboard");
 		} catch (error) {
@@ -60,8 +61,11 @@
 		try {
 			await callMethod("refresh_token");
 			sessionErrorState.open = false;
-		} catch {
-			//
+		} catch (error) {
+			if (asAppError(error)?.kind === "NotLoggedIn") {
+				toast.error("Your session expired — please sign in again");
+				await onSignOut();
+			}
 		} finally {
 			busy = false;
 		}
@@ -86,9 +90,9 @@
 		<AlertDialog.Header>
 			<AlertDialog.Title>Can't connect to Grindr</AlertDialog.Title>
 			<AlertDialog.Description>
-				We couldn't reach Grindr to refresh your session. Check your internet
-				connection and try again. If this keeps happening, copy the error and
-				report it.
+				We couldn't reach Grindr to refresh your session. Check your
+				internet connection and try again. If this keeps happening, copy
+				the error and report it.
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>

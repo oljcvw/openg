@@ -33,14 +33,12 @@
 </script>
 
 <svelte:element this={tag} class={className} {...rest}>
-	<div class={["absolute top-0 left-0 size-full z-11", bgClass]}></div>
-	{#each blurConfig as config, index}
+	<div class={["absolute top-0 left-0 z-11 size-full", bgClass]}></div>
+	{#each blurConfig as config, index (config.blur)}
 		<div
 			class={[
 				"blur-filter absolute top-0 left-0 size-full",
-				{
-					"z-10": index === blurConfig.length - 1,
-				},
+				{ "z-10": index === blurConfig.length - 1 },
 			]}
 			style:mask={`linear-gradient(
 					${direction === "bottomToTop" ? "to bottom" : "to top"},
@@ -54,7 +52,7 @@
 							: ""
 					} 
 				);`}
-			style="--pblur: {config.blur}px"
+			style:--pblur="{config.blur}px"
 		></div>
 	{/each}
 	<div class={["relative z-12", contentClass]}>

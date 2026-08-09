@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { observeIntersection } from "$lib/util/observe-intersection";
 	import type { Conversation as ConversationType } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
 	import Conversation from "./Conversation.svelte";
@@ -16,24 +17,6 @@
 	} = $props();
 
 	let mounted = $state(false);
-
-	function observe(node: HTMLElement) {
-		const observer = new IntersectionObserver(
-			(entries) => {
-				if (entries[0].isIntersecting) {
-					mounted = true;
-					observer.disconnect();
-				}
-			},
-			{ rootMargin: "600px" },
-		);
-		observer.observe(node);
-		return {
-			destroy() {
-				observer.disconnect();
-			},
-		};
-	}
 </script>
 
 {#if mounted}
@@ -44,5 +27,12 @@
 		{onRequestDelete}
 	/>
 {:else}
-	<div class="h-24.5 w-full shrink-0 rounded-2xl bg-muted/30" use:observe></div>
+	<div
+		class="h-24.5 w-full shrink-0 rounded-2xl bg-muted/30"
+		use:observeIntersection={{
+			handle: () => (mounted = true),
+			rootMargin: "600px",
+			once: true,
+		}}
+	></div>
 {/if}

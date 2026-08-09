@@ -5,10 +5,6 @@
 	import AgeFilter from "$lib/components/filters/age/AgeFilterField.svelte";
 	import BodyTypeFilter from "$lib/components/filters/BodyTypeFilter.svelte";
 	import FilterBoolean from "$lib/components/filters/FilterBoolean.svelte";
-	import {
-		defaultFilters,
-		type GridSearchFilters,
-	} from "$lib/components/filters/filters";
 	import GendersFilter from "$lib/components/filters/GendersFilter.svelte";
 	import HealthPracticesFilter from "$lib/components/filters/HealthPracticesFilter.svelte";
 	import HeightFilter from "$lib/components/filters/HeightFilter.svelte";
@@ -23,13 +19,13 @@
 	import { Button } from "$lib/components/ui/button";
 	import * as Sheet from "$lib/components/ui/sheet";
 	import { gridState } from "$lib/grid/grid-state.svelte";
+	import {
+		defaultFilters,
+		type GridSearchFilters,
+	} from "$lib/model/browse/grid/filters";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 
-	let {
-		open = $bindable(),
-	}: {
-		open: boolean;
-	} = $props();
+	let { open = $bindable() }: { open: boolean } = $props();
 
 	function snapshotFilters(): GridSearchFilters {
 		return { ...(gridState.filters.value ?? defaultFilters) };
@@ -140,9 +136,7 @@
 		<Sheet.Header
 			class={[
 				"border border-x-0 border-t-0 border-transparent p-4 transition-colors",
-				{
-					"border-muted": contentScroll > 0,
-				},
+				{ "border-muted": contentScroll > 0 },
 			]}
 		>
 			<Sheet.Title>Filters</Sheet.Title>
@@ -170,9 +164,7 @@
 		<Sheet.Footer
 			class={[
 				"border border-x-0 border-b-0 border-transparent p-4 transition-colors sm:items-end",
-				{
-					"border-muted": contentScroll < 1,
-				},
+				{ "border-muted": contentScroll < 1 },
 			]}
 		>
 			<Button

@@ -36,7 +36,7 @@
 		<span
 			class={[
 				"tabular-nums",
-				over ? "text-destructive" : "text-muted-foreground",
+				{ "text-destructive": over, "text-muted-foreground": !over },
 			]}
 		>
 			{remaining}

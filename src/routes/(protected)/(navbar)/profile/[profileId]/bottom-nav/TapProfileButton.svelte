@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { showErrorToast } from "$lib/api/error";
+	import { showErrorToast } from "$lib/api/error-toast";
 	import { sendTap } from "$lib/api/interest/taps";
 	import TapIcon from "$lib/components/profile/TapIcon.svelte";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-	import { TapType } from "$lib/model/interest/taps";
+	import { TapType, tapTypes } from "$lib/model/interest/taps";
 
 	let {
 		profileId,
@@ -25,16 +25,10 @@
 		sending = true;
 		try {
 			onTap(reaction);
-			await sendTap({
-				recipientId: profileId,
-				tapType: reaction,
-			});
+			await sendTap({ recipientId: profileId, tapType: reaction });
 		} catch (error) {
 			console.error(error);
-			showErrorToast({
-				label: "Failed to send tap",
-				error,
-			});
+			showErrorToast({ label: "Failed to send tap", error });
 			onTap(null);
 		} finally {
 			sending = false;
@@ -49,6 +43,9 @@
 <Button
 	size="icon-lg"
 	variant={sent ? "default" : "outline"}
+	aria-label={tapType === null
+		? `Send a ${tapTypes[defaultTapType]} tap`
+		: `${tapTypes[tapType]} tap sent`}
 	bind:ref={customAnchor}
 	oncontextmenu={(e) => {
 		e.preventDefault();
@@ -65,12 +62,20 @@
 	{/if}
 </Button>
 {#snippet tapOption(tapType: TapType)}
-	<DropdownMenu.Item class="w-10 px-2" onclick={() => send(tapType)}>
+	<DropdownMenu.Item
+		class="w-10 px-2"
+		aria-label="Send a {tapTypes[tapType]} tap"
+		onclick={() => send(tapType)}
+	>
 		<TapIcon {tapType} />
 	</DropdownMenu.Item>
 {/snippet}
 <DropdownMenu.Root bind:open>
-	<DropdownMenu.Content class="min-w-0 w-13 rounded-2xl" align="center" {customAnchor}>
+	<DropdownMenu.Content
+		class="w-13 min-w-0 rounded-2xl"
+		align="center"
+		{customAnchor}
+	>
 		{@render tapOption(TapType.Friendly)}
 		{@render tapOption(TapType.Hot)}
 		{@render tapOption(TapType.Looking)}

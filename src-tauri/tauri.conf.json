@@ -1,7 +1,7 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
 	"productName": "Open Grind",
-	"version": "0.1.0-beta.3",
+	"version": "0.1.0-beta.4-dev",
 	"identifier": "org.opengrind",
 	"build": {
 		"beforeDevCommand": "bun run dev:web",
@@ -19,16 +19,14 @@
 				"minWidth": 320,
 				"minHeight": 300,
 				"theme": "Dark",
-				"userAgent": "OpenGrind/0.1.0 (+https://opengrind.org/; contact: admin@opengrind.org)",
+				"create": false,
 				"titleBarStyle": "Visible",
-				"backgroundColor": "#1e1e1e"
+				"backgroundColor": "#1e1e1e",
+				"generalAutofillEnabled": false
 			}
 		],
 		"security": {
-			"csp": null,
-			"dangerousDisableAssetCspModification": [
-				"script-src"
-			]
+			"csp": "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'self' 'unsafe-inline'; img-src 'self' data: ogmedia: http://ogmedia.localhost https://tile.openstreetmap.org; media-src 'self' ogmedia: http://ogmedia.localhost; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; form-action 'self'"
 		}
 	},
 	"bundle": {
@@ -44,10 +42,13 @@
 		"macOS": {
 			"signingIdentity": "tauri-dev"
 		},
+		"windows": {
+			"minimumWebview2Version": "111.0.1661.34"
+		},
 		"android": {
 			"autoIncrementVersionCode": false,
 			"minSdkVersion": 28,
-			"versionCode": 1020
+			"versionCode": 1030
 		}
 	}
 }

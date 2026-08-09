@@ -3,14 +3,15 @@ import z from "zod";
 import {
 	mediaHashPrivateSchema,
 	mediaHashPublicSchema,
+	mediaUrlSchema,
 } from "$lib/model/media";
-import { albumExpirationSchema, albumPreviewSchema } from "$lib/model/messaging/albums";
-import { unixTimestampMsSchema } from "$lib/model/types";
+import {
+	albumExpirationSchema,
+	albumPreviewSchema,
+} from "$lib/model/messaging/albums";
+import { unixTimestampMsSchema, unmodeledSchema } from "$lib/model/types";
 
-const messageBaseSchema = z.object({
-	type: z.string(),
-	body: z.unknown(),
-});
+const messageBaseSchema = z.object({ type: z.string(), body: z.unknown() });
 
 export const apiResponseMessageOverlaySchema = z.object({
 	messageId: z.string(),
@@ -24,10 +25,10 @@ export const apiResponseMessageOverlaySchema = z.object({
 			reactionType: z.int().nonnegative(),
 		}),
 	),
-	// replyToMessage: z.unknown().nullable(),
-	// dynamic: z.boolean(),
-	// chat1Type: z.string(),
-	// replyPreview: z.unknown().nullable(),
+	replyToMessage: unmodeledSchema,
+	dynamic: unmodeledSchema,
+	chat1Type: unmodeledSchema,
+	replyPreview: unmodeledSchema,
 });
 
 export const albumMessageSchema = messageBaseSchema.safeExtend({
@@ -35,7 +36,7 @@ export const albumMessageSchema = messageBaseSchema.safeExtend({
 	body: z.object({
 		...albumPreviewSchema.shape,
 		...albumExpirationSchema.shape,
-		coverUrl: z.url().nullable(),
+		coverUrl: mediaUrlSchema.nullable(),
 		ownerProfileId: z.int().nonnegative().nullable(),
 		isViewable: z.boolean(),
 		hasVideo: z.boolean(),
@@ -48,18 +49,14 @@ export type AlbumMessage = z.infer<typeof albumMessageSchema>;
 
 export const expiringAlbumMessageSchema = albumMessageSchema.extend({
 	type: z.literal("ExpiringAlbum"),
-	body: z.object({
-		...albumMessageSchema.shape.body.shape,
-	}),
+	body: z.object({ ...albumMessageSchema.shape.body.shape }),
 });
 
 export type ExpiringAlbumMessage = z.infer<typeof expiringAlbumMessageSchema>;
 
 export const expiringAlbumV2MessageSchema = albumMessageSchema.extend({
 	type: z.literal("ExpiringAlbumV2"),
-	body: z.object({
-		...albumMessageSchema.shape.body.shape,
-	}),
+	body: z.object({ ...albumMessageSchema.shape.body.shape }),
 });
 
 export type ExpiringAlbumV2Message = z.infer<
@@ -72,7 +69,7 @@ export const albumContentReactionMessageSchema = messageBaseSchema.safeExtend({
 		albumId: z.int().nonnegative(),
 		ownerProfileId: z.int().nonnegative().nullable(),
 		albumContentId: z.int().nonnegative(),
-		previewUrl: z.url().nullable(),
+		previewUrl: mediaUrlSchema.nullable(),
 		expiresAt: unixTimestampMsSchema.nullable(),
 		viewable: z.boolean(),
 	}),
@@ -100,7 +97,7 @@ export const audioMessageSchema = messageBaseSchema.safeExtend({
 	body: z.object({
 		mediaId: z.int().nonnegative(),
 		mediaHash: mediaHashPrivateSchema.nullable(),
-		url: z.url(),
+		url: mediaUrlSchema,
 		contentType: z.string().nullable(),
 		length: z.int().nonnegative().nullable(),
 		expiresAt: unixTimestampMsSchema.nullable(),
@@ -113,7 +110,7 @@ export const videoMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Video"),
 	body: z.object({
 		mediaId: z.int().nonnegative().nullable(),
-		url: z.url().nullable(),
+		url: mediaUrlSchema.nullable(),
 		fileCacheKey: z.string().optional(),
 		contentType: z.string().nullable(),
 		length: z.int().nonnegative(),
@@ -136,9 +133,7 @@ export type NonExpiringVideoMessage = z.infer<
 
 export const gaymojiMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Gaymoji"),
-	body: z.object({
-		imageHash: z.string(),
-	}),
+	body: z.object({ imageHash: z.string() }),
 });
 
 export type GaymojiMessage = z.infer<typeof gaymojiMessageSchema>;
@@ -154,8 +149,8 @@ export const giphyMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Giphy"),
 	body: z.object({
 		id: z.string(),
-		urlPath: z.url(),
-		stillPath: z.url(),
+		urlPath: mediaUrlSchema,
+		stillPath: mediaUrlSchema,
 		previewPath: z.string(),
 		width: z.int().nonnegative(),
 		height: z.int().nonnegative(),
@@ -177,7 +172,7 @@ export const imageMessageSchema = imageBaseMessageSchema.safeExtend({
 	type: z.literal("Image"),
 	body: z.object({
 		...imageBaseMessageSchema.shape.body.shape,
-		url: z.url(),
+		url: mediaUrlSchema,
 		imageHash: z.union([mediaHashPrivateSchema, mediaHashPublicSchema]),
 		takenOnGrindr: z.boolean(),
 		createdAt: unixTimestampMsSchema.nullable(),
@@ -190,7 +185,7 @@ export const expiringImageMessageSchema = imageBaseMessageSchema.safeExtend({
 	type: z.literal("ExpiringImage"),
 	body: z.object({
 		...imageBaseMessageSchema.shape.body.shape,
-		url: z.url().nullable(),
+		url: mediaUrlSchema.nullable(),
 		viewsRemaining: z.int().nonnegative().nullable(),
 	}),
 });
@@ -199,10 +194,7 @@ export type ExpiringImageMessage = z.infer<typeof expiringImageMessageSchema>;
 
 export const locationMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Location"),
-	body: z.object({
-		lat: z.number(),
-		lon: z.number(),
-	}),
+	body: z.object({ lat: z.number(), lon: z.number() }),
 });
 
 export type LocationMessage = z.infer<typeof locationMessageSchema>;
@@ -226,10 +218,7 @@ export type ProfileLinkMessage = z.infer<typeof profileLinkMessageSchema>;
 
 export const profilePhotoReplyMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("ProfilePhotoReply"),
-	body: z.object({
-		imageHash: z.string(),
-		photoContentReply: z.string(),
-	}),
+	body: z.object({ imageHash: z.string(), photoContentReply: z.string() }),
 });
 
 export type ProfilePhotoReplyMessage = z.infer<
@@ -238,18 +227,14 @@ export type ProfilePhotoReplyMessage = z.infer<
 
 export const retractMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Retract"),
-	body: z.object({
-		targetMessageId: z.string(),
-	}),
+	body: z.object({ targetMessageId: z.string() }),
 });
 
 export type RetractMessage = z.infer<typeof retractMessageSchema>;
 
 export const textMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Text"),
-	body: z.object({
-		text: z.string(),
-	}),
+	body: z.object({ text: z.string() }),
 });
 
 export type TextMessage = z.infer<typeof textMessageSchema>;
@@ -309,64 +294,3 @@ export const apiResponseMessageSchema = z
 
 export type Message = z.infer<typeof messageSchema>;
 export type ApiResponseMessage = z.infer<typeof apiResponseMessageSchema>;
-
-export type MessagePreview = {
-	type: string;
-	text: string | null;
-	albumId: number | null;
-	imageHash: string | null;
-};
-
-export function previewFromMessage(
-	message: ApiResponseMessage | undefined,
-): MessagePreview {
-	if (!message) return { type: "", text: null, albumId: null, imageHash: null };
-	switch (message.type) {
-		case "Unsent":
-			return {
-				type: "Unsent",
-				text: null,
-				albumId: null,
-				imageHash: null,
-			};
-		case "Text":
-			return {
-				type: "Text",
-				text: message.body.text,
-				albumId: null,
-				imageHash: null,
-			};
-		case "Image":
-			return {
-				type: "Image",
-				text: null,
-				albumId: null,
-				imageHash: message.body.imageHash,
-			};
-		case "Album":
-		case "ExpiringAlbum":
-		case "ExpiringAlbumV2":
-			return {
-				type: message.type,
-				text: null,
-				albumId: message.body.albumId,
-				imageHash: null,
-			};
-		case "ExpiringImage":
-		default:
-			return {
-				type: message.type,
-				text: null,
-				albumId: null,
-				imageHash: null,
-			};
-	}
-}
-
-export function previewLabel(preview: MessagePreview | null): string | null {
-	if (preview === null) return null;
-	if (preview.text !== null) return preview.text;
-	if (preview.albumId !== null) return "Album";
-	if (preview.imageHash !== null || preview.type === "Image") return "Photo";
-	return null;
-}

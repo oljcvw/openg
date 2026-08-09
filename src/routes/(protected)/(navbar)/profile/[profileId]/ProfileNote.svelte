@@ -3,7 +3,7 @@
 	import { toast } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 
-	import { showErrorToast } from "$lib/api/error";
+	import { showErrorToast } from "$lib/api/error-toast";
 	import { updateFavoriteUserNote } from "$lib/api/users/favorites";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import * as Drawer from "$lib/components/ui/drawer";

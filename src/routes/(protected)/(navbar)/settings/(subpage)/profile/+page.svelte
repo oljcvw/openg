@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { getGenders, getProfile, getPronouns } from "$lib/api/users/profiles";
+	import { getGenders } from "$lib/api/users/genders";
+	import { getProfile } from "$lib/api/users/profiles";
+	import { getPronouns } from "$lib/api/users/pronouns";
 	import { getTags } from "$lib/api/users/tags";
 	import { Skeleton } from "$lib/components/ui/skeleton";
 	import ProfileForm from "./ProfileForm.svelte";
@@ -43,7 +45,7 @@
 		ourProfileId={data.ourProfileId}
 	/>
 {:catch}
-	<p class="text-destructive px-1 py-8 text-center">
+	<p class="px-1 py-8 text-center text-destructive">
 		Failed to load your profile. Please try again.
 	</p>
 {/await}

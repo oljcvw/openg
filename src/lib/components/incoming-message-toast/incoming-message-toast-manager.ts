@@ -1,7 +1,14 @@
 import { toast } from "svelte-sonner";
 
+import { registerAccountCache } from "$lib/api/account-caches";
 import type { ApiResponseMessage } from "$lib/model/messaging/messages";
 import IncomingMessageToast from "./IncomingMessageToast.svelte";
+
+registerAccountCache({
+	reset: () => {
+		toast.dismiss();
+	},
+});
 
 export function showIncomingMessageToast({
 	message,
@@ -13,11 +20,7 @@ export function showIncomingMessageToast({
 	conversationId: string;
 }): void {
 	toast.custom(IncomingMessageToast, {
-		componentProps: {
-			message,
-			sender,
-			conversationId,
-		},
+		componentProps: { message, sender, conversationId },
 		position: "top-center",
 		class: "incoming-message-toast rounded-2xl",
 		id: conversationId,

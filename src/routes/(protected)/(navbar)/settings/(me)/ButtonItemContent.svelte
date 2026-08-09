@@ -14,10 +14,8 @@
 	class={[
 		"h-auto cursor-pointer truncate",
 		props.class,
-		"dark:hover:bg-muted justify-start",
-		{
-			"border-white/10 dark:hover:border-white/20": variant === "outline",
-		},
+		"justify-start dark:hover:bg-muted",
+		{ "border-white/10 dark:hover:border-white/20": variant === "outline" },
 	]}
 >
 	{@render children?.()}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import z from "zod";
 
 import { demoRoute } from "$lib/demo";
+import { demoMeProfileId } from "$lib/demo/config";
 import { cascadeV4ResponseSchema } from "$lib/model/browse/grid/cascade/response/v4";
 import { searchProfileSchema } from "$lib/model/browse/grid/search";
 import { tapProfileSchema } from "$lib/model/interest/tap-profile";
@@ -15,16 +16,19 @@ import {
 	albumMinSchema,
 } from "$lib/model/messaging/albums";
 import { fullConversationSchema } from "$lib/model/messaging/conversations";
+import { previewLabel } from "$lib/model/messaging/message-preview";
 import {
 	apiResponseMessageSchema,
 	expiringImageMessageSchema,
-	previewLabel,
 } from "$lib/model/messaging/messages";
+import { gendersSchema } from "$lib/model/users/genders";
 import {
 	profileRightNowSchema,
 	profileSchema,
 	profileShortSchema,
 } from "$lib/model/users/profiles";
+import { pronounsSchema } from "$lib/model/users/pronouns";
+import { profileTagsResponseSchema } from "$lib/model/users/tags";
 
 const shortProfileSchema = z.object({
 	...profileShortSchema.shape,
@@ -32,7 +36,7 @@ const shortProfileSchema = z.object({
 });
 
 const route = (path: string, method = "GET", body?: unknown) =>
-	demoRoute(path, method, body).body;
+	demoRoute({ path, method, body }).body;
 
 describe("demo route data matches the real schemas", () => {
 	const firstProfileId = (
@@ -55,7 +59,9 @@ describe("demo route data matches the real schemas", () => {
 		const page1 = cascadeV4ResponseSchema.parse(
 			route("/v4/cascade?nearbyGeoHash=u00&pageNumber=1"),
 		);
-		expect(firstProfileId(page0.items)).not.toBe(firstProfileId(page1.items));
+		expect(firstProfileId(page0.items)).not.toBe(
+			firstProfileId(page1.items),
+		);
 	});
 
 	it("full profile validates for an arbitrary id", () => {
@@ -71,9 +77,11 @@ describe("demo route data matches the real schemas", () => {
 		for (const profile of body.profiles) shortProfileSchema.parse(profile);
 	});
 
-	it("my profile + uploaded photos validate", () => {
-		const me = route("/v4/me/profile") as { profiles: unknown[] };
-		shortProfileSchema.parse(me.profiles[0]);
+	it("own profile + uploaded photos validate", () => {
+		const me = route(`/v7/profiles/${demoMeProfileId}`) as {
+			profiles: unknown[];
+		};
+		profileSchema.parse(me.profiles[0]);
 		z.object({
 			medias: z.array(
 				z.object({
@@ -109,7 +117,10 @@ describe("demo route data matches the real schemas", () => {
 	it("conversation messages validate and align with the preview", () => {
 		const inbox = route("/v4/inbox?page=1", "POST") as {
 			entries: {
-				data: { conversationId: string; preview: { text: string | null } };
+				data: {
+					conversationId: string;
+					preview: { text: string | null };
+				};
 			}[];
 		};
 		for (const entry of inbox.entries) {
@@ -117,11 +128,13 @@ describe("demo route data matches the real schemas", () => {
 			const body = route(
 				`/v5/chat/conversation/${id}/message?profile=true`,
 			) as { messages: unknown[]; lastReadTimestamp: number | null };
-			const messages = z.array(apiResponseMessageSchema).parse(body.messages);
-			expect(messages.length).toBeGreaterThan(0);
-			expect(messages[0].timestamp).toBeGreaterThanOrEqual(
-				messages[messages.length - 1].timestamp,
-			);
+			const messages = z
+				.array(apiResponseMessageSchema)
+				.parse(body.messages);
+			const [newest] = messages;
+			const oldest = messages.at(-1);
+			if (!newest || !oldest) throw new Error(`no messages in ${id}`);
+			expect(newest.timestamp).toBeGreaterThanOrEqual(oldest.timestamp);
 		}
 	});
 
@@ -147,7 +160,9 @@ describe("demo route data matches the real schemas", () => {
 			const body = route(
 				`/v5/chat/conversation/${id}/message?profile=true`,
 			) as { messages: unknown[] };
-			const messages = z.array(apiResponseMessageSchema).parse(body.messages);
+			const messages = z
+				.array(apiResponseMessageSchema)
+				.parse(body.messages);
 			for (const message of messages) {
 				if (
 					message.type === "Album" ||
@@ -202,31 +217,50 @@ describe("demo route data matches the real schemas", () => {
 			profiles: unknown[];
 			previews: unknown[];
 		};
-		for (const profile of views.profiles) viewerProfileSchema.parse(profile);
+		for (const profile of views.profiles)
+			viewerProfileSchema.parse(profile);
 		for (const preview of views.previews) viewPreviewSchema.parse(preview);
 	});
 
 	it("reference data validates and mutations are accepted no-ops", () => {
-		expect(Array.isArray(route("/public/v2/genders"))).toBe(true);
-		expect(Array.isArray(route("/v1/pronouns"))).toBe(true);
-		expect(Array.isArray(route("/v1/tags"))).toBe(true);
-		expect(demoRoute("/v4/me/profile", "PATCH", { aboutMe: "x" }).status).toBe(
-			200,
-		);
-		expect(demoRoute("/v3/me/blocks/100001", "POST", undefined).status).toBe(
-			200,
-		);
-		expect(demoRoute("/v3/me/favorites/100001", "POST", undefined).status).toBe(
-			200,
-		);
+		gendersSchema.parse(route("/public/v2/genders"));
+		pronounsSchema.parse(route("/v1/pronouns"));
+		profileTagsResponseSchema.parse(route("/v1/tags"));
+		expect(
+			demoRoute({
+				path: "/v4/me/profile",
+				method: "PATCH",
+				body: { aboutMe: "x" },
+			}).status,
+		).toBe(200);
+		expect(
+			demoRoute({
+				path: "/v3/me/blocks/100001",
+				method: "POST",
+				body: undefined,
+			}).status,
+		).toBe(200);
+		expect(
+			demoRoute({
+				path: "/v3/me/favorites/100001",
+				method: "POST",
+				body: undefined,
+			}).status,
+		).toBe(200);
 	});
 
 	it("conversation pin/mute/delete mutations persist across inbox fetches", () => {
 		const inbox = () => {
-			const body = route("/v4/inbox?page=1", "POST") as { entries: unknown[] };
+			const body = route("/v4/inbox?page=1", "POST") as {
+				entries: unknown[];
+			};
 			return z.array(fullConversationSchema).parse(body.entries);
 		};
 		const [first, second, third] = inbox();
+		if (!first || !second || !third)
+			throw new Error(
+				"the demo inbox has fewer than three conversations",
+			);
 
 		route(
 			`/v4/chat/conversation/${first.data.conversationId}/${first.data.pinned ? "unpin" : "pin"}`,
@@ -250,7 +284,9 @@ describe("demo route data matches the real schemas", () => {
 			)?.data.muted,
 		).toBe(!second.data.muted);
 		expect(
-			after.some((e) => e.data.conversationId === third.data.conversationId),
+			after.some(
+				(e) => e.data.conversationId === third.data.conversationId,
+			),
 		).toBe(false);
 	});
 });

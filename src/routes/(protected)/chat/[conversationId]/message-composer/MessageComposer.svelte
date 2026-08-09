@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { showErrorToast } from "$lib/api/error";
+	import { showErrorToast } from "$lib/api/error-toast";
 	import type { Message } from "$lib/model/messaging/messages";
 	import ComposerAttachments from "./attachments/ComposerAttachments.svelte";
 	import ComposerSubmitButton from "./ComposerSubmitButton.svelte";
@@ -10,10 +10,15 @@
 	let {
 		onSend,
 		disabled,
-	}: { onSend: (params: Message) => void | Promise<void>; disabled: boolean } =
-		$props();
+		height = $bindable(0),
+	}: {
+		onSend: (params: Message) => void | Promise<void>;
+		disabled: boolean;
+		height?: number;
+	} = $props();
 
 	let textContent = $state("");
+	let form: HTMLFormElement | null = $state(null);
 
 	async function onSubmit() {
 		const text = textContent.trim();
@@ -23,31 +28,34 @@
 			textContent = "";
 		} catch (error) {
 			console.error(error);
-			showErrorToast({
-				label: "Failed to send message",
-				error,
-			});
+			showErrorToast({ label: "Failed to send message", error });
 		}
 	}
 
-	setMessageComposerContext(() => ({
-		disabled,
-		sendMessage: onSend,
-	}));
+	function remeasureBeforeResizeObserverCatchesUp() {
+		if (form) height = form.clientHeight;
+	}
+
+	setMessageComposerContext(() => ({ disabled, sendMessage: onSend }));
 </script>
 
 <form
-	class="relative mx-2 min-h-9.5 min-w-0 shrink-0"
+	bind:this={form}
+	class="absolute bottom-0 z-20 min-h-9.5 w-full min-w-0 shrink-0 px-2 pb-2"
+	bind:clientHeight={height}
+	oninput={remeasureBeforeResizeObserverCatchesUp}
 	onsubmit={(event) => {
 		event.preventDefault();
 		onSubmit().catch((error) => console.error(error));
 	}}
 >
-	<MessageTextInput bind:value={textContent} />
-	{#if textContent === ""}
-		<ComposerAttachments />
-		<ComposerVoiceMessage />
-	{:else}
-		<ComposerSubmitButton />
-	{/if}
+	<div class="relative h-full w-full rounded-composer bg-popover">
+		<MessageTextInput bind:value={textContent} />
+		{#if textContent === ""}
+			<ComposerAttachments />
+			<ComposerVoiceMessage />
+		{:else}
+			<ComposerSubmitButton />
+		{/if}
+	</div>
 </form>

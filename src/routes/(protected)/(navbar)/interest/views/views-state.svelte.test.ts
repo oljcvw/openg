@@ -21,7 +21,7 @@ const {
 	viewHandlers: [] as ((event: unknown) => void)[],
 }));
 
-vi.mock("$lib/api/error", () => ({ showErrorToast: showErrorToastMock }));
+vi.mock("$lib/api/error-toast", () => ({ showErrorToast: showErrorToastMock }));
 vi.mock("$lib/api/interest/views", () => ({ getViews: getViewsMock }));
 vi.mock("$lib/util/reconcile", () => ({
 	reconciler: {
@@ -31,8 +31,10 @@ vi.mock("$lib/util/reconcile", () => ({
 		},
 	},
 }));
+import { clearAccountCaches } from "$lib/api/account-caches";
+import { mergeProfileEditIntoCaches } from "$lib/api/users/profiles";
 import type { ViewerProfile, ViewPreview } from "$lib/model/interest/views";
-import { ViewsState } from "./views-state.svelte";
+import { getViewsState, ViewsState } from "./views-state.svelte";
 
 vi.mock("$lib/ws.svelte", async (importOriginal) => ({
 	...(await importOriginal<typeof import("$lib/ws.svelte")>()),
@@ -93,7 +95,34 @@ async function waitForLoaded(state: ViewsState) {
 	await vi.waitFor(() => expect(state.loading).toBe(false));
 }
 
+function deferred<T>() {
+	let resolve!: (value: T) => void;
+	const promise = new Promise<T>((r) => {
+		resolve = r;
+	});
+	return { promise, resolve };
+}
+
+function viewEvent(profileId: number) {
+	return {
+		type: "viewed_me.v1.new_view_received",
+		notificationId: null,
+		ref: null,
+		payload: {
+			viewedCount: 1,
+			mostRecent: {
+				profileId,
+				photoHash: null,
+				timestamp: 1_710_000_000_000 + profileId,
+			},
+		},
+	};
+}
+
+type ViewsSnapshot = { profiles: ViewerProfile[]; previews: ViewPreview[] };
+
 beforeEach(() => {
+	clearAccountCaches();
 	getViewsMock.mockReset();
 	showErrorToastMock.mockReset();
 	unlistenViewMock.mockReset();
@@ -106,7 +135,9 @@ beforeEach(() => {
 describe("ViewsState", () => {
 	it("loads profiles before previews and pages visible results", async () => {
 		getViewsMock.mockResolvedValue({
-			profiles: Array.from({ length: 24 }, (_, index) => profile(index + 1)),
+			profiles: Array.from({ length: 24 }, (_, index) =>
+				profile(index + 1),
+			),
 			previews: [preview()],
 		});
 
@@ -206,8 +237,96 @@ describe("ViewsState", () => {
 		});
 	});
 
+	it("keeps a websocket view that lands while a reconcile fetch is in flight", async () => {
+		getViewsMock.mockResolvedValueOnce({
+			profiles: [profile(1)],
+			previews: [],
+		});
+		const state = new ViewsState();
+		await waitForLoaded(state);
+
+		const gate = deferred<ViewsSnapshot>();
+		getViewsMock.mockReturnValueOnce(gate.promise);
+
+		const reconcilePromise = reconcileHandlers[0]?.();
+		emitView(viewEvent(5));
+		gate.resolve({ profiles: [profile(1), profile(2)], previews: [] });
+		await reconcilePromise;
+
+		expect(state.views[0]).toMatchObject({
+			type: "profile",
+			profile: { profileId: 5 },
+		});
+	});
+
+	it("does not double-count a mid-fetch view already in the snapshot", async () => {
+		getViewsMock.mockResolvedValueOnce({
+			profiles: [profile(1)],
+			previews: [],
+		});
+		const state = new ViewsState();
+		await waitForLoaded(state);
+
+		const gate = deferred<ViewsSnapshot>();
+		getViewsMock.mockReturnValueOnce(gate.promise);
+
+		const reconcilePromise = reconcileHandlers[0]?.();
+		emitView(viewEvent(2));
+		gate.resolve({
+			profiles: [
+				profile(1),
+				profile(2, {
+					viewedCount: { totalCount: 7, maxDisplayCount: 99 },
+				}),
+			],
+			previews: [],
+		});
+		await reconcilePromise;
+
+		const twos = state.views.filter(
+			(v) => v.type === "profile" && v.profile.profileId === 2,
+		);
+		expect(twos).toHaveLength(1);
+		expect(twos[0]).toMatchObject({
+			type: "profile",
+			profile: { viewedCount: { totalCount: 7 } },
+		});
+	});
+
+	it("follows a favorite change made elsewhere, and stops after destroy", async () => {
+		getViewsMock.mockResolvedValue({
+			profiles: [profile(1)],
+			previews: [],
+		});
+		const state = new ViewsState();
+		await waitForLoaded(state);
+
+		mergeProfileEditIntoCaches({
+			cacheProfileId: 1,
+			patch: { isFavorite: true },
+		});
+		expect(state.views[0]).toMatchObject({
+			type: "profile",
+			profile: { isFavorite: true },
+		});
+
+		state.destroy();
+		mergeProfileEditIntoCaches({
+			cacheProfileId: 1,
+			patch: { isFavorite: false },
+		});
+
+		expect(state.views[0]).toMatchObject({
+			type: "profile",
+			profile: { isFavorite: true },
+		});
+	});
+
 	it("cleans up subscriptions on destroy", async () => {
-		getViewsMock.mockResolvedValue({ profiles: [profile(1)], previews: [] });
+		getViewsMock.mockResolvedValue({
+			profiles: [profile(1)],
+			previews: [],
+		});
 		const state = new ViewsState();
 		await waitForLoaded(state);
 
@@ -229,5 +348,30 @@ describe("ViewsState", () => {
 		expect(unsubscribeReconcileMock).toHaveBeenCalledOnce();
 		await vi.waitFor(() => expect(unlistenViewMock).toHaveBeenCalledOnce());
 		expect(state.views).toHaveLength(1);
+	});
+});
+
+describe("getViewsState", () => {
+	it("keeps one loaded state per account across revisits", async () => {
+		getViewsMock.mockResolvedValue({
+			profiles: [profile(1)],
+			previews: [],
+		});
+
+		const state = getViewsState(99);
+		await waitForLoaded(state);
+		state.scrollY = 320;
+
+		const revisited = getViewsState(99);
+		revisited.load();
+
+		expect(revisited).toBe(state);
+		expect(revisited.scrollY).toBe(320);
+		expect(getViewsMock).toHaveBeenCalledTimes(1);
+
+		clearAccountCaches();
+
+		expect(getViewsState(99)).not.toBe(state);
+		expect(unsubscribeReconcileMock).toHaveBeenCalledOnce();
 	});
 });

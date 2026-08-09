@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { StarIcon } from "phosphor-svelte";
 
-	import { showErrorToast } from "$lib/api/error";
+	import { showErrorToast } from "$lib/api/error-toast";
 	import {
 		addFavoriteUser,
 		removeFavoriteUser,
@@ -10,10 +10,12 @@
 
 	let {
 		profileId,
-		isFavorite = $bindable(),
+		isFavorite,
+		onFavorite,
 	}: {
 		profileId: number;
 		isFavorite: boolean;
+		onFavorite: (isFavorite: boolean) => void;
 	} = $props();
 
 	let submitting = $state(false);
@@ -27,9 +29,11 @@
 			if (isFavorite) {
 				isFavorite = false; // Optimistically update the UI
 				await removeFavoriteUser({ profileId });
+				onFavorite(false);
 			} else {
 				isFavorite = true;
 				await addFavoriteUser({ profileId });
+				onFavorite(true);
 			}
 		} catch (error) {
 			isFavorite = previousValue;

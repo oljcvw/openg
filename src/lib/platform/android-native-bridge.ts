@@ -19,7 +19,10 @@ export function applyAndroidInsets() {
 		if (cssInset !== 0) value = `env(safe-area-inset-${side}, 0px)`;
 		else if (nativeInset !== undefined) value = `${nativeInset}px`;
 		else value = "0px";
-		document.documentElement.style.setProperty(`--safe-area-${side}`, value);
+		document.documentElement.style.setProperty(
+			`--safe-area-${side}`,
+			value,
+		);
 	}
 
 	window.__reapplyInsets = applyAndroidInsets;
@@ -30,9 +33,8 @@ export function isSoftKeyboardVisible(): boolean | undefined {
 }
 
 function runBackGestureHandlers(): boolean {
-	const handlers = [...backGestureEventHandlers];
-	for (let index = handlers.length - 1; index >= 0; index--) {
-		if (handlers[index]() !== true) return true;
+	for (const handler of [...backGestureEventHandlers].reverse()) {
+		if (handler() !== true) return true;
 	}
 	return false;
 }

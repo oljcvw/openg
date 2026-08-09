@@ -1,4 +1,4 @@
-import { callMethod } from "$lib/api";
+import { callMethod } from "$lib/api/methods";
 import { ws } from "$lib/ws.svelte";
 
 const THROTTLE_MS = 2000;
@@ -8,17 +8,23 @@ export type ReconcileHandler = () => void | Promise<void>;
 class Reconciler {
 	#handlers = new Set<ReconcileHandler>();
 	#lastReconcileAt = 0;
+	#resyncTimer: ReturnType<typeof setTimeout> | null = null;
 	#wasHidden = false;
 	#firstConnect = true;
 
 	constructor() {
-		void ws.onConnected(() => {
+		ws.onConnected(() => {
 			if (this.#firstConnect) {
 				this.#firstConnect = false;
 				return;
 			}
 			void this.#trigger();
-		});
+		}).catch(console.error);
+
+		ws.onEventsDropped((skipped) => {
+			console.warn(`[ws] resyncing after ${skipped} dropped events`);
+			this.#scheduleResync();
+		}).catch(console.error);
 
 		if (typeof document !== "undefined") {
 			document.addEventListener("visibilitychange", () => {
@@ -40,6 +46,16 @@ class Reconciler {
 		};
 	}
 
+	#scheduleResync(): void {
+		if (this.#resyncTimer !== null) return;
+		const elapsed = Date.now() - this.#lastReconcileAt;
+		const wait = Math.max(THROTTLE_MS - elapsed, 0);
+		this.#resyncTimer = setTimeout(() => {
+			this.#resyncTimer = null;
+			void this.#trigger();
+		}, wait);
+	}
+
 	async #trigger(): Promise<void> {
 		const now = Date.now();
 		if (now - this.#lastReconcileAt < THROTTLE_MS) return;
@@ -48,13 +64,15 @@ class Reconciler {
 		const profileId = await callMethod("auth_state").catch(() => null);
 		if (profileId === null) return;
 
-		for (const handler of [...this.#handlers]) {
-			try {
-				await handler();
-			} catch (error) {
-				console.error("Reconcile handler failed", error);
-			}
-		}
+		await Promise.all(
+			[...this.#handlers].map(async (handler) => {
+				try {
+					await handler();
+				} catch (error) {
+					console.error("Reconcile handler failed", error);
+				}
+			}),
+		);
 	}
 }
 

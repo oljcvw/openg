@@ -5,11 +5,7 @@
 	import LocationChange from "../LocationChange.svelte";
 	import QuickFilters from "./QuickFilters.svelte";
 
-	let openFilters = $state({
-		all: false,
-		age: false,
-		position: false,
-	});
+	let openFilters = $state({ all: false, age: false, position: false });
 </script>
 
 <ProgressiveBlur
@@ -25,5 +21,4 @@
 		<CommandCenterTrigger />
 	</div>
 </ProgressiveBlur>
-<div class="h-9"></div>
 <GridFilters bind:open={openFilters.all} />

@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { isTauri } from "@tauri-apps/api/core";
-	import { platform } from "@tauri-apps/plugin-os";
 	import "@fontsource-variable/ibm-plex-sans/wght.css";
 	import "@fontsource-variable/ibm-plex-sans/wght-italic.css";
 
@@ -16,6 +14,8 @@
 		applyBackGestureHandler,
 		registerAndroidBackButtonListener,
 	} from "$lib/platform/android-native-bridge";
+	import { blockZoom } from "$lib/platform/block-zoom";
+	import { isAndroidPlatform } from "$lib/platform/os";
 
 	onMount(() => {
 		if (env.PUBLIC_TEST_INSETS) {
@@ -36,7 +36,8 @@
 		}
 		applyAndroidInsets();
 		applyBackGestureHandler();
-		if (isTauri() && platform() === "android") {
+		const releaseZoomBlock = blockZoom();
+		if (isAndroidPlatform()) {
 			void registerAndroidBackButtonListener().catch((error) => {
 				console.error("Failed to register back button listener", error);
 			});
@@ -44,20 +45,18 @@
 		void hydratePreferences().catch((error) => {
 			console.error("Failed to hydrate preferences", error);
 		});
+		return releaseZoomBlock;
 	});
 
 	import { env } from "$env/dynamic/public";
 
 	import favicon from "$lib/assets/favicon.png";
 	import AccountStatusAlert from "$lib/components/feedback/AccountStatusAlert.svelte";
+	import CopyErrorConfirmAlert from "$lib/components/feedback/CopyErrorConfirmAlert.svelte";
 	import RequestBlockedAlert from "$lib/components/feedback/RequestBlockedAlert.svelte";
 	import SessionErrorAlert from "$lib/components/feedback/SessionErrorAlert.svelte";
 
-	let {
-		children,
-	}: {
-		children?: import("svelte").Snippet;
-	} = $props();
+	let { children }: { children?: import("svelte").Snippet } = $props();
 
 	const hasBottomNavBar = $derived(
 		page.route.id?.startsWith("/(protected)/(navbar)") ?? false,
@@ -81,7 +80,7 @@
 			"bg-red-900": env.PUBLIC_TEST_INSETS,
 		},
 	]}
-	style="height: var(--safe-area-top)"
+	style:height="var(--safe-area-top)"
 ></div>
 <div
 	class={[
@@ -91,20 +90,19 @@
 			"bg-red-900": env.PUBLIC_TEST_INSETS,
 		},
 	]}
-	style="height: var(--safe-area-bottom)"
+	style:height="var(--safe-area-bottom)"
 ></div>
-<Toaster
-	position="bottom-center"
-	offset={toastOffset}
-	mobileOffset={toastOffset}
-	toastOptions={{
-		class: "toast",
-	}}
-	expand
-/>
-<IconContext values={{}}>
+<IconContext values={{ "aria-hidden": true }}>
+	<Toaster
+		position="bottom-center"
+		offset={toastOffset}
+		mobileOffset={toastOffset}
+		toastOptions={{ class: "toast" }}
+		expand
+	/>
 	{@render children?.()}
+	<RequestBlockedAlert />
+	<SessionErrorAlert />
+	<AccountStatusAlert />
+	<CopyErrorConfirmAlert />
 </IconContext>
-<RequestBlockedAlert />
-<SessionErrorAlert />
-<AccountStatusAlert />

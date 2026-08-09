@@ -6,11 +6,7 @@
 	import ComposerButton from "../ComposerButton.svelte";
 	import { getMessageComposerContext } from "../message-composer-context.svelte";
 
-	let {
-		onClick,
-	}: {
-		onClick?: () => void;
-	} = $props();
+	let { onClick }: { onClick?: () => void } = $props();
 
 	const { disabled } = $derived(getMessageComposerContext()());
 </script>
@@ -21,6 +17,7 @@
 >
 	<ComposerButton
 		class="static right-7 pe-1.5"
+		aria-label="Add attachment"
 		onclick={() => {
 			onClick?.();
 		}}

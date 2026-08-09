@@ -88,7 +88,10 @@
 					<Button
 						size="icon-lg"
 						variant="secondary"
-						class={[className, "size-12 max-selection-bar-compact:size-10"]}
+						class={[
+							className,
+							"size-12 max-selection-bar-compact:size-10",
+						]}
 						aria-label="Selection actions"
 						{...props}
 					>
@@ -119,7 +122,7 @@
 				variant="secondary"
 				class={[
 					"size-12 max-selection-bar-compact:size-10",
-					action.destructive && "text-destructive",
+					{ "text-destructive": action.destructive },
 				]}
 				aria-label={action.label}
 				onclick={action.onSelect}

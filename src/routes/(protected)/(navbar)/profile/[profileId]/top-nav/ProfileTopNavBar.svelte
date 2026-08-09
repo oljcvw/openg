@@ -7,10 +7,12 @@
 		ourProfileId,
 		profile = $bindable(),
 		onBlocked,
+		onFavorite,
 	}: {
 		ourProfileId: number;
 		profile: import("$lib/model/users/profiles").Profile;
 		onBlocked: () => void;
+		onFavorite: (isFavorite: boolean) => void;
 	} = $props();
 
 	const profileId = $derived(profile.profileId);
@@ -18,12 +20,16 @@
 </script>
 
 <nav
-	class="absolute -translate-y-1/2 right-2 flex flex-row-reverse items-center gap-1.5"
+	class="absolute right-2 flex -translate-y-1/2 flex-row-reverse items-center gap-1.5"
 >
 	{#if isOurProfile}
 		<EditProfileButton />
 	{:else}
-		<FavoriteProfileToggle {profileId} bind:isFavorite={profile.isFavorite} />
-		<ProfileActionsMenu {profileId} {onBlocked}  />
+		<FavoriteProfileToggle
+			{profileId}
+			isFavorite={profile.isFavorite}
+			{onFavorite}
+		/>
+		<ProfileActionsMenu {profileId} {onBlocked} />
 	{/if}
 </nav>

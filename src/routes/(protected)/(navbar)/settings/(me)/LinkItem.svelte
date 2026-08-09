@@ -19,14 +19,8 @@
 		warning?: {
 			title: string;
 			description: string;
-			primary: {
-				label: string;
-				destination: string;
-			};
-			secondary: {
-				label: string;
-				destination: string;
-			};
+			primary: { label: string; destination: string };
+			secondary: { label: string; destination: string };
 		};
 	} = $props();
 
@@ -38,7 +32,8 @@
 		{@render icon()}
 	</Item.Media>
 	<Item.Content class="min-w-0">
-		<Item.Title class="inline-block max-w-full truncate">{label}</Item.Title>
+		<Item.Title class="inline-block max-w-full truncate">{label}</Item.Title
+		>
 	</Item.Content>
 	<Item.Actions>
 		<ArrowSquareOutIcon class="size-4" />
@@ -94,8 +89,14 @@
 				</Dialog.Description>
 			</Dialog.Header>
 			<Dialog.Footer class="max-w-full flex-col sm:flex-col">
-				{@render warningButton({ variant: "default", ...warning.primary })}
-				{@render warningButton({ variant: "secondary", ...warning.secondary })}
+				{@render warningButton({
+					variant: "default",
+					...warning.primary,
+				})}
+				{@render warningButton({
+					variant: "secondary",
+					...warning.secondary,
+				})}
 			</Dialog.Footer>
 		</Dialog.Content>
 	</Dialog.Root>

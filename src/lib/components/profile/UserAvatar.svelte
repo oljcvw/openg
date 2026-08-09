@@ -2,6 +2,7 @@
 	import { env } from "$env/dynamic/public";
 	import { UserIcon } from "phosphor-svelte";
 
+	import MediaImage from "$lib/components/shared/MediaImage.svelte";
 	import { profileMediaUrl } from "$lib/util/media";
 
 	let {
@@ -17,20 +18,19 @@
 
 <div class={[className]}>
 	{#if mediaHash}
-		<img
-			src={profileMediaUrl(mediaHash, "thumb")}
-			alt="Profile avatar"
-			class={[
-				"w-full h-full object-cover object-center bg-neutral-600",
-				{
-					"blur-2xl": env.PUBLIC_ENABLE_BLUR_EFFECTS,
-				},
+		<MediaImage
+			src={profileMediaUrl({ mediaHash, size: "thumb" })}
+			class="h-full w-full"
+			imgClass={[
+				"bg-neutral-600",
+				{ "blur-2xl": env.PUBLIC_ENABLE_BLUR_EFFECTS },
 			]}
+			tone="photo"
+			{size}
 			loading="lazy"
-			draggable="false"
 		/>
 	{:else}
-		<div class="bg-neutral-700 size-full flex items-center justify-center">
+		<div class="flex size-full items-center justify-center bg-neutral-700">
 			<UserIcon
 				weight="fill"
 				color="var(--color-stone-400)"

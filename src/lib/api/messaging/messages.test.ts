@@ -2,12 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { fetchRestMock } = vi.hoisted(() => ({ fetchRestMock: vi.fn() }));
 
-vi.mock("$lib/api", async (importOriginal) => ({
-	...(await importOriginal<typeof import("$lib/api")>()),
+vi.mock("$lib/api/transport", async (importOriginal) => ({
+	...(await importOriginal<typeof import("$lib/api/transport")>()),
 	fetchRest: fetchRestMock,
 }));
 
 import {
+	ConversationUnavailableError,
 	deleteMessageForMe,
 	getConversationMessages,
 	getSingleMessage,
@@ -34,19 +35,23 @@ function response({
 	data,
 	status = 200,
 	assertOkErrorMessage,
+	body,
 }: {
 	data?: unknown;
 	status?: number;
 	assertOkErrorMessage?: string;
+	body?: string;
 } = {}) {
 	return {
 		status,
 		assertOk() {
 			if (status >= 200 && status < 300) return;
 			throw new Error(
-				assertOkErrorMessage ?? `API request failed with status ${status}`,
+				assertOkErrorMessage ??
+					`API request failed with status ${status}`,
 			);
 		},
+		text: () => body ?? JSON.stringify(data ?? null),
 		json: () => data,
 		jsonParsed: vi.fn((schema: { parse(value: unknown): unknown }) =>
 			schema.parse(data),
@@ -89,6 +94,59 @@ describe("message API wrappers", () => {
 			"/v5/chat/conversation/conversation-1/message?profile=true&pageKey=next-page",
 			{ method: "GET" },
 		);
+	});
+
+	it("reports a conversation the server refuses as unavailable", async () => {
+		fetchRestMock.mockResolvedValue(
+			response({
+				status: 403,
+				body: JSON.stringify({
+					type: "urn:gr:err:unauthorized_action",
+					title: "Action not permitted",
+					status: 403,
+				}),
+			}),
+		);
+
+		await expect(
+			getConversationMessages({ conversationId: "conversation-1" }),
+		).rejects.toBeInstanceOf(ConversationUnavailableError);
+	});
+
+	it("keeps a Cloudflare 403 a transport failure, not a missing conversation", async () => {
+		const res = response({
+			status: 403,
+			body: "<html><title>Attention Required! | Cloudflare</title></html>",
+			assertOkErrorMessage: "API request failed with status 403",
+		});
+		fetchRestMock.mockResolvedValue(res);
+
+		const error = await getConversationMessages({
+			conversationId: "conversation-1",
+		}).catch((e: unknown) => e);
+
+		expect(error).not.toBeInstanceOf(ConversationUnavailableError);
+		expect(error).toBeInstanceOf(Error);
+		expect(res.jsonParsed).not.toHaveBeenCalled();
+	});
+
+	it("keeps an unrelated 403 JSON body a transport failure", async () => {
+		fetchRestMock.mockResolvedValue(
+			response({
+				status: 403,
+				body: JSON.stringify({
+					type: "urn:gr:err:header",
+					status: 403,
+				}),
+			}),
+		);
+
+		const error = await getConversationMessages({
+			conversationId: "conversation-1",
+		}).catch((e: unknown) => e);
+
+		expect(error).not.toBeInstanceOf(ConversationUnavailableError);
+		expect(error).toBeInstanceOf(Error);
 	});
 
 	it("loads a single message by conversation and message id", async () => {
@@ -171,14 +229,17 @@ describe("message API wrappers", () => {
 			}),
 		).resolves.toBe(res);
 
-		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/reaction", {
-			method: "POST",
-			body: {
-				conversationId: "conversation-1",
-				messageId: "msg-1",
-				reactionType: 1,
+		expect(fetchRestMock).toHaveBeenCalledWith(
+			"/v4/chat/message/reaction",
+			{
+				method: "POST",
+				body: {
+					conversationId: "conversation-1",
+					messageId: "msg-1",
+					reactionType: 1,
+				},
 			},
-		});
+		);
 	});
 
 	it("throws when delete requests return non-200 statuses", async () => {
@@ -200,10 +261,7 @@ describe("message API wrappers", () => {
 
 		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/delete", {
 			method: "POST",
-			body: {
-				conversationId: "conversation-1",
-				messageId: "msg-1",
-			},
+			body: { conversationId: "conversation-1", messageId: "msg-1" },
 		});
 	});
 
@@ -226,10 +284,7 @@ describe("message API wrappers", () => {
 
 		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/unsend", {
 			method: "POST",
-			body: {
-				conversationId: "conversation-1",
-				messageId: "msg-1",
-			},
+			body: { conversationId: "conversation-1", messageId: "msg-1" },
 		});
 	});
 });

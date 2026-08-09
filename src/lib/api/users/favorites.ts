@@ -1,4 +1,4 @@
-import { fetchRest } from "$lib/api";
+import { fetchRest } from "$lib/api/transport";
 import { type FavoriteNote, favoriteNoteSchema } from "$lib/model/favorites";
 import type { Profile } from "$lib/model/users/profiles";
 
@@ -7,9 +7,9 @@ export async function addFavoriteUser({
 }: {
 	profileId: Profile["profileId"];
 }) {
-	await fetchRest(`/v3/me/favorites/${profileId}`, {
-		method: "POST",
-	}).then((res) => res.assertOk());
+	await fetchRest(`/v3/me/favorites/${profileId}`, { method: "POST" }).then(
+		(res) => res.assertOk(),
+	);
 }
 
 export async function removeFavoriteUser({
@@ -17,9 +17,9 @@ export async function removeFavoriteUser({
 }: {
 	profileId: Profile["profileId"];
 }) {
-	await fetchRest(`/v3/me/favorites/${profileId}`, {
-		method: "DELETE",
-	}).then((res) => res.assertOk());
+	await fetchRest(`/v3/me/favorites/${profileId}`, { method: "DELETE" }).then(
+		(res) => res.assertOk(),
+	);
 }
 
 export async function getFavoriteUserNote(

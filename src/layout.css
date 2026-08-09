@@ -13,7 +13,6 @@
 	--card-foreground: oklch(0.985 0 0);
 	--popover: oklch(0.205 0 0);
 	--popover-foreground: oklch(0.985 0 0);
-	/* --primary: oklch(0.795 0.184 86.047); */
 	--primary: oklch(86.521% 0.17664 90.372);
 	--primary-foreground: oklch(0.421 0.095 57.708);
 	--secondary: oklch(0.274 0.006 286.033);
@@ -41,6 +40,7 @@
 	--sidebar-ring: oklch(0.556 0 0);
 	--message-bubble-in: oklch(0.7882 0.1455 228.36);
 	--message-bubble-out: oklch(0.8618 0.1973 89.76);
+	--list-rail: 117px;
 }
 
 @theme inline {
@@ -93,7 +93,7 @@
 	--text-3xs: 0.625rem; /* 10px */
 
 	--spacing-avatar: 37.5px;
-	--spacing-list-rail: 117px;
+	--spacing-list-rail: var(--list-rail);
 }
 
 /* Keep in sync with src/lib/util/breakpoints.svelte.ts */
@@ -107,6 +107,8 @@
 
 @theme {
 	--radius-grid: 17px;
+
+	--radius-composer: 19px;
 }
 
 /* .photo-grid column-count thresholds, queried against the nearest
@@ -137,14 +139,20 @@
 :root,
 body {
 	min-height: 100dvh;
+	/* No app-level rubber-banding; scroll containers opt back in via
+	   overscroll-behavior: contain for pull-to-refresh. */
 	overscroll-behavior: none;
 	user-select: none;
 	-webkit-user-select: none;
 	--nav-height: 4rem;
 	--selection-bar-height: 4.75rem;
 	--content-pb: calc(var(--nav-height) + var(--safe-area-bottom));
-	--screen-safe: calc(100dvh - var(--safe-area-top) - var(--safe-area-bottom));
-	--screen-scroll: calc(100dvh - var(--safe-area-top) - var(--content-pb));
+	--screen-safe: calc(
+		100dvh - var(--safe-area-top) - var(--safe-area-bottom)
+	);
+	/* Runs under the bottom navbar; pair with -mb-(--content-pb) and
+	   pb-nav-clear so content scrolls beneath the navbar's blur. */
+	--screen-nav: calc(100dvh - var(--safe-area-top));
 	text-rendering: geometricPrecision;
 	image-rendering: optimizeQuality;
 	shape-rendering: geometricPrecision;
@@ -160,10 +168,6 @@ a {
 
 :root[data-context-menu-open] body {
 	pointer-events: none !important;
-}
-
-*[data-tauri-drag-region] {
-	background: red;
 }
 
 .profile-card-distance {
@@ -291,6 +295,28 @@ a {
 	max-height: min(70vh, 500px);
 }
 
+/* 1px past full height keeps a scroll container technically scrollable, so
+   a native rubber band (and with it pull-to-refresh) works on short content */
+@utility min-h-overscrollable {
+	min-height: calc(100% + 1px);
+}
+
+@utility screen-nav-host {
+	/* Scroller child needs pull-scroller */
+	/* Content inside needs pb-nav-clear */
+	@apply relative h-(--screen-nav) w-full;
+	margin-bottom: calc(var(--content-pb) * -1);
+}
+
+/* Pull-to-refresh containers */
+@utility pull-scroller {
+	@apply size-full overflow-auto overscroll-contain;
+}
+
+[data-sonner-toaster] {
+	font-family: var(--font-sans) !important;
+}
+
 .toast[data-styled="true"] {
 	background-color: var(--color-accent) !important;
 	color: var(--popover) !important;
@@ -333,5 +359,46 @@ a {
 
 	to {
 		transform: var(--fly-out);
+	}
+}
+
+@theme {
+	--apple-system-glass-material-normal: -apple-system-glass-material;
+	--apple-system-glass-material-clear: -apple-system-glass-material-clear;
+	--apple-system-glass-material-subdued: -apple-system-glass-material-subdued;
+	--apple-system-glass-material-media-controls: -apple-system-glass-material-media-controls;
+	--apple-system-glass-material-media-controls-subdued: -apple-system-glass-material-media-controls-subdued;
+}
+
+@utility glass-* {
+	-apple-visual-effect: --value(--apple-system-glass-material-*);
+}
+
+@supports not (-apple-visual-effect: -apple-system-glass-material) {
+	.glass-normal {
+		backdrop-filter: blur(6px);
+	}
+	.glass-clear {
+		backdrop-filter: blur(1px);
+		border: 0.5px solid rgba(255, 255, 255, 0.75);
+		box-shadow:
+			inset 0 0 0px rgba(255, 255, 255, 0.2),
+			inset 4px 0 5px 2px rgba(255, 255, 255, 0.8),
+			inset -3px 0 5px 0px rgba(255, 255, 255, 0.6);
+	}
+	.glass-subdued {
+		backdrop-filter: blur(8px);
+		background-color: rgba(0, 0, 0, 0.2);
+	}
+	.glass-media-controls {
+		backdrop-filter: blur(8px);
+		background-color: rgba(0, 0, 0, 0.4);
+	}
+	.glass-media-controls-subdued {
+		backdrop-filter: blur(24px);
+		box-shadow:
+			inset 3px 1px 5px rgba(255, 255, 255, 0.05),
+			inset 2px -1px 3px rgba(255, 255, 255, 0.2),
+			inset 1px 1px 5px rgba(0, 0, 0, 0.2);
 	}
 }

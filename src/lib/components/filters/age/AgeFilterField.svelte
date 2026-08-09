@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Checkbox } from "$lib/components/ui/checkbox";
 	import { Label } from "$lib/components/ui/label";
+	import { ageRangeLabel } from "$lib/model/browse/grid/filters";
 	import FilterField from "../FilterField.svelte";
 	import AgeFilterSlider from "./AgeFilterSlider.svelte";
 
@@ -9,12 +10,12 @@
 		value = $bindable(),
 	}: { checked: boolean; value: number[] } = $props();
 
-	let label = $state("");
+	const label = $derived(ageRangeLabel(value));
 
 	const uid = $props.id();
 </script>
 
-<div class="inline-block space-y-3 w-full">
+<div class="inline-block w-full space-y-3">
 	<FilterField>
 		<Checkbox id="filters-age-{uid}" bind:checked />
 		<Label for="filters-age-{uid}">Age</Label>
@@ -31,7 +32,6 @@
 					value = v;
 				}
 			}
-			bind:label
 		/>
 	</div>
 </div>

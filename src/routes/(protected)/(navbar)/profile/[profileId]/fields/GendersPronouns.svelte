@@ -1,20 +1,17 @@
 <script lang="ts">
 	import { getGenders } from "$lib/api/users/genders";
-	import { fetchPronouns } from "$lib/api/users/pronouns";
+	import { getPronouns } from "$lib/api/users/pronouns";
 	import Separator from "$lib/components/ui/separator/separator.svelte";
 	import { Spinner } from "$lib/components/ui/spinner";
 	import ProfileField from "./ProfileField.svelte";
 
-	let allGenders = $derived(getGenders());
-	let allPronouns = $derived(fetchPronouns());
+	const allGenders = $derived(getGenders());
+	const allPronouns = $derived(getPronouns());
 
 	let {
 		genders = null,
 		pronouns = null,
-	}: {
-		genders?: number[] | null;
-		pronouns?: number[] | null;
-	} = $props();
+	}: { genders?: number[] | null; pronouns?: number[] | null } = $props();
 </script>
 
 {#if (genders !== null && genders.length > 0) || (pronouns !== null && pronouns.length > 0)}
@@ -24,6 +21,7 @@
 			width="1em"
 			height="1em"
 			viewBox="0 0 24 24"
+			aria-hidden="true"
 			class="shrink-0"
 		>
 			<!-- Icon from Lucide by Lucide Contributors - https://github.com/lucide-icons/lucide/blob/main/LICENSE -->
@@ -47,7 +45,8 @@
 				{genders
 					.map(
 						(genderId) =>
-							allGenders.find((g) => g.genderId === genderId)?.gender,
+							allGenders.find((g) => g.genderId === genderId)
+								?.gender,
 					)
 					.join(", ")}
 			{:catch}
@@ -64,7 +63,8 @@
 				{pronouns
 					.map(
 						(pronounId) =>
-							allPronouns.find((p) => p.pronounId === pronounId)?.pronoun,
+							allPronouns.find((p) => p.pronounId === pronounId)
+								?.pronoun,
 					)
 					.join(", ")}
 			{:catch}
@@ -77,6 +77,6 @@
 <style lang="postcss">
 	@reference "$layout";
 	.load-fail {
-		@apply italic text-muted-foreground;
+		@apply text-muted-foreground italic;
 	}
 </style>

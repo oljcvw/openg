@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import z from "zod";
 
-import { tapTypeSchema } from "$lib/model/interest/taps";
+import { tapTypeOrNoneSchema } from "$lib/model/interest/taps";
 import { mediaHashPublicSchema } from "$lib/model/media";
 import { apiResponseMessageSchema } from "$lib/model/messaging/messages";
 import { unixTimestampMsSchema } from "$lib/model/types";
@@ -22,9 +22,7 @@ export const chatV1MessageSentEventSchema = notificationEventSchema.safeExtend({
 export const chatV1ConversationDeleteEventSchema =
 	notificationEventSchema.safeExtend({
 		type: z.literal("chat.v1.conversation.delete"),
-		payload: z.object({
-			conversationIds: z.array(z.string()),
-		}),
+		payload: z.object({ conversationIds: z.array(z.string()) }),
 	});
 
 export const chatV1ConversationReadEventSchema =
@@ -43,7 +41,7 @@ export const tapV1TapSentEventSchema = notificationEventSchema.safeExtend({
 		timestamp: unixTimestampMsSchema,
 		senderId: z.number(),
 		recipientId: z.number(),
-		tapType: tapTypeSchema.or(z.literal(3).transform(() => null)).nullable(),
+		tapType: tapTypeOrNoneSchema.nullable(),
 		senderProfileImageHash: mediaHashPublicSchema.nullable(),
 		senderDisplayName: z.string().nullable(),
 		isMutual: z.boolean(),
@@ -79,7 +77,7 @@ export type ChatV1ConversationReadEventPayload = z.infer<
 	typeof chatV1ConversationReadEventSchema
 >;
 
-export type WsStatus = "disconnected" | "connecting" | "connected" | "error";
+export type WsStatus = "disconnected" | "connected";
 
 class WsState {
 	status = $state<WsStatus>("disconnected");
@@ -87,20 +85,14 @@ class WsState {
 	constructor() {
 		listen<void>("ws:connected", () => {
 			this.status = "connected";
-			console.log("[ws] connected");
 		}).catch(console.error);
 
 		listen<void>("ws:disconnected", () => {
 			this.status = "disconnected";
 		}).catch(console.error);
-
-		listen<string>("ws:ws_error", (event) => {
-			console.error("[ws] server error", event.payload);
-		}).catch(console.error);
 	}
 
 	connect(): void {
-		console.log("[ws] connecting...");
 		invoke("ws_connect").catch((e: unknown) => {
 			console.error("[ws] connect failed", e);
 		});
@@ -108,6 +100,12 @@ class WsState {
 
 	onConnected(handler: () => void): Promise<() => void> {
 		return listen<void>("ws:connected", () => handler());
+	}
+
+	onEventsDropped(handler: (skipped: number) => void): Promise<() => void> {
+		return listen<number>("ws:events-dropped", (event) => {
+			handler(event.payload);
+		});
 	}
 
 	send(type: string, payload: unknown): void {

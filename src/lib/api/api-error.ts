@@ -1,22 +1,22 @@
-export type ApiErrorKind =
-	| "Http"
-	| "Auth"
-	| "Api"
-	| "Unauthorized"
-	| "Banned"
-	| "RateLimited"
-	| "NotInitialized";
+export const apiErrorKinds = [
+	"Http",
+	"Auth",
+	"NotLoggedIn",
+	"Api",
+	"Unauthorized",
+	"Banned",
+	"RateLimited",
+	"RequestBlocked",
+	"NetworkBlocked",
+	"NotInitialized",
+	"SessionCleared",
+] as const;
+
+export type ApiErrorKind = (typeof apiErrorKinds)[number];
 
 export class ApiError extends Error {
-	readonly request: {
-		method: string;
-		path: string;
-		body?: unknown;
-	};
-	readonly response: {
-		status: number;
-		body: string;
-	} | null;
+	readonly request: { method: string; path: string; body?: unknown };
+	readonly response: { status: number; body: string } | null;
 	readonly kind: ApiErrorKind | null;
 
 	constructor(options: {
@@ -36,24 +36,13 @@ export class ApiError extends Error {
 	get retryable(): boolean {
 		if (this.kind === "Http") return true;
 		if (this.kind === "Auth" || this.kind === "Unauthorized") return true;
+		if (this.kind === "RequestBlocked") return true;
+		if (this.kind === "NetworkBlocked") return true;
 		if (this.response !== null) {
 			const { status } = this.response;
 			if (status >= 500) return true;
 			if (status === 401 || status === 408 || status === 429) return true;
 		}
 		return false;
-	}
-
-	copyableText(): string {
-		return JSON.stringify(
-			{
-				error: this.message,
-				kind: this.kind,
-				request: this.request,
-				response: this.response,
-			},
-			null,
-			2,
-		);
 	}
 }

@@ -1,30 +1,26 @@
 import { createContext } from "svelte";
 
-import { registerAccountCache } from "$lib/api/account-caches";
+import { accountScoped } from "$lib/api/account-caches";
+import { showIncomingMessageToast } from "$lib/components/incoming-message-toast/incoming-message-toast-manager";
 import { ConversationsState } from "./conversations-state.svelte";
 
 export const [getConversations, setConversations] =
 	createContext<ConversationsState>();
 
-let cachedState: ConversationsState | null = null;
-let cachedProfileId: number | null = null;
-
-export function getOrCreateConversationsState(
-	profileId: number,
-): ConversationsState {
-	if (cachedState !== null && cachedProfileId === profileId) {
-		return cachedState;
-	}
-	if (cachedState !== null) {
-		void cachedState.destroy();
-	}
-	cachedState = new ConversationsState(profileId);
-	cachedProfileId = profileId;
-	return cachedState;
-}
-
-registerAccountCache(() => {
-	void cachedState?.destroy();
-	cachedState = null;
-	cachedProfileId = null;
-});
+export const getOrCreateConversationsState = accountScoped(
+	(profileId) =>
+		new ConversationsState({
+			ourProfileId: profileId,
+			onIncomingMessage: ({ message, conversation }) =>
+				showIncomingMessageToast({
+					message,
+					sender: {
+						name: conversation.data.name,
+						avatarMediaHash:
+							conversation.data.participants[0]
+								?.primaryMediaHash ?? null,
+					},
+					conversationId: conversation.data.conversationId,
+				}),
+		}),
+);

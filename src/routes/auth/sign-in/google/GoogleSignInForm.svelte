@@ -2,9 +2,9 @@
 	import { goto } from "$app/navigation";
 	import { toast } from "svelte-sonner";
 
-	import { asAppError, callMethod } from "$lib/api";
 	import { showAccountRestriction } from "$lib/api/account-status-state.svelte";
-	import { showErrorToast } from "$lib/api/error";
+	import { showErrorToast } from "$lib/api/error-toast";
+	import { asAppError, callMethod } from "$lib/api/methods";
 	import { clearProfileCaches } from "$lib/api/users/profiles";
 	import { Button } from "$lib/components/ui/button";
 	import * as Card from "$lib/components/ui/card";
@@ -36,6 +36,16 @@
 				toast.error(
 					'Couldn\'t find the Open Grind Google OAuth app on your device. Install it first, then tap "Retry". Alternatively, try pasting the OAuth token manually.',
 				);
+				return;
+			}
+			if (
+				appError?.kind === "Auth" &&
+				appError.message === "companion-untrusted"
+			) {
+				toast.error(
+					"An app using the companion's name is installed but isn't signed by Open Grind, so its token was refused. Uninstall it, or paste the OAuth token manually.",
+				);
+				manualInput = true;
 				return;
 			}
 			if (
@@ -88,7 +98,7 @@
 				<ol class="ms-5 list-decimal">
 					<li>
 						Install <Link
-							href="https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app"
+							href="https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app/releases#install"
 							class="font-medium text-primary underline underline-offset-2"
 						>
 							Open Grind companion app
@@ -97,8 +107,13 @@
 					{#if !manualInput}
 						<li>On this screen, tap the "Retry" button</li>
 					{:else}
-						<li>Sign in with Google in the companion app and copy the token</li>
-						<li>Return to this screen, paste it and tap "Sign in"</li>
+						<li>
+							Sign in with Google in the companion app and copy
+							the token
+						</li>
+						<li>
+							Return to this screen, paste it and tap "Sign in"
+						</li>
 					{/if}
 				</ol>
 				{#if !manualInput}

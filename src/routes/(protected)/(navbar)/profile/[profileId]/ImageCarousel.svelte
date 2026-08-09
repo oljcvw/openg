@@ -5,10 +5,14 @@
 	import z from "zod";
 	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
-	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 	import { profileMediaUrl } from "$lib/util/media";
 	import type { FavoriteNote } from "$lib/model/favorites";
 	import type { Profile } from "$lib/model/users/profiles";
+	import {
+		applyPhotoSwipeBackGesture,
+		applyPhotoSwipeErrorUi,
+		applyPhotoSwipeThumbDimensions,
+	} from "$lib/util/photoswipe";
 	import ImageCarouselItem from "./ImageCarouselItem.svelte";
 	import ProfileNote from "./ProfileNote.svelte";
 
@@ -36,25 +40,13 @@
 				if (!gallery) return;
 				lightbox = new PhotoSwipeLightbox({
 					gallery,
-					children: ".item",
+					children: ".item[href]",
 					pswpModule: () => import("photoswipe"),
 					mainClass: `pswp--buttons-visible`,
 				});
-				lightbox.addFilter("itemData", (itemData) => {
-					const img = itemData.element?.querySelector("img");
-					if (img?.naturalWidth) {
-						itemData.width = img.naturalWidth;
-						itemData.height = img.naturalHeight;
-					}
-					return itemData;
-				});
-				const onBackGesture = () => {
-					lightbox?.pswp?.close();
-					return false;
-				};
-				lightbox.on("beforeOpen", () => {
-					backGestureEventHandlers.add(onBackGesture);
-				});
+				applyPhotoSwipeErrorUi(lightbox);
+				applyPhotoSwipeThumbDimensions(lightbox);
+				applyPhotoSwipeBackGesture(lightbox);
 				lightbox.on("openingAnimationStart", () => {
 					gallery?.querySelectorAll(".item").forEach((item) => {
 						if (item instanceof HTMLElement) {
@@ -64,12 +56,11 @@
 				});
 				lightbox.on("change", () => {
 					gallery?.scrollTo({
-						top: lightbox?.pswp?.currSlide?.data.element?.offsetTop ?? 0,
+						top:
+							lightbox?.pswp?.currSlide?.data.element
+								?.offsetTop ?? 0,
 						behavior: "instant",
 					});
-				});
-				lightbox.on("close", () => {
-					backGestureEventHandlers.delete(onBackGesture);
 				});
 				lightbox.on("destroy", () => {
 					gallery?.querySelectorAll(".item").forEach((item) => {
@@ -88,9 +79,15 @@
 								const { data: createdAt } = z.coerce
 									.number()
 									.int()
-									.safeParse(pswp.currSlide?.data.element?.dataset.createdAt);
+									.safeParse(
+										pswp.currSlide?.data.element?.dataset
+											.createdAt,
+									);
 								if (createdAt !== undefined) {
-									element.textContent = format(createdAt, "dd MMMM yyyy");
+									element.textContent = format(
+										createdAt,
+										"dd MMMM yyyy",
+									);
 								}
 							}, 0);
 						},
@@ -126,17 +123,26 @@
 				const index = Math.floor(item);
 				const tipYp =
 					Math.min(item > 0 ? index : item, medias.length - 1) +
-					(item < medias.length - 1 ? Math.max(0, (frac - 0.5) * 2) : frac);
+					(item < medias.length - 1
+						? Math.max(0, (frac - 0.5) * 2)
+						: frac);
 				indicatorY = PADDING_VERTICAL + tipYp * (BULLET_SIZE + GAP);
 				const indicatorStretch = stretch * (BULLET_SIZE * 2 + GAP + 4);
 				indicatorHeight =
 					BULLET_SIZE +
-					(item > 0 && item < medias.length - 1 ? indicatorStretch : 0);
+					(item > 0 && item < medias.length - 1
+						? indicatorStretch
+						: 0);
 			}}
 		>
-			{#each medias as { mediaHash, createdAt }}
-				{@const src = profileMediaUrl(mediaHash, "full")}
-				<ImageCarouselItem {src} thumb={src} {createdAt} />
+			{#each medias as { mediaHash, createdAt }, index (mediaHash + index)}
+				{@const src = profileMediaUrl({ mediaHash, size: "full" })}
+				<ImageCarouselItem
+					{src}
+					thumb={src}
+					{createdAt}
+					label="Profile photo {index + 1} of {medias.length}"
+				/>
 			{/each}
 		</div>
 		<div
@@ -145,11 +151,12 @@
 			style:padding="{PADDING_VERTICAL}px {PADDING_HORIZONTAL}px"
 		>
 			{#each medias, i (i)}
-				<span class="block size-2 rounded-full bg-neutral-200/40"></span>
+				<span class="block size-2 rounded-full bg-neutral-200/40"
+				></span>
 			{/each}
 			<span
 				class="absolute left-2 block w-2 rounded-full bg-neutral-300"
-				style="top: {indicatorY}px; height: {BULLET_SIZE}px"
+				style:top="{indicatorY}px"
 				style:height="{indicatorHeight}px"
 			></span>
 		</div>

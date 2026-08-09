@@ -19,6 +19,9 @@
 	);
 	setConversations(conversations);
 
+	const CONVERSATIONS_LIST_MIN_WIDTH_PX = 200;
+	const PAGE_CONTENT_MIN_WIDTH_PX = 280;
+
 	let paneGroup: HTMLElement | null = $state(null);
 	let conversationsListCollapsedSizePercentage = $state(0);
 	let conversationsListMinWidthPercentage = $state(0);
@@ -26,12 +29,17 @@
 
 	$effect(() => {
 		if (!paneGroup) return;
+		const listRailPx = parseFloat(
+			getComputedStyle(paneGroup).getPropertyValue("--list-rail"),
+		);
 		const observer = new ResizeObserver(() => {
 			if (!paneGroup) return;
-			// 117 == --spacing-list-rail
-			conversationsListCollapsedSizePercentage = 117 / paneGroup.offsetWidth;
-			conversationsListMinWidthPercentage = 200 / paneGroup.offsetWidth;
-			pageContentMinWidthPercentage = 280 / paneGroup.offsetWidth;
+			conversationsListCollapsedSizePercentage =
+				listRailPx / paneGroup.offsetWidth;
+			conversationsListMinWidthPercentage =
+				CONVERSATIONS_LIST_MIN_WIDTH_PX / paneGroup.offsetWidth;
+			pageContentMinWidthPercentage =
+				PAGE_CONTENT_MIN_WIDTH_PX / paneGroup.offsetWidth;
 		});
 		observer.observe(paneGroup);
 		return () => observer.disconnect();
@@ -72,10 +80,8 @@
 				<div class="h-full flex-1 self-stretch p-4 ps-1 pb-nav-clear">
 					<Card.Root
 						class={[
-							"relative h-full gap-0 rounded-2xl p-0 dark:ring-neutral-800 rounded-[27px]",
-							{
-								"bg-card/20 ring-0": !isChatSelected,
-							},
+							"relative h-full gap-0 rounded-[27px] p-0 dark:ring-neutral-800",
+							{ "bg-card/20 ring-0": !isChatSelected },
 						]}
 					>
 						{@render children?.()}
@@ -90,10 +96,10 @@
 				{@render children?.()}
 			</div>
 		{/if}
-	{:else}
-		<ConversationsList class="split:hidden" />
+	{:else if mobile.current}
+		<ConversationsList />
 	{/if}
 </main>
 {#if !mobile.current || page.route.id !== "/(protected)/chat/[conversationId]"}
-	<NavBar />
+	<NavBar ourProfileId={data.ourProfileId} />
 {/if}

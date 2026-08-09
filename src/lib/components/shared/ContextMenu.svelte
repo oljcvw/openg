@@ -16,7 +16,12 @@
 		selectable = false,
 		children,
 	}: {
-		contextMenuOpen: { x: number; y: number; width: number; height: number };
+		contextMenuOpen: {
+			x: number;
+			y: number;
+			width: number;
+			height: number;
+		};
 		style: string;
 		onClose: () => void;
 		isOut?: boolean;
@@ -64,7 +69,9 @@
 		if (contextMenuDialog instanceof HTMLDialogElement) {
 			contextMenuDialog.showModal();
 			contextMenuDialog
-				.querySelector<HTMLElement>("[data-slot='context-menu-trigger']")
+				.querySelector<HTMLElement>(
+					"[data-slot='context-menu-trigger']",
+				)
 				?.focus();
 		}
 	});
@@ -78,7 +85,7 @@
 	}}
 />
 <dialog
-	class="fixed top-0 left-0 z-9999 size-full bg-transparent max-w-none max-h-none backdrop:bg-transparent backdrop:backdrop-blur-xl"
+	class="fixed top-0 left-0 z-9999 size-full max-h-none max-w-none bg-transparent backdrop:bg-transparent backdrop:backdrop-blur-xl"
 	bind:this={contextMenuDialog}
 	onmousedown={(event) => {
 		if (
@@ -89,7 +96,6 @@
 		}
 	}}
 	onclose={() => onClose()}
-	// tabindex={-1}
 >
 	<div
 		bind:this={contextMenuTrigger}

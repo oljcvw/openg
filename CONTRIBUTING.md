@@ -3,20 +3,23 @@
 Thanks for considering contributing to Open Grind.
 
 - [Contributing to Open Grind](#contributing-to-open-grind)
-  - [Contribution guidelines](#contribution-guidelines)
-  - [Getting started](#getting-started)
-    - [Development environment](#development-environment)
-    - [Project structure](#project-structure)
-    - [Interacting with API](#interacting-with-api)
+    - [Contribution guidelines](#contribution-guidelines)
+    - [Getting started](#getting-started)
+        - [Development environment](#development-environment)
+        - [Project structure](#project-structure)
+        - [Interacting with API](#interacting-with-api)
+        - [Checks and tests](#checks-and-tests)
+        - [Where state lives](#where-state-lives)
+        - [Function parameters](#function-parameters)
     - [Submitting your changes](#submitting-your-changes)
-  - [Inclusion in GOVERNANCE.md](#inclusion-in-governancemd)
-
+        - [Inclusion in GOVERNANCE.md](#inclusion-in-governancemd)
 
 ## Contribution guidelines
 
 AI-generated pull requests are not allowed. AI-assisted code is allowed. All contributions must be aligned with [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
 - Use American English spelling
+- Internationalization is out of scope for now (see [#106](https://git.opengrind.org/open-grind/open-grind/issues/106)), so keep interface strings inline in American English, no translation layer and no partial translations
 - Use [Phosphor Icons](https://phosphoricons.com) whenever possible
 
 ## Getting started
@@ -38,19 +41,21 @@ Projects reference:
 
 1. Clone repository with submodules: `git clone --recurse-submodules ssh://git@git.opengrind.org/open-grind/open-grind.git`
 2. Install prerequisites:
-   - [Bun](https://bun.sh)
-   - [Rust](https://rustup.rs)
-   - [Tauri CLI](https://tauri.app/start/prerequisites/)
+    - [Bun](https://bun.sh)
+    - [Rust](https://rustup.rs)
+    - [Tauri CLI](https://tauri.app/start/prerequisites/)
 3. Install dependencies:
     ```bash
     bun ci
     ```
 4. Then start a dev server:
+
     ```bash
     bun dev
     ```
-   - Run with `PUBLIC_ENABLE_BLUR_EFFECTS=1` to blur all avatars in the app.
-   - Run with `PUBLIC_ENABLE_DEMO=1` to switch to SFW mock data.
+
+    - Run with `PUBLIC_ENABLE_BLUR_EFFECTS=1` to blur all avatars in the app.
+    - Run with `PUBLIC_ENABLE_DEMO=1` to switch to SFW mock data.
 
 ### Project structure
 
@@ -75,22 +80,21 @@ const securityHeaders = {
 	"Accept-Language": "en-US",
 	requireRealDeviceInfo: "true",
 	"L-Time-Zone": "Europe/Madrid",
-	"User-Agent": "grindr3/25.20.0.147239;147239;Free;Android 13;Pixel 7;Google",
+	"User-Agent":
+		"grindr3/25.20.0.147239;147239;Free;Android 13;Pixel 7;Google",
 	"L-Device-Info":
 		"1fAf9fB2aFfd47Fd;GLOBAL;2;3543028095;2400x1080;a1b2c3d4-e5f6-7890-abcd-ef1234567890",
 	// modify L-Device-Info values randomly if you're getting ACCOUNT_BANNED at login stage
-    // more info about these headers in docs: ./docs/content/grindr-api/security-headers.md
+	// more info about these headers in docs: ./docs/content/grindr-api/security-headers.md
 };
 
 const req = await fetch("https://grindr.mobi/v8/sessions", {
 	method: "POST",
-	headers: {
-		Accept: "application/json",
-		...securityHeaders,
-	},
+	headers: { Accept: "application/json", ...securityHeaders },
 	body: JSON.stringify({
 		email: "yourmail@example.org",
-		password: "comment out this field after you log in once, use authToken to refresh session",
+		password:
+			"comment out this field after you log in once, use authToken to refresh session",
 		// authToken:
 		//	"just reuse any of previous authTokens, even expired",
 		token: null,
@@ -99,12 +103,53 @@ const req = await fetch("https://grindr.mobi/v8/sessions", {
 });
 
 process.stdout.write("Grindr3 " + (await req.json().then((t) => t.sessionId)));
-
 ```
 
 </details>
 
-### Submitting your changes
+### Checks and tests
+
+Before opening a pull request, run the same checks CI runs:
+
+- `bun run lint` — ESLint. Formatting is separate: `bun run format` (Prettier).
+- `bun run check` — `svelte-check` type checking.
+- `bun run check:deps` — `cargo deny` (advisories, licenses, duplicate and unknown-source crates) plus `bun audit` over every workspace. Needs [cargo-deny](https://github.com/EmbarkStudios/cargo-deny) on `PATH`; CI runs it on a weekly schedule and on any pull request that touches a manifest or lockfile.
+- `bun run test` — frontend unit tests (Vitest) and Rust backend tests (`cargo test`) together. Individually: `bun run test:unit` and `bun run test:rust`.
+
+End-to-end tests are a separate tier:
+
+- `bun run test:e2e` — Playwright. One-time setup: `bunx playwright install chromium`. It drives the web build and runs the browser serially, which is why it stays out of `bun run test`.
+
+`bun ci` also installs a pre-commit hook ([lefthook](https://lefthook.dev/), configured in [lefthook.yml](./lefthook.yml)) that runs over staged files only:
+
+- `*.{js,mjs,ts,svelte}` — Prettier, then ESLint with `--fix`
+- `*.{json,md,yml,yaml,css,html}` — Prettier
+- `*.sh` — ShellCheck
+- `*.rs` — `rustfmt`, then `cargo clippy` over the whole crate
+
+[ShellCheck](https://www.shellcheck.net/) and [rustfmt](https://github.com/rust-lang/rustfmt) must be on `PATH`. `nix develop` provides both, along with the pinned Rust and Android toolchains.
+
+### Where state lives
+
+Pick the shortest lifetime that still holds the data long enough:
+
+- **Survives navigation and belongs to the signed-in account** — `accountScoped(create)` from [account-caches.ts](./src/lib/api/account-caches.ts). One instance per profile id, the previous one destroyed on account change. Conversations, taps and views use it.
+- **Survives navigation and is not per-account** — a module singleton that calls `registerAccountCache({ reset })` itself, like `gridState` and the API caches. Anything cached across screens must register a reset, or it leaks into the next account.
+- **Belongs to one route parameter** — a class the page constructs and destroys in an `$effect`, rebuilt when the parameter changes: `ConversationState`, `ProfileState`. Use it when reopening the screen should start over.
+- **Belongs to one mount** — plain `$state` in the component.
+
+Data that outlives the component goes in a state class, not in `<script module>`.
+
+### Function parameters
+
+Use named arguments in functions, except when:
+
+- a subject followed by options — `fetchRest(path, { method })`
+- order carries no meaning — `deepEqual(a, b)`
+- the call reads as prose — `formatHeight(180, "cm")`
+- the name already names its only argument — `getProfileById(profileId)`
+
+## Submitting your changes
 
 1. [Create an account](https://git.opengrind.org/user/sign_up) on git.opengrind.org
 2. [Create an SSH key](https://docs.codeberg.org/security/ssh-key/) for authorization on your computer and add it to your SSH config
@@ -115,14 +160,14 @@ process.stdout.write("Grindr3 " + (await req.json().then((t) => t.sessionId)));
 7. Configure git to use your name to commit: `git config set user.name gitusername` — it's recommended to use your git.opengrind.org account's display name
 8. Configure git to sign commits: `git config set commit.gpgSign true` and tell it about your SSH/GPG key: `git config set user.signingKey '~/.ssh/<YOUR PUBLIC SSH KEY>'` (if you use SSH key to sign, also set `git config set gpg.format ssh`) — **all submitted commits must be signed by keys verified in your git.opengrind.org account.**
 9. Create a new branch from main: `git branch your-feature main` — use a descriptive unique name
-10. Make your changes, test them locally
+10. Make your changes; run `bun run lint`, `bun run check`, and `bun run test` locally
 11. Commit your changes
 12. Make sure the commit is signed: `git cat-file commit HEAD` — **you must see `gpgsig` in the result**
 13. Push your changes: `git push`
 14. [Open a pull request](https://git.opengrind.org/open-grind/open-grind/pulls) in Pull requests page on git.opengrind.org
 15. Submit and mark for review once you're ready
 
-## Inclusion in GOVERNANCE.md
+### Inclusion in GOVERNANCE.md
 
 **Criteria:** Once you have at least 1 accepted PR with significant changes (a feature, a bug fix, a section of documentation), you can request inclusion into GOVERNANCE.md. AI-generated PRs don't count, unless you have proven significant work and understanding of the subject beyond the AI-generated content.
 

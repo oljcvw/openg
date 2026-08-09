@@ -4,11 +4,7 @@
 	import fireEmoji from "$lib/assets/emojis/fire/72px.png";
 	import { TapType, tapTypes } from "$lib/model/interest/taps";
 
-	let {
-		tapType,
-	}: {
-		tapType: TapType;
-	} = $props();
+	let { tapType }: { tapType: TapType } = $props();
 
 	const emojis = {
 		[TapType.Friendly]: cookieEmoji,
@@ -19,7 +15,7 @@
 
 <img
 	src={emojis[tapType]}
-	alt={`${tapTypes[tapType]} emoji`}
+	alt={`${tapTypes[tapType]} tap`}
 	width="24"
 	height="24"
 	class="shrink-0"

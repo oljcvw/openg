@@ -2,7 +2,7 @@
 	import { getContext, setContext } from "svelte";
 	import type { VariantProps } from "tailwind-variants";
 
-	import { toggleVariants } from "$lib/components/ui/toggle/index.js";
+	import type { toggleVariants } from "$lib/components/ui/toggle/index.js";
 
 	type ToggleVariants = VariantProps<typeof toggleVariants>;
 
@@ -70,8 +70,8 @@ get along, so we shut typescript up by casting `value` to `never`.
 	data-spacing={spacing}
 	style={`--gap: ${spacing}`}
 	class={cn(
-		"data-[spacing=0]:data-[variant=outline]:rounded-3xl group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] data-vertical:flex-col data-vertical:items-stretch",
-		className
+		"group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] data-[spacing=0]:data-[variant=outline]:rounded-3xl data-vertical:flex-col data-vertical:items-stretch",
+		className,
 	)}
 	{...restProps}
 />

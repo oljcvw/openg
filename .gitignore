@@ -8,6 +8,7 @@ node_modules
 !.env.example
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+test-results
 
 # Nix
 /result
@@ -20,3 +21,4 @@ keystore.properties
 *.keystore
 
 .local
+/coverage

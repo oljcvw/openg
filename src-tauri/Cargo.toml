@@ -1,9 +1,13 @@
 [package]
 name = "open-grind"
-version = "0.1.0-beta.3"
+version = "0.1.0-beta.4-dev"
 description = "FLOSS Grindr client"
 authors = ["Open Grind Governance (https://opengrind.org/governance)"]
 homepage = "https://opengrind.org"
+repository = "https://git.opengrind.org/open-grind/open-grind"
+license = "MIT"
+readme = "../README.md"
+publish = false
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -21,12 +25,15 @@ keychain = ["dep:apple-native-keyring-store"]
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+[dev-dependencies]
+tauri = { version = "2", features = ["test"] }
+
 [dependencies]
 tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-grindr = "0.5.0"
+grindr = "0.13.0"
 tokio = { version = "1", features = ["sync", "time", "rt", "macros"] }
 tauri-plugin-fs = "2"
 tauri-plugin-geolocation = "2"
@@ -35,27 +42,39 @@ tauri-plugin-clipboard-manager = "2"
 rmp-serde = "1.3.1"
 serde_bytes = "0.11"
 base64 = "0.22"
-keyring-core = "0.7.2"
+getrandom = "0.3"
+keyring-core = "1.0.0"
 tauri-plugin-devtools = "2.0.0"
 tauri-plugin-dialog = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-apple-native-keyring-store = { version = "0.2.3", features = ["keychain", "protected"], optional = true }
+apple-native-keyring-store = { version = "1.0.1", features = ["keychain", "protected"], optional = true }
+# Private WKWebView selector behind `-apple-visual-effect`, see src/appearance.rs.
+objc2 = "0.6"
 
 [target.'cfg(target_os = "ios")'.dependencies]
-apple-native-keyring-store = { version = "0.2.3", features = ["keychain", "protected"] }
+apple-native-keyring-store = { version = "1.0.1", features = ["keychain", "protected"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows-native-keyring-store = "0.5.1"
+windows-native-keyring-store = "1.1.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-linux-keyutils-keyring-store = "0.2.1"
+# Synchronous by construction. zbus's blocking wrapper drives a nested tokio
+# runtime and panics inside our spawned tasks whenever zbus/tokio is enabled,
+# which any dependency can turn on for us.
+dbus-secret-service-keyring-store = { version = "1.0.0", features = ["crypto-rust"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
-android-native-keyring-store = "0.5.0"
+android-native-keyring-store = "1.0.0"
 # Reads the EmbeddedSetup oauth_token cookie via android.webkit.CookieManager.
 jni = "0.21"
 tauri-plugin-android-fs = "=28.2.2"
 
 [profile.release]
 strip = "symbols"
+
+# See https://github.com/tauri-apps/tauri/pull/15777
+[patch.crates-io]
+tauri-codegen = { path = "patches/tauri-codegen" }

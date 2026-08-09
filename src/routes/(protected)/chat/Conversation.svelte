@@ -15,7 +15,7 @@
 	import { Badge } from "$lib/components/ui/badge";
 	import * as ContextMenu from "$lib/components/ui/context-menu";
 	import * as Item from "$lib/components/ui/item";
-	import { previewLabel } from "$lib/model/messaging/messages";
+	import { previewLabel } from "$lib/model/messaging/message-preview";
 	import type { Conversation } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
 
@@ -44,11 +44,17 @@
 	let contextMenuUsed = $state(false);
 
 	function togglePinned() {
-		void conversations.setPinned([conversationId], !conversation.data.pinned);
+		void conversations.setPinned({
+			conversationIds: [conversationId],
+			pinned: !conversation.data.pinned,
+		});
 	}
 
 	function toggleMuted() {
-		void conversations.setMuted([conversationId], !conversation.data.muted);
+		void conversations.setMuted({
+			conversationIds: [conversationId],
+			muted: !conversation.data.muted,
+		});
 	}
 
 	function toggleSelected() {
@@ -73,15 +79,15 @@
 	<ProfileItem
 		{active}
 		avatar={{
-			mediaHash: participant.primaryMediaHash ?? null,
-			link: `/profile/${participant.profileId}`,
-			overlay: isSelected ? selectedOverlay : undefined
+			mediaHash: participant?.primaryMediaHash ?? null,
+			link: participant ? `/profile/${participant.profileId}` : undefined,
+			overlay: isSelected ? selectedOverlay : undefined,
 		}}
 		title={{
 			value: conversation.data.name,
-			badge: conversation.data.muted ? mutedBadge : undefined
+			badge: conversation.data.muted ? mutedBadge : undefined,
 		}}
-		onlineUntil={conversation.data.onlineUntil ?? participant.onlineUntil}
+		onlineUntil={conversation.data.onlineUntil ?? participant?.onlineUntil}
 		link="/chat/{conversationId}"
 		selected={isSelected}
 		onToggleSelected={selection ? toggleSelected : undefined}
@@ -91,13 +97,16 @@
 			<Item.Description
 				class={{
 					"font-medium text-white":
-						conversation.data.unreadCount > 0 && !conversation.data.muted,
+						conversation.data.unreadCount > 0 &&
+						!conversation.data.muted,
 				}}
 			>
 				{#if previewText !== null}
 					{previewText}
 				{:else}
-					<span class="preview-not-available"> Preview not available </span>
+					<span class="preview-not-available">
+						Preview not available
+					</span>
 				{/if}
 			</Item.Description>
 		{/snippet}
@@ -117,7 +126,9 @@
 				</span>
 				{#if conversation.data.unreadCount > 0}
 					<Badge
-						variant={conversation.data.muted ? "secondary" : "default"}
+						variant={conversation.data.muted
+							? "secondary"
+							: "default"}
 						class="px-[5.5px] @max-row:hidden"
 					>
 						{conversation.data.unreadCount}
@@ -136,7 +147,7 @@
 			if (open) contextMenuUsed = true;
 		}}
 	>
-		<ContextMenu.Trigger>
+		<ContextMenu.Trigger class="rounded-2xl">
 			{@render row()}
 		</ContextMenu.Trigger>
 		{#if contextMenuUsed}
@@ -160,7 +171,10 @@
 					{/if}
 				</ContextMenu.Item>
 				<ContextMenu.Separator />
-				<ContextMenu.Item variant="destructive" onSelect={onRequestDelete}>
+				<ContextMenu.Item
+					variant="destructive"
+					onSelect={onRequestDelete}
+				>
 					<TrashIcon class="size-5" />
 					Delete
 				</ContextMenu.Item>

@@ -4,22 +4,22 @@
 		getCurrentPosition,
 		requestPermissions,
 	} from "@tauri-apps/plugin-geolocation";
-	import { platform } from "@tauri-apps/plugin-os";
 	import GpsFixIcon from "phosphor-svelte/lib/GpsFixIcon";
 	import MagnifyingGlassIcon from "phosphor-svelte/lib/MagnifyingGlassIcon";
 	import NavigationArrowIcon from "phosphor-svelte/lib/NavigationArrowIcon";
 	import { toast } from "svelte-sonner";
 
-	import { showErrorToast } from "$lib/api/error";
+	import { showErrorToast } from "$lib/api/error-toast";
 	import { setPreferences } from "$lib/app-data/preferences.svelte";
 	import LocationChooser from "$lib/components/location-chooser/LocationChooser.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import * as Empty from "$lib/components/ui/empty";
 	import { encodeGeohash } from "$lib/model/geohash";
+	import { isMobilePlatform } from "$lib/platform/os";
 
 	let geoMapPickerOpen = $state(false);
 
-	const geoApiSupported = $derived(["android", "ios"].includes(platform()));
+	const geoApiSupported = isMobilePlatform();
 	let disabled = $state(false);
 
 	async function handleDetectLocation() {
@@ -38,7 +38,9 @@
 						coords: { latitude, longitude },
 					} = await getCurrentPosition();
 
-					await submitGeohash(encodeGeohash(latitude, longitude));
+					await submitGeohash(
+						encodeGeohash({ lat: latitude, lon: longitude }),
+					);
 				} catch (error) {
 					console.error(error);
 					showErrorToast({
@@ -62,10 +64,7 @@
 			geoMapPickerOpen = false;
 		} catch (error) {
 			console.error(error);
-			showErrorToast({
-				label: "Failed to save location",
-				error,
-			});
+			showErrorToast({ label: "Failed to save location", error });
 		}
 	}
 </script>
@@ -77,13 +76,18 @@
 		</Empty.Media>
 		<Empty.Title>Choose location</Empty.Title>
 		<Empty.Description>
-			Pick a location on the map or select from the list to find nearby profiles.
+			Pick a location on the map or select from the list to find nearby
+			profiles.
 		</Empty.Description>
 	</Empty.Header>
 	<Empty.Content>
 		<div class="flex flex-wrap justify-center gap-2">
 			{#if geoApiSupported}
-				<Button variant="default" onclick={handleDetectLocation} {disabled}>
+				<Button
+					variant="default"
+					onclick={handleDetectLocation}
+					{disabled}
+				>
 					<GpsFixIcon color="currentColor" weight="fill" />
 					Use current location
 				</Button>
@@ -97,10 +101,5 @@
 			</Button>
 		</div>
 	</Empty.Content>
-	<!-- <Button variant="link" class="text-muted-foreground" size="sm">
-		<a href="#/">
-			Learn More <ArrowUpRightIcon class="inline" />
-		</a>
-	</Button> -->
 </Empty.Root>
 <LocationChooser onSubmit={submitGeohash} bind:open={geoMapPickerOpen} />

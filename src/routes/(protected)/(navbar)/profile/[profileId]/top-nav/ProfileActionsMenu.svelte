@@ -8,18 +8,13 @@
 	import { toast } from "svelte-sonner";
 
 	import { blockUser } from "$lib/api/browse/blocks";
-	import { showErrorToast } from "$lib/api/error";
+	import { showErrorToast } from "$lib/api/error-toast";
 	import ToastUnimplemented from "$lib/components/feedback/ToastUnimplemented.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
 
-	let {
-		profileId,
-		onBlocked,
-	}: {
-		profileId: number;
-		onBlocked: () => void;
-	} = $props();
+	let { profileId, onBlocked }: { profileId: number; onBlocked: () => void } =
+		$props();
 
 	let submitting = $state(false);
 </script>
@@ -49,7 +44,10 @@
 					toast.success("Profile ID copied to clipboard");
 				} catch (error) {
 					console.error(error);
-					showErrorToast({ label: "Failed to copy profile ID", error });
+					showErrorToast({
+						label: "Failed to copy profile ID",
+						error,
+					});
 				}
 			}}
 		>
@@ -59,10 +57,7 @@
 		<DropdownMenu.Item
 			onSelect={() => {
 				toast(ToastUnimplemented, {
-					componentProps: {
-						feature: "Report profile",
-						issue: 41,
-					},
+					componentProps: { feature: "Report profile", issue: 41 },
 				});
 			}}
 		>

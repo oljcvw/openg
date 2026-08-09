@@ -11,14 +11,14 @@
 	import * as Tooltip from "$lib/components/ui/tooltip";
 
 	let flip = $state(false);
-	let flipProgress = new Tween(0, { duration: 500 });
+	const flipProgress = new Tween(0, { duration: 500 });
 	let anchor: HTMLElement | null = $state(null);
 </script>
 
 <Empty.Root>
 	<Empty.Header>
 		<div
-			class="perspective-near size-10 cursor-help hover:scale-105 transition-transform rounded-full no-touch-callout select-none"
+			class="no-touch-callout size-10 cursor-help rounded-full transition-transform select-none perspective-near hover:scale-105"
 			onpointerdown={() => {
 				flip = true;
 				flipProgress.target = 1;
@@ -37,10 +37,8 @@
 		>
 			<div
 				class={[
-					"transform-3d relative transition-transform duration-500 rounded-full size-full *:backface-hidden *:absolute *:top-0 *:left-0 *:size-full",
-					{
-						"-rotate-y-180": flip,
-					},
+					"relative size-full rounded-full transition-transform duration-500 transform-3d *:absolute *:top-0 *:left-0 *:size-full *:backface-hidden",
+					{ "-rotate-y-180": flip },
 				]}
 			>
 				<Empty.Media variant="icon" class="mb-0">
@@ -49,7 +47,7 @@
 
 				<Tooltip.Provider>
 					<img
-						class="rotate-y-180 size-full rounded-full bg-neutral-200 select-none"
+						class="size-full rotate-y-180 rounded-full bg-neutral-200 select-none"
 						src={clippy}
 						alt="Clippy"
 						draggable="false"
@@ -57,7 +55,7 @@
 					<Tooltip.Root open={flipProgress.current === 1}>
 						<Tooltip.Content
 							customAnchor={anchor}
-							class="bg-popover text-accent rounded-sm max-w-35 flex flex-col items-start"
+							class="flex max-w-35 flex-col items-start rounded-sm bg-popover text-accent"
 							arrowClasses="bg-popover ms-0.5"
 						>
 							<p>

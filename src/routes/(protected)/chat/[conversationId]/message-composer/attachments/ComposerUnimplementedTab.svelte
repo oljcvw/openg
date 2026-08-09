@@ -4,16 +4,10 @@
 	import * as Alert from "$lib/components/ui/alert";
 	import Link from "$lib/components/ui/link/Link.svelte";
 
-	let {
-		label,
-		issue,
-	}: {
-		label: string;
-		issue: number;
-	} = $props();
+	let { label, issue }: { label: string; issue: number } = $props();
 </script>
 
-<div class="flex flex-1 px-8">
+<div class="flex flex-1 py-16">
 	<Alert.Root class="m-auto w-full max-w-sm">
 		<SmileySadIcon size="2em" color="#ffba20" weight="fill" />
 		<Alert.Title>Unimplemented</Alert.Title>
