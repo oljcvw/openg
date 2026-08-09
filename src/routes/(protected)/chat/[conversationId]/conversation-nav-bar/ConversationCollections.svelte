@@ -23,18 +23,18 @@
 </script>
 
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import {
 		DotsThreeVerticalIcon,
 		FolderOpenIcon,
 		ImagesIcon,
 		VideoCameraIcon,
 	} from "phosphor-svelte";
-	import { onDestroy, onMount, untrack } from "svelte";
+	import { onDestroy, onMount, tick, untrack } from "svelte";
 
 	import {
 		listDirectMediaHistory,
 		upsertDirectMediaHistory,
+		upsertDirectMediaHistoryBatch,
 	} from "$lib/app-data/direct-media-cache";
 	import {
 		setDirectMediaRetentionScope,
@@ -45,9 +45,12 @@
 		getRetainSharedChatMediaSnapshot,
 		subscribePreferences,
 	} from "$lib/app-data/preferences.svelte";
+	import { CollectionPageWindow } from "$lib/chat/collection-page-window";
+	import { getConversationMediaViewer } from "$lib/chat/conversation-media-viewer.svelte";
 	import {
 		loadSharedAlbumCollection,
 		loadSharedAlbumHistoryPage,
+		releaseSharedAlbumHistory,
 	} from "$lib/chat/shared-album-loader";
 	import {
 		classifyReceivedSharedMedia,
@@ -55,10 +58,16 @@
 		type SharedMediaEntry,
 	} from "$lib/chat/shared-media";
 	import { mergeSharedMediaSources } from "$lib/chat/shared-media-collection";
-	import MixedMediaViewer from "$lib/components/media/MixedMediaViewer.svelte";
+	import { nearestScrollableAncestor } from "$lib/components/feedback/refresh/scroll-chain";
 	import { Button } from "$lib/components/ui/button";
 	import * as Drawer from "$lib/components/ui/drawer";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import {
+		responsiveGridColumnCount,
+		toGridRows,
+	} from "$lib/components/virtual/virtual-grid";
+	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
+	import { openReceivedAlbumDetail } from "$lib/navigation/app-navigation";
 	import { videoCallController } from "$lib/video-call/controller";
 	import type { SharedAlbum } from "$lib/model/messaging/albums";
 	import type { ApiResponseMessage } from "$lib/model/messaging/messages";
@@ -67,10 +76,15 @@
 	import SharedMediaTile from "./SharedMediaTile.svelte";
 
 	const conversationState = $derived(getConversationState()());
+	const mediaViewer = getConversationMediaViewer()();
 	let {
+		accountProfileId,
+		conversationId,
 		peerProfileId,
 		peerLabel = null,
 	}: {
+		accountProfileId: number;
+		conversationId: string;
 		peerProfileId: number;
 		peerLabel?: string | null;
 	} = $props();
@@ -79,9 +93,20 @@
 	let albumsOpen = $state(false);
 	let mediaOpen = $state(false);
 	let currentAlbums = $state<SharedAlbum[]>([]);
-	let cachedAlbums = $state<
-		Awaited<ReturnType<typeof loadSharedAlbumHistoryPage>>["items"]
-	>([]);
+	type CachedAlbum = Awaited<
+		ReturnType<typeof loadSharedAlbumHistoryPage>
+	>["items"][number];
+	function cachedAlbumKey(album: CachedAlbum): string {
+		return `${album.identity.accountProfileId}:${album.identity.ownerProfileId}:${album.identity.albumId}`;
+	}
+	const cachedAlbumWindow = new CollectionPageWindow<CachedAlbum>(
+		cachedAlbumKey,
+	);
+	let cachedAlbumWindowVersion = $state(0);
+	const cachedAlbums = $derived.by(() => {
+		void cachedAlbumWindowVersion;
+		return cachedAlbumWindow.items;
+	});
 	let nextCachedCursor = $state<string | null>(null);
 	let cachedCursorStack = $state<Array<string | null>>([null]);
 	let albumLoading = $state(false);
@@ -92,6 +117,7 @@
 	let loadGeneration = 0;
 	let albumRefreshToken = 0;
 	let albumRefreshOwner: number | null = null;
+	let initializedCollectionScope = "";
 	let cachedPageToken = 0;
 	let cachedPageOwner: number | null = null;
 	let cachedPageLoading = $state(false);
@@ -106,7 +132,19 @@
 			videoCallBusy = snapshot.phase !== "idle";
 		}),
 	);
-	let retainedMedia = $state<SharedMediaEntry[]>([]);
+	const retainedMediaWindow = new CollectionPageWindow<SharedMediaEntry>(
+		(entry) => entry.messageId,
+		{
+			onEvict: (entries) =>
+				entries.forEach((entry) => releaseResolvedMediaUrl(entry.messageId)),
+		},
+	);
+	let retainedMediaWindowVersion = $state(0);
+	let retainedMediaPage = 0;
+	const retainedMedia = $derived.by(() => {
+		void retainedMediaWindowVersion;
+		return retainedMediaWindow.items;
+	});
 	let nextMediaCursor = $state<string | null>(null);
 	let mediaLoading = $state(false);
 	let retainedMediaError = $state<unknown>(null);
@@ -116,22 +154,37 @@
 	let retainedPageOwner: number | null = null;
 	let conversationPageToken = 0;
 	let conversationPageOwner: number | null = null;
-	let mediaHistoryMessages = $state<ApiResponseMessage[]>([]);
+	const conversationMediaWindow = new CollectionPageWindow<ApiResponseMessage>(
+		(message) => message.messageId,
+		{
+			onEvict: (messages) =>
+				messages.forEach((message) =>
+					releaseResolvedMediaUrl(message.messageId),
+				),
+		},
+	);
+	let conversationMediaWindowVersion = $state(0);
+	let conversationMediaPage = 0;
+	const mediaHistoryMessages = $derived.by(() => {
+		void conversationMediaWindowVersion;
+		return conversationMediaWindow.items;
+	});
 	let mediaPageKey = $state<string | null>(null);
 	let mediaHistoryLoading = $state(false);
 	let seenMediaPageKeys = new Set<string>();
-	let mediaWindowStart = $state(0);
-	let selectedMediaId = $state<string | null>(null);
-	let viewerSnapshot = $state<
-		Array<{
-			id: string;
-			kind: "image" | "video";
-			url: string | null;
-			unavailableLabel: string;
-		}>
-	>([]);
 	let resolvedMediaUrls = $state<Record<string, string | null>>({});
-	let viewerOpener = $state<HTMLElement | null>(null);
+	let releasedPinnedMediaIds = new Set<string>();
+	let albumScroller: HTMLDivElement | null = $state(null);
+	let mediaScroller: HTMLDivElement | null = $state(null);
+	let currentAlbumGrid: HTMLDivElement | null = $state(null);
+	let cachedAlbumGrid: HTMLDivElement | null = $state(null);
+	let mediaGrid: HTMLDivElement | null = $state(null);
+	let cachedAlbumCollection: {
+		scrollToIndex(index: number): Promise<void>;
+	} | null = $state(null);
+	let currentAlbumGridWidth = $state(0);
+	let cachedAlbumGridWidth = $state(0);
+	let mediaGridWidth = $state(0);
 
 	const showAlbums = $derived(
 		currentAlbums.length > 0 ||
@@ -152,27 +205,38 @@
 			retained: retainedMedia,
 		});
 	});
-	const visibleSharedMedia = $derived(
-		sharedMedia.slice(mediaWindowStart, mediaWindowStart + 120),
+	const currentAlbumColumns = $derived(
+		responsiveGridColumnCount(currentAlbumGridWidth),
 	);
+	const cachedAlbumColumns = $derived(
+		responsiveGridColumnCount(cachedAlbumGridWidth),
+	);
+	const mediaColumns = $derived(responsiveGridColumnCount(mediaGridWidth));
+	const currentAlbumRows = $derived(
+		toGridRows(
+			currentAlbums.slice(currentAlbumPage * 60, (currentAlbumPage + 1) * 60),
+			currentAlbumColumns,
+		),
+	);
+	const cachedAlbumRows = $derived(
+		toGridRows(cachedAlbums, cachedAlbumColumns),
+	);
+	const sharedMediaRows = $derived(toGridRows(sharedMedia, mediaColumns));
 	const viewerItems = $derived(
-		visibleSharedMedia.map((entry) => ({
-			id: entry.messageId,
-			kind: entry.kind,
-			url: galleryPlayableUrl(
-				entry,
-				resolvedMediaUrls[entry.messageId] ?? null,
-			),
-			unavailableLabel:
-				entry.cacheAvailability === "evicted"
-					? "Cached copy no longer stored"
-					: "Media unavailable",
-		})),
-	);
-	const selectedMediaIndex = $derived(
-		selectedMediaId === null
-			? -1
-			: viewerSnapshot.findIndex((item) => item.id === selectedMediaId),
+		sharedMedia
+			.filter((entry) => entry.messageId in resolvedMediaUrls)
+			.map((entry) => ({
+				id: entry.messageId,
+				kind: entry.kind,
+				url: galleryPlayableUrl(
+					entry,
+					resolvedMediaUrls[entry.messageId] ?? null,
+				),
+				unavailableLabel:
+					entry.cacheAvailability === "evicted"
+						? "Cached copy no longer stored"
+						: "Media unavailable",
+			})),
 	);
 	const mediaError = $derived(conversationMediaError ?? retainedMediaError);
 
@@ -200,6 +264,97 @@
 		);
 	}
 
+	function setCachedAlbumPage(index: number, items: readonly CachedAlbum[]) {
+		cachedAlbumWindow.setPage(index, items);
+		cachedAlbumWindow.focus(index);
+		cachedAlbumWindowVersion += 1;
+	}
+
+	function clearCachedAlbumPages(): void {
+		cachedAlbumWindow.clear();
+		cachedAlbumWindowVersion += 1;
+	}
+
+	function setRetainedMediaPage(
+		index: number,
+		items: readonly SharedMediaEntry[],
+	): void {
+		retainedMediaWindow.setPage(index, items);
+		retainedMediaWindow.focus(index);
+		retainedMediaPage = index;
+		retainedMediaWindowVersion += 1;
+	}
+
+	function clearRetainedMediaPages(): void {
+		retainedMediaWindow.clear();
+		retainedMediaPage = 0;
+		retainedMediaWindowVersion += 1;
+	}
+
+	function setConversationMediaPage(
+		index: number,
+		messages: readonly ApiResponseMessage[],
+	): void {
+		conversationMediaWindow.setPage(index, messages);
+		conversationMediaWindow.focus(index);
+		conversationMediaPage = index;
+		conversationMediaWindowVersion += 1;
+	}
+
+	function clearConversationMediaPages(): void {
+		conversationMediaWindow.clear();
+		conversationMediaPage = 0;
+		conversationMediaWindowVersion += 1;
+	}
+
+	function observeGridWidth(
+		node: HTMLDivElement,
+		setWidth: (width: number) => void,
+	) {
+		const update = () =>
+			setWidth(node.getBoundingClientRect().width || node.clientWidth);
+		update();
+		if (typeof ResizeObserver === "undefined") return {};
+		const observer = new ResizeObserver(update);
+		observer.observe(node);
+		return { destroy: () => observer.disconnect() };
+	}
+
+	function observeLoadMore(node: HTMLElement, load: () => void) {
+		if (typeof IntersectionObserver === "undefined") return {};
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (entries[0]?.isIntersecting) load();
+			},
+			{
+				root: nearestScrollableAncestor(node),
+				rootMargin: "400px",
+			},
+		);
+		observer.observe(node);
+		return { destroy: () => observer.disconnect() };
+	}
+
+	function retainResolvedMediaUrl(messageId: string, url: string | null): void {
+		if (url === null) {
+			const remaining = { ...resolvedMediaUrls };
+			delete remaining[messageId];
+			resolvedMediaUrls = remaining;
+			return;
+		}
+		resolvedMediaUrls = { ...resolvedMediaUrls, [messageId]: url };
+	}
+
+	function releaseResolvedMediaUrl(messageId: string): void {
+		if (mediaViewer.activeMessageId === messageId) {
+			releasedPinnedMediaIds.add(messageId);
+			return;
+		}
+		const remaining = { ...resolvedMediaUrls };
+		delete remaining[messageId];
+		resolvedMediaUrls = remaining;
+	}
+
 	async function loadMediaHistory(reset = false): Promise<void> {
 		if (mediaLoading && !reset) return;
 		const scope = collectionScope();
@@ -217,15 +372,8 @@
 			});
 			if (!operationOwns(scope, token, retainedPageOwner)) return;
 			const additions = page.items.map(toSharedMediaEntry);
-			retainedMedia = reset
-				? additions
-				: [...retainedMedia, ...additions].filter(
-						(entry, index, values) =>
-							values.findIndex(
-								(candidate) => candidate.messageId === entry.messageId,
-							) === index,
-					);
-			if (!reset && additions.length > 0) mediaWindowStart += 60;
+			if (reset) clearRetainedMediaPages();
+			setRetainedMediaPage(reset ? 0 : retainedMediaPage + 1, additions);
 			nextMediaCursor = page.nextCursor;
 		} catch (error) {
 			if (operationOwns(scope, token, retainedPageOwner))
@@ -269,30 +417,27 @@
 					}),
 				)
 				.filter((entry): entry is SharedMediaEntry => entry !== null);
-			await Promise.allSettled(
-				entries.map((entry) =>
-					upsertDirectMediaHistory({
-						accountProfileId: entry.accountProfileId,
-						conversationId: entry.conversationId,
-						peerProfileId: entry.peerProfileId,
-						messageId: entry.messageId,
-						mediaId: entry.mediaId,
-						kind: entry.kind,
-						messageType: entry.messageType,
-						sentAt: entry.sentAt,
-						remoteAvailability: entry.remoteAvailability,
-					}),
-				),
+			await upsertDirectMediaHistoryBatch(
+				entries.map((entry) => ({
+					accountProfileId: entry.accountProfileId,
+					conversationId: entry.conversationId,
+					peerProfileId: entry.peerProfileId,
+					messageId: entry.messageId,
+					mediaId: entry.mediaId,
+					kind: entry.kind,
+					messageType: entry.messageType,
+					sentAt: entry.sentAt,
+					remoteAvailability: entry.remoteAvailability,
+				})),
 			);
 			if (!operationOwns(scope, token, conversationPageOwner)) return;
-			mediaHistoryMessages = [...mediaHistoryMessages, ...page.messages];
+			setConversationMediaPage(conversationMediaPage + 1, page.messages);
 			mediaPageKey =
 				page.messages.length === 0 ||
 				page.pageKey === null ||
 				seenMediaPageKeys.has(page.pageKey)
 					? null
 					: page.pageKey;
-			if (page.messages.length > 0) mediaWindowStart += 60;
 		} catch (error) {
 			if (operationOwns(scope, token, conversationPageOwner)) {
 				conversationMediaError = error;
@@ -325,7 +470,8 @@
 			)
 				return;
 			currentAlbums = loaded.current;
-			cachedAlbums = loaded.cached;
+			clearCachedAlbumPages();
+			setCachedAlbumPage(0, loaded.cached);
 			nextCachedCursor = loaded.nextCachedCursor;
 			cachedCursorStack = [null];
 			cachedAlbumPage = 0;
@@ -353,7 +499,7 @@
 					albumRefreshOwner === null
 				)
 					return;
-				cachedAlbums = cached.items;
+				setCachedAlbumPage(0, cached.items);
 				nextCachedCursor = cached.nextCursor;
 			} catch {
 				// Keep the last valid collection and preserve the original error.
@@ -371,10 +517,13 @@
 	}
 
 	$effect(() => {
-		const accountProfileId = conversationState.ourProfileId;
-		const conversationId = conversationState.conversationId;
+		const accountId = accountProfileId;
+		const activeConversationId = conversationId;
 		const peer = peerProfileId;
+		const scopeKey = `${accountId}:${activeConversationId}:${peer}`;
+		if (scopeKey === initializedCollectionScope) return;
 		untrack(() => {
+			initializedCollectionScope = scopeKey;
 			mediaGeneration += 1;
 			loadGeneration += 1;
 			albumRefreshOwner = null;
@@ -386,7 +535,7 @@
 			mediaLoading = false;
 			mediaHistoryLoading = false;
 			currentAlbums = [];
-			cachedAlbums = [];
+			clearCachedAlbumPages();
 			cachedAlbumPage = 0;
 			currentAlbumPage = 0;
 			albumRefreshProvedEmpty = false;
@@ -394,21 +543,45 @@
 			cachedPageError = null;
 			retainedMediaError = null;
 			conversationMediaError = null;
-			retainedMedia = [];
-			mediaHistoryMessages = [];
+			clearRetainedMediaPages();
+			clearConversationMediaPages();
 			mediaPageKey = untrack(() => conversationState.pageKey);
 			seenMediaPageKeys = new Set();
-			mediaWindowStart = 0;
-			selectedMediaId = null;
-			viewerSnapshot = [];
+			mediaViewer.close();
 			resolvedMediaUrls = {};
 			nextMediaCursor = null;
 			setDirectMediaRetentionScope({
-				accountProfileId,
-				conversationId,
+				accountProfileId: accountId,
+				conversationId: activeConversationId,
 				peerProfileId: peer,
 			});
 			void refreshAlbums(true);
+		});
+	});
+
+	$effect(() => {
+		if (!albumsOpen) releaseSharedAlbumHistory(peerProfileId);
+	});
+
+	$effect(() => {
+		const activeMessageId = mediaViewer.activeMessageId;
+		if (activeMessageId !== null) return;
+		untrack(() => {
+			for (const messageId of releasedPinnedMediaIds)
+				releaseResolvedMediaUrl(messageId);
+			releasedPinnedMediaIds = new Set();
+			retainedMediaWindow.unpin();
+			retainedMediaWindowVersion += 1;
+		});
+	});
+
+	$effect(() => {
+		const drawerOpen = mediaOpen;
+		const activeMessageId = mediaViewer.activeMessageId;
+		if (drawerOpen || activeMessageId !== null) return;
+		untrack(() => {
+			resolvedMediaUrls = {};
+			releasedPinnedMediaIds = new Set();
 		});
 	});
 
@@ -502,6 +675,12 @@
 		retainedPageOwner = null;
 		conversationPageOwner = null;
 		setDirectMediaRetentionScope(null);
+		releaseSharedAlbumHistory(peerProfileId);
+		clearCachedAlbumPages();
+		clearRetainedMediaPages();
+		clearConversationMediaPages();
+		resolvedMediaUrls = {};
+		releasedPinnedMediaIds = new Set();
 	});
 
 	function albumCount(album: SharedAlbum): number | null {
@@ -561,17 +740,35 @@
 			cachedPageOwner = null;
 			return;
 		}
+		const anchorKey =
+			direction === "older"
+				? cachedAlbums.at(-1)
+					? cachedAlbumKey(cachedAlbums.at(-1)!)
+					: null
+				: cachedAlbums[0]
+					? cachedAlbumKey(cachedAlbums[0])
+					: null;
 		try {
 			const page = await loadSharedAlbumHistoryPage({
 				ownerProfileId: scope.peerProfileId,
 				cursor,
 			});
 			if (!operationOwns(scope, token, cachedPageOwner)) return;
-			cachedAlbums = page.items;
+			setCachedAlbumPage(nextIndex, page.items);
 			nextCachedCursor = page.nextCursor;
 			cachedAlbumPage = nextIndex;
 			if (direction === "older") {
 				cachedCursorStack = [...cachedCursorStack.slice(0, nextIndex), cursor];
+			}
+			if (anchorKey !== null && cachedAlbumCollection !== null) {
+				await tick();
+				const anchorIndex = cachedAlbums.findIndex(
+					(album) => cachedAlbumKey(album) === anchorKey,
+				);
+				if (anchorIndex >= 0)
+					await cachedAlbumCollection.scrollToIndex(
+						Math.floor(anchorIndex / cachedAlbumColumns),
+					);
 			}
 		} catch (error) {
 			if (operationOwns(scope, token, cachedPageOwner)) cachedPageError = error;
@@ -584,8 +781,15 @@
 	}
 
 	async function openAlbum(albumId: number): Promise<void> {
+		const pinned = cachedAlbums.find(
+			(album) => album.identity.albumId === albumId,
+		);
+		if (pinned) {
+			cachedAlbumWindow.pin(pinned);
+			cachedAlbumWindowVersion += 1;
+		}
 		albumsOpen = false;
-		await goto(`/albums/${albumId}?owner=${peerProfileId}`);
+		await openReceivedAlbumDetail(`/albums/${albumId}?owner=${peerProfileId}`);
 	}
 
 	function openSharedMedia(
@@ -593,17 +797,18 @@
 		url: string,
 		opener: HTMLButtonElement,
 	): void {
-		viewerOpener = opener;
-		resolvedMediaUrls = { ...resolvedMediaUrls, [entry.messageId]: url };
-		viewerSnapshot = viewerItems.map((item) =>
+		retainResolvedMediaUrl(entry.messageId, url);
+		retainedMediaWindow.pin(entry);
+		retainedMediaWindowVersion += 1;
+		const snapshot = viewerItems.map((item) =>
 			item.id === entry.messageId ? { ...item, url } : item,
 		);
-		selectedMediaId = entry.messageId;
-	}
-
-	function closeSharedMedia(): void {
-		selectedMediaId = null;
-		viewerSnapshot = [];
+		mediaViewer.open({
+			items: snapshot,
+			startId: entry.messageId,
+			messageId: entry.messageId,
+			opener,
+		});
 	}
 
 	function retryMediaError(): void {
@@ -675,7 +880,10 @@
 				>Current shares and retained album history.</Drawer.Description
 			>
 		</Drawer.Header>
-		<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+		<div
+			bind:this={albumScroller}
+			class="min-h-0 flex-1 overflow-y-auto px-4 pb-6"
+		>
 			{#if albumError !== null}
 				<div
 					class="mb-3 flex items-center justify-between gap-3 rounded-xl bg-muted p-3"
@@ -699,36 +907,61 @@
 			{#if currentAlbums.length > 0}
 				<h3 class="mb-2 text-base font-semibold">Shared now</h3>
 				<div
-					class="mb-6 grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3"
+					bind:this={currentAlbumGrid}
+					class="mb-6 w-full"
+					use:observeGridWidth={(width) => (currentAlbumGridWidth = width)}
 				>
-					{#each currentAlbums.slice(currentAlbumPage * 60, (currentAlbumPage + 1) * 60) as album (`${album.profileId}:${album.albumId}`)}
-						<button
-							class="overflow-hidden rounded-2xl border bg-card text-start"
-							onclick={() => openAlbum(album.albumId)}
-						>
-							{#if album.content?.coverUrl}
-								<img
-									class="aspect-square w-full object-cover"
-									src={album.content.coverUrl}
-									alt=""
-								/>
-							{:else}
-								<div
-									class="flex aspect-square items-center justify-center bg-muted"
-								>
-									<FolderOpenIcon class="size-8" />
-								</div>
-							{/if}
-							<div class="p-3">
-								<div class="truncate font-medium">
-									{album.albumName ?? "Untitled album"}
-								</div>
-								<div class="text-xs text-muted-foreground">
-									{albumCount(album) ?? "Unknown"} items
-								</div>
+					<VirtualCollection
+						items={currentAlbumRows}
+						scrollElement={albumScroller}
+						getKey={(row) =>
+							row
+								.map((album) => `${album.profileId}:${album.albumId}`)
+								.join("|")}
+						estimateSize={Math.max(
+							176,
+							currentAlbumGridWidth / currentAlbumColumns + 64,
+						)}
+						gap={12}
+					>
+						{#snippet children(row)}
+							<div
+								class="grid gap-3"
+								style:grid-template-columns={`repeat(${currentAlbumColumns}, minmax(0, 1fr))`}
+							>
+								{#each row as album (`${album.profileId}:${album.albumId}`)}
+									<button
+										data-navigation-item-key={`current-album:${album.profileId}:${album.albumId}`}
+										class="overflow-hidden rounded-2xl border bg-card text-start"
+										onclick={() => openAlbum(album.albumId)}
+									>
+										{#if album.content?.coverUrl}
+											<img
+												class="aspect-square w-full object-cover"
+												src={album.content.coverUrl}
+												alt=""
+												loading="lazy"
+											/>
+										{:else}
+											<div
+												class="flex aspect-square items-center justify-center bg-muted"
+											>
+												<FolderOpenIcon class="size-8" />
+											</div>
+										{/if}
+										<div class="p-3">
+											<div class="truncate font-medium">
+												{album.albumName ?? "Untitled album"}
+											</div>
+											<div class="text-xs text-muted-foreground">
+												{albumCount(album) ?? "Unknown"} items
+											</div>
+										</div>
+									</button>
+								{/each}
 							</div>
-						</button>
-					{/each}
+						{/snippet}
+					</VirtualCollection>
 				</div>
 				{#if currentAlbums.length > 60}
 					<div class="mb-6 flex items-center justify-center gap-3">
@@ -765,23 +998,47 @@
 						>
 					</div>
 				{/if}
-				<div class="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-3">
-					{#each cachedAlbums as album (`${album.ownerProfileId}:${album.albumId}`)}
-						<button
-							class="rounded-2xl border bg-card p-3 text-start"
-							onclick={() => openAlbum(album.albumId)}
-						>
-							<div class="truncate font-medium">
-								{album.album.albumName ?? "Untitled album"}
+				<div
+					bind:this={cachedAlbumGrid}
+					class="w-full"
+					use:observeGridWidth={(width) => (cachedAlbumGridWidth = width)}
+				>
+					<VirtualCollection
+						bind:this={cachedAlbumCollection}
+						items={cachedAlbumRows}
+						scrollElement={albumScroller}
+						getKey={(row) => row.map(cachedAlbumKey).join("|")}
+						estimateSize={76}
+						gap={12}
+					>
+						{#snippet children(row)}
+							<div
+								class="grid gap-3"
+								style:grid-template-columns={`repeat(${cachedAlbumColumns}, minmax(0, 1fr))`}
+							>
+								{#each row as album (cachedAlbumKey(album))}
+									<button
+										data-navigation-item-key={`cached-album:${cachedAlbumKey(album)}`}
+										class="rounded-2xl border bg-card p-3 text-start"
+										onclick={() => openAlbum(album.albumId)}
+									>
+										<div class="truncate font-medium">
+											{album.album.albumName ?? "Untitled album"}
+										</div>
+										<div class="text-xs text-muted-foreground">
+											{cachedAlbumStatus(album)} · {album.album.content.length} items
+										</div>
+									</button>
+								{/each}
 							</div>
-							<div class="text-xs text-muted-foreground">
-								{cachedAlbumStatus(album)} · {album.album.content.length} items
-							</div>
-						</button>
-					{/each}
+						{/snippet}
+					</VirtualCollection>
 				</div>
 				{#if cachedAlbumPage > 0 || nextCachedCursor !== null}
-					<div class="mt-4 flex items-center justify-center gap-3">
+					<div
+						class="mt-4 flex items-center justify-center gap-3"
+						use:observeLoadMore={() => void changeCachedPage("older")}
+					>
 						<Button
 							variant="outline"
 							disabled={cachedAlbumPage === 0 || cachedPageLoading}
@@ -812,7 +1069,10 @@
 				>Pictures and videos received in this chat.</Drawer.Description
 			>
 		</Drawer.Header>
-		<div class="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+		<div
+			bind:this={mediaScroller}
+			class="min-h-0 flex-1 overflow-y-auto px-4 pb-6"
+		>
 			{#if mediaError !== null}
 				<div
 					class="mb-3 flex items-center justify-between gap-3 rounded-xl bg-muted p-3"
@@ -851,31 +1111,46 @@
 					{/if}
 				</div>
 			{:else}
-				<div class="grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-1">
-					{#each visibleSharedMedia as entry (entry.messageId)}
-						<SharedMediaTile
-							{entry}
-							onResolved={(url) =>
-								(resolvedMediaUrls = {
-									...resolvedMediaUrls,
-									[entry.messageId]: url,
-								})}
-							onOpen={(url, opener) => openSharedMedia(entry, url, opener)}
-						/>
-					{/each}
+				<div
+					bind:this={mediaGrid}
+					class="w-full"
+					use:observeGridWidth={(width) => (mediaGridWidth = width)}
+				>
+					<VirtualCollection
+						items={sharedMediaRows}
+						scrollElement={mediaScroller}
+						getKey={(row) => row.map((entry) => entry.messageId).join("|")}
+						estimateSize={Math.max(112, mediaGridWidth / mediaColumns)}
+						gap={4}
+					>
+						{#snippet children(row)}
+							<div
+								class="grid gap-1"
+								style:grid-template-columns={`repeat(${mediaColumns}, minmax(0, 1fr))`}
+							>
+								{#each row as entry (entry.messageId)}
+									<div
+										data-navigation-item-key={`shared-media:${entry.messageId}`}
+									>
+										<SharedMediaTile
+											{entry}
+											onResolved={(url) =>
+												retainResolvedMediaUrl(entry.messageId, url)}
+											onReleased={releaseResolvedMediaUrl}
+											onOpen={(url, opener) =>
+												openSharedMedia(entry, url, opener)}
+										/>
+									</div>
+								{/each}
+							</div>
+						{/snippet}
+					</VirtualCollection>
 				</div>
-				{#if mediaWindowStart > 0}
-					<div class="flex justify-center py-4">
-						<Button
-							variant="outline"
-							onclick={() =>
-								(mediaWindowStart = Math.max(0, mediaWindowStart - 60))}
-							>Newer media</Button
-						>
-					</div>
-				{/if}
 				{#if nextMediaCursor !== null}
-					<div class="flex justify-center py-4">
+					<div
+						class="flex justify-center py-4"
+						use:observeLoadMore={() => void loadMediaHistory()}
+					>
 						<Button
 							variant="outline"
 							disabled={mediaLoading}
@@ -885,7 +1160,10 @@
 					</div>
 				{/if}
 				{#if mediaPageKey !== null}
-					<div class="flex justify-center py-4">
+					<div
+						class="flex justify-center py-4"
+						use:observeLoadMore={() => void loadOlderConversationMedia()}
+					>
 						<Button
 							variant="outline"
 							disabled={mediaHistoryLoading}
@@ -898,12 +1176,3 @@
 		</div>
 	</Drawer.Content>
 </Drawer.Root>
-
-{#if selectedMediaIndex >= 0}
-	<MixedMediaViewer
-		items={viewerSnapshot}
-		startIndex={selectedMediaIndex}
-		opener={viewerOpener}
-		onClose={closeSharedMedia}
-	/>
-{/if}

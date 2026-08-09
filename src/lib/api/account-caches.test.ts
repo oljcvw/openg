@@ -6,6 +6,7 @@ import {
 	invalidateAccountSession,
 	isAccountSessionCurrent,
 	registerAccountCache,
+	subscribeAccountGeneration,
 } from "$lib/api/account-caches";
 
 describe("account session generation", () => {
@@ -31,5 +32,25 @@ describe("account session generation", () => {
 		expect(previous.accountId).toBe(303);
 		expect(isAccountSessionCurrent(previous)).toBe(false);
 		expect(getAccountSessionSnapshot().accountId).toBeNull();
+	});
+
+	it("notifies generation subscribers without exposing account identifiers", () => {
+		const observed: number[] = [];
+		const release = subscribeAccountGeneration((generation) => {
+			observed.push(generation);
+		});
+		const initialGeneration = getAccountSessionSnapshot().generation;
+
+		activateAccountSession(987_654_321);
+		invalidateAccountSession();
+		release();
+		activateAccountSession(123_456_789);
+
+		expect(observed).toEqual([
+			initialGeneration,
+			initialGeneration + 1,
+			initialGeneration + 2,
+		]);
+		expect(JSON.stringify(observed)).not.toContain("987654321");
 	});
 });

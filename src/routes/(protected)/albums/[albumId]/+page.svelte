@@ -76,6 +76,11 @@
 		ALBUM_NAME_MAX_BYTES,
 		albumNameByteLength,
 	} from "$lib/model/messaging/albums";
+	import {
+		closeAppDetail,
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 	import { pickMultipleMedia } from "$lib/platform/media-picker";
 	import AlbumShares from "./AlbumShares.svelte";
 
@@ -260,7 +265,7 @@
 			if (!isCurrentAction(context)) return;
 			deleteAlbumOpen = false;
 			toast.success("Album deleted");
-			history.back();
+			await closeAppDetail(page.url.pathname, page.state);
 		} catch (err) {
 			if (!isCurrentAction(context)) return;
 			console.error(err);
@@ -398,7 +403,7 @@
 >
 	<button
 		type="button"
-		onclick={() => history.back()}
+		onclick={() => void closeAppDetail(page.url.pathname, page.state)}
 		class="flex h-full w-19 shrink-0 items-center justify-center"
 		aria-label="Back"
 	>
@@ -456,7 +461,15 @@
 							The sender may have revoked access or removed this album. A cached
 							copy remains on this device.
 						</p>
-						<Button href="/settings/app">Open App Settings</Button>
+						<Button
+							href="/settings/app"
+							onclick={(event) =>
+								interceptAppNavigationClick(event, () =>
+									openAppDetail("/settings/app"),
+								)}
+						>
+							Open App Settings
+						</Button>
 					</div>
 				{:else if error !== null}
 					<ApiErrorDisplay

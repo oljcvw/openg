@@ -102,7 +102,11 @@ export async function readCachedProfileEntry(
 		String(profileId),
 		(value) => cachedProfileSchema.parse(value),
 	);
-	if (!entry || now - entry.updatedAt > MAX_PROFILE_AGE_MS) return null;
+	if (!entry) return null;
+	if (now - entry.updatedAt > MAX_PROFILE_AGE_MS) {
+		await removeCacheEntry(Number(owner), "profile", String(profileId));
+		return null;
+	}
 	return structuredClone(entry);
 }
 

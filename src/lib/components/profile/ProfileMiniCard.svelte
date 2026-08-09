@@ -6,6 +6,10 @@
 	import ProfileStatusIndicator from "$lib/components/profile/ProfileStatusIndicator.svelte";
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import { Badge } from "$lib/components/ui/badge";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 
 	let {
 		mediaHash = null,
@@ -115,6 +119,8 @@
 {#if href !== null}
 	<a
 		{href}
+		onclick={(event) =>
+			interceptAppNavigationClick(event, () => openAppDetail(href))}
 		class={["relative flex aspect-square items-end overflow-hidden", className]}
 	>
 		{@render content()}

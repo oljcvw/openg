@@ -1,7 +1,12 @@
 import { SvelteMap } from "svelte/reactivity";
 
-import { registerAccountCache } from "$lib/api/account-caches";
+import {
+	getAccountSessionSnapshot,
+	isAccountSessionCurrent,
+	registerAccountCache,
+} from "$lib/api/account-caches";
 import { getAlbumShares } from "$lib/api/messaging/albums";
+import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
 import { now } from "$lib/util/clock";
 
 /**
@@ -65,27 +70,44 @@ async function sweep(
 	profileId: number,
 	albums: readonly { albumId: number }[],
 ): Promise<void> {
-	const outcomes = await Promise.all(
-		albums.map(async (album) => {
-			try {
-				const profileIds = await getAlbumShares(album.albumId);
-				setAlbumShared(
-					album.albumId,
-					profileId,
-					profileIds.includes(profileId),
-				);
-				return true;
-			} catch (error) {
-				// Preserve unknown so callers can block sharing and offer a retry
-				// instead of treating a failed lookup as known-unshared.
-				console.error(error);
-				return false;
+	const session = getAccountSessionSnapshot();
+	const outcomes: boolean[] = [];
+	let next = 0;
+	const concurrency = Math.min(
+		albums.length,
+		getDeveloperSettingsSnapshot().albumShareDiscoveryConcurrency,
+	);
+	await Promise.all(
+		Array.from({ length: concurrency }, async () => {
+			while (true) {
+				const album = albums[next++];
+				if (!album) return;
+				try {
+					const profileIds = await getAlbumShares(album.albumId);
+					if (!isAccountSessionCurrent(session)) return;
+					setAlbumShared(
+						album.albumId,
+						profileId,
+						profileIds.includes(profileId),
+					);
+					outcomes.push(true);
+				} catch (error) {
+					// Preserve unknown so callers can block sharing and offer a retry
+					// instead of treating a failed lookup as known-unshared.
+					console.error(error);
+					outcomes.push(false);
+				}
 			}
 		}),
 	);
 	// A partial result is not safe to cache: an unknown album may already be
 	// shared, so the next attempt must retry rather than enabling a duplicate.
-	if (outcomes.every(Boolean)) sweptAt.set(profileId, now());
+	if (
+		isAccountSessionCurrent(session) &&
+		outcomes.length === albums.length &&
+		outcomes.every(Boolean)
+	)
+		sweptAt.set(profileId, now());
 }
 
 /**
@@ -111,9 +133,11 @@ export function ensureAlbumSharesSwept(
 				(album) => getAlbumShared(album.albumId, profileId) === undefined,
 			)
 		: albums;
-	inFlight = sweep(profileId, requested).finally(() => {
-		sweepsInFlight.delete(profileId);
+	const registered = sweep(profileId, requested).finally(() => {
+		if (sweepsInFlight.get(profileId) === registered)
+			sweepsInFlight.delete(profileId);
 	});
+	inFlight = registered;
 	sweepsInFlight.set(profileId, inFlight);
 	return inFlight;
 }

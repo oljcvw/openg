@@ -22,6 +22,7 @@ const {
 	writeCachedInboxMock,
 	reconcileHandlers,
 	messageSentHandlers,
+	wsOnMock,
 } = vi.hoisted(() => ({
 	getConversationsMock: vi.fn(),
 	getConversationMessagesMock: vi.fn(),
@@ -37,6 +38,7 @@ const {
 		event: ReconcileEventInput,
 	) => void | Promise<void>)[],
 	messageSentHandlers: [] as ((event: unknown) => void)[],
+	wsOnMock: vi.fn(),
 }));
 
 vi.mock("$app/state", () => ({ page: { route: { id: "/(protected)/chat" } } }));
@@ -52,6 +54,22 @@ vi.mock("$lib/api/messaging/messages", () => ({
 	getConversationMessages: getConversationMessagesMock,
 }));
 vi.mock("$lib/app-data/chat-cache", () => ({
+	mergeConfirmedMessages: <T extends { messageId: string; timestamp: number }>(
+		existing: readonly T[],
+		incoming: readonly T[],
+		removedMessageIds: ReadonlySet<string> = new Set(),
+	) => {
+		const byId = new Map<string, T>();
+		for (const message of [...existing, ...incoming]) {
+			if (!removedMessageIds.has(message.messageId))
+				byId.set(message.messageId, message);
+		}
+		return [...byId.values()].toSorted(
+			(left, right) =>
+				right.timestamp - left.timestamp ||
+				left.messageId.localeCompare(right.messageId),
+		);
+	},
 	readCachedInbox: vi.fn(() => Promise.resolve(null)),
 	readCachedConversation: readCachedConversationMock,
 	removeCachedConversation: vi.fn(() => Promise.resolve()),
@@ -82,11 +100,12 @@ vi.mock("$lib/ws.svelte", async (importOriginal) => ({
 		on(eventType: string, _schema: unknown, handler: (e: unknown) => void) {
 			if (eventType === "chat.v1.message_sent")
 				messageSentHandlers.push(handler);
-			return Promise.resolve(vi.fn());
+			return wsOnMock(eventType);
 		},
 	},
 }));
 
+import { getRuntimeOwnershipSnapshot } from "$lib/dev/runtime-ownership";
 import type { Conversation } from "$lib/model/messaging/conversations";
 import type { ApiResponseMessage } from "$lib/model/messaging/messages";
 import { ConversationsState } from "./conversations-state.svelte";
@@ -178,11 +197,49 @@ beforeEach(() => {
 	messageSentHandlers.length = 0;
 	readCachedConversationMock.mockReset().mockResolvedValue(null);
 	writeCachedInboxMock.mockReset().mockResolvedValue(undefined);
+	wsOnMock.mockReset().mockImplementation(() => Promise.resolve(vi.fn()));
 });
 
 afterEach(() => vi.restoreAllMocks());
 
 describe("ConversationsState cache recovery", () => {
+	it("cleans every fulfilled WebSocket listener when a sibling registration rejects", async () => {
+		const baseline = getRuntimeOwnershipSnapshot();
+		const unlisten = vi.fn();
+		wsOnMock
+			.mockResolvedValueOnce(unlisten)
+			.mockRejectedValueOnce(new Error("listener failed"));
+		getConversationsMock.mockResolvedValue({ entries: [], nextPage: null });
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+		await expect(state.destroy()).rejects.toThrow(
+			"WebSocket listener cleanup failed",
+		);
+		expect(unlisten).toHaveBeenCalledOnce();
+		expect(getRuntimeOwnershipSnapshot()).toEqual(baseline);
+	});
+
+	it("releases a listener lease and cleans siblings when native unlisten throws", async () => {
+		const baseline = getRuntimeOwnershipSnapshot();
+		const cleanupError = new Error("native unlisten failed");
+		const throwingUnlisten = vi.fn(() => {
+			throw cleanupError;
+		});
+		const siblingUnlisten = vi.fn();
+		wsOnMock
+			.mockResolvedValueOnce(throwingUnlisten)
+			.mockResolvedValueOnce(siblingUnlisten);
+		getConversationsMock.mockResolvedValue({ entries: [], nextPage: null });
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+		await expect(state.destroy()).rejects.toThrow(
+			"WebSocket listener cleanup failed",
+		);
+		expect(throwingUnlisten).toHaveBeenCalledOnce();
+		expect(siblingUnlisten).toHaveBeenCalledOnce();
+		expect(getRuntimeOwnershipSnapshot()).toEqual(baseline);
+	});
+
 	it("ignores an unreadable persisted conversation", async () => {
 		const consoleError = vi
 			.spyOn(console, "error")
@@ -451,6 +508,32 @@ describe("ConversationsState cached-message search", () => {
 		expect(getConversationMessagesMock).not.toHaveBeenCalled();
 		expect(state.messageSearchMatchIds).toEqual([]);
 		expect(state.messageSearchScanned).toBe(2);
+	});
+
+	it("bounds cached reads and cancellation prevents late workers from repopulating", async () => {
+		getConversationsMock.mockResolvedValue({
+			entries: Array.from({ length: 10 }, (_, index) =>
+				conversation(`c:${index}`, 1_000 - index),
+			),
+			nextPage: null,
+		});
+		const releases: Array<() => void> = [];
+		readCachedConversationMock.mockImplementation(
+			() =>
+				new Promise<null>((resolve) => {
+					releases.push(() => resolve(null));
+				}),
+		);
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+		const pending = state.searchLoadedMessages("needle");
+		await vi.waitFor(() => expect(releases).toHaveLength(3));
+		state.cancelMessageSearch("");
+		for (const release of releases) release();
+		await pending;
+		expect(readCachedConversationMock).toHaveBeenCalledTimes(3);
+		expect(state.messageSearchMatchIds).toEqual([]);
+		expect(state.messageSearchStatus).toBe("idle");
 	});
 
 	it("updates current results when cached messages change", async () => {

@@ -49,6 +49,7 @@ const entrySchema = z.object({
 	remoteAvailability: remoteAvailabilitySchema,
 	cacheAvailability: cacheAvailabilitySchema,
 	cacheToken: z.string().min(1).nullable(),
+	protocolUrl: z.string().min(1).nullable().default(null),
 	contentType: z.string().min(1).nullable(),
 	byteLength: z.number().int().positive().nullable(),
 	lastAccessedMs: z.number().int().nonnegative(),
@@ -75,6 +76,10 @@ export type DirectMediaCacheAvailability = z.infer<
 export type DirectMediaHistoryEntry = z.infer<typeof entrySchema>;
 export type DirectMediaCacheStats = z.infer<typeof statsSchema>;
 
+const historyFingerprints = new Map<string, Map<string, string>>();
+const historyFingerprintGenerations = new Map<number, number>();
+let historyFingerprintEpoch = 0;
+
 type Identity = {
 	accountProfileId: number;
 	conversationId: string;
@@ -82,7 +87,7 @@ type Identity = {
 	messageId: string;
 	mediaId: string;
 };
-type HistoryInput = Identity & {
+export type DirectMediaHistoryDelta = Identity & {
 	kind: z.infer<typeof kindSchema>;
 	messageType: z.infer<typeof messageTypeSchema>;
 	sentAt: number;
@@ -100,20 +105,77 @@ function nativeIdentity(identity: Identity) {
 }
 
 export async function upsertDirectMediaHistory(
-	input: HistoryInput,
+	input: DirectMediaHistoryDelta,
 ): Promise<void> {
-	if (!isTauri()) return;
-	await invoke("direct_media_cache_upsert", {
-		...nativeIdentity(input),
-		kind: input.kind,
-		messageType: input.messageType,
-		sentAt: input.sentAt,
-		remoteAvailability: input.remoteAvailability,
+	await upsertDirectMediaHistoryBatch([input]);
+}
+
+export async function upsertDirectMediaHistoryBatch(
+	deltas: readonly DirectMediaHistoryDelta[],
+): Promise<void> {
+	if (!isTauri() || deltas.length === 0) return;
+	const changed = deltas.filter((delta) => {
+		const scope = `${delta.accountProfileId}\0${delta.conversationId}`;
+		const identity = `${delta.peerProfileId}\0${delta.messageId}\0${delta.mediaId}`;
+		const fingerprint = `${delta.kind}\0${delta.messageType}\0${delta.sentAt}\0${delta.remoteAvailability}`;
+		return historyFingerprints.get(scope)?.get(identity) !== fingerprint;
 	});
+	if (changed.length === 0) return;
+	const capturedEpoch = historyFingerprintEpoch;
+	const capturedGenerations = new Map(
+		changed.map((delta) => [
+			delta.accountProfileId,
+			historyFingerprintGenerations.get(delta.accountProfileId) ?? 0,
+		]),
+	);
+	await invoke("direct_media_cache_upsert_batch", {
+		deltas: changed.map((input) => ({
+			...nativeIdentity(input),
+			kind: input.kind,
+			messageType: input.messageType,
+			sentAt: input.sentAt,
+			remoteAvailability: input.remoteAvailability,
+		})),
+	});
+	for (const delta of changed) {
+		if (
+			historyFingerprintEpoch !== capturedEpoch ||
+			(historyFingerprintGenerations.get(delta.accountProfileId) ?? 0) !==
+				capturedGenerations.get(delta.accountProfileId)
+		)
+			continue;
+		const scope = `${delta.accountProfileId}\0${delta.conversationId}`;
+		const identity = `${delta.peerProfileId}\0${delta.messageId}\0${delta.mediaId}`;
+		const fingerprint = `${delta.kind}\0${delta.messageType}\0${delta.sentAt}\0${delta.remoteAvailability}`;
+		let entries = historyFingerprints.get(scope);
+		if (!entries) {
+			entries = new Map();
+			historyFingerprints.set(scope, entries);
+		}
+		entries.set(identity, fingerprint);
+	}
+}
+
+export function resetDirectMediaHistoryFingerprints(
+	accountProfileId?: number,
+): void {
+	if (accountProfileId === undefined) {
+		historyFingerprints.clear();
+		historyFingerprintEpoch += 1;
+		return;
+	}
+	historyFingerprintGenerations.set(
+		accountProfileId,
+		(historyFingerprintGenerations.get(accountProfileId) ?? 0) + 1,
+	);
+	const prefix = `${accountProfileId}\0`;
+	for (const scope of historyFingerprints.keys()) {
+		if (scope.startsWith(prefix)) historyFingerprints.delete(scope);
+	}
 }
 
 export async function storeDirectMedia(
-	input: HistoryInput & {
+	input: DirectMediaHistoryDelta & {
 		sourceUrl: string;
 		contentType: string;
 		maximumBytes: number;
@@ -137,7 +199,7 @@ export async function storeDirectMedia(
 }
 
 export async function importLegacyDirectMedia(
-	input: HistoryInput & {
+	input: DirectMediaHistoryDelta & {
 		dataBase64: string;
 		contentType: string;
 		maximumBytes: number;
@@ -222,12 +284,14 @@ export async function trimDirectMediaCache(maximumBytes: number) {
 
 export async function clearDirectMediaCache(accountProfileId?: number) {
 	if (!isTauri()) return emptyStats();
-	return statsSchema.parse(
+	const result = statsSchema.parse(
 		await invoke("direct_media_cache_clear", {
 			accountId:
 				accountProfileId === undefined ? null : String(accountProfileId),
 		}),
 	);
+	resetDirectMediaHistoryFingerprints(accountProfileId);
+	return result;
 }
 
 export async function getDirectMediaCacheStats(accountProfileId?: number) {

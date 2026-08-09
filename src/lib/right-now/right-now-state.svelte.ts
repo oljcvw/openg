@@ -19,7 +19,6 @@ export class RightNowState {
 	refreshing = $state(false);
 	error: Error | null = $state(null);
 	viewerCount = $state(0);
-	scrollY = 0;
 
 	#allPosts: FeedPost[] = $state([]);
 	#fetchToken = 0;
@@ -50,6 +49,11 @@ export class RightNowState {
 		return this.#visibleCount < this.#activePosts(currentTime).length;
 	}
 
+	pruneExpired(currentTime: number): void {
+		const active = this.#activePosts(currentTime);
+		if (active.length !== this.#allPosts.length) this.#allPosts = active;
+	}
+
 	loadMore() {
 		this.#visibleCount += PAGE_SIZE;
 	}
@@ -63,7 +67,6 @@ export class RightNowState {
 		this.#loaded = false;
 		this.#allPosts = [];
 		this.viewerCount = 0;
-		this.scrollY = 0;
 		return this.#startLoad();
 	}
 
@@ -86,7 +89,6 @@ export class RightNowState {
 		this.refreshing = false;
 		this.error = null;
 		this.viewerCount = 0;
-		this.scrollY = 0;
 		this.filters.reset();
 	}
 

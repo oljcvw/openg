@@ -53,6 +53,7 @@ export class SharedAlbumCollection {
 		albumIds: ReadonlySet<number>,
 		listedAt: number,
 	) => Promise<void>;
+	readonly #releaseHistory: () => void | Promise<void>;
 	#generation = 0;
 
 	constructor(options: {
@@ -66,12 +67,14 @@ export class SharedAlbumCollection {
 			albumIds: ReadonlySet<number>,
 			listedAt: number,
 		) => Promise<void>;
+		releaseHistory?: () => void | Promise<void>;
 	}) {
 		this.#accountProfileId = options.accountProfileId;
 		this.#ownerProfileId = options.ownerProfileId;
 		this.#loadCurrent = options.loadCurrent;
 		this.#loadHistory = options.loadHistory;
 		this.#commitCurrentMembership = options.commitCurrentMembership;
+		this.#releaseHistory = options.releaseHistory ?? (() => {});
 	}
 
 	async loadCachedPage(cursor: string | null): Promise<void> {
@@ -86,6 +89,8 @@ export class SharedAlbumCollection {
 
 	async refresh(): Promise<void> {
 		const generation = ++this.#generation;
+		await this.#releaseHistory();
+		if (generation !== this.#generation) return;
 		this.status = "loading";
 		this.error = null;
 		try {
@@ -119,6 +124,13 @@ export class SharedAlbumCollection {
 
 	invalidate(): void {
 		this.#generation += 1;
+	}
+
+	close(): void {
+		this.invalidate();
+		this.cached = [];
+		this.nextCachedCursor = null;
+		void this.#releaseHistory();
 	}
 }
 

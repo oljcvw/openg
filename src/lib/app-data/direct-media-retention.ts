@@ -4,7 +4,7 @@ import {
 	importLegacyDirectMedia,
 	setDirectMediaCacheScope,
 	storeDirectMedia,
-	upsertDirectMediaHistory,
+	upsertDirectMediaHistoryBatch,
 } from "$lib/app-data/direct-media-cache";
 import {
 	getDeveloperSettingsSnapshot,
@@ -117,7 +117,7 @@ async function retain(
 	await scopeReady;
 	if (generation !== scopeGeneration || scopeToken !== activeScopeToken)
 		return null;
-	await upsertDirectMediaHistory(historyInput(entry));
+	await upsertDirectMediaHistoryBatch([historyInput(entry)]);
 	if (generation !== scopeGeneration) return null;
 	const settings = getDeveloperSettingsSnapshot();
 	const stored = await storeDirectMedia({
@@ -230,7 +230,7 @@ export function toSharedMediaEntry(
 			entry.messageType === "ExpiringImage" ||
 			entry.messageType === "PrivateVideo" ||
 			entry.messageType === "Video",
-		remoteUrl: null,
+		remoteUrl: entry.protocolUrl,
 	};
 }
 

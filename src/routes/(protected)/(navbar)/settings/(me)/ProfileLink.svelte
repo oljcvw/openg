@@ -7,6 +7,10 @@
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as Item from "$lib/components/ui/item";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 
 	let {
 		id,
@@ -22,6 +26,10 @@
 	{#snippet child({ props })}
 		<a
 			href="/profile/{id}"
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () =>
+					openAppDetail(`/profile/${id}`),
+				)}
 			{...props}
 			class={["rounded-full", props.class, "flex-nowrap!"]}
 		>

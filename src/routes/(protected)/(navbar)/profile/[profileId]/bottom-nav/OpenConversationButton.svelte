@@ -1,5 +1,9 @@
 <script lang="ts">
 	import Button from "$lib/components/ui/button/button.svelte";
+	import {
+		interceptAppNavigationClick,
+		replaceAppDetail,
+	} from "$lib/navigation/app-navigation";
 
 	let {
 		profileId,
@@ -19,6 +23,10 @@
 	size="lg"
 	class="flex-1 justify-start bg-input/20!"
 	href="/chat/{conversationId}"
+	onclick={(event) =>
+		interceptAppNavigationClick(event, () =>
+			replaceAppDetail(`/chat/${conversationId}`),
+		)}
 >
 	<span class="font-normal text-muted-foreground">Write a message...</span>
 </Button>

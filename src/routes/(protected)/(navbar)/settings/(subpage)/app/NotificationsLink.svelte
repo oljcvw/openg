@@ -2,11 +2,22 @@
 	import { CaretRightIcon } from "phosphor-svelte";
 
 	import * as Item from "$lib/components/ui/item";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 </script>
 
 <Item.Root variant="outline">
 	{#snippet child({ props })}
-		<a href="/settings/app/notifications" {...props}>
+		<a
+			href="/settings/app/notifications"
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () =>
+					openAppDetail("/settings/app/notifications"),
+				)}
+			{...props}
+		>
 			<Item.Content class="max-cramped:min-w-0">
 				<Item.Title class="inline-block max-w-full min-w-0 truncate">
 					Notifications

@@ -19,6 +19,7 @@
 	import { previewLabel } from "$lib/model/messaging/messages";
 	import type { Conversation } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
+	import { conversationRowPresentation } from "./conversation-row-presentation";
 
 	let {
 		conversation,
@@ -42,6 +43,9 @@
 	const active = $derived(page.params.conversationId === conversationId);
 	const isSelected = $derived(selection?.has(conversationId) ?? false);
 	const hasUnread = $derived(conversation.data.unreadCount > 0);
+	const presentation = $derived(
+		conversationRowPresentation({ active, unread: hasUnread }),
+	);
 
 	let contextMenuUsed = $state(false);
 
@@ -74,10 +78,13 @@
 {#snippet row()}
 	<ProfileItem
 		{active}
-		class={{
-			"border-primary/70 bg-primary/[0.08] shadow-[inset_4px_0_0_var(--primary)] in-data-[contrast=high]:border-2 in-data-[contrast=high]:border-primary in-data-[contrast=high]:bg-primary/15 in-data-[contrast=high]:shadow-[inset_6px_0_0_var(--primary)]":
-				hasUnread,
-		}}
+		ariaCurrent={presentation.ariaCurrent}
+		class={[
+			presentation.tone === "active" &&
+				"border-2 border-l-8 border-primary bg-primary/15 in-data-[contrast=high]:border-4 in-data-[contrast=high]:border-l-8 in-data-[contrast=high]:bg-primary/20",
+			presentation.tone === "unread" &&
+				"border-l-4 border-primary/45 bg-primary/[0.06] in-data-[contrast=high]:border-2 in-data-[contrast=high]:border-l-4 in-data-[contrast=high]:border-primary in-data-[contrast=high]:bg-primary/10",
+		]}
 		avatar={{
 			mediaHash: participant.primaryMediaHash ?? null,
 			link: `/profile/${participant.profileId}`,

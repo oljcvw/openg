@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { onDestroy } from "svelte";
+	import { createVirtualizer } from "@tanstack/svelte-virtual";
+	import { onDestroy, tick, untrack } from "svelte";
 	import { toast } from "svelte-sonner";
+	import { get } from "svelte/store";
 
 	import { showErrorToast } from "$lib/api/error";
 	import {
@@ -28,8 +30,10 @@
 	import Message from "./message/Message.svelte";
 
 	let {
+		container,
 		seenTimestamp = $bindable(),
 	}: {
+		container: HTMLElement | null;
 		seenTimestamp: number;
 	} = $props();
 
@@ -41,14 +45,7 @@
 	let replySearchGeneration = 0;
 	let replySearchInFlight = false;
 
-	function findMessage(messageId: string): HTMLElement | null {
-		return document.querySelector<HTMLElement>(
-			`[data-message-id="${CSS.escape(messageId)}"]`,
-		);
-	}
-
-	function highlightTarget(target: HTMLElement, messageId: string): void {
-		target.scrollIntoView({ behavior: "smooth", block: "center" });
+	function highlightTarget(messageId: string): void {
 		highlightedMessageId = messageId;
 		if (highlightTimer !== null) clearTimeout(highlightTimer);
 		highlightTimer = setTimeout(() => {
@@ -57,13 +54,47 @@
 		}, 1600);
 	}
 
-	function offerContinue(messageId: string): void {
-		toast.info("Search paused before the end of the conversation", {
-			action: {
-				label: "Continue",
-				onClick: () => void revealReplyTarget(messageId),
-			},
-		});
+	export async function scrollToMessage(
+		messageId: string,
+		{
+			align = "center",
+			behavior = "auto",
+			offsetPx = null,
+		}: {
+			align?: "start" | "center" | "end" | "auto";
+			behavior?: ScrollBehavior;
+			offsetPx?: number | null;
+		} = {},
+	): Promise<boolean> {
+		const state = conversationState;
+		const conversationId = state.conversationId;
+		const located = await state.locateMessage(messageId);
+		if (
+			located === null ||
+			conversationState !== state ||
+			conversationState.conversationId !== conversationId
+		)
+			return false;
+		await tick();
+		const chronologicalIndex = chronologicalMessages.findIndex(
+			(message) => message.messageId === messageId,
+		);
+		if (chronologicalIndex === -1) return false;
+		$virtualizer.scrollToIndex(chronologicalIndex, { align, behavior });
+		if (offsetPx !== null) {
+			await tick();
+			const row = [
+				...(container?.querySelectorAll<HTMLElement>("[data-message-id]") ??
+					[]),
+			].find((candidate) => candidate.dataset.messageId === messageId);
+			if (row && container) {
+				container.scrollTop +=
+					row.getBoundingClientRect().top -
+					container.getBoundingClientRect().top -
+					offsetPx;
+			}
+		}
+		return true;
 	}
 
 	async function revealReplyTarget(messageId: string) {
@@ -72,58 +103,21 @@
 		const generation = ++replySearchGeneration;
 		const state = conversationState;
 		const conversationId = state.conversationId;
-		const seenCursors = new Set<string>();
 		try {
-			for (let page = 0; page < 5; page++) {
-				const target = findMessage(messageId);
-				if (target) {
-					highlightTarget(target, messageId);
-					return;
-				}
-				const cursor = state.pageKey;
-				if (cursor === null) {
-					toast.info("Original message is no longer available");
-					return;
-				}
-				if (seenCursors.has(cursor)) {
-					toast.info("Original message is no longer available");
-					return;
-				}
-				seenCursors.add(cursor);
-				const outcome = await state.loadMore();
-				await new Promise(requestAnimationFrame);
-				if (
-					generation !== replySearchGeneration ||
-					conversationState !== state ||
-					conversationState.conversationId !== conversationId
-				)
-					return;
-				if (outcome === "busy" || outcome === "error") {
-					offerContinue(messageId);
-					return;
-				}
-				if (outcome === "end" || state.pageKey === null) {
-					const finalTarget = findMessage(messageId);
-					if (finalTarget) highlightTarget(finalTarget, messageId);
-					else toast.info("Original message is no longer available");
-					return;
-				}
-				if (state.pageKey === cursor) {
-					toast.info("Original message is no longer available");
-					return;
-				}
-			}
-
-			const target = findMessage(messageId);
-			if (target) {
-				highlightTarget(target, messageId);
+			const found = await scrollToMessage(messageId, {
+				align: "center",
+				behavior: "smooth",
+			});
+			if (
+				!found ||
+				generation !== replySearchGeneration ||
+				conversationState !== state ||
+				conversationState.conversationId !== conversationId
+			) {
+				if (!found) toast.info("Original message is no longer available");
 				return;
 			}
-			if (state.pageKey === null) {
-				toast.info("Original message is no longer available");
-			} else {
-				offerContinue(messageId);
-			}
+			highlightTarget(messageId);
 		} finally {
 			if (generation === replySearchGeneration) replySearchInFlight = false;
 		}
@@ -172,132 +166,222 @@
 			ourProfileId: conversationState.ourProfileId,
 		}),
 	);
+	const chronologicalMessages = $derived(messages.toReversed());
+	const ESTIMATED_ROW_HEIGHT_PX = 96;
+	const virtualizer = createVirtualizer<HTMLElement, HTMLElement>({
+		count: 0,
+		getScrollElement: () => container,
+		estimateSize: () => ESTIMATED_ROW_HEIGHT_PX,
+		measureElement: (element, entry) => {
+			const borderBoxSize = entry?.borderBoxSize?.[0]?.blockSize;
+			if (borderBoxSize !== undefined && borderBoxSize > 0)
+				return borderBoxSize;
+			const height = element.getBoundingClientRect().height;
+			return height > 0 ? height : ESTIMATED_ROW_HEIGHT_PX;
+		},
+		getItemKey: (index) => chronologicalMessages[index]?.messageId ?? index,
+		overscan: 8,
+		anchorTo: "end",
+		followOnAppend: true,
+		scrollEndThreshold: 16,
+		useAnimationFrameWithResizeObserver: true,
+	});
+
+	$effect(() => {
+		const rows = chronologicalMessages;
+		const scrollElement = container;
+		untrack(() => {
+			get(virtualizer).setOptions({
+				count: rows.length,
+				getScrollElement: () => scrollElement,
+				getItemKey: (index) => rows[index]?.messageId ?? index,
+			});
+		});
+	});
+
+	let lastPaginationCursor: string | null = null;
+	$effect(() => {
+		const firstIndex = $virtualizer.getVirtualItems().at(0)?.index;
+		const cursor = conversationState.pageKey;
+		if (
+			firstIndex === undefined ||
+			firstIndex > 8 ||
+			cursor === null ||
+			conversationState.loadingMore ||
+			lastPaginationCursor === cursor
+		)
+			return;
+		lastPaginationCursor = cursor;
+		void conversationState.loadMore().then((outcome) => {
+			if (outcome === "busy" || outcome === "error") {
+				lastPaginationCursor = null;
+			}
+		});
+	});
+
+	let lastNewerSegmentId: string | null = null;
+	$effect(() => {
+		const virtualItems = $virtualizer.getVirtualItems();
+		const lastIndex = virtualItems.at(-1)?.index;
+		const count = chronologicalMessages.length;
+		const segmentId = conversationState.newerSegmentId;
+		if (
+			lastIndex === undefined ||
+			lastIndex < count - 9 ||
+			segmentId === null
+		) {
+			lastNewerSegmentId = null;
+			return;
+		}
+		if (conversationState.loadingNewer || lastNewerSegmentId === segmentId)
+			return;
+		lastNewerSegmentId = segmentId;
+		void conversationState.loadNewer().then((outcome) => {
+			if (outcome === "busy") lastNewerSegmentId = null;
+		});
+	});
 </script>
 
-{#each messages.toReversed() as message (message.messageId)}
-	{@const isOut = message.senderId === conversationState.ourProfileId}
-	<Message
-		{message}
-		{isOut}
-		indexInStack={message.indexInStack}
-		stackLength={message.stackLength}
-		dayStart={message.dayStart}
-		status={message.status}
-		ourProfileId={conversationState.ourProfileId}
-		peerProfileId={conversationState.profile?.profileId ?? null}
-		otherName={conversationState.profile?.name}
-		highlighted={highlightedMessageId === message.messageId}
-		onRetry={(message.status === "failed" || message.status === "handled") &&
-		(message.retryCount ?? 0) < 1
-			? () => conversationState.retryFailedMessage(message.messageId)
-			: undefined}
-		onMarkHandled={() =>
-			conversationState.markFailedMessageHandled(message.messageId)}
-		onSendAgain={message.status === "confirming" ||
-		((message.status === "failed" || message.status === "handled") &&
-			(message.retryCount ?? 0) >= 1)
-			? () => conversationState.sendAgain(message.messageId)
-			: undefined}
-		isRead={isOut && message.messageId === messages[0].messageId
-			? conversationState.lastReadTimestamp === message.timestamp
-			: null}
-		onVisible={!isOut
-			? () => {
-					if (message.timestamp > seenTimestamp) {
-						seenTimestamp = message.timestamp;
-					}
-					conversationState.reportRead(message);
-				}
-			: undefined}
-		onDelete={async () => {
-			let revert: (() => void) | undefined;
-			try {
-				({ revert } = conversationState.remove(message.messageId));
-				await deleteMessageForMe({
-					conversationId: conversationState.conversationId,
-					messageId: message.messageId,
-				});
-			} catch (error) {
-				console.error(error);
-				showErrorToast({
-					label: "Failed to delete message",
-					error,
-				});
-				revert?.();
-			}
-		}}
-		onReact={async (reactionType: number) => {
-			try {
-				await conversationState.reactTo(message.messageId, reactionType);
-			} catch (error) {
-				console.error(error);
-				showErrorToast({
-					label: "Failed to react to message",
-					error,
-				});
-			}
-		}}
-		onUnsend={canUnsendMessage(message, isOut)
-			? async () => {
-					let revert: (() => void) | undefined;
-					try {
-						({ revert } = conversationState.markMessageAsUnsent(
-							message.messageId,
-						));
-						await unsendMessage({
-							conversationId: conversationState.conversationId,
-							messageId: message.messageId,
-						});
-					} catch (error) {
-						console.error(error);
-						showErrorToast({
-							label: "Failed to unsend message",
-							error,
-						});
-						revert?.();
-					}
-				}
-			: undefined}
-		onUnshareAlbum={albumIdToUnshare(message) !== null
-			? async () => {
-					const albumId = albumIdToUnshare(message);
-					const profileId = conversationState.profile?.profileId;
-					if (albumId === null || profileId === undefined) return;
-					try {
-						await unshareAlbum({ albumId, profileIds: [profileId] });
-						setAlbumShared(albumId, profileId, false);
-						toast.success("Album unshared");
-					} catch (error) {
-						console.error(error);
-						showErrorToast({
-							label: "Failed to unshare album",
-							error,
-						});
-					}
-				}
-			: undefined}
-		onSavePhrase={message.type === "Text" && !message.unsent
-			? async () => {
-					try {
-						await addSavedPhrase(
-							conversationState.ourProfileId,
-							message.body.text,
-						);
-						toast.success("Phrase saved");
-					} catch (error) {
-						if (error instanceof DuplicateSavedPhraseError) {
-							toast.info(error.message);
-						} else {
-							showErrorToast({ label: "Failed to save phrase", error });
+<div
+	class="relative w-full shrink-0"
+	style:height={`${$virtualizer.getTotalSize()}px`}
+>
+	{#each $virtualizer.getVirtualItems() as virtualRow (virtualRow.key)}
+		{@const message = chronologicalMessages[virtualRow.index]}
+		{#if message}
+			{@const isOut = message.senderId === conversationState.ourProfileId}
+			<div
+				class="absolute top-0 left-0 w-full"
+				data-index={virtualRow.index}
+				style:transform={`translateY(${virtualRow.start}px)`}
+				use:$virtualizer.measureElement
+			>
+				<Message
+					{message}
+					{isOut}
+					indexInStack={message.indexInStack}
+					stackLength={message.stackLength}
+					dayStart={message.dayStart}
+					status={message.status}
+					ourProfileId={conversationState.ourProfileId}
+					peerProfileId={conversationState.profile?.profileId ?? null}
+					otherName={conversationState.profile?.name}
+					highlighted={highlightedMessageId === message.messageId}
+					onRetry={(message.status === "failed" ||
+						message.status === "handled") &&
+					(message.retryCount ?? 0) < 1
+						? () => conversationState.retryFailedMessage(message.messageId)
+						: undefined}
+					onMarkHandled={() =>
+						conversationState.markFailedMessageHandled(message.messageId)}
+					onSendAgain={message.status === "confirming" ||
+					((message.status === "failed" || message.status === "handled") &&
+						(message.retryCount ?? 0) >= 1)
+						? () => conversationState.sendAgain(message.messageId)
+						: undefined}
+					isRead={isOut && message.messageId === messages[0].messageId
+						? conversationState.lastReadTimestamp === message.timestamp
+						: null}
+					onVisible={!isOut
+						? () => {
+								if (message.timestamp > seenTimestamp) {
+									seenTimestamp = message.timestamp;
+								}
+								conversationState.reportRead(message);
+							}
+						: undefined}
+					onDelete={async () => {
+						let revert: (() => void) | undefined;
+						try {
+							({ revert } = conversationState.remove(message.messageId));
+							await deleteMessageForMe({
+								conversationId: conversationState.conversationId,
+								messageId: message.messageId,
+							});
+						} catch (error) {
+							console.error(error);
+							showErrorToast({
+								label: "Failed to delete message",
+								error,
+							});
+							revert?.();
 						}
-					}
-				}
-			: undefined}
-		onReply={message.status === "sent" && canReplyToMessage(message)
-			? () => conversationState.setReplyTarget(message)
-			: undefined}
-		onReplySelect={message.replyToMessage
-			? () => void revealReplyTarget(message.replyToMessage!.messageId)
-			: undefined}
-	/>
-{/each}
+					}}
+					onReact={async (reactionType: number) => {
+						try {
+							await conversationState.reactTo(message.messageId, reactionType);
+						} catch (error) {
+							console.error(error);
+							showErrorToast({
+								label: "Failed to react to message",
+								error,
+							});
+						}
+					}}
+					onUnsend={canUnsendMessage(message, isOut)
+						? async () => {
+								let revert: (() => void) | undefined;
+								try {
+									({ revert } = conversationState.markMessageAsUnsent(
+										message.messageId,
+									));
+									await unsendMessage({
+										conversationId: conversationState.conversationId,
+										messageId: message.messageId,
+									});
+								} catch (error) {
+									console.error(error);
+									showErrorToast({
+										label: "Failed to unsend message",
+										error,
+									});
+									revert?.();
+								}
+							}
+						: undefined}
+					onUnshareAlbum={albumIdToUnshare(message) !== null
+						? async () => {
+								const albumId = albumIdToUnshare(message);
+								const profileId = conversationState.profile?.profileId;
+								if (albumId === null || profileId === undefined) return;
+								try {
+									await unshareAlbum({ albumId, profileIds: [profileId] });
+									setAlbumShared(albumId, profileId, false);
+									toast.success("Album unshared");
+								} catch (error) {
+									console.error(error);
+									showErrorToast({
+										label: "Failed to unshare album",
+										error,
+									});
+								}
+							}
+						: undefined}
+					onSavePhrase={message.type === "Text" && !message.unsent
+						? async () => {
+								try {
+									await addSavedPhrase(
+										conversationState.ourProfileId,
+										message.body.text,
+									);
+									toast.success("Phrase saved");
+								} catch (error) {
+									if (error instanceof DuplicateSavedPhraseError) {
+										toast.info(error.message);
+									} else {
+										showErrorToast({ label: "Failed to save phrase", error });
+									}
+								}
+							}
+						: undefined}
+					onReply={message.status === "sent" && canReplyToMessage(message)
+						? () => conversationState.setReplyTarget(message)
+						: undefined}
+					onReplySelect={message.replyToMessage
+						? () => void revealReplyTarget(message.replyToMessage!.messageId)
+						: undefined}
+				/>
+			</div>
+		{/if}
+	{/each}
+</div>

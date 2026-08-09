@@ -10,10 +10,12 @@
 		entry,
 		onOpen,
 		onResolved = () => {},
+		onReleased = () => {},
 	}: {
 		entry: SharedMediaEntry;
 		onOpen: (url: string, opener: HTMLButtonElement) => void;
 		onResolved?: (url: string | null) => void;
+		onReleased?: (messageId: string) => void;
 	} = $props();
 
 	let tile: HTMLButtonElement | null = $state(null);
@@ -47,6 +49,7 @@
 		if (!element || currentEntry.consumptive)
 			return () => {
 				mounted = false;
+				onReleased(currentEntry.messageId);
 			};
 		const observer = new IntersectionObserver(
 			(records) => {
@@ -65,6 +68,7 @@
 		return () => {
 			mounted = false;
 			observer.disconnect();
+			onReleased(currentEntry.messageId);
 		};
 	});
 </script>

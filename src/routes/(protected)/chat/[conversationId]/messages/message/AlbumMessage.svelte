@@ -1,6 +1,4 @@
 <script lang="ts">
-	import "photoswipe/style.css";
-	import { goto } from "$app/navigation";
 	import {
 		ClockIcon,
 		ImageBrokenIcon,
@@ -8,7 +6,6 @@
 		VideoIcon,
 	} from "phosphor-svelte";
 	import { toast } from "svelte-sonner";
-	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
 	import { ApiError } from "$lib/api";
 	import { getAccountSessionSnapshot } from "$lib/api/account-caches";
@@ -32,7 +29,8 @@
 		getKeepUnavailableCachedAlbumsSnapshot,
 		subscribePreferences,
 	} from "$lib/app-data/preferences.svelte";
-	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+	import { getConversationMediaViewer } from "$lib/chat/conversation-media-viewer.svelte";
+	import { openAppDetail } from "$lib/navigation/app-navigation";
 	import { observeBackgroundTask } from "$lib/platform/client-diagnostics";
 	import { getNow, subscribeNow } from "$lib/util/now.svelte";
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
@@ -43,17 +41,20 @@
 
 	let {
 		message,
+		messageId,
 		senderProfileId = null,
 		peerProfileId = null,
 		isOut = true,
 	}: {
 		message: AlbumMessage["body"];
+		messageId: string;
 		senderProfileId?: number | null;
 		peerProfileId?: number | null;
 		isOut?: boolean;
 	} = $props();
 
 	const media = new MessageMediaState();
+	const viewer = getConversationMediaViewer()();
 
 	const expiry = $derived(albumExpiry(message, getNow()));
 	let cachedRecord = $state<CachedAlbumRecord | null>(null);
@@ -146,19 +147,14 @@
 		media.cornerClass,
 	]);
 
-	type LoadedAlbum = AlbumContentResponse & {
+	type LoadedAlbum = Omit<AlbumContentResponse, "content"> & {
 		content: (AlbumContentResponse["content"][number] & {
 			width: number;
 			height: number;
 		})[];
 	};
 
-	type AlbumState =
-		| { status: "idle" }
-		| { status: "loading" }
-		| { status: "open"; album: LoadedAlbum };
-
-	let albumState = $state<AlbumState>({ status: "idle" });
+	let loading = $state(false);
 	let retainedAlbumSnapshot: { key: string; album: LoadedAlbum } | null = null;
 	const retainedSnapshotKey = $derived(
 		albumIdentity === null
@@ -171,7 +167,7 @@
 		retainedAlbumSnapshot = null;
 	});
 
-	function openAlbum() {
+	function openAlbum(opener: HTMLButtonElement) {
 		if (!canOpen) {
 			toast.info(accessLabel(unavailableReason) ?? "Album unavailable", {
 				description:
@@ -182,229 +178,137 @@
 					cachedItemCount > 0
 						? {
 								label: "App Settings",
-								onClick: () => void goto("/settings/app"),
+								onClick: () => void openAppDetail("/settings/app"),
 							}
 						: undefined,
 			});
 			return;
 		}
+		if (loading) return;
+		loading = true;
+		void viewer
+			.openExplicit({
+				messageId,
+				opener,
+				resolve: resolveViewerSession,
+			})
+			.catch((error) => {
+				if (error instanceof DOMException && error.name === "AbortError")
+					return;
+				console.error(error);
+				showErrorToast({ label: "Failed to load album content", error });
+			})
+			.finally(() => (loading = false));
+	}
+
+	async function resolveViewerSession(signal: AbortSignal) {
 		if (
 			unavailableReason !== null &&
 			retainedAlbumSnapshot?.key === retainedSnapshotKey
 		) {
-			albumState = { status: "open", album: retainedAlbumSnapshot.album };
-		} else {
-			albumState = { status: "loading" };
+			return albumViewerSession(retainedAlbumSnapshot.album);
 		}
+		let response: AlbumContentResponse;
+		let retained = false;
+		const snapshotKey = retainedSnapshotKey;
+		if (unavailableReason !== null && keepUnavailable && cachedRecord) {
+			response = await resolveCachedAlbum(cachedRecord);
+			retained = true;
+		} else {
+			try {
+				response = await getAlbumContent(message.albumId, {
+					signal,
+				});
+			} catch (error) {
+				if (
+					error instanceof ApiError &&
+					error.response?.status === 403 &&
+					error.kind !== "RequestBlocked" &&
+					error.kind !== "RequestCooldown"
+				) {
+					if (albumIdentity)
+						await markAlbumUnavailable(
+							albumIdentity,
+							"revoked_or_removed",
+						).catch((cacheError) =>
+							console.error("Failed to mark cached album", cacheError),
+						);
+				}
+				const cached = albumIdentity
+					? await readCachedAlbum(albumIdentity).catch((cacheError) => {
+							console.error("Failed to read cached album", cacheError);
+							return null;
+						})
+					: null;
+				if (!keepUnavailable || !cached || cached.media.length === 0)
+					throw error;
+				response = await resolveCachedAlbum(cached).catch((cacheError) => {
+					console.error("Failed to resolve cached album", cacheError);
+					throw error;
+				});
+				retained = true;
+			}
+		}
+		const loaded = await preloadForViewer(response, {
+			retained,
+			signal,
+		});
+		if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+		if (retained) retainedAlbumSnapshot = { key: snapshotKey, album: loaded };
+		return albumViewerSession(loaded);
 	}
 
-	$effect(() => {
-		if (albumState.status !== "loading") return;
-		const abortController = new AbortController();
-		(async () => {
-			let response: AlbumContentResponse;
-			let retained = false;
-			const snapshotKey = retainedSnapshotKey;
-			if (unavailableReason !== null && keepUnavailable && cachedRecord) {
-				response = await resolveCachedAlbum(cachedRecord);
-				retained = true;
-			} else {
-				try {
-					response = await getAlbumContent(message.albumId, {
-						signal: abortController.signal,
-					});
-				} catch (error) {
-					if (
-						error instanceof ApiError &&
-						error.response?.status === 403 &&
-						error.kind !== "RequestBlocked" &&
-						error.kind !== "RequestCooldown"
-					) {
-						if (albumIdentity)
-							await markAlbumUnavailable(
-								albumIdentity,
-								"revoked_or_removed",
-							).catch((cacheError) =>
-								console.error("Failed to mark cached album", cacheError),
-							);
-					}
-					const cached = albumIdentity
-						? await readCachedAlbum(albumIdentity).catch((cacheError) => {
-								console.error("Failed to read cached album", cacheError);
-								return null;
+	function albumViewerSession(album: LoadedAlbum) {
+		const viewed = new Set<number>();
+		return {
+			items: album.content.map((item) => ({
+				id: String(item.contentId),
+				kind: item.contentType.startsWith("video/")
+					? ("video" as const)
+					: ("image" as const),
+				url: item.url.length > 0 ? item.url : null,
+				width: item.width,
+				height: item.height,
+				poster: item.coverUrl,
+				unavailableLabel: "This item was not cached",
+			})),
+			startId: String(album.content[0]?.contentId ?? ""),
+			preload:
+				message.expirationType === "ONCE"
+					? ([0, 0] as [number, number])
+					: ([1, 2] as [number, number]),
+			statusLabel:
+				unavailableReason === null
+					? null
+					: `Cached copy · ${accessLabel(unavailableReason)}`,
+			onItemActivate:
+				message.expirationType === "ONCE" && unavailableReason === null
+					? (_item: unknown, index: number) => {
+							const item = album.content[index];
+							if (!item || item.url.length === 0 || viewed.has(item.contentId))
+								return;
+							viewed.add(item.contentId);
+							void recordAlbumContentView({
+								albumId: album.albumId,
+								contentId: item.contentId,
 							})
-						: null;
-					if (!keepUnavailable || !cached || cached.media.length === 0)
-						throw error;
-					response = await resolveCachedAlbum(cached).catch((cacheError) => {
-						console.error("Failed to resolve cached album", cacheError);
-						throw error;
-					});
-					retained = true;
-				}
-			}
-			const loaded = await preloadForViewer(response, {
-				retained,
-				signal: abortController.signal,
-			});
-			if (abortController.signal.aborted) return;
-			if (retained) retainedAlbumSnapshot = { key: snapshotKey, album: loaded };
-			albumState = { status: "open", album: loaded };
-		})().catch((error) => {
-			if (abortController.signal.aborted) return;
-			console.error(error);
-			showErrorToast({
-				label: "Failed to load album content",
-				error,
-			});
-			albumState = { status: "idle" };
-		});
-		return () => abortController.abort();
-	});
-
-	$effect(() => {
-		if (albumState.status !== "open") return;
-		const { album } = albumState;
-		let lightbox: PhotoSwipeLightbox | undefined;
-		let canceled = false;
-		import("photoswipe/lightbox")
-			.then(({ default: PhotoSwipeLightbox }) => {
-				if (canceled) return;
-				lightbox = new PhotoSwipeLightbox({
-					showHideAnimationType: "fade",
-					pswpModule: () => import("photoswipe"),
-					mainClass: `pswp--buttons-visible`,
-					loop: false,
-					preload: message.expirationType === "ONCE" ? [0, 0] : [1, 2],
-				});
-				lightbox.addFilter("numItems", () => album.content.length);
-				lightbox.addFilter("itemData", (_, index) => {
-					const { url, width, height } = album.content[index];
-					return url.length > 0
-						? { src: url, width, height }
-						: {
-								html: '<div class="og-album-missing">This item was not cached</div>',
-								width: 1,
-								height: 1,
-							};
-				});
-				lightbox.addFilter(
-					"useContentPlaceholder",
-					(usePlaceholder, content) =>
-						album.content[content.index]?.contentType.startsWith("video/")
-							? false
-							: usePlaceholder,
-				);
-				lightbox.on("uiRegister", () => {
-					lightbox?.pswp?.ui?.registerElement({
-						name: "album-position",
-						order: 7,
-						isButton: false,
-						appendTo: "wrapper",
-						onInit: (element, pswp) => {
-							element.setAttribute("role", "status");
-							element.setAttribute("aria-live", "polite");
-							element.setAttribute("aria-atomic", "true");
-							const updatePosition = () => {
-								element.textContent = `${pswp.currIndex + 1} / ${pswp.getNumItems()}`;
-							};
-							updatePosition();
-							pswp.on("change", updatePosition);
-						},
-					});
-				});
-				const onBackGesture = () => {
-					lightbox?.pswp?.close();
-					return false;
-				};
-				lightbox.on("beforeOpen", () => {
-					backGestureEventHandlers.add(onBackGesture);
-				});
-				lightbox.on("close", () => {
-					backGestureEventHandlers.delete(onBackGesture);
-				});
-				lightbox.on("contentLoad", (event) => {
-					const { content } = event;
-					const slide = album.content[content.index];
-					if (slide?.url.length > 0 && slide.contentType.startsWith("video/")) {
-						event.preventDefault();
-						content.element = document.createElement("div");
-						const video = document.createElement("video");
-						video.src = slide.url;
-						if (slide.coverUrl !== null) video.poster = slide.coverUrl;
-						video.controls = true;
-						video.playsInline = true;
-						video.className = "size-full object-contain";
-						content.element.appendChild(video);
-						content.state = "loading";
-						if (video.readyState >= 3) {
-							content.onLoaded();
-						} else {
-							video.addEventListener("loadeddata", () => content.onLoaded());
-							video.addEventListener("error", () => content.onError());
+								.then(() =>
+									retainViewedAlbumContent(
+										{
+											albumId: album.albumId,
+											ownerProfileId: message.ownerProfileId,
+											expirationType: message.expirationType,
+											expiresAt: message.viewableUntil ?? message.expiresAt,
+										},
+										album,
+										item.contentId,
+									),
+								)
+								.catch((error) => console.error(error));
 						}
-					}
-				});
-				if (message.expirationType === "ONCE" && unavailableReason === null) {
-					const viewed = new Set<number>();
-					const recordCurrentView = () => {
-						const index = lightbox?.pswp?.currIndex ?? 0;
-						const item = album.content[index];
-						if (!item || item.url.length === 0 || viewed.has(item.contentId))
-							return;
-						viewed.add(item.contentId);
-						void recordAlbumContentView({
-							albumId: album.albumId,
-							contentId: item.contentId,
-						})
-							.then(() =>
-								retainViewedAlbumContent(
-									{
-										albumId: album.albumId,
-										ownerProfileId: message.ownerProfileId,
-										expirationType: message.expirationType,
-										expiresAt: message.viewableUntil ?? message.expiresAt,
-									},
-									album,
-									item.contentId,
-								),
-							)
-							.catch((error) => console.error(error));
-					};
-					lightbox.on("afterInit", recordCurrentView);
-					lightbox.on("change", recordCurrentView);
-				}
-				if (unavailableReason !== null) {
-					lightbox.on("uiRegister", () => {
-						lightbox?.pswp?.ui?.registerElement({
-							name: "cached-album-status",
-							order: 8,
-							isButton: false,
-							appendTo: "wrapper",
-							html: `Cached copy · ${accessLabel(unavailableReason)}`,
-						});
-					});
-				}
-				lightbox.on("closingAnimationEnd", () => {
-					albumState = { status: "idle" };
-				});
-				lightbox.init();
-				lightbox.loadAndOpen(0);
-			})
-			.catch((error) => {
-				console.error(error);
-				showErrorToast({
-					label: "Failed to open album",
-					error,
-				});
-				albumState = { status: "idle" };
-			});
-		return () => {
-			canceled = true;
-			lightbox?.destroy();
-			lightbox = undefined;
+					: undefined,
 		};
-	});
+	}
 
 	async function preloadForViewer(
 		album: AlbumContentResponse,
@@ -462,12 +366,12 @@
 			className,
 			contentClass,
 			{
-				"cursor-pointer": albumState.status === "idle",
-				"opacity-50": albumState.status === "loading",
+				"cursor-pointer": !loading,
+				"opacity-50": loading,
 			},
 		]}
-		onclick={openAlbum}
-		disabled={albumState.status !== "idle"}
+		onclick={(event) => openAlbum(event.currentTarget)}
+		disabled={loading}
 		bind:this={media.el}
 	>
 		{#if message.coverUrl !== null}
@@ -540,46 +444,3 @@
 		{@render media.adornments?.()}
 	</div>
 {/if}
-
-<style>
-	:global(.pswp__img) {
-		object-fit: contain;
-	}
-	:global(.pswp__cached-album-status) {
-		position: absolute;
-		top: calc(var(--safe-area-top) + 0.75rem);
-		left: 50%;
-		z-index: 20;
-		transform: translateX(-50%);
-		border-radius: 9999px;
-		background: rgb(0 0 0 / 75%);
-		padding: 0.25rem 0.75rem;
-		color: white;
-		font-size: 0.75rem;
-	}
-	:global(.pswp__album-position) {
-		position: absolute;
-		top: calc(var(--safe-area-top) + 3rem);
-		left: 50%;
-		z-index: 21;
-		transform: translateX(-50%);
-		border: 1px solid var(--color-border);
-		border-radius: 9999px;
-		background: var(--color-card);
-		padding: 0.25rem 0.75rem;
-		color: var(--color-card-foreground);
-		font-size: 0.875rem;
-		font-weight: 600;
-		line-height: 1.25rem;
-		box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
-	}
-	:global(.og-album-missing) {
-		display: flex;
-		height: 100%;
-		width: 100%;
-		align-items: center;
-		justify-content: center;
-		background: var(--color-card);
-		color: var(--color-muted-foreground);
-	}
-</style>

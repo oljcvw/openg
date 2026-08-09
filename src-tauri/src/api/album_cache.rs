@@ -5,6 +5,12 @@ use std::{
 	sync::atomic::{AtomicU64, Ordering},
 };
 
+use aes_gcm::{
+	aead::{Aead, KeyInit, Payload},
+	Aes256Gcm, Nonce,
+};
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use tauri::{http, Manager};
 
@@ -29,8 +35,12 @@ const SCHEME: &str = "album-cache";
 const CACHE_DIR: &str = "album-cache-v1";
 const INDEX_FILE: &str = "index.json";
 const RECORD_INDEX_FILE: &str = "records.json";
+const RECORD_PARTITION_INDEX_FILE: &str = "index-v6.ogai";
+const RECORD_INDEX_SCHEMA_VERSION: u8 = 6;
+const RECORD_MIGRATION_BATCH_SIZE: usize = 60;
 const MAGIC: &[u8; 8] = b"OGALBC01";
 const RECORD_MAGIC: &[u8; 8] = b"OGALBR02";
+const RECORD_INDEX_MAGIC: &[u8; 8] = b"OGALIX06";
 const MEMBERSHIP_MAGIC: &[u8; 8] = b"OGALMS05";
 const KEY_SERVICE: &str = "open-grind-album-cache";
 static CACHE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
@@ -56,7 +66,7 @@ struct CacheIndex {
 	entries: Vec<CacheEntry>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct AlbumRecordEntry {
 	account_hash: String,
@@ -79,6 +89,40 @@ pub struct AlbumMembershipSnapshot {
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct AlbumRecordIndex {
 	entries: Vec<AlbumRecordEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AlbumRecordPartitionIndex {
+	schema_version: u8,
+	epoch: u64,
+	entries: Vec<AlbumRecordEntry>,
+}
+
+impl Default for AlbumRecordPartitionIndex {
+	fn default() -> Self {
+		Self {
+			schema_version: RECORD_INDEX_SCHEMA_VERSION,
+			epoch: 0,
+			entries: Vec::new(),
+		}
+	}
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AlbumRecordCursor {
+	schema_version: u8,
+	epoch: u64,
+	history_order: Option<u64>,
+	last_accessed_ms: u64,
+	album_hash: String,
+}
+
+#[derive(Debug)]
+struct AlbumRecordEntryPage {
+	entries: Vec<AlbumRecordEntry>,
+	next: Option<AlbumRecordCursor>,
 }
 
 #[derive(Debug, Serialize)]
@@ -455,13 +499,17 @@ pub async fn album_cache_record_store(
 		return Err(AppError::RequestCancelled);
 	}
 	let key = load_or_create_encryption_key(KEY_SERVICE, &account_hash)?;
-	let mut index: AlbumRecordIndex =
-		load_json_index(&root, RECORD_INDEX_FILE)?;
-	let previous = index.entries.iter().find(|entry| {
-		entry.account_hash == account_hash
-			&& entry.owner_hash == owner_hash
-			&& entry.album_hash == album_hash
-	});
+	let mut index = migrate_record_partition(
+		&root,
+		&account_hash,
+		&owner_hash,
+		operation_epoch,
+		&key,
+	)?;
+	let previous = index
+		.entries
+		.iter()
+		.find(|entry| entry.album_hash == album_hash);
 	let history_order = history_order_for_record(&record, previous);
 	let file_name = previous
 		.map(|entry| entry.file_name.clone())
@@ -476,14 +524,10 @@ pub async fn album_cache_record_store(
 		&record_aad(&account_hash, &owner_hash, &album_hash),
 		RECORD_MAGIC,
 	)?;
-	index.entries.retain(|entry| {
-		!(entry.account_hash == account_hash
-			&& entry.owner_hash == owner_hash
-			&& entry.album_hash == album_hash)
-	});
+	index.entries.retain(|entry| entry.album_hash != album_hash);
 	index.entries.push(AlbumRecordEntry {
-		account_hash,
-		owner_hash,
+		account_hash: account_hash.clone(),
+		owner_hash: owner_hash.clone(),
 		album_hash,
 		file_name,
 		last_accessed_ms: record
@@ -492,7 +536,8 @@ pub async fn album_cache_record_store(
 			.unwrap_or_else(now_ms),
 		history_order,
 	});
-	save_json_index(&root, RECORD_INDEX_FILE, &index)
+	index.epoch = index.epoch.saturating_add(1);
+	save_record_partition_index(&root, &account_hash, &owner_hash, &index, &key)
 }
 
 #[tauri::command]
@@ -502,6 +547,7 @@ pub async fn album_cache_record_read(
 	owner_profile_id: String,
 	album_id: String,
 ) -> Result<Option<serde_json::Value>, AppError> {
+	let operation_epoch = CACHE_EPOCH.load(Ordering::Acquire);
 	validate_composite_identity(&account_id, &owner_profile_id, &album_id)?;
 	ensure_active_account(&account_id)?;
 	let root = cache_root(&app)?;
@@ -509,12 +555,24 @@ pub async fn album_cache_record_read(
 	let owner_hash = identifier_hash(&owner_profile_id);
 	let album_hash = identifier_hash(&album_id);
 	let _guard = CACHE_LOCK.lock().await;
-	let index: AlbumRecordIndex = load_json_index(&root, RECORD_INDEX_FILE)?;
-	let Some(entry) = index.entries.iter().find(|entry| {
-		entry.account_hash == account_hash
-			&& entry.owner_hash == owner_hash
-			&& entry.album_hash == album_hash
-	}) else {
+	if CACHE_EPOCH.load(Ordering::Acquire) != operation_epoch
+		|| ensure_active_account(&account_id).is_err()
+	{
+		return Err(AppError::RequestCancelled);
+	}
+	let key = load_or_create_encryption_key(KEY_SERVICE, &account_hash)?;
+	let partition = migrate_record_partition(
+		&root,
+		&account_hash,
+		&owner_hash,
+		operation_epoch,
+		&key,
+	)?;
+	let entries =
+		merged_record_entries(&root, partition, &account_hash, &owner_hash)?;
+	let Some(entry) =
+		entries.iter().find(|entry| entry.album_hash == album_hash)
+	else {
 		return Ok(None);
 	};
 	read_record(&root, entry).map(Some)
@@ -527,6 +585,7 @@ pub async fn album_cache_records_page(
 	owner_profile_id: String,
 	cursor: Option<String>,
 ) -> Result<AlbumRecordPage, AppError> {
+	let operation_epoch = CACHE_EPOCH.load(Ordering::Acquire);
 	validate_identifier(&account_id)?;
 	validate_identifier(&owner_profile_id)?;
 	ensure_active_account(&account_id)?;
@@ -534,35 +593,52 @@ pub async fn album_cache_records_page(
 	let account_hash = identifier_hash(&account_id);
 	let owner_hash = identifier_hash(&owner_profile_id);
 	let _guard = CACHE_LOCK.lock().await;
-	let index: AlbumRecordIndex = load_json_index(&root, RECORD_INDEX_FILE)?;
-	let mut matching: Vec<_> = index
+	if CACHE_EPOCH.load(Ordering::Acquire) != operation_epoch
+		|| ensure_active_account(&account_id).is_err()
+	{
+		return Err(AppError::RequestCancelled);
+	}
+	let key = load_or_create_encryption_key(KEY_SERVICE, &account_hash)?;
+	let partition = migrate_record_partition(
+		&root,
+		&account_hash,
+		&owner_hash,
+		operation_epoch,
+		&key,
+	)?;
+	let partition_epoch = partition.epoch;
+	let entries =
+		merged_record_entries(&root, partition, &account_hash, &owner_hash)?;
+	let decoded_cursor = cursor
+		.as_deref()
+		.map(|cursor| {
+			decode_record_cursor(&key, &account_hash, &owner_hash, cursor)
+		})
+		.transpose()?;
+	if let Some(cursor) = decoded_cursor.as_ref() {
+		record_cursor_epoch_is_current(cursor, partition_epoch)?;
+	}
+	let page = page_record_entries(&entries, decoded_cursor.as_ref(), 60)?;
+	let records = page
 		.entries
 		.iter()
-		.filter(|entry| {
-			entry.account_hash == account_hash && entry.owner_hash == owner_hash
-		})
-		.collect();
-	matching.sort_by(|left, right| compare_record_entries(left, right));
-	let start = match cursor {
-		None => 0,
-		Some(cursor) => matching
-			.iter()
-			.position(|entry| entry.album_hash == cursor)
-			.map(|index| index + 1)
-			.ok_or_else(|| cache_error("album history cursor is invalid"))?,
-	};
-	let page = matching
-		.into_iter()
-		.skip(start)
-		.take(61)
-		.collect::<Vec<_>>();
-	let has_more = page.len() > 60;
-	let records = page
-		.iter()
-		.take(60)
 		.map(|entry| read_record(&root, entry))
 		.collect::<Result<Vec<_>, _>>()?;
-	let next_cursor = has_more.then(|| page[59].album_hash.clone());
+	let next_cursor = page
+		.next
+		.as_ref()
+		.map(|_| {
+			encode_record_cursor(
+				&key,
+				&account_hash,
+				&owner_hash,
+				partition_epoch,
+				page.entries
+					.last()
+					.expect("a continuation requires a final entry"),
+			)
+		})
+		.transpose()?;
 	Ok(AlbumRecordPage {
 		records,
 		next_cursor,
@@ -628,6 +704,7 @@ pub async fn album_cache_records_reconcile_membership(
 	current_album_ids: Vec<String>,
 	listed_at: u64,
 ) -> Result<(), AppError> {
+	let operation_epoch = CACHE_EPOCH.load(Ordering::Acquire);
 	validate_identifier(&account_id)?;
 	validate_identifier(&owner_profile_id)?;
 	for album_id in &current_album_ids {
@@ -639,11 +716,29 @@ pub async fn album_cache_records_reconcile_membership(
 	let account_hash = identifier_hash(&account_id);
 	let owner_hash = identifier_hash(&owner_profile_id);
 	let _guard = CACHE_LOCK.lock().await;
-	let index: AlbumRecordIndex = load_json_index(&root, RECORD_INDEX_FILE)?;
+	if CACHE_EPOCH.load(Ordering::Acquire) != operation_epoch
+		|| ensure_active_account(&account_id).is_err()
+	{
+		return Err(AppError::RequestCancelled);
+	}
 	let key = load_or_create_encryption_key(KEY_SERVICE, &account_hash)?;
-	for entry in index.entries.iter().filter(|entry| {
-		entry.account_hash == account_hash && entry.owner_hash == owner_hash
-	}) {
+	let mut partition = migrate_record_partition(
+		&root,
+		&account_hash,
+		&owner_hash,
+		operation_epoch,
+		&key,
+	)?;
+	let entries = merged_record_entries(
+		&root,
+		partition.clone(),
+		&account_hash,
+		&owner_hash,
+	)?;
+	for entry in &entries {
+		if CACHE_EPOCH.load(Ordering::Acquire) != operation_epoch {
+			return Err(AppError::RequestCancelled);
+		}
 		let mut record = read_record(&root, entry)?;
 		reconcile_record_membership(&mut record, &current, listed_at)?;
 		let bytes = serde_json::to_vec(&record)
@@ -656,7 +751,14 @@ pub async fn album_cache_records_reconcile_membership(
 			RECORD_MAGIC,
 		)?;
 	}
-	Ok(())
+	partition.epoch = partition.epoch.saturating_add(1);
+	save_record_partition_index(
+		&root,
+		&account_hash,
+		&owner_hash,
+		&partition,
+		&key,
+	)
 }
 
 fn reconcile_record_membership(
@@ -1020,6 +1122,560 @@ fn compare_record_entries(
 			.cmp(&right_order)
 			.then_with(|| left.album_hash.cmp(&right.album_hash)),
 	}
+}
+
+fn record_partition_index_path(
+	root: &Path,
+	account_hash: &str,
+	owner_hash: &str,
+) -> PathBuf {
+	root.join(account_hash)
+		.join("history")
+		.join(owner_hash)
+		.join(RECORD_PARTITION_INDEX_FILE)
+}
+
+fn load_record_partition_index(
+	root: &Path,
+	account_hash: &str,
+	owner_hash: &str,
+	key: &[u8; 32],
+) -> Result<AlbumRecordPartitionIndex, AppError> {
+	let path = record_partition_index_path(root, account_hash, owner_hash);
+	if !path.is_file() {
+		return Ok(AlbumRecordPartitionIndex::default());
+	}
+	let bytes = read_encrypted_range(
+		&path,
+		key,
+		&encrypted_aad_prefix("record-index-v6", &[account_hash, owner_hash]),
+		None,
+		RECORD_INDEX_MAGIC,
+	)?;
+	let index: AlbumRecordPartitionIndex = serde_json::from_slice(&bytes)
+		.map_err(|_| cache_error("album history partition is invalid"))?;
+	if index.schema_version != RECORD_INDEX_SCHEMA_VERSION {
+		return Err(cache_error(
+			"album history partition schema version is unsupported",
+		));
+	}
+	if index.entries.iter().any(|entry| {
+		entry.account_hash != account_hash || entry.owner_hash != owner_hash
+	}) {
+		return Err(cache_error("album history partition scope is invalid"));
+	}
+	Ok(index)
+}
+
+fn save_record_partition_index(
+	root: &Path,
+	account_hash: &str,
+	owner_hash: &str,
+	index: &AlbumRecordPartitionIndex,
+	key: &[u8; 32],
+) -> Result<(), AppError> {
+	if index.schema_version != RECORD_INDEX_SCHEMA_VERSION
+		|| index.entries.iter().any(|entry| {
+			entry.account_hash != account_hash || entry.owner_hash != owner_hash
+		}) {
+		return Err(cache_error("album history partition scope is invalid"));
+	}
+	let path = record_partition_index_path(root, account_hash, owner_hash);
+	let parent = path.parent().ok_or_else(|| {
+		cache_error("album history partition path is invalid")
+	})?;
+	fs::create_dir_all(parent)
+		.map_err(|_| cache_error("could not create album history partition"))?;
+	let bytes = serde_json::to_vec(index)
+		.map_err(|_| cache_error("could not encode album history partition"))?;
+	write_encrypted_atomic(
+		&path,
+		&bytes,
+		key,
+		&encrypted_aad_prefix("record-index-v6", &[account_hash, owner_hash]),
+		RECORD_INDEX_MAGIC,
+	)
+}
+
+fn cursor_aad(account_hash: &str, owner_hash: &str) -> Vec<u8> {
+	encrypted_aad_prefix("record-cursor-v6", &[account_hash, owner_hash])
+}
+
+fn cursor_for_entry(epoch: u64, entry: &AlbumRecordEntry) -> AlbumRecordCursor {
+	AlbumRecordCursor {
+		schema_version: RECORD_INDEX_SCHEMA_VERSION,
+		epoch,
+		history_order: entry.history_order,
+		last_accessed_ms: entry.last_accessed_ms,
+		album_hash: entry.album_hash.clone(),
+	}
+}
+
+fn encode_record_cursor(
+	key: &[u8; 32],
+	account_hash: &str,
+	owner_hash: &str,
+	epoch: u64,
+	entry: &AlbumRecordEntry,
+) -> Result<String, AppError> {
+	let payload = serde_json::to_vec(&cursor_for_entry(epoch, entry))
+		.map_err(|_| cache_error("could not encode album history cursor"))?;
+	let cipher = Aes256Gcm::new_from_slice(key).map_err(|_| {
+		cache_error("could not initialize album history cursor")
+	})?;
+	let mut nonce = [0_u8; 12];
+	OsRng.fill_bytes(&mut nonce);
+	let ciphertext = cipher
+		.encrypt(
+			Nonce::from_slice(&nonce),
+			Payload {
+				msg: &payload,
+				aad: &cursor_aad(account_hash, owner_hash),
+			},
+		)
+		.map_err(|_| cache_error("could not protect album history cursor"))?;
+	let mut encoded = nonce.to_vec();
+	encoded.extend(ciphertext);
+	Ok(URL_SAFE_NO_PAD.encode(encoded))
+}
+
+fn decode_record_cursor(
+	key: &[u8; 32],
+	account_hash: &str,
+	owner_hash: &str,
+	cursor: &str,
+) -> Result<AlbumRecordCursor, AppError> {
+	let encoded = URL_SAFE_NO_PAD
+		.decode(cursor)
+		.map_err(|_| cache_error("album history cursor is invalid"))?;
+	if encoded.len() <= 12 {
+		return Err(cache_error("album history cursor is invalid"));
+	}
+	let cipher = Aes256Gcm::new_from_slice(key).map_err(|_| {
+		cache_error("could not initialize album history cursor")
+	})?;
+	let payload = cipher
+		.decrypt(
+			Nonce::from_slice(&encoded[..12]),
+			Payload {
+				msg: &encoded[12..],
+				aad: &cursor_aad(account_hash, owner_hash),
+			},
+		)
+		.map_err(|_| cache_error("album history cursor is invalid"))?;
+	let decoded: AlbumRecordCursor = serde_json::from_slice(&payload)
+		.map_err(|_| cache_error("album history cursor is invalid"))?;
+	if decoded.schema_version != RECORD_INDEX_SCHEMA_VERSION {
+		return Err(cache_error("album history cursor is invalid"));
+	}
+	Ok(decoded)
+}
+
+fn record_cursor_epoch_is_current(
+	cursor: &AlbumRecordCursor,
+	partition_epoch: u64,
+) -> Result<(), AppError> {
+	if cursor.epoch == partition_epoch {
+		Ok(())
+	} else {
+		Err(cache_error("album history cursor is stale"))
+	}
+}
+
+fn json_identity_hash(value: &serde_json::Value) -> Option<String> {
+	value
+		.as_u64()
+		.map(|value| identifier_hash(&value.to_string()))
+		.or_else(|| value.as_str().map(identifier_hash))
+}
+
+fn record_matches_index_identity(
+	record: &serde_json::Value,
+	entry: &AlbumRecordEntry,
+) -> bool {
+	let Some(object) = record.as_object() else {
+		return false;
+	};
+	let Some(identity) =
+		object.get("identity").and_then(|value| value.as_object())
+	else {
+		return false;
+	};
+	let canonical_account_id = identity
+		.get("accountProfileId")
+		.and_then(|value| value.as_u64());
+	let account_matches = canonical_account_id
+		.map(|value| identifier_hash(&value.to_string()))
+		.is_some_and(|hash| hash == entry.account_hash);
+	let owner_matches = identity
+		.get("ownerProfileId")
+		.and_then(json_identity_hash)
+		.is_some_and(|hash| hash == entry.owner_hash);
+	let album_matches = identity
+		.get("albumId")
+		.and_then(json_identity_hash)
+		.is_some_and(|hash| hash == entry.album_hash);
+	let canonical_album_id =
+		identity.get("albumId").and_then(|value| value.as_u64());
+	let canonical_owner_id = identity
+		.get("ownerProfileId")
+		.and_then(|value| value.as_u64());
+	let membership_complete = object
+		.get("membership")
+		.and_then(|value| value.as_object())
+		.is_some_and(|membership| {
+			membership
+				.get("isCurrentlyShared")
+				.is_some_and(serde_json::Value::is_boolean)
+				&& membership
+					.get("lastListedAt")
+					.is_some_and(serde_json::Value::is_u64)
+				&& membership.contains_key("unavailableReason")
+		});
+	let album_complete = object
+		.get("album")
+		.and_then(|value| value.as_object())
+		.is_some_and(|album| {
+			album.get("albumId").and_then(|value| value.as_u64())
+				== canonical_album_id
+				&& album.get("profileId").and_then(|value| value.as_u64())
+					== canonical_owner_id
+				&& album
+					.get("content")
+					.is_some_and(serde_json::Value::is_array)
+				&& album
+					.get("hasUnseenContent")
+					.is_some_and(serde_json::Value::is_boolean)
+				&& album.contains_key("albumName")
+				&& album
+					.get("albumViewable")
+					.is_some_and(serde_json::Value::is_boolean)
+				&& album
+					.get("sharedCount")
+					.is_some_and(serde_json::Value::is_u64)
+				&& album
+					.get("createdAt")
+					.is_some_and(serde_json::Value::is_string)
+				&& album
+					.get("updatedAt")
+					.is_some_and(serde_json::Value::is_string)
+		});
+	let history_order = object.get("historyOrder");
+	let history_matches = match entry.history_order {
+		Some(expected) => {
+			history_order
+				.and_then(|value| value.get("sequence"))
+				.and_then(|value| value.as_u64())
+				== Some(expected)
+		}
+		None => history_order.is_some_and(serde_json::Value::is_null),
+	};
+	object.get("version").and_then(|value| value.as_u64()) == Some(2)
+		&& account_matches
+		&& owner_matches
+		&& album_matches
+		&& object.get("albumId").and_then(|value| value.as_u64())
+			== canonical_album_id
+		&& object
+			.get("ownerProfileId")
+			.and_then(|value| value.as_u64())
+			== canonical_owner_id
+		&& object
+			.get("lastAccessedAt")
+			.and_then(|value| value.as_u64())
+			== Some(entry.last_accessed_ms)
+		&& membership_complete
+		&& object
+			.get("access")
+			.and_then(|value| value.get("status"))
+			.and_then(|value| value.as_str())
+			.is_some_and(|status| {
+				matches!(status, "active" | "unavailable" | "unknown")
+			}) && object.contains_key("currentSnapshot")
+		&& object
+			.get("retainedItems")
+			.is_some_and(serde_json::Value::is_array)
+		&& object.get("media").is_some_and(serde_json::Value::is_array)
+		&& object.contains_key("expirationType")
+		&& object.contains_key("expiresAt")
+		&& album_complete
+		&& history_matches
+}
+
+fn page_record_entries(
+	entries: &[AlbumRecordEntry],
+	cursor: Option<&AlbumRecordCursor>,
+	limit: usize,
+) -> Result<AlbumRecordEntryPage, AppError> {
+	let mut sorted = entries.to_vec();
+	sorted.sort_by(compare_record_entries);
+	let start = cursor.map_or(0, |cursor| {
+		sorted.partition_point(|entry| {
+			compare_record_entries(
+				entry,
+				&AlbumRecordEntry {
+					account_hash: entry.account_hash.clone(),
+					owner_hash: entry.owner_hash.clone(),
+					album_hash: cursor.album_hash.clone(),
+					file_name: String::new(),
+					last_accessed_ms: cursor.last_accessed_ms,
+					history_order: cursor.history_order,
+				},
+			) != std::cmp::Ordering::Greater
+		})
+	});
+	let page = sorted
+		.into_iter()
+		.skip(start)
+		.take(limit + 1)
+		.collect::<Vec<_>>();
+	let has_more = page.len() > limit;
+	let entries = page.into_iter().take(limit).collect::<Vec<_>>();
+	let next = has_more
+		.then(|| entries.last().map(|entry| cursor_for_entry(0, entry)))
+		.flatten();
+	Ok(AlbumRecordEntryPage { entries, next })
+}
+
+fn migration_batch(
+	source: &[AlbumRecordEntry],
+	partition: &[AlbumRecordEntry],
+	account_hash: &str,
+	owner_hash: &str,
+	limit: usize,
+) -> Vec<AlbumRecordEntry> {
+	let existing = partition
+		.iter()
+		.map(|entry| entry.album_hash.as_str())
+		.collect::<HashSet<_>>();
+	source
+		.iter()
+		.filter(|entry| {
+			entry.account_hash == account_hash
+				&& !entry.owner_hash.is_empty()
+				&& entry.owner_hash == owner_hash
+				&& !existing.contains(entry.album_hash.as_str())
+		})
+		.take(limit)
+		.cloned()
+		.collect()
+}
+
+fn retire_migrated_entries(
+	source: &[AlbumRecordEntry],
+	staged: &[AlbumRecordEntry],
+	verified: bool,
+) -> Vec<AlbumRecordEntry> {
+	if !verified {
+		return source.to_vec();
+	}
+	let migrated = staged
+		.iter()
+		.map(|entry| {
+			(
+				entry.account_hash.as_str(),
+				entry.owner_hash.as_str(),
+				entry.album_hash.as_str(),
+				entry.file_name.as_str(),
+			)
+		})
+		.collect::<HashSet<_>>();
+	source
+		.iter()
+		.filter(|entry| {
+			!migrated.contains(&(
+				entry.account_hash.as_str(),
+				entry.owner_hash.as_str(),
+				entry.album_hash.as_str(),
+				entry.file_name.as_str(),
+			))
+		})
+		.cloned()
+		.collect()
+}
+
+fn staged_retirement_batch(
+	source: &[AlbumRecordEntry],
+	partition: &[AlbumRecordEntry],
+	account_hash: &str,
+	owner_hash: &str,
+	limit: usize,
+) -> Vec<AlbumRecordEntry> {
+	source
+		.iter()
+		.filter(|source| {
+			source.account_hash == account_hash
+				&& !source.owner_hash.is_empty()
+				&& source.owner_hash == owner_hash
+				&& partition.iter().any(|entry| {
+					entry.album_hash == source.album_hash
+						&& entry.file_name == source.file_name
+				})
+		})
+		.take(limit)
+		.cloned()
+		.collect()
+}
+
+fn migration_epoch_matches(operation_epoch: u64, current_epoch: u64) -> bool {
+	operation_epoch == current_epoch
+}
+
+fn migrate_record_partition(
+	root: &Path,
+	account_hash: &str,
+	owner_hash: &str,
+	operation_epoch: u64,
+	key: &[u8; 32],
+) -> Result<AlbumRecordPartitionIndex, AppError> {
+	let started = std::time::Instant::now();
+	let legacy_count =
+		load_json_index::<AlbumRecordIndex>(root, RECORD_INDEX_FILE)
+			.map(|index| index.entries.len())
+			.unwrap_or(0);
+	let result = migrate_record_partition_inner(
+		root,
+		account_hash,
+		owner_hash,
+		operation_epoch,
+		key,
+	);
+	tracing::info!(
+		source_schema = 1_u32,
+		destination_schema = RECORD_INDEX_SCHEMA_VERSION,
+		record_count = legacy_count,
+		duration_ms = started.elapsed().as_millis() as u64,
+		outcome = if result.is_ok() { "complete" } else { "failed" },
+		"album history migration"
+	);
+	result
+}
+
+fn migrate_record_partition_inner(
+	root: &Path,
+	account_hash: &str,
+	owner_hash: &str,
+	operation_epoch: u64,
+	key: &[u8; 32],
+) -> Result<AlbumRecordPartitionIndex, AppError> {
+	if !migration_epoch_matches(
+		operation_epoch,
+		CACHE_EPOCH.load(Ordering::Acquire),
+	) {
+		return Err(AppError::RequestCancelled);
+	}
+	let mut legacy: AlbumRecordIndex =
+		load_json_index(root, RECORD_INDEX_FILE)?;
+	let mut partition =
+		load_record_partition_index(root, account_hash, owner_hash, key)?;
+	// A prior run may have durably staged the partition and then stopped before
+	// retiring the source index. Finish that retirement first, still bounded.
+	let already_staged = staged_retirement_batch(
+		&legacy.entries,
+		&partition.entries,
+		account_hash,
+		owner_hash,
+		RECORD_MIGRATION_BATCH_SIZE,
+	);
+	if !already_staged.is_empty() {
+		let verified = already_staged.iter().all(|entry| {
+			read_record(root, entry).is_ok_and(|record| {
+				record_matches_index_identity(&record, entry)
+			})
+		});
+		if !verified {
+			return Err(cache_error(
+				"album history migration verification failed",
+			));
+		}
+		if !migration_epoch_matches(
+			operation_epoch,
+			CACHE_EPOCH.load(Ordering::Acquire),
+		) {
+			return Err(AppError::RequestCancelled);
+		}
+		legacy.entries =
+			retire_migrated_entries(&legacy.entries, &already_staged, true);
+		save_json_index(root, RECORD_INDEX_FILE, &legacy)?;
+		return Ok(partition);
+	}
+	let staged = migration_batch(
+		&legacy.entries,
+		&partition.entries,
+		account_hash,
+		owner_hash,
+		RECORD_MIGRATION_BATCH_SIZE,
+	);
+	if staged.is_empty() {
+		return Ok(partition);
+	}
+	partition.entries.extend(staged.iter().cloned());
+	partition.epoch = partition.epoch.saturating_add(1);
+	save_record_partition_index(
+		root,
+		account_hash,
+		owner_hash,
+		&partition,
+		key,
+	)?;
+
+	let durable =
+		load_record_partition_index(root, account_hash, owner_hash, key)?;
+	let verified = staged.iter().all(|staged_entry| {
+		durable.entries.iter().any(|entry| {
+			entry.account_hash == staged_entry.account_hash
+				&& entry.owner_hash == staged_entry.owner_hash
+				&& entry.album_hash == staged_entry.album_hash
+				&& entry.file_name == staged_entry.file_name
+				&& entry.last_accessed_ms == staged_entry.last_accessed_ms
+				&& entry.history_order == staged_entry.history_order
+		}) && read_record(root, staged_entry).is_ok_and(|record| {
+			record_matches_index_identity(&record, staged_entry)
+		})
+	});
+	if !verified
+		|| !migration_epoch_matches(
+			operation_epoch,
+			CACHE_EPOCH.load(Ordering::Acquire),
+		) {
+		partition.entries =
+			retire_migrated_entries(&partition.entries, &staged, true);
+		let _ = save_record_partition_index(
+			root,
+			account_hash,
+			owner_hash,
+			&partition,
+			key,
+		);
+		return Err(if verified {
+			AppError::RequestCancelled
+		} else {
+			cache_error("album history migration verification failed")
+		});
+	}
+	legacy.entries = retire_migrated_entries(&legacy.entries, &staged, true);
+	save_json_index(root, RECORD_INDEX_FILE, &legacy)?;
+	Ok(partition)
+}
+
+fn merged_record_entries(
+	root: &Path,
+	partition: AlbumRecordPartitionIndex,
+	account_hash: &str,
+	owner_hash: &str,
+) -> Result<Vec<AlbumRecordEntry>, AppError> {
+	let legacy: AlbumRecordIndex = load_json_index(root, RECORD_INDEX_FILE)?;
+	let mut entries = partition.entries;
+	let existing = entries
+		.iter()
+		.map(|entry| entry.album_hash.clone())
+		.collect::<HashSet<_>>();
+	entries.extend(legacy.entries.into_iter().filter(|entry| {
+		entry.account_hash == account_hash
+			&& entry.owner_hash == owner_hash
+			&& !existing.contains(&entry.album_hash)
+	}));
+	Ok(entries)
 }
 
 fn history_order_for_record(
@@ -1517,6 +2173,249 @@ mod tests {
 				.collect::<Vec<_>>(),
 			vec!["album-0", "album-1", "album-2"]
 		);
+	}
+
+	#[test]
+	fn record_partitions_isolate_colliding_accounts_and_owners() {
+		let root = PathBuf::from("/cache");
+		assert_ne!(
+			record_partition_index_path(&root, "account-a", "owner"),
+			record_partition_index_path(&root, "account-b", "owner")
+		);
+		assert_ne!(
+			record_partition_index_path(&root, "account-a", "owner-a"),
+			record_partition_index_path(&root, "account-a", "owner-b")
+		);
+		assert_eq!(
+			AlbumRecordPartitionIndex::default().schema_version,
+			RECORD_INDEX_SCHEMA_VERSION
+		);
+	}
+
+	#[test]
+	fn partition_index_persists_explicit_schema_and_composite_scope() {
+		let root = temp_dir();
+		let key = [41_u8; 32];
+		let entry = AlbumRecordEntry {
+			account_hash: "account".into(),
+			owner_hash: "owner".into(),
+			album_hash: "album".into(),
+			file_name: "record.ogar".into(),
+			last_accessed_ms: 1,
+			history_order: None,
+		};
+		let index = AlbumRecordPartitionIndex {
+			schema_version: RECORD_INDEX_SCHEMA_VERSION,
+			epoch: 4,
+			entries: vec![entry.clone()],
+		};
+		save_record_partition_index(&root, "account", "owner", &index, &key)
+			.unwrap();
+		let path = record_partition_index_path(&root, "account", "owner");
+		assert!(path.is_file());
+		let encrypted = fs::read(&path).unwrap();
+		assert_eq!(&encrypted[..RECORD_INDEX_MAGIC.len()], RECORD_INDEX_MAGIC);
+		assert_ne!(encrypted, serde_json::to_vec(&index).unwrap());
+		let loaded =
+			load_record_partition_index(&root, "account", "owner", &key)
+				.unwrap();
+		assert_eq!(loaded.schema_version, RECORD_INDEX_SCHEMA_VERSION);
+		assert_eq!(loaded.epoch, 4);
+		assert_eq!(loaded.entries, vec![entry]);
+		assert!(
+			load_record_partition_index(&root, "account", "other", &key,)
+				.unwrap()
+				.entries
+				.is_empty()
+		);
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn stateless_cursor_is_integrity_protected_and_scope_bound() {
+		let key = [31_u8; 32];
+		let entry = AlbumRecordEntry {
+			account_hash: "account".into(),
+			owner_hash: "owner".into(),
+			album_hash: "album".into(),
+			file_name: "record.ogar".into(),
+			last_accessed_ms: 123,
+			history_order: Some(7),
+		};
+		let cursor =
+			encode_record_cursor(&key, "account", "owner", 9, &entry).unwrap();
+		let decoded =
+			decode_record_cursor(&key, "account", "owner", &cursor).unwrap();
+		assert_eq!(decoded.epoch, 9);
+		assert_eq!(decoded.album_hash, "album");
+		assert!(
+			decode_record_cursor(&key, "account", "other", &cursor).is_err()
+		);
+		let mut tampered = cursor.into_bytes();
+		let last = tampered.len() - 1;
+		tampered[last] = if tampered[last] == b'A' { b'B' } else { b'A' };
+		assert!(decode_record_cursor(
+			&key,
+			"account",
+			"owner",
+			std::str::from_utf8(&tampered).unwrap()
+		)
+		.is_err());
+		assert!(record_cursor_epoch_is_current(&decoded, 9).is_ok());
+		assert!(record_cursor_epoch_is_current(&decoded, 10).is_err());
+	}
+
+	#[test]
+	fn migrated_record_must_match_complete_authoritative_index_identity() {
+		let entry = AlbumRecordEntry {
+			account_hash: identifier_hash("7"),
+			owner_hash: identifier_hash("42"),
+			album_hash: identifier_hash("9"),
+			file_name: "record.ogar".into(),
+			last_accessed_ms: 123,
+			history_order: Some(4),
+		};
+		let canonical = serde_json::json!({
+			"version": 2,
+			"albumId": 9,
+			"ownerProfileId": 42,
+			"identity": {
+				"accountProfileId": 7,
+				"ownerProfileId": 42,
+				"albumId": 9
+			},
+			"membership": {
+				"isCurrentlyShared": false,
+				"lastListedAt": 123,
+				"unavailableReason": "unshared"
+			},
+			"currentSnapshot": null,
+			"retainedItems": [],
+			"historyOrder": { "source": "beta4", "sequence": 4 },
+			"expirationType": null,
+			"expiresAt": null,
+			"access": { "status": "unknown", "lastValidatedAt": null },
+			"album": {
+				"albumId": 9,
+				"hasUnseenContent": false,
+				"albumName": null,
+				"profileId": 42,
+				"albumViewable": false,
+				"sharedCount": 0,
+				"createdAt": "2026-01-01T00:00:00Z",
+				"updatedAt": "2026-01-01T00:00:00Z",
+				"content": []
+			},
+			"media": [],
+			"lastAccessedAt": 123
+		});
+		assert!(record_matches_index_identity(&canonical, &entry));
+		let mut wrong_owner = canonical.clone();
+		wrong_owner["identity"]["ownerProfileId"] = 99.into();
+		assert!(!record_matches_index_identity(&wrong_owner, &entry));
+		let mut wrong_metadata_owner = canonical.clone();
+		wrong_metadata_owner["album"]["profileId"] = 99.into();
+		assert!(!record_matches_index_identity(
+			&wrong_metadata_owner,
+			&entry
+		));
+		let mut noncanonical_account = canonical.clone();
+		noncanonical_account["identity"]["accountProfileId"] = "7".into();
+		assert!(!record_matches_index_identity(
+			&noncanonical_account,
+			&entry
+		));
+		let mut incomplete = canonical;
+		incomplete.as_object_mut().unwrap().remove("retainedItems");
+		assert!(!record_matches_index_identity(&incomplete, &entry));
+	}
+
+	#[test]
+	fn ten_thousand_records_page_stably_without_full_record_hydration() {
+		let entries = (0..10_000)
+			.map(|index| AlbumRecordEntry {
+				account_hash: "account".into(),
+				owner_hash: "owner".into(),
+				album_hash: format!("album-{index:05}"),
+				file_name: format!("record-{index:05}.ogar"),
+				last_accessed_ms: 10_000 - index,
+				history_order: Some(index),
+			})
+			.collect::<Vec<_>>();
+		let mut cursor = None;
+		let mut seen = Vec::new();
+		loop {
+			let page =
+				page_record_entries(&entries, cursor.as_ref(), 60).unwrap();
+			seen.extend(
+				page.entries.iter().map(|entry| entry.album_hash.clone()),
+			);
+			cursor = page.next;
+			if cursor.is_none() {
+				break;
+			}
+		}
+		assert_eq!(seen.len(), 10_000);
+		assert_eq!(seen[0], "album-00000");
+		assert_eq!(seen[9_999], "album-09999");
+	}
+
+	#[test]
+	fn bounded_migration_keeps_source_entries_until_verified_retirement() {
+		let source = (0..125)
+			.map(|index| AlbumRecordEntry {
+				account_hash: "account".into(),
+				owner_hash: "owner".into(),
+				album_hash: format!("album-{index}"),
+				file_name: format!("record-{index}.ogar"),
+				last_accessed_ms: index,
+				history_order: Some(index),
+			})
+			.collect::<Vec<_>>();
+		let staged = migration_batch(&source, &[], "account", "owner", 60);
+		assert_eq!(staged.len(), 60);
+		let interrupted_source =
+			retire_migrated_entries(&source, &staged, false);
+		assert_eq!(interrupted_source.len(), 125);
+		let retired_source = retire_migrated_entries(&source, &staged, true);
+		assert_eq!(retired_source.len(), 65);
+		let restaged =
+			migration_batch(&source, &staged, "account", "owner", 60);
+		assert_eq!(restaged.len(), 60);
+		assert!(restaged.iter().all(|entry| !staged
+			.iter()
+			.any(|old| old.album_hash == entry.album_hash)));
+		let resumable_retirement =
+			staged_retirement_batch(&source, &staged, "account", "owner", 60);
+		assert_eq!(resumable_retirement, staged);
+		assert_eq!(
+			retire_migrated_entries(&source, &resumable_retirement, true,)
+				.len(),
+			65
+		);
+	}
+
+	#[test]
+	fn migration_uses_composite_scope_and_clear_epoch_fence() {
+		let collision = |account: &str, owner: &str| AlbumRecordEntry {
+			account_hash: account.into(),
+			owner_hash: owner.into(),
+			album_hash: "same-album".into(),
+			file_name: format!("{account}-{owner}.ogar"),
+			last_accessed_ms: 1,
+			history_order: None,
+		};
+		let source = vec![
+			collision("account-a", "owner-a"),
+			collision("account-a", "owner-b"),
+			collision("account-b", "owner-a"),
+			collision("account-a", ""),
+		];
+		let staged = migration_batch(&source, &[], "account-a", "owner-a", 60);
+		assert_eq!(staged.len(), 1);
+		assert_eq!(staged[0].file_name, "account-a-owner-a.ogar");
+		assert!(migration_epoch_matches(7, 7));
+		assert!(!migration_epoch_matches(7, 8));
 	}
 
 	#[test]

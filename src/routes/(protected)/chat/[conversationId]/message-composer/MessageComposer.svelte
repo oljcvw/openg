@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { untrack } from "svelte";
+
 	import { showErrorToast } from "$lib/api/error";
 	import {
 		filterSavedPhrases,
@@ -12,6 +14,9 @@
 		previewFromMessage,
 		previewLabel,
 	} from "$lib/model/messaging/messages";
+	import { navigationMemory } from "$lib/navigation/navigation-memory";
+	import type { AccountSessionSnapshot } from "$lib/api/account-caches";
+	import type { SendOwnershipTransfer } from "../conversation-state.svelte";
 	import ComposerAttachments from "./attachments/ComposerAttachments.svelte";
 	import ComposerCamera from "./ComposerCamera.svelte";
 	import ComposerSubmitButton from "./ComposerSubmitButton.svelte";
@@ -26,22 +31,52 @@
 		replyTarget,
 		otherName,
 		onCancelReply,
+		conversationId,
+		accountSession,
 		height = $bindable(0),
 	}: {
-		onSend: (params: Message) => void | Promise<void>;
+		onSend: (params: Message) => Promise<SendOwnershipTransfer>;
 		disabled: boolean;
 		accountProfileId: number;
+		conversationId: string;
+		accountSession: AccountSessionSnapshot;
 		replyTarget?: ApiResponseMessage | null;
 		otherName?: string | null;
 		onCancelReply?: () => void;
 		height?: number;
 	} = $props();
 
+	let draftOwnerKey = $state("");
 	let textContent = $state("");
 	let form: HTMLFormElement | null = $state(null);
 	let savedPhrases: SavedPhrase[] = $state([]);
 	let savedPhrasesAccountId: number | null = $state(null);
 	let savedPhrasesGeneration = 0;
+
+	$effect(() => {
+		const id = conversationId;
+		const session = accountSession;
+		const nextOwnerKey = `${session.generation}:${id}`;
+		untrack(() => {
+			if (nextOwnerKey === draftOwnerKey) return;
+			draftOwnerKey = nextOwnerKey;
+			textContent = navigationMemory.getDetailSession(id, session).draftText;
+		});
+	});
+
+	$effect(() => {
+		const id = conversationId;
+		const session = accountSession;
+		const ownerKey = `${session.generation}:${id}`;
+		const text = textContent;
+		if (ownerKey !== draftOwnerKey) return;
+		const draft = navigationMemory.getDetailSession(id, session);
+		navigationMemory.updateDraft(
+			id,
+			{ text, replyTargetMessageId: draft.replyTargetMessageId },
+			session,
+		);
+	});
 
 	async function loadSavedPhrases(profileId: number, generation: number) {
 		try {
@@ -88,7 +123,9 @@
 		const text = textContent.trim();
 		if (text === "") return;
 		try {
-			await onSend({ type: "Text", body: { text } });
+			const accepted = await onSend({ type: "Text", body: { text } });
+			if (accepted?.kind !== "accepted") return;
+			navigationMemory.clearDraft(conversationId, accountSession);
 			textContent = "";
 		} catch (error) {
 			console.error(error);

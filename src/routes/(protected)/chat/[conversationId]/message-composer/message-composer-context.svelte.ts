@@ -7,7 +7,7 @@ export const [getMessageComposerContext, setMessageComposerContext] =
 		() => {
 			accountProfileId: number;
 			disabled: boolean;
-			sendMessage: (message: Message) => void | Promise<void>;
+			sendMessage: (message: Message) => unknown | Promise<unknown>;
 			setText: (text: string) => void;
 		}
 	>();

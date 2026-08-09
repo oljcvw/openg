@@ -12,6 +12,10 @@
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { Badge } from "$lib/components/ui/badge";
 	import { tabsListVariants } from "$lib/components/ui/tabs";
+	import {
+		activateAppRoot,
+		interceptAppNavigationClick,
+	} from "$lib/navigation/app-navigation";
 	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
 
 	const myProfile = getMyProfile();
@@ -42,11 +46,8 @@
 		<a
 			href="/"
 			data-active={page.route.id === "/(protected)/(navbar)/(root)"}
-			onclick={(e) => {
-				if (page.route.id === "/(protected)/(navbar)/(root)") {
-					e.preventDefault();
-				}
-			}}
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () => activateAppRoot("browse"))}
 		>
 			<DotsNineIcon weight="fill" />
 			Browse
@@ -54,21 +55,27 @@
 		<a
 			href="/right-now"
 			data-active={page.route.id === "/(protected)/(navbar)/right-now"}
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () => activateAppRoot("rightNow"))}
 		>
 			<DropIcon weight="fill" />
 			Right Now
 		</a>
 		<a
-			href="/interest"
+			href="/interest/taps"
 			data-active={page.route.id?.startsWith("/(protected)/(navbar)/interest")}
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () => activateAppRoot("interest"))}
 		>
 			<FireIcon weight="fill" />
 			Interest
 		</a>
 		<a
 			href="/chat"
-			data-active={page.route.id === "/(protected)/chat" ||
+			data-active={page.route.id?.startsWith("/(protected)/chat") ||
 				page.route.id?.startsWith("/(protected)/albums")}
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () => activateAppRoot("inbox"))}
 		>
 			<ChatCircleIcon weight="fill" />
 			Inbox
@@ -79,13 +86,17 @@
 	</div>
 	<a
 		href="/settings"
+		onclick={(event) =>
+			interceptAppNavigationClick(event, () => activateAppRoot("settings"))}
 		class={[
 			"flex size-[calc(var(--nav-height)-0.5rem)] shrink-0 rounded-full border bg-muted p-1",
 			{
-				"border-2 border-accent":
-					page.route.id === "/(protected)/(navbar)/settings/(me)",
-				"border-border":
-					page.route.id !== "/(protected)/(navbar)/settings/(me)",
+				"border-2 border-accent": page.route.id?.startsWith(
+					"/(protected)/(navbar)/settings",
+				),
+				"border-border": !page.route.id?.startsWith(
+					"/(protected)/(navbar)/settings",
+				),
 			},
 		]}
 	>

@@ -49,6 +49,13 @@ const failedMessageSchema = z.object({
 	retryCount: z.number().int().nonnegative().default(0),
 });
 
+const messageSegmentMetadataSchema = z.object({
+	segmentId: z.string(),
+	cursor: z.string().nullable(),
+	nextCursor: z.string().nullable(),
+	messageIds: z.array(z.string()),
+});
+
 const cachedConversationSchema = z.object({
 	version: z.union([z.literal(1), z.literal(2)]).default(2),
 	messages: z.array(apiResponseMessageSchema).default([]),
@@ -56,6 +63,7 @@ const cachedConversationSchema = z.object({
 	profile: conversationProfileSchema,
 	pageKey: z.string().nullable(),
 	lastReadTimestamp: z.number().nullable(),
+	segments: z.array(messageSegmentMetadataSchema).default([]),
 	updatedAt: z.number().nonnegative(),
 });
 
@@ -102,6 +110,29 @@ export function pruneConfirmedMessages(
 		.filter((message) => message.timestamp >= cutoff)
 		.toSorted((left, right) => right.timestamp - left.timestamp)
 		.slice(0, MAX_CONFIRMED_MESSAGES);
+}
+
+export function mergeConfirmedMessages(
+	existing: readonly ApiResponseMessage[],
+	incoming: readonly ApiResponseMessage[],
+	removedMessageIds: ReadonlySet<string> = new Set(),
+): ApiResponseMessage[] {
+	const byId = new Map<string, ApiResponseMessage>();
+	for (const message of existing) {
+		if (!removedMessageIds.has(message.messageId)) {
+			byId.set(message.messageId, message);
+		}
+	}
+	for (const message of incoming) {
+		if (!removedMessageIds.has(message.messageId)) {
+			byId.set(message.messageId, message);
+		}
+	}
+	return [...byId.values()].toSorted(
+		(left, right) =>
+			right.timestamp - left.timestamp ||
+			left.messageId.localeCompare(right.messageId),
+	);
 }
 
 export async function readCachedInbox(

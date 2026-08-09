@@ -353,17 +353,6 @@ pub(super) fn read_encrypted_range(
 	Ok(output)
 }
 
-pub(super) fn encrypted_plaintext_length(
-	path: &Path,
-	magic: &[u8; 8],
-) -> Result<u64, AppError> {
-	let mut reader = BufReader::new(
-		File::open(path)
-			.map_err(|_| media_error("cache file is unavailable"))?,
-	);
-	read_header(&mut reader, magic).map(|(_, total)| total)
-}
-
 fn read_header(
 	reader: &mut impl Read,
 	magic: &[u8; 8],

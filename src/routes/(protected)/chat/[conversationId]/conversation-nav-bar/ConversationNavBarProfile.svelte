@@ -5,6 +5,10 @@
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as Avatar from "$lib/components/ui/avatar";
 	import * as Card from "$lib/components/ui/card";
+	import {
+		interceptAppNavigationClick,
+		replaceAppDetail,
+	} from "$lib/navigation/app-navigation";
 	import type { ConversationProfile } from "../conversation-state.svelte";
 
 	let {
@@ -14,7 +18,14 @@
 	} = $props();
 </script>
 
-<a href="/profile/{profile.profileId}" class="min-w-0 flex-1 py-4 ps-0 pe-4">
+<a
+	href="/profile/{profile.profileId}"
+	onclick={(event) =>
+		interceptAppNavigationClick(event, () =>
+			replaceAppDetail(`/profile/${profile.profileId}`),
+		)}
+	class="min-w-0 flex-1 py-4 ps-0 pe-4"
+>
 	<Card.Header class="flex items-center gap-4 px-0">
 		<Avatar.Root class="size-avatar after:rounded-full">
 			<UserAvatar

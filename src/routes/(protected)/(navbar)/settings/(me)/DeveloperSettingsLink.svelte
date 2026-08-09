@@ -2,11 +2,22 @@
 	import { CaretRightIcon, CodeIcon } from "phosphor-svelte";
 
 	import * as Item from "$lib/components/ui/item";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 </script>
 
 <Item.Root variant="outline">
 	{#snippet child({ props })}
-		<a href="/settings/developer" {...props}>
+		<a
+			href="/settings/developer"
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () =>
+					openAppDetail("/settings/developer"),
+				)}
+			{...props}
+		>
 			<Item.Media>
 				<CodeIcon weight="bold" class="size-5" />
 			</Item.Media>

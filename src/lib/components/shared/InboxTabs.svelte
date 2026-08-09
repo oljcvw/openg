@@ -2,6 +2,10 @@
 	import { page } from "$app/state";
 
 	import { tabsListVariants } from "$lib/components/ui/tabs";
+	import {
+		activateAppRootRoute,
+		interceptAppNavigationClick,
+	} from "$lib/navigation/app-navigation";
 
 	let {
 		class: className,
@@ -19,6 +23,8 @@
 		href="/chat"
 		data-active={!albumsActive}
 		aria-current={!albumsActive ? "page" : undefined}
+		onclick={(event) =>
+			interceptAppNavigationClick(event, () => activateAppRootRoute("/chat"))}
 	>
 		Chats
 	</a>
@@ -26,6 +32,8 @@
 		href="/albums"
 		data-active={albumsActive}
 		aria-current={albumsActive ? "page" : undefined}
+		onclick={(event) =>
+			interceptAppNavigationClick(event, () => activateAppRootRoute("/albums"))}
 	>
 		Albums
 	</a>

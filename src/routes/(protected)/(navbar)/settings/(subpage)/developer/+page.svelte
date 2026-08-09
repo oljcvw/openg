@@ -195,6 +195,30 @@
 
 <h2>Search and sync</h2>
 <DeveloperNumberSetting
+	setting="profileCacheMaxEntries"
+	title="Profile cache size"
+	description="Maximum fresh profile records retained in memory for the active account."
+	min={100}
+	max={2000}
+	unit="profiles"
+/>
+<DeveloperNumberSetting
+	setting="conversationSearchConcurrency"
+	title="Conversation search concurrency"
+	description="Maximum cached conversations read and indexed at the same time."
+	min={1}
+	max={6}
+	unit="conversations"
+/>
+<DeveloperNumberSetting
+	setting="albumShareDiscoveryConcurrency"
+	title="Album-share discovery concurrency"
+	description="Maximum album-share lookups running together for the active recipient."
+	min={1}
+	max={8}
+	unit="albums"
+/>
+<DeveloperNumberSetting
 	setting="conversationSearchDebounceMs"
 	title="Conversation search debounce"
 	description="Delay before searching cached message text after the inbox search query changes."

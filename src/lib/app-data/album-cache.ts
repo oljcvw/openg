@@ -283,16 +283,160 @@ export function compareAlbumHistoryOrder(
 	);
 }
 
-const historyCursors = new Map<
-	string,
-	{
-		accountProfileId: number;
-		ownerProfileId: number;
-		offset: number;
-		seenKeys?: string[];
+type AlbumHistoryScope = {
+	accountProfileId: number;
+	ownerProfileId: number;
+};
+
+function albumHistoryOwnerScopeKey(
+	accountProfileId: number,
+	ownerProfileId: number,
+): string {
+	return JSON.stringify([accountProfileId, ownerProfileId]);
+}
+
+/** A per-owner LRU. Values are copied so consumers cannot retain cache storage. */
+export class AlbumHistoryPageCache<T> {
+	readonly #maximumPagesPerOwner: number;
+	readonly #owners = new Map<string, Map<string, T[]>>();
+
+	constructor(maximumPagesPerOwner = 3) {
+		this.#maximumPagesPerOwner = Math.max(1, maximumPagesPerOwner);
 	}
->();
-const nativeHistorySeenKeys = new Map<string, Set<string>>();
+
+	set(
+		accountProfileId: number,
+		ownerProfileId: number,
+		cursor: string | null,
+		value: readonly T[],
+	): void {
+		const ownerKey = albumHistoryOwnerScopeKey(
+			accountProfileId,
+			ownerProfileId,
+		);
+		const pages = this.#owners.get(ownerKey) ?? new Map<string, T[]>();
+		const pageKey = cursor ?? "";
+		pages.delete(pageKey);
+		pages.set(pageKey, [...value]);
+		while (pages.size > this.#maximumPagesPerOwner) {
+			const oldest = pages.keys().next().value;
+			if (oldest === undefined) break;
+			pages.delete(oldest);
+		}
+		this.#owners.set(ownerKey, pages);
+	}
+
+	get(
+		accountProfileId: number,
+		ownerProfileId: number,
+		cursor: string | null,
+	): T[] | null {
+		const pages = this.#owners.get(
+			albumHistoryOwnerScopeKey(accountProfileId, ownerProfileId),
+		);
+		const pageKey = cursor ?? "";
+		const value = pages?.get(pageKey);
+		if (value === undefined || pages === undefined) return null;
+		pages.delete(pageKey);
+		pages.set(pageKey, value);
+		return [...value];
+	}
+
+	closeOwner(accountProfileId: number, ownerProfileId: number): void {
+		this.#owners.delete(
+			albumHistoryOwnerScopeKey(accountProfileId, ownerProfileId),
+		);
+	}
+
+	clear(): void {
+		this.#owners.clear();
+	}
+}
+
+export class AlbumHistoryCursorRegistry<T> {
+	readonly #capacity: number;
+	readonly #ttlMs: number;
+	readonly #now: () => number;
+	readonly #entries = new Map<
+		string,
+		AlbumHistoryScope & { expiresAt: number; value: T }
+	>();
+
+	constructor(options: {
+		capacity: number;
+		ttlMs: number;
+		now?: () => number;
+	}) {
+		this.#capacity = Math.max(1, options.capacity);
+		this.#ttlMs = Math.max(1, options.ttlMs);
+		this.#now = options.now ?? Date.now;
+	}
+
+	set(
+		token: string,
+		accountProfileId: number,
+		ownerProfileId: number,
+		value: T,
+	): void {
+		this.#prune();
+		this.#entries.delete(token);
+		this.#entries.set(token, {
+			accountProfileId,
+			ownerProfileId,
+			expiresAt: this.#now() + this.#ttlMs,
+			value,
+		});
+		while (this.#entries.size > this.#capacity) {
+			const oldest = this.#entries.keys().next().value;
+			if (oldest === undefined) break;
+			this.#entries.delete(oldest);
+		}
+	}
+
+	take(
+		token: string,
+		accountProfileId: number,
+		ownerProfileId: number,
+	): T | null {
+		this.#prune();
+		const entry = this.#entries.get(token);
+		if (
+			entry === undefined ||
+			entry.accountProfileId !== accountProfileId ||
+			entry.ownerProfileId !== ownerProfileId
+		)
+			return null;
+		this.#entries.delete(token);
+		return entry.value;
+	}
+
+	closeOwner(accountProfileId: number, ownerProfileId: number): void {
+		for (const [token, entry] of this.#entries) {
+			if (
+				entry.accountProfileId === accountProfileId &&
+				entry.ownerProfileId === ownerProfileId
+			)
+				this.#entries.delete(token);
+		}
+	}
+
+	clear(): void {
+		this.#entries.clear();
+	}
+
+	#prune(): void {
+		const now = this.#now();
+		for (const [token, entry] of this.#entries) {
+			if (entry.expiresAt <= now) this.#entries.delete(token);
+		}
+	}
+}
+
+const historyPages = new AlbumHistoryPageCache<CachedAlbumRecord>(3);
+const historyPageNextCursors = new AlbumHistoryPageCache<string | null>(3);
+const historyCursors = new AlbumHistoryCursorRegistry<{
+	offset: number;
+}>({ capacity: 32, ttlMs: 5 * 60_000 });
 const genericAlbumMigrationProgress = new Map<
 	string,
 	{
@@ -448,8 +592,13 @@ function notify(
 	record: CachedAlbumRecord | null,
 ): void {
 	const key = albumIdentityKey(identity);
+	const activeListeners = listeners.get(key);
+	if (activeListeners === undefined || activeListeners.size === 0) {
+		records.delete(key);
+		return;
+	}
 	records.set(key, record);
-	for (const listener of listeners.get(key) ?? []) listener(record);
+	for (const listener of activeListeners) listener(record);
 }
 
 export function subscribeCachedAlbum(
@@ -463,15 +612,21 @@ export function subscribeCachedAlbum(
 	listeners.set(key, albumListeners);
 	if (records.has(key)) listener(records.get(key) ?? null);
 	else {
-		observeBackgroundTask(readCachedAlbum(identity).then(listener), {
-			category: "cache_recovery",
-			component: "album",
-			code: "album_cache_hydration_failed",
-		});
+		observeBackgroundTask(
+			readCachedAlbum(identity).then(() => undefined),
+			{
+				category: "cache_recovery",
+				component: "album",
+				code: "album_cache_hydration_failed",
+			},
+		);
 	}
 	return () => {
 		albumListeners.delete(listener);
-		if (albumListeners.size === 0) listeners.delete(key);
+		if (albumListeners.size === 0) {
+			listeners.delete(key);
+			records.delete(key);
+		}
 	};
 }
 
@@ -731,8 +886,6 @@ export async function listCachedAlbumsByOwner(
 			usable.map((record) => [albumIdentityKey(record.identity), record]),
 		).values(),
 	];
-	for (const record of unique)
-		records.set(albumIdentityKey(record.identity), record);
 	const session = getAccountSessionSnapshot();
 	const processedKeys: string[] = [];
 	let processedNextHistorySequence = migrationProgress.nextHistorySequence;
@@ -830,71 +983,52 @@ export async function listCachedAlbumHistoryPage(
 	ownerProfileId: number,
 	cursor: string | null = null,
 ): Promise<{ items: CachedAlbumRecord[]; nextCursor: string | null }> {
-	const accountProfileId = getAccountSessionSnapshot().accountId;
+	const session = getAccountSessionSnapshot();
+	const accountProfileId = session.accountId;
 	if (accountProfileId === null) return { items: [], nextCursor: null };
-	const localCursor = cursor === null ? null : historyCursors.get(cursor);
+	const cachedPage = historyPages.get(accountProfileId, ownerProfileId, cursor);
+	const cachedNextCursor = historyPageNextCursors.get(
+		accountProfileId,
+		ownerProfileId,
+		cursor,
+	)?.[0];
+	if (cachedPage !== null && cachedNextCursor !== undefined)
+		return { items: cachedPage, nextCursor: cachedNextCursor };
+	const localCursor =
+		cursor === null
+			? null
+			: historyCursors.take(cursor, accountProfileId, ownerProfileId);
 	if (localCursor) {
-		if (
-			localCursor.accountProfileId !== accountProfileId ||
-			localCursor.ownerProfileId !== ownerProfileId
-		)
+		const ownerRecords = await listCachedAlbumsByOwner(ownerProfileId);
+		if (!isAccountSessionCurrent(session))
 			return { items: [], nextCursor: null };
-		const records = await listCachedAlbumsByOwner(ownerProfileId);
-		historyCursors.delete(cursor!);
 		const migrationPending =
 			albumMigrationContinuation.get(
 				`${accountProfileId}:${ownerProfileId}`,
 			) === true;
-		if (localCursor.seenKeys) {
-			const seen = new Set(localCursor.seenKeys);
-			const unseen = records.filter(
-				(record) => !seen.has(albumIdentityKey(record.identity)),
-			);
-			const items = unseen.slice(0, ALBUM_HISTORY_PAGE_SIZE);
-			for (const record of items) seen.add(albumIdentityKey(record.identity));
-			if (unseen.length <= items.length && !migrationPending)
-				return { items, nextCursor: null };
-			const nextCursor = crypto.randomUUID();
-			historyCursors.set(nextCursor, {
-				accountProfileId,
-				ownerProfileId,
-				offset: 0,
-				seenKeys: [...seen],
-			});
-			return { items, nextCursor };
-		}
-		const page = pageAlbumHistoryRecords(records, localCursor.offset);
+		const page = pageAlbumHistoryRecords(ownerRecords, localCursor.offset);
 		if (page.nextOffset === null && !migrationPending)
 			return { items: page.items, nextCursor: null };
 		const nextCursor = crypto.randomUUID();
-		historyCursors.set(nextCursor, {
-			accountProfileId,
-			ownerProfileId,
+		historyCursors.set(nextCursor, accountProfileId, ownerProfileId, {
 			offset: page.nextOffset ?? localCursor.offset + page.items.length,
 		});
 		return { items: page.items, nextCursor };
 	}
-	const nativeCursorScope =
-		cursor === null
-			? null
-			: albumHistoryCursorScopeKey(accountProfileId, ownerProfileId, cursor);
-	if (
-		cursor !== null &&
-		nativeCursorScope !== null &&
-		!nativeHistorySeenKeys.has(nativeCursorScope)
-	)
-		return { items: [], nextCursor: null };
 	let compatibleLegacy: CachedAlbumRecord[] | null = null;
 	if (cursor === null) {
 		// Advance one bounded generic beta-4 page on every collection load,
 		// including after the native history has become non-empty.
 		compatibleLegacy = await listCachedAlbumsByOwner(ownerProfileId);
+		if (!isAccountSessionCurrent(session))
+			return { items: [], nextCursor: null };
 	}
 	let nativePage = await pageAlbumRecords({
 		accountId: accountProfileId,
 		ownerProfileId,
 		cursor,
 	});
+	if (!isAccountSessionCurrent(session)) return { items: [], nextCursor: null };
 	if (
 		nativePage !== null &&
 		cursor === null &&
@@ -903,11 +1037,15 @@ export async function listCachedAlbumHistoryPage(
 		// A first-page miss may mean this account still has generic v1 records.
 		// Migrate at most one page, then retry the durable native index.
 		compatibleLegacy ??= await listCachedAlbumsByOwner(ownerProfileId);
+		if (!isAccountSessionCurrent(session))
+			return { items: [], nextCursor: null };
 		nativePage = await pageAlbumRecords({
 			accountId: accountProfileId,
 			ownerProfileId,
 			cursor: null,
 		});
+		if (!isAccountSessionCurrent(session))
+			return { items: [], nextCursor: null };
 		if (nativePage?.records.length === 0 && compatibleLegacy.length > 0)
 			nativePage = null;
 	}
@@ -915,68 +1053,38 @@ export async function listCachedAlbumHistoryPage(
 		const items = nativePage.records.map((record) =>
 			cachedAlbumRecordSchema.parse(record),
 		);
-		for (const record of items)
-			records.set(albumIdentityKey(record.identity), record);
-		const seen =
-			cursor === null
-				? new Set<string>()
-				: (nativeHistorySeenKeys.get(nativeCursorScope!) ?? new Set<string>());
-		if (nativeCursorScope !== null)
-			nativeHistorySeenKeys.delete(nativeCursorScope);
-		for (const record of items) seen.add(albumIdentityKey(record.identity));
-		let nextCursor = nativePage.nextCursor;
-		if (nextCursor !== null)
-			nativeHistorySeenKeys.set(
-				albumHistoryCursorScopeKey(
-					accountProfileId,
-					ownerProfileId,
-					nextCursor,
-				),
-				seen,
-			);
-		if (
-			nextCursor === null &&
-			albumMigrationContinuation.get(
-				`${accountProfileId}:${ownerProfileId}`,
-			) === true
-		) {
-			nextCursor = crypto.randomUUID();
-			historyCursors.set(nextCursor, {
-				accountProfileId,
-				ownerProfileId,
-				offset: 0,
-				seenKeys: [...seen],
-			});
-		}
+		const nextCursor = nativePage.nextCursor;
+		historyPages.set(accountProfileId, ownerProfileId, cursor, items);
+		historyPageNextCursors.set(accountProfileId, ownerProfileId, cursor, [
+			nextCursor,
+		]);
 		return {
 			items,
 			nextCursor,
 		};
 	}
-	const cursorState = cursor === null ? null : historyCursors.get(cursor);
-	if (
-		cursor !== null &&
-		(!cursorState ||
-			cursorState.accountProfileId !== accountProfileId ||
-			cursorState.ownerProfileId !== ownerProfileId)
-	) {
+	if (cursor !== null) {
 		return { items: [], nextCursor: null };
 	}
 	const historyRecords =
 		compatibleLegacy ?? (await listCachedAlbumsByOwner(ownerProfileId));
-	const page = pageAlbumHistoryRecords(
-		historyRecords,
-		cursorState?.offset ?? 0,
-	);
-	if (cursor !== null) historyCursors.delete(cursor);
+	if (!isAccountSessionCurrent(session)) return { items: [], nextCursor: null };
+	const page = pageAlbumHistoryRecords(historyRecords, 0);
 	if (page.nextOffset === null) return { items: page.items, nextCursor: null };
 	const nextCursor = crypto.randomUUID();
-	historyCursors.set(nextCursor, {
-		accountProfileId,
-		ownerProfileId,
+	historyCursors.set(nextCursor, accountProfileId, ownerProfileId, {
 		offset: page.nextOffset,
 	});
 	return { items: page.items, nextCursor };
+}
+
+/** Release owner-scoped retained pages/cursors when a drawer refreshes or closes. */
+export function releaseCachedAlbumHistory(ownerProfileId: number): void {
+	const accountProfileId = getAccountSessionSnapshot().accountId;
+	if (accountProfileId === null) return;
+	historyPages.closeOwner(accountProfileId, ownerProfileId);
+	historyPageNextCursors.closeOwner(accountProfileId, ownerProfileId);
+	historyCursors.closeOwner(accountProfileId, ownerProfileId);
 }
 
 /** Apply only after a complete, successfully parsed shares response. */
@@ -1420,7 +1528,8 @@ export function clearAlbumCacheMemory(): void {
 	queue.length = 0;
 	queued.clear();
 	historyCursors.clear();
-	nativeHistorySeenKeys.clear();
+	historyPages.clear();
+	historyPageNextCursors.clear();
 	genericAlbumMigrationProgress.clear();
 	albumMigrationContinuation.clear();
 	processing = false;

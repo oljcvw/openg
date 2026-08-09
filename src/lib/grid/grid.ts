@@ -1,6 +1,9 @@
-import { registerAccountCache } from "$lib/api/account-caches";
 import { getCascadeV4 } from "$lib/api/browse/grid";
 import { getProfiles } from "$lib/api/users/profiles";
+import {
+	getProfileMemoryRecord,
+	mergeProfileMemoryRecord,
+} from "$lib/app-data/profile-memory-cache";
 import { now } from "$lib/util/clock";
 
 function primaryImageHashes(url: string | null | undefined): string[] | null {
@@ -82,26 +85,13 @@ export async function getGrid(query: Parameters<typeof getCascadeV4>[0]) {
 	};
 }
 
-const PROFILE_CACHE_TTL_MS = 60_000;
-
-const profileCache = new Map<
-	number,
-	{ profile: RenderedGridProfile; updatedAt: number }
->();
-
 export function getCachedProfile(id: number): RenderedGridProfile | null {
-	const cached = profileCache.get(id);
-	if (!cached || now() - cached.updatedAt >= PROFILE_CACHE_TTL_MS) {
-		return null;
-	}
-	return cached.profile;
+	return (getProfileMemoryRecord(id)?.browse as RenderedGridProfile) ?? null;
 }
 
 export function setCachedProfile(profile: RenderedGridProfile): void {
-	profileCache.set(profile.id, { profile, updatedAt: now() });
+	mergeProfileMemoryRecord(profile.id, { browse: profile });
 }
-
-registerAccountCache(() => profileCache.clear());
 
 export async function resolveLazyProfiles(
 	profiles: LazyGridProfile[],

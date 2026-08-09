@@ -1,6 +1,10 @@
 <script lang="ts">
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as Avatar from "$lib/components/ui/avatar";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 	import { getNow, subscribeNow } from "$lib/util/now.svelte";
 
 	let {
@@ -22,6 +26,10 @@
 <a
 	class="relative isolate inline-block rounded-full focus-visible:ring-3 focus-visible:ring-ring/40"
 	href="/profile/{profileId}"
+	onclick={(event) =>
+		interceptAppNavigationClick(event, () =>
+			openAppDetail(`/profile/${profileId}`),
+		)}
 	aria-label="View {displayName ?? 'profile'}"
 >
 	<Avatar.Root class="size-16 *:rounded-full">

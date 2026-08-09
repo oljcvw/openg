@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import FolderOpenIcon from "phosphor-svelte/lib/FolderOpenIcon";
 	import PlusIcon from "phosphor-svelte/lib/PlusIcon";
+	import { tick } from "svelte";
 
 	import { ApiError } from "$lib/api";
+	import { getAccountSessionSnapshot } from "$lib/api/account-caches";
 	import { showErrorToast } from "$lib/api/error";
 	import {
 		createAlbum,
@@ -23,6 +24,18 @@
 		type AlbumStorageLimits,
 		type MyAlbum,
 	} from "$lib/model/messaging/albums";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+		registerRootActivationRefresh,
+	} from "$lib/navigation/app-navigation";
+	import {
+		captureScrollAnchor,
+		captureScrollNeighborhood,
+		navigationMemory,
+		restoreScrollAnchor,
+		ScrollCaptureGate,
+	} from "$lib/navigation/navigation-memory";
 
 	let albums = $state<MyAlbum[] | null>(null);
 	let limits = $state<AlbumStorageLimits | null>(null);
@@ -30,6 +43,10 @@
 	let createOpen = $state(false);
 	let createName = $state("");
 	let creating = $state(false);
+	let container: HTMLDivElement | null = $state(null);
+	let scrollRestored = false;
+	const accountSession = getAccountSessionSnapshot();
+	const captureGate = new ScrollCaptureGate();
 
 	const createNameTooLong = $derived(
 		albumNameByteLength(createName) > ALBUM_NAME_MAX_BYTES,
@@ -54,6 +71,37 @@
 		}
 	}
 
+	$effect(() =>
+		registerRootActivationRefresh("/albums", () =>
+			captureGate.suppressDuring(async () => {
+				navigationMemory.clearSurfaceAnchor("inboxAlbums", accountSession);
+				container?.scrollTo({ top: 0, behavior: "smooth" });
+				await load();
+			}),
+		),
+	);
+
+	$effect(() => {
+		if (scrollRestored || !container || albums === null || error !== null)
+			return;
+		scrollRestored = true;
+		const el = container;
+		const position = navigationMemory.getSurfaceScrollPosition(
+			"inboxAlbums",
+			accountSession,
+		);
+		if (position)
+			void tick().then(() =>
+				restoreScrollAnchor(
+					el,
+					position.anchor,
+					undefined,
+					undefined,
+					position.neighborhood,
+				),
+			);
+	});
+
 	void load();
 
 	async function submitCreate() {
@@ -65,7 +113,7 @@
 			createOpen = false;
 			createName = "";
 			await load();
-			await goto(`/albums/${created.albumId}`);
+			await openAppDetail(`/albums/${created.albumId}`);
 		} catch (err) {
 			console.error(err);
 			const status = err instanceof ApiError ? err.response?.status : null;
@@ -83,7 +131,20 @@
 </script>
 
 <main class="screen-nav-host">
-	<div class="h-full overflow-y-auto overscroll-contain">
+	<div
+		bind:this={container}
+		class="h-full overflow-y-auto overscroll-contain"
+		onscroll={() => {
+			if (!container || !captureGate.canCapture) return;
+			const anchor = captureScrollAnchor(container);
+			navigationMemory.setSurfaceAnchor(
+				"inboxAlbums",
+				anchor,
+				accountSession,
+				captureScrollNeighborhood(container, anchor.itemKey),
+			);
+		}}
+	>
 		<div
 			class="mx-auto flex min-h-overscrollable w-full max-w-200 flex-col gap-4 px-4 pt-4 pb-nav-clear"
 		>
@@ -136,7 +197,12 @@
 					{#each albums as album (album.albumId)}
 						{@const coverUrl = cover(album)}
 						<a
+							data-navigation-item-key={String(album.albumId)}
 							href="/albums/{album.albumId}"
+							onclick={(event) =>
+								interceptAppNavigationClick(event, () =>
+									openAppDetail(`/albums/${album.albumId}`),
+								)}
 							class="group flex min-w-0 flex-col gap-2 rounded-3xl border bg-card p-2 shadow-sm transition-transform active:scale-98"
 						>
 							<div class="aspect-square overflow-hidden rounded-2xl bg-muted">

@@ -1,43 +1,57 @@
 use std::{
-	collections::{HashMap, HashSet},
+	collections::{BTreeMap, HashMap, HashSet},
 	fs,
-	path::{Path, PathBuf},
+	path::{Component, Path, PathBuf},
 	sync::{
 		atomic::{AtomicU64, Ordering},
 		LazyLock,
 	},
 };
 
+use aes_gcm::{
+	aead::{Aead, KeyInit, Payload},
+	Aes256Gcm, Nonce,
+};
 use base64::{
 	engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD},
 	Engine,
 };
+use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
 use tauri::{http, Manager};
 
 use crate::{
 	api::encrypted_media_store::{
-		aad_prefix, cdn_host_allowed, delete_key, encrypted_plaintext_length,
-		identifier_hash, load_key, load_or_create_key, media_error, now_ms,
-		parse_range, protocol_url, random_token, read_encrypted_range,
-		same_media_category, stream_encrypted_atomic, validate_cdn_url,
-		validate_content_type, validate_identifier, write_encrypted_atomic,
+		aad_prefix, cdn_host_allowed, delete_key, identifier_hash, load_key,
+		load_or_create_key, media_error, now_ms, parse_range, protocol_url,
+		random_token, read_encrypted_range, same_media_category,
+		stream_encrypted_atomic, validate_cdn_url, validate_content_type,
+		validate_identifier, write_encrypted_atomic,
 	},
 	error::AppError,
 	storage::AuthStorage,
 };
 
+#[cfg(test)]
+use crate::api::encrypted_media_store::CHUNK_SIZE;
+
 const SCHEME: &str = "direct-media-cache";
 const CACHE_DIR: &str = "direct-media-cache-v1";
 const INDEX_FILE: &str = "history.ogdi";
+const INDEX_SCHEMA_VERSION: u32 = 2;
+const INDEX_V2_DIR: &str = "history-v2";
+const MIGRATION_PARTITION_BATCH: usize = 8;
 const MEDIA_MAGIC: &[u8; 8] = b"OGDMED01";
 const INDEX_MAGIC: &[u8; 8] = b"OGDIDX01";
 const KEY_SERVICE: &str = "open-grind-direct-media-cache";
 const DEFAULT_PAGE_SIZE: usize = 60;
 const MAX_PAGE_SIZE: usize = 60;
 const MAX_SINGLE_MEDIA_BYTES: u64 = 128 * 1024 * 1024;
+const ACCESS_WRITE_INTERVAL_MS: u64 = 60_000;
 static CACHE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 static CACHE_EPOCH: AtomicU64 = AtomicU64::new(0);
+static ACCOUNT_GENERATIONS: LazyLock<std::sync::Mutex<HashMap<String, u64>>> =
+	LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
 static ACTIVE_SCOPES: LazyLock<
 	tokio::sync::Mutex<HashMap<String, ActiveScope>>,
 > = LazyLock::new(|| tokio::sync::Mutex::new(HashMap::new()));
@@ -66,7 +80,7 @@ pub enum CacheAvailability {
 	Evicted,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DirectMediaEntry {
 	account_profile_id: String,
@@ -87,7 +101,7 @@ pub struct DirectMediaEntry {
 	pub last_accessed_ms: u64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct IndexEntry {
 	identity_hash: String,
@@ -101,9 +115,58 @@ struct IndexEntry {
 	cache_token_hash: Option<String>,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 struct AccountIndex {
 	entries: Vec<IndexEntry>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ConversationIndexEnvelope {
+	schema_version: u32,
+	conversation_hash: String,
+	entries: Vec<IndexEntry>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DirectMediaCursor {
+	version: u8,
+	sent_at: u64,
+	identity_hash: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct BatchJournalManifest {
+	accounts: Vec<BatchJournalAccount>,
+	backups: Vec<BatchJournalBackup>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct BatchJournalAccount {
+	account_hash: String,
+	baseline_record_files: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct BatchJournalBackup {
+	target: String,
+	backup: String,
+	existed: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DirectMediaHistoryDelta {
+	account_id: String,
+	conversation_id: String,
+	peer_profile_id: String,
+	message_id: String,
+	media_id: String,
+	kind: String,
+	message_type: String,
+	sent_at: u64,
+	remote_availability: RemoteAvailability,
 }
 
 #[derive(Debug, Serialize)]
@@ -136,9 +199,17 @@ pub struct DirectMediaPresence {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DirectMediaPage {
-	pub items: Vec<DirectMediaEntry>,
+	pub items: Vec<DirectMediaPageEntry>,
 	pub next_cursor: Option<String>,
 	pub total_count: u64,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DirectMediaPageEntry {
+	#[serde(flatten)]
+	entry: DirectMediaEntry,
+	protocol_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -154,6 +225,13 @@ pub struct DirectMediaCacheStats {
 pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 	tauri::plugin::Builder::new("open-grind-direct-media-cache")
 		.setup(|app, _api| {
+			if let Ok(root) = cache_root(app) {
+				if recover_batch_journals(&root).is_err() {
+					tracing::warn!(
+						"direct-media batch recovery was incomplete"
+					);
+				}
+			}
 			if repair_persisted_records(app).is_err() {
 				tracing::warn!(
 					"direct-media persisted-record migration was incomplete"
@@ -224,56 +302,10 @@ pub async fn direct_media_cache_upsert(
 	sent_at: u64,
 	remote_availability: RemoteAvailability,
 ) -> Result<(), AppError> {
-	validate_identity(
-		&account_id,
-		&conversation_id,
-		&peer_profile_id,
-		&message_id,
-		&media_id,
-	)?;
-	validate_media_kind(&kind, &message_type)?;
-	ensure_active_account(&account_id)?;
-	let root = cache_root(&app)?;
-	let account_hash = identifier_hash(&account_id);
-	let _guard = CACHE_LOCK.lock().await;
-	let key = load_or_create_key(KEY_SERVICE, &account_hash)?;
-	let mut index = load_account_index(&root, &account_hash, &key)?;
-	let identity_hash = composite_identity_hash(
-		&conversation_id,
-		&peer_profile_id,
-		&message_id,
-		&media_id,
-	);
-	if let Some(position) = index
-		.entries
-		.iter()
-		.position(|entry| entry.identity_hash == identity_hash)
-	{
-		let mut record =
-			load_record(&root, &account_hash, &index.entries[position], &key)?;
-		if remote_availability == RemoteAvailability::Retracted
-			&& record.cache_availability != CacheAvailability::Cached
-		{
-			let reference = index.entries.remove(position);
-			let _ = fs::remove_file(
-				root.join(&account_hash).join(reference.record_file),
-			);
-		} else {
-			record.remote_availability = preserve_terminal_availability(
-				record.remote_availability,
-				remote_availability,
-			);
-			record.kind = kind;
-			record.message_type = message_type;
-			record.sent_at = sent_at;
-			let record_file = index.entries[position].record_file.clone();
-			let reference = reference_for(&record, record_file);
-			save_record(&root, &account_hash, &reference, &key, &record)?;
-			index.entries[position] = reference;
-		}
-	} else if remote_availability != RemoteAvailability::Retracted {
-		let record = DirectMediaEntry {
-			account_profile_id: account_id,
+	direct_media_cache_upsert_batch(
+		app,
+		vec![DirectMediaHistoryDelta {
+			account_id,
 			conversation_id,
 			peer_profile_id,
 			message_id,
@@ -282,6 +314,188 @@ pub async fn direct_media_cache_upsert(
 			message_type,
 			sent_at,
 			remote_availability,
+		}],
+	)
+	.await
+}
+
+#[tauri::command]
+pub async fn direct_media_cache_upsert_batch(
+	app: tauri::AppHandle,
+	deltas: Vec<DirectMediaHistoryDelta>,
+) -> Result<(), AppError> {
+	if deltas.is_empty() {
+		return Ok(());
+	}
+	for delta in &deltas {
+		validate_identity(
+			&delta.account_id,
+			&delta.conversation_id,
+			&delta.peer_profile_id,
+			&delta.message_id,
+			&delta.media_id,
+		)?;
+		validate_media_kind(&delta.kind, &delta.message_type)?;
+		ensure_active_account(&delta.account_id)?;
+	}
+	let generations = deltas
+		.iter()
+		.map(|delta| {
+			let hash = identifier_hash(&delta.account_id);
+			let generation = account_generation(&hash);
+			(hash, generation)
+		})
+		.collect::<HashMap<_, _>>();
+	let root = cache_root(&app)?;
+	let captured_epoch = CACHE_EPOCH.load(Ordering::Acquire);
+	let _guard = CACHE_LOCK.lock().await;
+	if CACHE_EPOCH.load(Ordering::Acquire) != captured_epoch {
+		return Err(cache_error("direct-media cache changed"));
+	}
+	if generations
+		.iter()
+		.any(|(hash, generation)| account_generation(hash) != *generation)
+	{
+		return Err(cache_error("direct-media account cache changed"));
+	}
+	let mut by_partition: BTreeMap<
+		(String, String),
+		Vec<DirectMediaHistoryDelta>,
+	> = BTreeMap::new();
+	for delta in deltas {
+		by_partition
+			.entry((delta.account_id.clone(), delta.conversation_id.clone()))
+			.or_default()
+			.push(delta);
+	}
+	sort_batch_partitions(&mut by_partition);
+	recover_batch_journals(&root)?;
+	let journal = create_batch_journal(&root, &by_partition)?;
+	let result = apply_batch_partitions(&root, by_partition);
+	match result {
+		Ok(()) => match commit_batch_journal(&journal) {
+			Ok(()) => Ok(()),
+			Err(error) => {
+				let _ = rollback_batch_journal(&journal);
+				Err(error)
+			}
+		},
+		Err(error) => {
+			let _ = rollback_batch_journal(&journal);
+			Err(error)
+		}
+	}
+}
+
+fn sort_batch_partitions(
+	partitions: &mut BTreeMap<(String, String), Vec<DirectMediaHistoryDelta>>,
+) {
+	for deltas in partitions.values_mut() {
+		deltas.sort_by_key(|delta| {
+			composite_identity_hash(
+				&delta.conversation_id,
+				&delta.peer_profile_id,
+				&delta.message_id,
+				&delta.media_id,
+			)
+		});
+	}
+}
+
+fn apply_batch_partitions(
+	root: &Path,
+	by_partition: BTreeMap<(String, String), Vec<DirectMediaHistoryDelta>>,
+) -> Result<(), AppError> {
+	for ((account_id, conversation_id), partition_deltas) in by_partition {
+		let account_hash = identifier_hash(&account_id);
+		let conversation_hash = identifier_hash(&conversation_id);
+		let key = load_or_create_key(KEY_SERVICE, &account_hash)?;
+		let mut index = load_conversation_index(
+			&root,
+			&account_hash,
+			&conversation_hash,
+			&key,
+		)?;
+		let mut index_changed = false;
+		for delta in partition_deltas {
+			index_changed |= apply_history_delta(
+				&root,
+				&account_hash,
+				&key,
+				&mut index,
+				delta,
+			)?;
+		}
+		if index_changed {
+			save_conversation_index(
+				&root.join(&account_hash),
+				&account_hash,
+				&conversation_hash,
+				&key,
+				&index,
+			)?;
+		}
+	}
+	Ok(())
+}
+
+fn apply_history_delta(
+	root: &Path,
+	account_hash: &str,
+	key: &[u8; 32],
+	index: &mut AccountIndex,
+	delta: DirectMediaHistoryDelta,
+) -> Result<bool, AppError> {
+	let identity_hash = composite_identity_hash(
+		&delta.conversation_id,
+		&delta.peer_profile_id,
+		&delta.message_id,
+		&delta.media_id,
+	);
+	if let Some(position) = index
+		.entries
+		.iter()
+		.position(|entry| entry.identity_hash == identity_hash)
+	{
+		let mut record =
+			load_record(root, account_hash, &index.entries[position], key)?;
+		if delta.remote_availability == RemoteAvailability::Retracted
+			&& record.cache_availability != CacheAvailability::Cached
+		{
+			let reference = index.entries.remove(position);
+			let _ = fs::remove_file(
+				root.join(account_hash).join(reference.record_file),
+			);
+			return Ok(true);
+		} else {
+			let previous = record.clone();
+			record.remote_availability = preserve_terminal_availability(
+				record.remote_availability,
+				delta.remote_availability,
+			);
+			record.kind = delta.kind;
+			record.message_type = delta.message_type;
+			record.sent_at = delta.sent_at;
+			if record == previous {
+				return Ok(false);
+			}
+			let record_file = index.entries[position].record_file.clone();
+			let reference = reference_for(&record, record_file);
+			save_record(root, account_hash, &reference, key, &record)?;
+			index.entries[position] = reference;
+			return Ok(true);
+		}
+	} else if delta.remote_availability != RemoteAvailability::Retracted {
+		let record = DirectMediaEntry {
+			account_profile_id: delta.account_id,
+			conversation_id: delta.conversation_id,
+			peer_profile_id: delta.peer_profile_id,
+			message_id: delta.message_id,
+			media_id: delta.media_id,
+			kind: delta.kind,
+			message_type: delta.message_type,
+			sent_at: delta.sent_at,
+			remote_availability: delta.remote_availability,
 			cache_availability: CacheAvailability::NotCached,
 			cache_token: None,
 			content_type: None,
@@ -291,10 +505,11 @@ pub async fn direct_media_cache_upsert(
 		};
 		let reference =
 			reference_for(&record, format!("{}.ogdr", random_token()));
-		save_record(&root, &account_hash, &reference, &key, &record)?;
+		save_record(root, account_hash, &reference, key, &record)?;
 		index.entries.push(reference);
+		return Ok(true);
 	}
-	save_account_index(&root, &account_hash, &key, &index)
+	Ok(false)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -388,6 +603,7 @@ pub async fn direct_media_cache_store(
 		return Err(cache_error("direct-media cache changed during download"));
 	}
 	let mut index = load_account_index(&root, &account_hash, &key)?;
+	let index_before = index.clone();
 	let identity_hash = composite_identity_hash(
 		&conversation_id,
 		&peer_profile_id,
@@ -436,7 +652,13 @@ pub async fn direct_media_cache_store(
 	} else {
 		index.entries.push(reference);
 	}
-	if let Err(error) = save_account_index(&root, &account_hash, &key, &index) {
+	if let Err(error) = persist_account_index_changes(
+		&root,
+		&account_hash,
+		&key,
+		&index_before,
+		&index,
+	) {
 		let _ = fs::remove_file(&destination);
 		return Err(error);
 	}
@@ -547,6 +769,7 @@ pub async fn direct_media_cache_import_legacy(
 		return Err(cache_error("legacy media verification failed"));
 	}
 	let mut index = load_account_index(&root, &account_hash, &key)?;
+	let index_before = index.clone();
 	let identity_hash = composite_identity_hash(
 		&conversation_id,
 		&peer_profile_id,
@@ -596,7 +819,13 @@ pub async fn direct_media_cache_import_legacy(
 	} else {
 		index.entries.push(reference);
 	}
-	if let Err(error) = save_account_index(&root, &account_hash, &key, &index) {
+	if let Err(error) = persist_account_index_changes(
+		&root,
+		&account_hash,
+		&key,
+		&index_before,
+		&index,
+	) {
 		let _ = fs::remove_file(&destination);
 		return Err(error);
 	}
@@ -637,6 +866,7 @@ pub async fn direct_media_cache_lookup(
 		Err(_) => return Ok(not_found()),
 	};
 	let mut index = load_account_index(&root, &account_hash, &key)?;
+	let index_before = index.clone();
 	let account_dir = root.join(&account_hash);
 	let identity_hash = composite_identity_hash(
 		&conversation_id,
@@ -664,7 +894,7 @@ pub async fn direct_media_cache_lookup(
 	{
 		return Ok(not_found());
 	}
-	entry.last_accessed_ms = now_ms();
+	let accessed_at = now_ms();
 	let result = DirectMediaLookup {
 		found: true,
 		token: entry.cache_token.clone(),
@@ -675,10 +905,25 @@ pub async fn direct_media_cache_lookup(
 		byte_length: entry.byte_length,
 		content_type: entry.content_type.clone(),
 	};
-	index.entries[position] =
-		reference_for(&entry, index.entries[position].record_file.clone());
-	save_record(&root, &account_hash, &index.entries[position], &key, &entry)?;
-	save_account_index(&root, &account_hash, &key, &index)?;
+	if should_persist_access(entry.last_accessed_ms, accessed_at) {
+		entry.last_accessed_ms = accessed_at;
+		index.entries[position] =
+			reference_for(&entry, index.entries[position].record_file.clone());
+		save_record(
+			&root,
+			&account_hash,
+			&index.entries[position],
+			&key,
+			&entry,
+		)?;
+		persist_account_index_changes(
+			&root,
+			&account_hash,
+			&key,
+			&index_before,
+			&index,
+		)?;
+	}
 	Ok(result)
 }
 
@@ -775,14 +1020,71 @@ pub async fn direct_media_cache_list(
 				&& entry.peer_hash == peer_hash
 		})
 		.collect::<Vec<_>>();
-	let (references, next_cursor, total_count) = page_references(
+	let decoded_cursor = cursor
+		.as_deref()
+		.map(|cursor| {
+			decode_direct_media_cursor(
+				&key,
+				&account_hash,
+				&conversation_hash,
+				&peer_hash,
+				cursor,
+			)
+		})
+		.transpose()?;
+	let (references, next_entry, total_count) = page_references(
 		references,
-		cursor.as_deref(),
+		decoded_cursor.as_ref(),
 		page_size.unwrap_or(DEFAULT_PAGE_SIZE),
 	)?;
+	let next_cursor = next_entry
+		.as_ref()
+		.map(|entry| {
+			encode_direct_media_cursor(
+				&key,
+				&account_hash,
+				&conversation_hash,
+				&peer_hash,
+				entry,
+			)
+		})
+		.transpose()?;
+	let account_dir = root.join(&account_hash);
 	let items = references
 		.iter()
-		.map(|reference| load_record(&root, &account_hash, reference, &key))
+		.map(|reference| {
+			let mut record =
+				load_record(&root, &account_hash, reference, &key)?;
+			let verified = record.cache_availability
+				== CacheAvailability::Cached
+				&& probe_verified_entry_media(
+					&account_dir,
+					&account_hash,
+					&key,
+					&record,
+				)
+				.is_ok();
+			if verified {
+				let playable_url = record
+					.cache_token
+					.as_deref()
+					.map(|token| protocol_url(SCHEME, token));
+				return Ok::<DirectMediaPageEntry, AppError>(
+					DirectMediaPageEntry {
+						entry: record,
+						protocol_url: playable_url,
+					},
+				);
+			} else if record.cache_availability == CacheAvailability::Cached {
+				record.cache_availability = CacheAvailability::Evicted;
+				record.cache_token = None;
+				record.byte_length = None;
+			}
+			Ok::<DirectMediaPageEntry, AppError>(DirectMediaPageEntry {
+				entry: record,
+				protocol_url: None,
+			})
+		})
 		.collect::<Result<Vec<_>, _>>()?;
 	Ok(DirectMediaPage {
 		items,
@@ -828,6 +1130,7 @@ fn trim_locked(
 			continue;
 		};
 		let mut index = load_account_index(root, &hash, &key)?;
+		let index_before = index.clone();
 		let mut positions = evict
 			.iter()
 			.filter(|(candidate, _)| candidate == &hash)
@@ -855,7 +1158,13 @@ fn trim_locked(
 				index.entries[position] = updated;
 			}
 		}
-		save_account_index(root, &hash, &key, &index)?;
+		persist_account_index_changes(
+			root,
+			&hash,
+			&key,
+			&index_before,
+			&index,
+		)?;
 	}
 	stats_locked(root)
 }
@@ -885,6 +1194,7 @@ pub async fn direct_media_cache_clear(
 ) -> Result<DirectMediaCacheStats, AppError> {
 	if let Some(id) = account_id.as_deref() {
 		ensure_active_account(id)?;
+		bump_account_generation(&identifier_hash(id));
 	}
 	CACHE_EPOCH.fetch_add(1, Ordering::AcqRel);
 	let root = cache_root(&app)?;
@@ -964,6 +1274,7 @@ async fn serve_protocol_inner(
 		.map_err(|_| http::StatusCode::GONE)?;
 	let mut index = load_account_index(&root, &account_hash, &key)
 		.map_err(|_| http::StatusCode::INTERNAL_SERVER_ERROR)?;
+	let index_before = index.clone();
 	let token_hash = identifier_hash(token);
 	let position = index
 		.entries
@@ -1002,17 +1313,26 @@ async fn serve_protocol_inner(
 		)
 		.map_err(|_| http::StatusCode::GONE)?
 	};
-	entry.last_accessed_ms = now_ms();
-	let record_file = index.entries[position].record_file.clone();
-	index.entries[position] = reference_for(&entry, record_file);
-	let _ = save_record(
-		&root,
-		&account_hash,
-		&index.entries[position],
-		&key,
-		&entry,
-	);
-	let _ = save_account_index(&root, &account_hash, &key, &index);
+	let accessed_at = now_ms();
+	if should_persist_access(entry.last_accessed_ms, accessed_at) {
+		entry.last_accessed_ms = accessed_at;
+		let record_file = index.entries[position].record_file.clone();
+		index.entries[position] = reference_for(&entry, record_file);
+		let _ = save_record(
+			&root,
+			&account_hash,
+			&index.entries[position],
+			&key,
+			&entry,
+		);
+		let _ = persist_account_index_changes(
+			&root,
+			&account_hash,
+			&key,
+			&index_before,
+			&index,
+		);
+	}
 	build_response(request.method(), &content_type, total, range, body)
 }
 
@@ -1157,6 +1477,27 @@ fn preserve_terminal_availability(
 	}
 }
 
+fn should_persist_access(previous_ms: u64, current_ms: u64) -> bool {
+	current_ms.saturating_sub(previous_ms) >= ACCESS_WRITE_INTERVAL_MS
+}
+
+fn account_generation(account_hash: &str) -> u64 {
+	ACCOUNT_GENERATIONS
+		.lock()
+		.unwrap_or_else(|poisoned| poisoned.into_inner())
+		.get(account_hash)
+		.copied()
+		.unwrap_or(0)
+}
+
+fn bump_account_generation(account_hash: &str) {
+	let mut generations = ACCOUNT_GENERATIONS
+		.lock()
+		.unwrap_or_else(|poisoned| poisoned.into_inner());
+	let generation = generations.entry(account_hash.to_owned()).or_default();
+	*generation = generation.wrapping_add(1);
+}
+
 fn decode_legacy_media(
 	data_base64: &str,
 	maximum_bytes: u64,
@@ -1217,7 +1558,6 @@ fn direct_media_aad(
 	)
 }
 
-#[cfg(test)]
 fn read_exact_entry_media(
 	account_dir: &Path,
 	account_hash: &str,
@@ -1263,47 +1603,7 @@ fn probe_verified_entry_media(
 	key: &[u8; 32],
 	entry: &DirectMediaEntry,
 ) -> Result<(), AppError> {
-	let file_name = entry
-		.file_name
-		.as_deref()
-		.ok_or_else(|| cache_error("cached media file is missing"))?;
-	let content_type = entry
-		.content_type
-		.as_deref()
-		.ok_or_else(|| cache_error("cached media content type is missing"))?;
-	let expected_length = entry
-		.byte_length
-		.filter(|length| *length > 0)
-		.ok_or_else(|| cache_error("cached media length is missing"))?;
-	let path = account_dir.join(file_name);
-	if encrypted_plaintext_length(&path, MEDIA_MAGIC)? != expected_length {
-		return Err(cache_error(
-			"cached media length does not match its record",
-		));
-	}
-	let aad = direct_media_aad(
-		account_hash,
-		&identifier_hash(&entry.conversation_id),
-		&identifier_hash(&entry.peer_profile_id),
-		&identifier_hash(&entry.message_id),
-		&identifier_hash(&entry.media_id),
-		content_type,
-	);
-	let first =
-		read_encrypted_range(&path, key, &aad, Some((0, 0)), MEDIA_MAGIC)?;
-	let last_offset = expected_length - 1;
-	let last = read_encrypted_range(
-		&path,
-		key,
-		&aad,
-		Some((last_offset, last_offset)),
-		MEDIA_MAGIC,
-	)?;
-	if first.len() != 1 || last.len() != 1 {
-		return Err(cache_error(
-			"cached media length does not match its record",
-		));
-	}
+	read_exact_entry_media(account_dir, account_hash, key, entry)?;
 	Ok(())
 }
 fn index_aad(account_hash: &str) -> Vec<u8> {
@@ -1385,12 +1685,569 @@ fn load_account_index(
 	account_hash: &str,
 	key: &[u8; 32],
 ) -> Result<AccountIndex, AppError> {
-	let path = root.join(account_hash).join(INDEX_FILE);
-	if !path.is_file() {
-		return Ok(AccountIndex::default());
+	let account_dir = root.join(account_hash);
+	let legacy_path = account_dir.join(INDEX_FILE);
+	let mut combined = if legacy_path.is_file() {
+		load_v2_indexes(&account_dir, account_hash, key)?
+	} else {
+		load_v2_indexes(&account_dir, account_hash, key)?
+	};
+	if legacy_path.is_file() {
+		let legacy = load_legacy_index(&legacy_path, account_hash, key)?;
+		for entry in legacy.entries {
+			if let Some(position) =
+				combined.entries.iter().position(|candidate| {
+					candidate.identity_hash == entry.identity_hash
+				}) {
+				combined.entries[position] = entry;
+			} else {
+				combined.entries.push(entry);
+			}
+		}
+		let captured_epoch = CACHE_EPOCH.load(Ordering::Acquire);
+		if let Err(error) = migrate_legacy_index(
+			&account_dir,
+			account_hash,
+			key,
+			&combined,
+			captured_epoch,
+		) {
+			tracing::warn!(error = ?error, "direct-media index migration will resume later");
+		}
 	}
+	Ok(combined)
+}
+
+fn load_conversation_index(
+	root: &Path,
+	account_hash: &str,
+	conversation_hash: &str,
+	key: &[u8; 32],
+) -> Result<AccountIndex, AppError> {
+	let account_dir = root.join(account_hash);
+	let path = conversation_index_path(&account_dir, conversation_hash);
+	let mut entries = if path.is_file() {
+		load_conversation_envelope(&path, account_hash, conversation_hash, key)?
+			.entries
+	} else {
+		Vec::new()
+	};
+	let legacy_path = account_dir.join(INDEX_FILE);
+	if legacy_path.is_file() {
+		for entry in load_legacy_index(&legacy_path, account_hash, key)?
+			.entries
+			.into_iter()
+			.filter(|entry| entry.conversation_hash == conversation_hash)
+		{
+			if let Some(position) = entries.iter().position(|candidate| {
+				candidate.identity_hash == entry.identity_hash
+			}) {
+				entries[position] = entry;
+			} else {
+				entries.push(entry);
+			}
+		}
+	}
+	Ok(AccountIndex { entries })
+}
+
+fn load_conversation_envelope(
+	path: &Path,
+	account_hash: &str,
+	conversation_hash: &str,
+	key: &[u8; 32],
+) -> Result<ConversationIndexEnvelope, AppError> {
 	let bytes = read_encrypted_range(
-		&path,
+		path,
+		key,
+		&conversation_index_aad(account_hash, conversation_hash),
+		None,
+		INDEX_MAGIC,
+	)?;
+	let envelope: ConversationIndexEnvelope = serde_json::from_slice(&bytes)
+		.map_err(|_| {
+			cache_error("direct-media conversation index is invalid")
+		})?;
+	if envelope.schema_version != INDEX_SCHEMA_VERSION
+		|| envelope.conversation_hash != conversation_hash
+		|| envelope
+			.entries
+			.iter()
+			.any(|entry| entry.conversation_hash != conversation_hash)
+	{
+		return Err(cache_error(
+			"direct-media conversation index schema is invalid",
+		));
+	}
+	Ok(envelope)
+}
+
+fn save_conversation_index(
+	account_dir: &Path,
+	account_hash: &str,
+	conversation_hash: &str,
+	key: &[u8; 32],
+	index: &AccountIndex,
+) -> Result<(), AppError> {
+	if index
+		.entries
+		.iter()
+		.any(|entry| entry.conversation_hash != conversation_hash)
+	{
+		return Err(cache_error(
+			"direct-media conversation index scope mismatch",
+		));
+	}
+	let envelope = ConversationIndexEnvelope {
+		schema_version: INDEX_SCHEMA_VERSION,
+		conversation_hash: conversation_hash.to_owned(),
+		entries: index.entries.clone(),
+	};
+	let bytes = serde_json::to_vec(&envelope).map_err(|_| {
+		cache_error("could not encode direct-media conversation index")
+	})?;
+	let directory = account_dir.join(INDEX_V2_DIR);
+	fs::create_dir_all(&directory).map_err(|_| {
+		cache_error("could not create direct-media index directory")
+	})?;
+	write_encrypted_atomic(
+		&conversation_index_path(account_dir, conversation_hash),
+		&bytes,
+		key,
+		&conversation_index_aad(account_hash, conversation_hash),
+		INDEX_MAGIC,
+	)
+}
+
+fn transaction_root(root: &Path) -> PathBuf {
+	root.join(".transactions")
+}
+
+fn sync_directory(path: &Path) -> Result<(), AppError> {
+	fs::File::open(path)
+		.and_then(|file| file.sync_all())
+		.map_err(|_| cache_error("could not sync direct-media directory"))
+}
+
+fn create_batch_journal(
+	root: &Path,
+	partitions: &BTreeMap<(String, String), Vec<DirectMediaHistoryDelta>>,
+) -> Result<PathBuf, AppError> {
+	let journal = transaction_root(root).join(random_token());
+	fs::create_dir_all(journal.join("backups")).map_err(|_| {
+		cache_error("could not create direct-media transaction")
+	})?;
+	sync_directory(root)?;
+	sync_directory(&transaction_root(root))?;
+	sync_directory(&journal)?;
+	let mut accounts = BTreeMap::<String, Vec<String>>::new();
+	let mut targets = BTreeMap::<String, bool>::new();
+	for ((account_id, conversation_id), deltas) in partitions {
+		let account_hash = identifier_hash(account_id);
+		let conversation_hash = identifier_hash(conversation_id);
+		let account_dir = root.join(&account_hash);
+		accounts.entry(account_hash.clone()).or_insert_with(|| {
+			fs::read_dir(&account_dir)
+				.into_iter()
+				.flatten()
+				.filter_map(Result::ok)
+				.filter_map(|entry| {
+					let name = entry.file_name().to_str()?.to_owned();
+					name.ends_with(".ogdr").then_some(name)
+				})
+				.collect()
+		});
+		let partition =
+			conversation_index_path(&account_dir, &conversation_hash);
+		targets.insert(
+			relative_cache_path(root, &partition)?,
+			partition.is_file(),
+		);
+		let key = load_or_create_key(KEY_SERVICE, &account_hash)?;
+		let index = load_conversation_index(
+			root,
+			&account_hash,
+			&conversation_hash,
+			&key,
+		)?;
+		for delta in deltas {
+			let identity = composite_identity_hash(
+				&delta.conversation_id,
+				&delta.peer_profile_id,
+				&delta.message_id,
+				&delta.media_id,
+			);
+			if let Some(reference) = index
+				.entries
+				.iter()
+				.find(|entry| entry.identity_hash == identity)
+			{
+				let record = account_dir.join(&reference.record_file);
+				targets.insert(
+					relative_cache_path(root, &record)?,
+					record.is_file(),
+				);
+			}
+		}
+	}
+	let mut backups = Vec::new();
+	for (position, (target, existed)) in targets.into_iter().enumerate() {
+		let backup = format!("backups/{position}.bak");
+		if existed {
+			fs::copy(root.join(&target), journal.join(&backup)).map_err(
+				|_| {
+					cache_error(
+						"could not back up direct-media transaction target",
+					)
+				},
+			)?;
+			fs::File::open(journal.join(&backup))
+				.and_then(|file| file.sync_all())
+				.map_err(|_| {
+					cache_error(
+						"could not sync direct-media transaction backup",
+					)
+				})?;
+		}
+		backups.push(BatchJournalBackup {
+			target,
+			backup,
+			existed,
+		});
+	}
+	let manifest = BatchJournalManifest {
+		accounts: accounts
+			.into_iter()
+			.map(|(account_hash, mut baseline_record_files)| {
+				baseline_record_files.sort();
+				BatchJournalAccount {
+					account_hash,
+					baseline_record_files,
+				}
+			})
+			.collect(),
+		backups,
+	};
+	let manifest_path = journal.join("manifest.json");
+	fs::write(
+		&manifest_path,
+		serde_json::to_vec(&manifest).map_err(|_| {
+			cache_error("could not encode direct-media transaction")
+		})?,
+	)
+	.map_err(|_| cache_error("could not write direct-media transaction"))?;
+	fs::File::open(&manifest_path)
+		.and_then(|file| file.sync_all())
+		.map_err(|_| cache_error("could not sync direct-media transaction"))?;
+	sync_directory(&journal)?;
+	sync_directory(&transaction_root(root))?;
+	Ok(journal)
+}
+
+fn relative_cache_path(root: &Path, path: &Path) -> Result<String, AppError> {
+	path.strip_prefix(root)
+		.map_err(|_| {
+			cache_error("direct-media transaction path escaped cache")
+		})?
+		.to_str()
+		.map(str::to_owned)
+		.ok_or_else(|| cache_error("direct-media transaction path is invalid"))
+}
+
+fn validated_journal_relative_path(value: &str) -> Result<&Path, AppError> {
+	let path = Path::new(value);
+	if path.as_os_str().is_empty()
+		|| path
+			.components()
+			.any(|component| !matches!(component, Component::Normal(_)))
+	{
+		return Err(cache_error("direct-media transaction path is invalid"));
+	}
+	Ok(path)
+}
+
+fn validated_journal_component(value: &str) -> Result<&Path, AppError> {
+	let path = validated_journal_relative_path(value)?;
+	if path.components().count() != 1 {
+		return Err(cache_error(
+			"direct-media transaction component is invalid",
+		));
+	}
+	Ok(path)
+}
+
+fn rollback_batch_journal(journal: &Path) -> Result<(), AppError> {
+	let root = journal.parent().and_then(Path::parent).ok_or_else(|| {
+		cache_error("direct-media transaction root is invalid")
+	})?;
+	let manifest: BatchJournalManifest = serde_json::from_slice(
+		&fs::read(journal.join("manifest.json")).map_err(|_| {
+			cache_error("could not read direct-media transaction")
+		})?,
+	)
+	.map_err(|_| cache_error("direct-media transaction is invalid"))?;
+	// Validate the complete plaintext manifest before performing any recovery
+	// mutation. A damaged journal must not turn relative cache paths into
+	// arbitrary filesystem targets.
+	let backups = manifest
+		.backups
+		.iter()
+		.map(|backup| {
+			Ok((
+				root.join(validated_journal_relative_path(&backup.target)?),
+				journal.join(validated_journal_relative_path(&backup.backup)?),
+				backup.existed,
+			))
+		})
+		.collect::<Result<Vec<_>, AppError>>()?;
+	let accounts = manifest
+		.accounts
+		.iter()
+		.map(|account| {
+			for file in &account.baseline_record_files {
+				validated_journal_component(file)?;
+			}
+			Ok((
+				root.join(validated_journal_component(&account.account_hash)?),
+				account.baseline_record_files.iter().collect::<HashSet<_>>(),
+			))
+		})
+		.collect::<Result<Vec<_>, AppError>>()?;
+	let mut affected_directories = std::collections::BTreeSet::new();
+	for (target, backup, existed) in backups {
+		if existed {
+			if let Some(parent) = target.parent() {
+				fs::create_dir_all(parent).map_err(|_| {
+					cache_error("could not restore transaction directory")
+				})?;
+			}
+			fs::copy(backup, &target).map_err(|_| {
+				cache_error("could not restore direct-media transaction")
+			})?;
+			fs::File::open(&target)
+				.and_then(|file| file.sync_all())
+				.map_err(|_| {
+					cache_error("could not sync restored direct-media target")
+				})?;
+		} else if target.is_file() {
+			fs::remove_file(&target).map_err(|_| {
+				cache_error("could not remove direct-media transaction target")
+			})?;
+		}
+		if let Some(parent) = target.parent() {
+			affected_directories.insert(parent.to_path_buf());
+		}
+	}
+	for (account_dir, baseline) in accounts {
+		for item in fs::read_dir(&account_dir)
+			.into_iter()
+			.flatten()
+			.filter_map(Result::ok)
+		{
+			let Some(name) = item.file_name().to_str().map(str::to_owned)
+			else {
+				continue;
+			};
+			if name.ends_with(".ogdr") && !baseline.contains(&name) {
+				fs::remove_file(item.path()).map_err(|_| {
+					cache_error("could not remove orphaned direct-media record")
+				})?;
+			}
+		}
+		affected_directories.insert(account_dir);
+	}
+	for directory in affected_directories {
+		if directory.is_dir() {
+			sync_directory(&directory)?;
+		}
+	}
+	let parent = journal
+		.parent()
+		.ok_or_else(|| {
+			cache_error("direct-media transaction parent is invalid")
+		})?
+		.to_path_buf();
+	fs::remove_dir_all(journal).map_err(|_| {
+		cache_error("could not retire direct-media transaction")
+	})?;
+	sync_directory(&parent)?;
+	Ok(())
+}
+
+fn commit_batch_journal(journal: &Path) -> Result<(), AppError> {
+	let marker = journal.join("committed");
+	fs::write(&marker, b"committed").map_err(|_| {
+		cache_error("could not commit direct-media transaction")
+	})?;
+	fs::File::open(&marker)
+		.and_then(|file| file.sync_all())
+		.map_err(|_| {
+			cache_error("could not sync direct-media transaction commit")
+		})?;
+	sync_directory(journal)?;
+	let parent = journal
+		.parent()
+		.ok_or_else(|| {
+			cache_error("direct-media transaction parent is invalid")
+		})?
+		.to_path_buf();
+	sync_directory(&parent)?;
+	fs::remove_dir_all(journal).map_err(|_| {
+		cache_error("could not retire direct-media transaction")
+	})?;
+	sync_directory(&parent)?;
+	Ok(())
+}
+
+fn recover_batch_journals(root: &Path) -> Result<(), AppError> {
+	let transactions = transaction_root(root);
+	if !transactions.is_dir() {
+		return Ok(());
+	}
+	let mut journals = fs::read_dir(&transactions)
+		.map_err(|_| cache_error("could not read direct-media transactions"))?
+		.filter_map(Result::ok)
+		.map(|entry| entry.path())
+		.filter(|path| path.is_dir())
+		.collect::<Vec<_>>();
+	journals.sort();
+	for journal in journals {
+		if !journal.join("manifest.json").is_file() {
+			fs::remove_dir_all(&journal).map_err(|_| {
+				cache_error(
+					"could not retire incomplete direct-media transaction",
+				)
+			})?;
+			sync_directory(&transactions)?;
+			continue;
+		}
+		if journal.join("committed").is_file() {
+			fs::remove_dir_all(&journal).map_err(|_| {
+				cache_error(
+					"could not retire committed direct-media transaction",
+				)
+			})?;
+			sync_directory(&transactions)?;
+		} else {
+			rollback_batch_journal(&journal)?;
+		}
+	}
+	Ok(())
+}
+
+#[cfg(test)]
+fn save_account_index(
+	root: &Path,
+	account_hash: &str,
+	key: &[u8; 32],
+	index: &AccountIndex,
+) -> Result<(), AppError> {
+	save_v2_indexes(&root.join(account_hash), account_hash, key, index)
+}
+
+fn persist_account_index_changes(
+	root: &Path,
+	account_hash: &str,
+	key: &[u8; 32],
+	before: &AccountIndex,
+	after: &AccountIndex,
+) -> Result<(), AppError> {
+	let grouped = |index: &AccountIndex| {
+		let mut groups: BTreeMap<String, Vec<IndexEntry>> = BTreeMap::new();
+		for entry in &index.entries {
+			groups
+				.entry(entry.conversation_hash.clone())
+				.or_default()
+				.push(entry.clone());
+		}
+		for entries in groups.values_mut() {
+			entries.sort_by(|left, right| {
+				left.identity_hash.cmp(&right.identity_hash)
+			});
+		}
+		groups
+	};
+	let before_groups = grouped(before);
+	let after_groups = grouped(after);
+	let conversations = before_groups
+		.keys()
+		.chain(after_groups.keys())
+		.cloned()
+		.collect::<std::collections::BTreeSet<_>>();
+	for conversation_hash in conversations {
+		let old = before_groups
+			.get(&conversation_hash)
+			.map(Vec::as_slice)
+			.unwrap_or_default();
+		let new = after_groups
+			.get(&conversation_hash)
+			.map(Vec::as_slice)
+			.unwrap_or_default();
+		if old == new {
+			continue;
+		}
+		let path = conversation_index_path(
+			&root.join(account_hash),
+			&conversation_hash,
+		);
+		if new.is_empty() {
+			if path.is_file() {
+				fs::remove_file(&path).map_err(|_| {
+					cache_error(
+						"could not remove direct-media conversation index",
+					)
+				})?;
+				if let Some(parent) = path.parent() {
+					fs::File::open(parent)
+						.and_then(|file| file.sync_all())
+						.map_err(|_| {
+							cache_error(
+								"could not sync direct-media index directory",
+							)
+						})?;
+				}
+			}
+		} else {
+			save_conversation_index(
+				&root.join(account_hash),
+				account_hash,
+				&conversation_hash,
+				key,
+				&AccountIndex {
+					entries: new.to_vec(),
+				},
+			)?;
+		}
+	}
+	Ok(())
+}
+
+fn conversation_index_aad(
+	account_hash: &str,
+	conversation_hash: &str,
+) -> Vec<u8> {
+	aad_prefix(
+		"direct-media-conversation-index-v2",
+		&[account_hash, conversation_hash],
+	)
+}
+
+fn conversation_index_path(
+	account_dir: &Path,
+	conversation_hash: &str,
+) -> PathBuf {
+	account_dir
+		.join(INDEX_V2_DIR)
+		.join(format!("{conversation_hash}.ogdi"))
+}
+
+fn load_legacy_index(
+	path: &Path,
+	account_hash: &str,
+	key: &[u8; 32],
+) -> Result<AccountIndex, AppError> {
+	let bytes = read_encrypted_range(
+		path,
 		key,
 		&index_aad(account_hash),
 		None,
@@ -1399,26 +2256,262 @@ fn load_account_index(
 	serde_json::from_slice(&bytes)
 		.map_err(|_| cache_error("direct-media history index is invalid"))
 }
-fn save_account_index(
-	root: &Path,
+
+fn load_v2_indexes(
+	account_dir: &Path,
+	account_hash: &str,
+	key: &[u8; 32],
+) -> Result<AccountIndex, AppError> {
+	let directory = account_dir.join(INDEX_V2_DIR);
+	if !directory.is_dir() {
+		return Ok(AccountIndex::default());
+	}
+	let mut index = AccountIndex::default();
+	for item in fs::read_dir(&directory).map_err(|_| {
+		cache_error("could not read direct-media index directory")
+	})? {
+		let path = item
+			.map_err(|_| {
+				cache_error("could not read direct-media index entry")
+			})?
+			.path();
+		if path.extension().and_then(|value| value.to_str()) != Some("ogdi") {
+			continue;
+		}
+		let Some(conversation_hash) =
+			path.file_stem().and_then(|value| value.to_str())
+		else {
+			return Err(cache_error(
+				"direct-media conversation index name is invalid",
+			));
+		};
+		let bytes = read_encrypted_range(
+			&path,
+			key,
+			&conversation_index_aad(account_hash, conversation_hash),
+			None,
+			INDEX_MAGIC,
+		)?;
+		let envelope: ConversationIndexEnvelope =
+			serde_json::from_slice(&bytes).map_err(|_| {
+				cache_error("direct-media conversation index is invalid")
+			})?;
+		if envelope.schema_version != INDEX_SCHEMA_VERSION
+			|| envelope.conversation_hash != conversation_hash
+			|| envelope
+				.entries
+				.iter()
+				.any(|entry| entry.conversation_hash != conversation_hash)
+		{
+			return Err(cache_error(
+				"direct-media conversation index schema is invalid",
+			));
+		}
+		index.entries.extend(envelope.entries);
+	}
+	Ok(index)
+}
+
+#[cfg(test)]
+fn save_v2_indexes(
+	account_dir: &Path,
 	account_hash: &str,
 	key: &[u8; 32],
 	index: &AccountIndex,
 ) -> Result<(), AppError> {
-	let dir = root.join(account_hash);
-	fs::create_dir_all(&dir).map_err(|_| {
-		cache_error("could not create direct-media cache directory")
+	let directory = account_dir.join(INDEX_V2_DIR);
+	fs::create_dir_all(&directory).map_err(|_| {
+		cache_error("could not create direct-media index directory")
 	})?;
-	let bytes = serde_json::to_vec(index).map_err(|_| {
-		cache_error("could not encode direct-media history index")
-	})?;
-	write_encrypted_atomic(
-		&dir.join(INDEX_FILE),
-		&bytes,
+	let mut grouped: HashMap<String, Vec<IndexEntry>> = HashMap::new();
+	for entry in &index.entries {
+		grouped
+			.entry(entry.conversation_hash.clone())
+			.or_default()
+			.push(entry.clone());
+	}
+	for (conversation_hash, entries) in &grouped {
+		let envelope = ConversationIndexEnvelope {
+			schema_version: INDEX_SCHEMA_VERSION,
+			conversation_hash: conversation_hash.clone(),
+			entries: entries.clone(),
+		};
+		let bytes = serde_json::to_vec(&envelope).map_err(|_| {
+			cache_error("could not encode direct-media conversation index")
+		})?;
+		write_encrypted_atomic(
+			&conversation_index_path(account_dir, conversation_hash),
+			&bytes,
+			key,
+			&conversation_index_aad(account_hash, conversation_hash),
+			INDEX_MAGIC,
+		)?;
+	}
+	for item in fs::read_dir(&directory).map_err(|_| {
+		cache_error("could not read direct-media index directory")
+	})? {
+		let path = item
+			.map_err(|_| {
+				cache_error("could not read direct-media index entry")
+			})?
+			.path();
+		let Some(stem) = path.file_stem().and_then(|value| value.to_str())
+		else {
+			continue;
+		};
+		if path.extension().and_then(|value| value.to_str()) == Some("ogdi")
+			&& !grouped.contains_key(stem)
+		{
+			fs::remove_file(path).map_err(|_| {
+				cache_error("could not retire direct-media index partition")
+			})?;
+		}
+	}
+	fs::File::open(&directory)
+		.and_then(|file| file.sync_all())
+		.map_err(|_| {
+			cache_error("could not sync direct-media index directory")
+		})?;
+	Ok(())
+}
+
+fn migrate_legacy_index(
+	account_dir: &Path,
+	account_hash: &str,
+	key: &[u8; 32],
+	index: &AccountIndex,
+	captured_epoch: u64,
+) -> Result<(), AppError> {
+	let started = std::time::Instant::now();
+	let result = migrate_legacy_index_with_hook(
+		account_dir,
+		account_hash,
 		key,
-		&index_aad(account_hash),
-		INDEX_MAGIC,
-	)
+		index,
+		captured_epoch,
+		|| Ok(()),
+	);
+	tracing::info!(
+		source_schema = 1_u32,
+		destination_schema = INDEX_SCHEMA_VERSION,
+		record_count = index.entries.len(),
+		duration_ms = started.elapsed().as_millis() as u64,
+		outcome = if result.is_ok() { "complete" } else { "failed" },
+		"direct-media history migration"
+	);
+	result
+}
+
+fn migrate_legacy_index_with_hook<F>(
+	account_dir: &Path,
+	account_hash: &str,
+	key: &[u8; 32],
+	index: &AccountIndex,
+	captured_epoch: u64,
+	after_stage: F,
+) -> Result<(), AppError>
+where
+	F: FnOnce() -> Result<(), AppError>,
+{
+	stage_legacy_partitions_bounded(account_dir, account_hash, key, index)?;
+	after_stage()?;
+	let verified = load_v2_indexes(account_dir, account_hash, key)?;
+	let mut expected = index.entries.clone();
+	let mut actual = verified.entries.clone();
+	expected
+		.sort_by(|left, right| left.identity_hash.cmp(&right.identity_hash));
+	actual.sort_by(|left, right| left.identity_hash.cmp(&right.identity_hash));
+	if CACHE_EPOCH.load(Ordering::Acquire) != captured_epoch {
+		return Err(cache_error(
+			"direct-media index migration verification failed",
+		));
+	}
+	if expected != actual {
+		return Ok(());
+	}
+	let root = account_dir
+		.parent()
+		.ok_or_else(|| cache_error("direct-media account path is invalid"))?;
+	for reference in &actual {
+		let record = load_record(root, account_hash, reference, key)?;
+		if reference_for(&record, reference.record_file.clone()) != *reference {
+			return Err(cache_error(
+				"direct-media migration record pointer verification failed",
+			));
+		}
+	}
+	fs::remove_file(account_dir.join(INDEX_FILE)).map_err(|_| {
+		cache_error("could not retire legacy direct-media index")
+	})?;
+	fs::File::open(account_dir)
+		.and_then(|file| file.sync_all())
+		.map_err(|_| {
+			cache_error("could not sync direct-media account directory")
+		})?;
+	Ok(())
+}
+
+fn stage_legacy_partitions_bounded(
+	account_dir: &Path,
+	account_hash: &str,
+	key: &[u8; 32],
+	index: &AccountIndex,
+) -> Result<(), AppError> {
+	let mut existing: BTreeMap<String, Vec<IndexEntry>> = BTreeMap::new();
+	for entry in load_v2_indexes(account_dir, account_hash, key)?.entries {
+		existing
+			.entry(entry.conversation_hash.clone())
+			.or_default()
+			.push(entry);
+	}
+	let mut grouped: BTreeMap<String, Vec<IndexEntry>> = BTreeMap::new();
+	for entry in &index.entries {
+		grouped
+			.entry(entry.conversation_hash.clone())
+			.or_default()
+			.push(entry.clone());
+	}
+	for entries in existing.values_mut().chain(grouped.values_mut()) {
+		entries.sort_by(|left, right| {
+			left.identity_hash.cmp(&right.identity_hash)
+		});
+	}
+	let directory = account_dir.join(INDEX_V2_DIR);
+	fs::create_dir_all(&directory).map_err(|_| {
+		cache_error("could not create direct-media index directory")
+	})?;
+	let mut missing = grouped
+		.into_iter()
+		.filter(|(conversation_hash, entries)| {
+			existing.get(conversation_hash) != Some(entries)
+		})
+		.collect::<Vec<_>>();
+	missing.sort_by(|left, right| left.0.cmp(&right.0));
+	for (conversation_hash, entries) in
+		missing.into_iter().take(MIGRATION_PARTITION_BATCH)
+	{
+		let envelope = ConversationIndexEnvelope {
+			schema_version: INDEX_SCHEMA_VERSION,
+			conversation_hash: conversation_hash.clone(),
+			entries,
+		};
+		let bytes = serde_json::to_vec(&envelope).map_err(|_| {
+			cache_error("could not encode direct-media conversation index")
+		})?;
+		write_encrypted_atomic(
+			&conversation_index_path(account_dir, &conversation_hash),
+			&bytes,
+			key,
+			&conversation_index_aad(account_hash, &conversation_hash),
+			INDEX_MAGIC,
+		)?;
+	}
+	fs::File::open(&directory)
+		.and_then(|file| file.sync_all())
+		.map_err(|_| {
+			cache_error("could not sync direct-media index directory")
+		})?;
+	Ok(())
 }
 
 fn repair_persisted_records(app: &tauri::AppHandle) -> Result<(), AppError> {
@@ -1438,6 +2531,7 @@ fn repair_account_records(
 	key: &[u8; 32],
 ) -> Result<(), AppError> {
 	let mut index = load_account_index(root, account_hash, key)?;
+	let index_before = index.clone();
 	let account_dir = root.join(account_hash);
 	let orphan_candidates = fs::read_dir(&account_dir)
 		.into_iter()
@@ -1538,7 +2632,13 @@ fn repair_account_records(
 		position += 1;
 	}
 	if changed {
-		save_account_index(root, account_hash, key, &index)?;
+		persist_account_index_changes(
+			root,
+			account_hash,
+			key,
+			&index_before,
+			&index,
+		)?;
 	}
 	for candidate in orphan_candidates {
 		if !referenced_media.contains(&candidate) {
@@ -1644,7 +2744,7 @@ fn page_entries(
 			.then_with(|| right.message_id.cmp(&left.message_id))
 	});
 	let total_count = entries.len() as u64;
-	let offset = cursor.map(decode_cursor).transpose()?.unwrap_or(0);
+	let offset = cursor.map(decode_test_cursor).transpose()?.unwrap_or(0);
 	if offset > entries.len() {
 		return Err(cache_error("invalid direct-media cursor"));
 	}
@@ -1655,17 +2755,24 @@ fn page_entries(
 		.collect::<Vec<_>>();
 	let next = offset + items.len();
 	Ok(DirectMediaPage {
-		items,
-		next_cursor: (next < total_count as usize).then(|| encode_cursor(next)),
+		items: items
+			.into_iter()
+			.map(|entry| DirectMediaPageEntry {
+				entry,
+				protocol_url: None,
+			})
+			.collect(),
+		next_cursor: (next < total_count as usize)
+			.then(|| encode_test_cursor(next)),
 		total_count,
 	})
 }
 
 fn page_references(
 	mut entries: Vec<IndexEntry>,
-	cursor: Option<&str>,
+	cursor: Option<&DirectMediaCursor>,
 	page_size: usize,
-) -> Result<(Vec<IndexEntry>, Option<String>, u64), AppError> {
+) -> Result<(Vec<IndexEntry>, Option<IndexEntry>, u64), AppError> {
 	let page_size = page_size.clamp(1, MAX_PAGE_SIZE);
 	entries.sort_by(|left, right| {
 		right
@@ -1674,26 +2781,30 @@ fn page_references(
 			.then_with(|| right.identity_hash.cmp(&left.identity_hash))
 	});
 	let total_count = entries.len() as u64;
-	let offset = cursor.map(decode_cursor).transpose()?.unwrap_or(0);
-	if offset > entries.len() {
-		return Err(cache_error("invalid direct-media cursor"));
-	}
+	let offset = cursor.map_or(0, |cursor| {
+		entries.partition_point(|entry| {
+			entry.sent_at > cursor.sent_at
+				|| (entry.sent_at == cursor.sent_at
+					&& entry.identity_hash >= cursor.identity_hash)
+		})
+	});
 	let items = entries
 		.into_iter()
 		.skip(offset)
 		.take(page_size)
 		.collect::<Vec<_>>();
 	let next = offset + items.len();
-	Ok((
-		items,
-		(next < total_count as usize).then(|| encode_cursor(next)),
-		total_count,
-	))
+	let next_entry = (next < total_count as usize)
+		.then(|| items.last().cloned())
+		.flatten();
+	Ok((items, next_entry, total_count))
 }
-fn encode_cursor(offset: usize) -> String {
+#[cfg(test)]
+fn encode_test_cursor(offset: usize) -> String {
 	URL_SAFE_NO_PAD.encode((offset as u64).to_be_bytes())
 }
-fn decode_cursor(cursor: &str) -> Result<usize, AppError> {
+#[cfg(test)]
+fn decode_test_cursor(cursor: &str) -> Result<usize, AppError> {
 	let bytes = URL_SAFE_NO_PAD
 		.decode(cursor)
 		.map_err(|_| cache_error("invalid direct-media cursor"))?;
@@ -1702,6 +2813,88 @@ fn decode_cursor(cursor: &str) -> Result<usize, AppError> {
 		.map_err(|_| cache_error("invalid direct-media cursor"))?;
 	usize::try_from(u64::from_be_bytes(array))
 		.map_err(|_| cache_error("invalid direct-media cursor"))
+}
+
+fn direct_media_cursor_aad(
+	account_hash: &str,
+	conversation_hash: &str,
+	peer_hash: &str,
+) -> Vec<u8> {
+	aad_prefix(
+		"history-cursor-v1",
+		&[account_hash, conversation_hash, peer_hash],
+	)
+}
+
+fn encode_direct_media_cursor(
+	key: &[u8; 32],
+	account_hash: &str,
+	conversation_hash: &str,
+	peer_hash: &str,
+	entry: &IndexEntry,
+) -> Result<String, AppError> {
+	let payload = serde_json::to_vec(&DirectMediaCursor {
+		version: 1,
+		sent_at: entry.sent_at,
+		identity_hash: entry.identity_hash.clone(),
+	})
+	.map_err(|_| cache_error("could not encode direct-media cursor"))?;
+	let cipher = Aes256Gcm::new_from_slice(key)
+		.map_err(|_| cache_error("could not initialize direct-media cursor"))?;
+	let mut nonce = [0_u8; 12];
+	OsRng.fill_bytes(&mut nonce);
+	let ciphertext = cipher
+		.encrypt(
+			Nonce::from_slice(&nonce),
+			Payload {
+				msg: &payload,
+				aad: &direct_media_cursor_aad(
+					account_hash,
+					conversation_hash,
+					peer_hash,
+				),
+			},
+		)
+		.map_err(|_| cache_error("could not protect direct-media cursor"))?;
+	let mut encoded = nonce.to_vec();
+	encoded.extend(ciphertext);
+	Ok(URL_SAFE_NO_PAD.encode(encoded))
+}
+
+fn decode_direct_media_cursor(
+	key: &[u8; 32],
+	account_hash: &str,
+	conversation_hash: &str,
+	peer_hash: &str,
+	cursor: &str,
+) -> Result<DirectMediaCursor, AppError> {
+	let encoded = URL_SAFE_NO_PAD
+		.decode(cursor)
+		.map_err(|_| cache_error("invalid direct-media cursor"))?;
+	if encoded.len() <= 12 {
+		return Err(cache_error("invalid direct-media cursor"));
+	}
+	let cipher = Aes256Gcm::new_from_slice(key)
+		.map_err(|_| cache_error("could not initialize direct-media cursor"))?;
+	let payload = cipher
+		.decrypt(
+			Nonce::from_slice(&encoded[..12]),
+			Payload {
+				msg: &encoded[12..],
+				aad: &direct_media_cursor_aad(
+					account_hash,
+					conversation_hash,
+					peer_hash,
+				),
+			},
+		)
+		.map_err(|_| cache_error("invalid direct-media cursor"))?;
+	let cursor: DirectMediaCursor = serde_json::from_slice(&payload)
+		.map_err(|_| cache_error("invalid direct-media cursor"))?;
+	if cursor.version != 1 || cursor.identity_hash.is_empty() {
+		return Err(cache_error("invalid direct-media cursor"));
+	}
+	Ok(cursor)
 }
 fn account_hashes(root: &Path) -> Result<Vec<String>, AppError> {
 	let iter = match fs::read_dir(root) {
@@ -1716,6 +2909,7 @@ fn account_hashes(root: &Path) -> Result<Vec<String>, AppError> {
 	Ok(iter
 		.filter_map(Result::ok)
 		.filter(|entry| entry.path().is_dir())
+		.filter(|entry| entry.file_name() != ".transactions")
 		.filter_map(|entry| entry.file_name().into_string().ok())
 		.collect())
 }
@@ -1836,6 +3030,54 @@ impl DirectMediaEntry {
 mod tests {
 	use super::*;
 
+	fn history_delta(message_id: &str) -> DirectMediaHistoryDelta {
+		DirectMediaHistoryDelta {
+			account_id: "account".into(),
+			conversation_id: "conversation".into(),
+			peer_profile_id: "peer".into(),
+			message_id: message_id.into(),
+			media_id: format!("media-{message_id}"),
+			kind: "image".into(),
+			message_type: "Image".into(),
+			sent_at: 1,
+			remote_availability: RemoteAvailability::Available,
+		}
+	}
+
+	fn save_legacy_records(
+		root: &Path,
+		account_hash: &str,
+		key: &[u8; 32],
+		records: &[DirectMediaEntry],
+	) -> AccountIndex {
+		let account_dir = root.join(account_hash);
+		fs::create_dir_all(&account_dir).unwrap();
+		let index = AccountIndex {
+			entries: records
+				.iter()
+				.enumerate()
+				.map(|(position, record)| {
+					let reference = reference_for(
+						record,
+						format!("legacy-record-{position}.ogdr"),
+					);
+					save_record(root, account_hash, &reference, key, record)
+						.unwrap();
+					reference
+				})
+				.collect(),
+		};
+		write_encrypted_atomic(
+			&account_dir.join(INDEX_FILE),
+			&serde_json::to_vec(&index).unwrap(),
+			key,
+			&index_aad(account_hash),
+			INDEX_MAGIC,
+		)
+		.unwrap();
+		index
+	}
+
 	fn temp_dir() -> PathBuf {
 		let path = std::env::temp_dir().join(format!(
 			"open-grind-direct-media-cache-test-{}",
@@ -1922,7 +3164,7 @@ mod tests {
 			first
 				.items
 				.iter()
-				.map(|item| item.message_id.as_str())
+				.map(|item| item.entry.message_id.as_str())
 				.collect::<Vec<_>>(),
 			vec!["same-b", "same-a"]
 		);
@@ -1933,10 +3175,75 @@ mod tests {
 			second
 				.items
 				.iter()
-				.map(|item| item.message_id.as_str())
+				.map(|item| item.entry.message_id.as_str())
 				.collect::<Vec<_>>(),
 			vec!["older"]
 		);
+	}
+
+	#[test]
+	fn native_page_cursor_is_authenticated_scope_bound_and_keyset_stable() {
+		let key = [91_u8; 32];
+		let account_hash = identifier_hash("account");
+		let conversation_hash = identifier_hash("conversation");
+		let peer_hash = identifier_hash("peer");
+		let references = [
+			DirectMediaEntry::test("newest", 30),
+			DirectMediaEntry::test("middle", 20),
+			DirectMediaEntry::test("oldest", 10),
+		]
+		.into_iter()
+		.map(|entry| {
+			reference_for(&entry, format!("{}.ogdr", entry.message_id))
+		})
+		.collect::<Vec<_>>();
+		let (first, next, _) =
+			page_references(references.clone(), None, 2).unwrap();
+		assert_eq!(first.len(), 2);
+		let token = encode_direct_media_cursor(
+			&key,
+			&account_hash,
+			&conversation_hash,
+			&peer_hash,
+			next.as_ref().unwrap(),
+		)
+		.unwrap();
+		assert!(!token.contains(&next.unwrap().identity_hash));
+		let decoded = decode_direct_media_cursor(
+			&key,
+			&account_hash,
+			&conversation_hash,
+			&peer_hash,
+			&token,
+		)
+		.unwrap();
+		assert!(decode_direct_media_cursor(
+			&key,
+			&account_hash,
+			&identifier_hash("other-conversation"),
+			&peer_hash,
+			&token,
+		)
+		.is_err());
+		let mut tampered = token.into_bytes();
+		let last = tampered.len() - 1;
+		tampered[last] = if tampered[last] == b'A' { b'B' } else { b'A' };
+		assert!(decode_direct_media_cursor(
+			&key,
+			&account_hash,
+			&conversation_hash,
+			&peer_hash,
+			std::str::from_utf8(&tampered).unwrap(),
+		)
+		.is_err());
+
+		let inserted = DirectMediaEntry::test("inserted-later", 40);
+		let mut changed = references;
+		changed.push(reference_for(&inserted, "inserted.ogdr".into()));
+		let (second, _, _) =
+			page_references(changed, Some(&decoded), 2).unwrap();
+		assert_eq!(second.len(), 1);
+		assert_eq!(second[0].sent_at, 10);
 	}
 	#[test]
 	fn trim_evicts_bytes_but_preserves_history_metadata() {
@@ -2021,6 +3328,235 @@ mod tests {
 			RemoteAvailability::Expired,
 		);
 	}
+
+	#[test]
+	fn identical_history_delta_requires_zero_record_or_index_writes() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let key = [55_u8; 32];
+		let mut index = AccountIndex::default();
+		assert!(apply_history_delta(
+			&root,
+			&account_hash,
+			&key,
+			&mut index,
+			history_delta("message"),
+		)
+		.unwrap());
+		assert!(!apply_history_delta(
+			&root,
+			&account_hash,
+			&key,
+			&mut index,
+			history_delta("message"),
+		)
+		.unwrap());
+		assert_eq!(index.entries.len(), 1);
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn access_updates_are_coalesced_to_one_write_per_interval() {
+		assert!(!should_persist_access(1_000, 60_999));
+		assert!(should_persist_access(1_000, 61_000));
+		assert!(!should_persist_access(61_000, 61_001));
+	}
+
+	#[test]
+	fn account_generation_changes_are_account_partitioned() {
+		let first = identifier_hash("first-account");
+		let second = identifier_hash("second-account");
+		let first_before = account_generation(&first);
+		let second_before = account_generation(&second);
+		bump_account_generation(&first);
+		assert_eq!(account_generation(&first), first_before.wrapping_add(1));
+		assert_eq!(account_generation(&second), second_before);
+	}
+
+	#[test]
+	fn batch_partition_and_identity_commit_order_is_deterministic() {
+		let mut partitions = BTreeMap::new();
+		partitions.insert(
+			("account-b".into(), "conversation-b".into()),
+			vec![history_delta("z"), history_delta("a")],
+		);
+		partitions.insert(
+			("account-a".into(), "conversation-a".into()),
+			vec![history_delta("m")],
+		);
+		sort_batch_partitions(&mut partitions);
+		assert_eq!(
+			partitions.keys().cloned().collect::<Vec<_>>(),
+			vec![
+				("account-a".into(), "conversation-a".into()),
+				("account-b".into(), "conversation-b".into()),
+			],
+		);
+		let identities = partitions
+			.get(&("account-b".into(), "conversation-b".into()))
+			.unwrap()
+			.iter()
+			.map(|delta| {
+				composite_identity_hash(
+					&delta.conversation_id,
+					&delta.peer_profile_id,
+					&delta.message_id,
+					&delta.media_id,
+				)
+			})
+			.collect::<Vec<_>>();
+		assert!(identities.windows(2).all(|pair| pair[0] <= pair[1]));
+	}
+
+	#[test]
+	fn incomplete_batch_journal_rolls_back_partial_commit_and_orphans() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let second_hash = identifier_hash("second-account");
+		let account_dir = root.join(&account_hash);
+		let second_dir = root.join(&second_hash);
+		fs::create_dir_all(account_dir.join(INDEX_V2_DIR)).unwrap();
+		fs::create_dir_all(&second_dir).unwrap();
+		fs::write(account_dir.join("existing.ogdr"), b"before-record").unwrap();
+		fs::write(second_dir.join("existing.ogdr"), b"second-before").unwrap();
+		let partition = account_dir.join(INDEX_V2_DIR).join("partition.ogdi");
+		fs::write(&partition, b"before-index").unwrap();
+		let journal = transaction_root(&root).join("fault-injected");
+		fs::create_dir_all(journal.join("backups")).unwrap();
+		fs::copy(
+			account_dir.join("existing.ogdr"),
+			journal.join("backups/0.bak"),
+		)
+		.unwrap();
+		fs::copy(&partition, journal.join("backups/1.bak")).unwrap();
+		fs::copy(
+			second_dir.join("existing.ogdr"),
+			journal.join("backups/2.bak"),
+		)
+		.unwrap();
+		let manifest = BatchJournalManifest {
+			accounts: vec![
+				BatchJournalAccount {
+					account_hash: account_hash.clone(),
+					baseline_record_files: vec!["existing.ogdr".into()],
+				},
+				BatchJournalAccount {
+					account_hash: second_hash.clone(),
+					baseline_record_files: vec!["existing.ogdr".into()],
+				},
+			],
+			backups: vec![
+				BatchJournalBackup {
+					target: format!("{account_hash}/existing.ogdr"),
+					backup: "backups/0.bak".into(),
+					existed: true,
+				},
+				BatchJournalBackup {
+					target: format!("{second_hash}/existing.ogdr"),
+					backup: "backups/2.bak".into(),
+					existed: true,
+				},
+				BatchJournalBackup {
+					target: format!(
+						"{account_hash}/{INDEX_V2_DIR}/partition.ogdi"
+					),
+					backup: "backups/1.bak".into(),
+					existed: true,
+				},
+			],
+		};
+		fs::write(
+			journal.join("manifest.json"),
+			serde_json::to_vec(&manifest).unwrap(),
+		)
+		.unwrap();
+		fs::write(account_dir.join("existing.ogdr"), b"partial-record")
+			.unwrap();
+		fs::write(&partition, b"partial-index").unwrap();
+		fs::write(account_dir.join("orphan.ogdr"), b"orphan").unwrap();
+		fs::write(second_dir.join("existing.ogdr"), b"second-partial").unwrap();
+		fs::write(second_dir.join("orphan.ogdr"), b"second-orphan").unwrap();
+		recover_batch_journals(&root).unwrap();
+		assert_eq!(
+			fs::read(account_dir.join("existing.ogdr")).unwrap(),
+			b"before-record"
+		);
+		assert_eq!(fs::read(&partition).unwrap(), b"before-index");
+		assert!(!account_dir.join("orphan.ogdr").exists());
+		assert_eq!(
+			fs::read(second_dir.join("existing.ogdr")).unwrap(),
+			b"second-before"
+		);
+		assert!(!second_dir.join("orphan.ogdr").exists());
+		assert!(!journal.exists());
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn journal_recovery_handles_pre_manifest_and_committed_power_loss_boundaries(
+	) {
+		let root = temp_dir();
+		let transactions = transaction_root(&root);
+		let incomplete = transactions.join("before-manifest");
+		fs::create_dir_all(incomplete.join("backups")).unwrap();
+		recover_batch_journals(&root).unwrap();
+		assert!(!incomplete.exists());
+
+		let committed = transactions.join("after-commit-marker");
+		fs::create_dir_all(&committed).unwrap();
+		fs::write(
+			committed.join("manifest.json"),
+			serde_json::to_vec(&BatchJournalManifest {
+				accounts: vec![],
+				backups: vec![],
+			})
+			.unwrap(),
+		)
+		.unwrap();
+		fs::write(committed.join("committed"), b"committed").unwrap();
+		let durable = root.join("durable-result");
+		fs::write(&durable, b"keep").unwrap();
+		recover_batch_journals(&root).unwrap();
+		assert_eq!(fs::read(durable).unwrap(), b"keep");
+		assert!(!committed.exists());
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn journal_recovery_rejects_paths_outside_the_cache_before_mutating() {
+		let root = temp_dir();
+		let outside = root
+			.parent()
+			.unwrap()
+			.join(format!("outside-{}.txt", random_token()));
+		fs::write(&outside, b"do-not-touch").unwrap();
+		let journal = transaction_root(&root).join("malformed");
+		fs::create_dir_all(journal.join("backups")).unwrap();
+		fs::write(journal.join("backups/0.bak"), b"attacker-bytes").unwrap();
+		fs::write(
+			journal.join("manifest.json"),
+			serde_json::to_vec(&BatchJournalManifest {
+				accounts: vec![],
+				backups: vec![BatchJournalBackup {
+					target: format!(
+						"../{}",
+						outside.file_name().unwrap().to_string_lossy()
+					),
+					backup: "backups/0.bak".into(),
+					existed: true,
+				}],
+			})
+			.unwrap(),
+		)
+		.unwrap();
+
+		assert!(recover_batch_journals(&root).is_err());
+		assert_eq!(fs::read(&outside).unwrap(), b"do-not-touch");
+		assert!(journal.is_dir());
+
+		fs::remove_file(outside).unwrap();
+		fs::remove_dir_all(root).unwrap();
+	}
 	#[test]
 	fn page_size_is_capped_at_sixty_for_large_history() {
 		let entries = (0..1000)
@@ -2035,6 +3571,37 @@ mod tests {
 	}
 
 	#[test]
+	fn paging_is_stable_for_sixty_one_twenty_one_thousand_and_ten_thousand() {
+		for total in [60_usize, 120, 1_000, 10_000] {
+			let entries = (0..total)
+				.map(|value| {
+					DirectMediaEntry::test(
+						&format!("message-{value:05}"),
+						value as u64,
+					)
+				})
+				.collect::<Vec<_>>();
+			let mut cursor = None;
+			let mut observed = Vec::new();
+			loop {
+				let page =
+					page_entries(entries.clone(), cursor.as_deref(), 120)
+						.unwrap();
+				assert!(page.items.len() <= 60);
+				observed.extend(
+					page.items.into_iter().map(|entry| entry.entry.message_id),
+				);
+				cursor = page.next_cursor;
+				if cursor.is_none() {
+					break;
+				}
+			}
+			assert_eq!(observed.len(), total);
+			assert_eq!(observed.iter().collect::<HashSet<_>>().len(), total);
+		}
+	}
+
+	#[test]
 	fn history_metadata_is_encrypted_at_rest() {
 		let root = temp_dir();
 		let account_hash = identifier_hash("account");
@@ -2046,8 +3613,11 @@ mod tests {
 			entries: vec![reference],
 		};
 		save_account_index(&root, &account_hash, &key, &index).unwrap();
-		let stored =
-			fs::read(root.join(&account_hash).join(INDEX_FILE)).unwrap();
+		let stored = fs::read(conversation_index_path(
+			&root.join(&account_hash),
+			&identifier_hash("conversation"),
+		))
+		.unwrap();
 		assert!(!stored
 			.windows(b"private-message".len())
 			.any(|window| window == b"private-message"));
@@ -2056,6 +3626,294 @@ mod tests {
 			load_record(&root, &account_hash, &loaded.entries[0], &key)
 				.unwrap();
 		assert_eq!(loaded_record.message_id, "private-message");
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn legacy_index_migration_is_partitioned_verified_and_idempotent() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let key = [61_u8; 32];
+		let first = DirectMediaEntry::test("first", 1);
+		let mut second = DirectMediaEntry::test("second", 2);
+		second.conversation_id = "other-conversation".into();
+		let index =
+			save_legacy_records(&root, &account_hash, &key, &[first, second]);
+		let account_dir = root.join(&account_hash);
+		let epoch = CACHE_EPOCH.load(Ordering::Acquire);
+		migrate_legacy_index(&account_dir, &account_hash, &key, &index, epoch)
+			.unwrap();
+		assert!(!account_dir.join(INDEX_FILE).exists());
+		let loaded =
+			load_v2_indexes(&account_dir, &account_hash, &key).unwrap();
+		assert_eq!(loaded.entries.len(), 2);
+		let conversation_hash = identifier_hash("conversation");
+		let bytes = read_encrypted_range(
+			&conversation_index_path(&account_dir, &conversation_hash),
+			&key,
+			&conversation_index_aad(&account_hash, &conversation_hash),
+			None,
+			INDEX_MAGIC,
+		)
+		.unwrap();
+		let envelope: ConversationIndexEnvelope =
+			serde_json::from_slice(&bytes).unwrap();
+		assert_eq!(envelope.schema_version, INDEX_SCHEMA_VERSION);
+		assert_eq!(
+			fs::read_dir(account_dir.join(INDEX_V2_DIR))
+				.unwrap()
+				.count(),
+			2
+		);
+		// Resume after completed retirement is a stable read, not a duplicate write.
+		assert_eq!(
+			load_account_index(&root, &account_hash, &key)
+				.unwrap()
+				.entries
+				.len(),
+			2
+		);
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn interrupted_migration_retains_readable_source_until_verified() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let key = [62_u8; 32];
+		let record = DirectMediaEntry::test("private-message", 1);
+		let index = save_legacy_records(&root, &account_hash, &key, &[record]);
+		let account_dir = root.join(&account_hash);
+		let partition = conversation_index_path(
+			&account_dir,
+			&identifier_hash("conversation"),
+		);
+		let epoch = CACHE_EPOCH.load(Ordering::Acquire);
+		let result = migrate_legacy_index_with_hook(
+			&account_dir,
+			&account_hash,
+			&key,
+			&index,
+			epoch,
+			|| {
+				fs::write(&partition, b"interrupted").map_err(|_| {
+					cache_error("injected migration interruption")
+				})?;
+				Ok(())
+			},
+		);
+		assert!(result.is_err());
+		assert!(account_dir.join(INDEX_FILE).is_file());
+		assert_eq!(
+			load_legacy_index(
+				&account_dir.join(INDEX_FILE),
+				&account_hash,
+				&key
+			)
+			.unwrap()
+			.entries
+			.len(),
+			1
+		);
+		// A corrupt staged partition must fail closed rather than being silently
+		// overwritten. Once the invalid artifact is explicitly removed, migration
+		// can resume and retire the still-readable legacy source after verification.
+		fs::remove_file(&partition).unwrap();
+		migrate_legacy_index(&account_dir, &account_hash, &key, &index, epoch)
+			.unwrap();
+		assert!(!account_dir.join(INDEX_FILE).exists());
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn migration_resumes_in_bounded_partition_batches() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let key = [64_u8; 32];
+		let records = (0..(MIGRATION_PARTITION_BATCH + 2))
+			.map(|value| {
+				let mut record = DirectMediaEntry::test(
+					&format!("message-{value}"),
+					value as u64,
+				);
+				record.conversation_id = format!("conversation-{value}");
+				record
+			})
+			.collect::<Vec<_>>();
+		let index = save_legacy_records(&root, &account_hash, &key, &records);
+		let account_dir = root.join(&account_hash);
+		let epoch = CACHE_EPOCH.load(Ordering::Acquire);
+		migrate_legacy_index(&account_dir, &account_hash, &key, &index, epoch)
+			.unwrap();
+		assert!(account_dir.join(INDEX_FILE).is_file());
+		assert_eq!(
+			load_v2_indexes(&account_dir, &account_hash, &key)
+				.unwrap()
+				.entries
+				.len(),
+			MIGRATION_PARTITION_BATCH
+		);
+		migrate_legacy_index(&account_dir, &account_hash, &key, &index, epoch)
+			.unwrap();
+		assert!(!account_dir.join(INDEX_FILE).exists());
+		assert_eq!(
+			load_v2_indexes(&account_dir, &account_hash, &key)
+				.unwrap()
+				.entries
+				.len(),
+			MIGRATION_PARTITION_BATCH + 2
+		);
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn migration_retains_source_when_encrypted_record_pointer_is_stale() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let key = [65_u8; 32];
+		let record = DirectMediaEntry::test("message", 1);
+		let index =
+			save_legacy_records(&root, &account_hash, &key, &[record.clone()]);
+		let mut mismatched = record;
+		mismatched.sent_at = 99;
+		save_record(&root, &account_hash, &index.entries[0], &key, &mismatched)
+			.unwrap();
+		let account_dir = root.join(&account_hash);
+		let epoch = CACHE_EPOCH.load(Ordering::Acquire);
+		assert!(migrate_legacy_index(
+			&account_dir,
+			&account_hash,
+			&key,
+			&index,
+			epoch
+		)
+		.is_err());
+		assert!(account_dir.join(INDEX_FILE).is_file());
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn newer_legacy_entry_overrides_stale_authenticated_v2_before_retirement() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let key = [66_u8; 32];
+		let mut legacy_record = DirectMediaEntry::test("message", 20);
+		legacy_record.remote_availability = RemoteAvailability::Expired;
+		let legacy =
+			save_legacy_records(&root, &account_hash, &key, &[legacy_record]);
+		let mut stale = legacy.entries[0].clone();
+		stale.sent_at = 1;
+		stale.last_accessed_ms = 1;
+		let conversation_hash = stale.conversation_hash.clone();
+		save_conversation_index(
+			&root.join(&account_hash),
+			&account_hash,
+			&conversation_hash,
+			&key,
+			&AccountIndex {
+				entries: vec![stale],
+			},
+		)
+		.unwrap();
+		let loaded = load_account_index(&root, &account_hash, &key).unwrap();
+		assert_eq!(loaded.entries, legacy.entries);
+		assert!(!root.join(&account_hash).join(INDEX_FILE).exists());
+		let migrated =
+			load_v2_indexes(&root.join(&account_hash), &account_hash, &key)
+				.unwrap();
+		assert_eq!(migrated.entries, legacy.entries);
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn corrupt_v2_partition_fails_closed_while_legacy_source_remains() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let key = [68_u8; 32];
+		let legacy_record = DirectMediaEntry::test("legacy-message", 20);
+		let legacy =
+			save_legacy_records(&root, &account_hash, &key, &[legacy_record]);
+		let account_dir = root.join(&account_hash);
+		let conversation_hash = legacy.entries[0].conversation_hash.clone();
+		save_conversation_index(
+			&account_dir,
+			&account_hash,
+			&conversation_hash,
+			&key,
+			&legacy,
+		)
+		.unwrap();
+		let partition =
+			conversation_index_path(&account_dir, &conversation_hash);
+		fs::write(&partition, b"corrupt-current-partition").unwrap();
+		let corrupt_bytes = fs::read(&partition).unwrap();
+
+		assert!(load_account_index(&root, &account_hash, &key).is_err());
+		assert!(account_dir.join(INDEX_FILE).is_file());
+		assert_eq!(fs::read(partition).unwrap(), corrupt_bytes);
+
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn normal_persistence_rewrites_only_changed_conversation_partition() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let key = [67_u8; 32];
+		let records = (0..10)
+			.map(|value| {
+				let mut record =
+					DirectMediaEntry::test(&format!("message-{value}"), value);
+				record.conversation_id = format!("conversation-{value}");
+				record
+			})
+			.collect::<Vec<_>>();
+		let before = AccountIndex {
+			entries: records
+				.iter()
+				.enumerate()
+				.map(|(position, record)| {
+					reference_for(record, format!("record-{position}.ogdr"))
+				})
+				.collect(),
+		};
+		save_account_index(&root, &account_hash, &key, &before).unwrap();
+		let unchanged_hash = identifier_hash("conversation-9");
+		let unchanged_path =
+			conversation_index_path(&root.join(&account_hash), &unchanged_hash);
+		let unchanged_bytes = fs::read(&unchanged_path).unwrap();
+		let mut after = before.clone();
+		after.entries[0].last_accessed_ms += 100;
+		persist_account_index_changes(
+			&root,
+			&account_hash,
+			&key,
+			&before,
+			&after,
+		)
+		.unwrap();
+		assert_eq!(fs::read(unchanged_path).unwrap(), unchanged_bytes);
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn cache_epoch_change_fences_legacy_source_retirement() {
+		let root = temp_dir();
+		let account_hash = identifier_hash("account");
+		let key = [63_u8; 32];
+		let record = DirectMediaEntry::test("message", 1);
+		let index = save_legacy_records(&root, &account_hash, &key, &[record]);
+		let account_dir = root.join(&account_hash);
+		let stale_epoch = CACHE_EPOCH.load(Ordering::Acquire).wrapping_sub(1);
+		assert!(migrate_legacy_index(
+			&account_dir,
+			&account_hash,
+			&key,
+			&index,
+			stale_epoch
+		)
+		.is_err());
+		assert!(account_dir.join(INDEX_FILE).is_file());
 		fs::remove_dir_all(root).unwrap();
 	}
 
@@ -2228,6 +4086,34 @@ mod tests {
 			&account_hash,
 			&key,
 			&record
+		)
+		.is_err());
+		let middle = vec![7_u8; CHUNK_SIZE * 3];
+		record.byte_length = Some(middle.len() as u64);
+		write_encrypted_atomic(
+			&path,
+			&middle,
+			&key,
+			&direct_media_aad(
+				&account_hash,
+				&identifier_hash("conversation"),
+				&identifier_hash("peer"),
+				&identifier_hash("message"),
+				&identifier_hash("media-message"),
+				"image/jpeg",
+			),
+			MEDIA_MAGIC,
+		)
+		.unwrap();
+		let mut corrupted_middle = fs::read(&path).unwrap();
+		let midpoint = corrupted_middle.len() / 2;
+		corrupted_middle[midpoint] ^= 0x80;
+		fs::write(&path, corrupted_middle).unwrap();
+		assert!(probe_verified_entry_media(
+			&account_dir,
+			&account_hash,
+			&key,
+			&record,
 		)
 		.is_err());
 		fs::remove_dir_all(root).unwrap();

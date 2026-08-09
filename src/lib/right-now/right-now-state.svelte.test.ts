@@ -106,6 +106,21 @@ describe("RightNowState", () => {
 		expect(state.visiblePosts(3_000)).toHaveLength(0);
 	});
 
+	it("prunes expired posts from the loaded snapshot", async () => {
+		const state = new RightNowState({
+			loader: () =>
+				Promise.resolve({
+					posts: [post(1, 1_500), post(2, 2_500)],
+					viewerCount: 0,
+				}),
+			filters: filters(),
+		});
+		await state.load();
+
+		state.pruneExpired(2_000);
+		expect(state.visiblePosts(1_000).map(({ id }) => id)).toEqual([2]);
+	});
+
 	it("records an initial failure and succeeds on retry", async () => {
 		const loader = vi
 			.fn()

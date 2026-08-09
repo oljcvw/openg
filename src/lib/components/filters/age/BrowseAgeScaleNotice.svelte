@@ -4,6 +4,10 @@
 		browseAgeScaleLabel,
 	} from "$lib/components/filters/filters";
 	import { Button } from "$lib/components/ui/button";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 
 	let {
 		scale,
@@ -36,7 +40,11 @@
 		variant="link"
 		size="xs"
 		class="h-auto px-0"
-		onclick={onsettings}
+		onclick={(event) =>
+			interceptAppNavigationClick(event, () => {
+				onsettings();
+				return openAppDetail("/settings/developer");
+			})}
 	>
 		Developer Settings
 	</Button>

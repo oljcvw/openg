@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
-
 	import { showErrorToast } from "$lib/api/error";
 	import { setPreferences } from "$lib/app-data/preferences.svelte";
 	import * as Command from "$lib/components/ui/command";
+	import { activateAppRootRoute } from "$lib/navigation/app-navigation";
 	import { commandCenterClose } from "../command-center-state.svelte";
 
 	let {
@@ -16,7 +14,7 @@
 	async function setLocation(geohash: string) {
 		try {
 			await setPreferences({ geohash });
-			await goto("/", { replaceState: page.url.pathname === "/" });
+			await activateAppRootRoute("/");
 		} catch (error) {
 			console.error(error);
 			showErrorToast({

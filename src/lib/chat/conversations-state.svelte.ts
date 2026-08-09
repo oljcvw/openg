@@ -11,6 +11,7 @@ import {
 } from "$lib/api/messaging/conversations";
 import {
 	type FailedCachedMessage,
+	mergeConfirmedMessages,
 	readCachedInbox,
 	readCachedConversation as readPersistedConversation,
 	removeCachedConversation,
@@ -18,10 +19,12 @@ import {
 	writeCachedConversation as writePersistedConversation,
 } from "$lib/app-data/chat-cache";
 import {
+	getDeveloperSettingsSnapshot,
 	getShowRetractedMessagesSnapshot,
 	subscribePreferences,
 } from "$lib/app-data/preferences.svelte";
 import { showIncomingMessageToast } from "$lib/components/incoming-message-toast/incoming-message-toast-manager";
+import { runtimeOwnership } from "$lib/dev/runtime-ownership";
 import { previewFromMessage } from "$lib/model/messaging/messages";
 import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 import { below } from "$lib/util/breakpoints.svelte";
@@ -61,6 +64,13 @@ export type CachedConversation = {
 	};
 	pageKey: string | null;
 	lastReadTimestamp: number | null;
+	segments?: {
+		segmentId: string;
+		cursor: string | null;
+		nextCursor: string | null;
+		messageIds: string[];
+	}[];
+	removedMessageIds?: string[];
 };
 
 class ConversationsState {
@@ -70,7 +80,6 @@ class ConversationsState {
 	refreshing = $state(false);
 	inboxLastViewedAt = $state(0);
 	initial: Promise<void> = $state(Promise.resolve());
-	listScrollY = 0;
 	messageSearchQuery = $state("");
 	messageSearchMatchIds = $state<string[]>([]);
 	messageSearchStatus = $state<MessageSearchStatus>("idle");
@@ -102,6 +111,7 @@ class ConversationsState {
 	#messageSearchCorpora = new Map<string, MessageSearchCorpus>();
 	#messageSearchEpoch = 0;
 	#unsubscribePreferences: () => void;
+	#releaseOwnership = runtimeOwnership.acquire("conversation-state");
 
 	constructor(ourProfileId: number) {
 		this.ourProfileId = ourProfileId;
@@ -132,22 +142,48 @@ class ConversationsState {
 		});
 
 		this.#wsPromises.push(
-			ws.on("chat.v1.message_sent", chatV1MessageSentEventSchema, (event) => {
-				if (this.#destroyed) return;
-				void this.#handleMessageSent(event.payload);
-			}),
-			ws.on(
-				"chat.v1.conversation.delete",
-				chatV1ConversationDeleteEventSchema,
-				(event) => {
+			this.#trackWebsocketListener(
+				ws.on("chat.v1.message_sent", chatV1MessageSentEventSchema, (event) => {
 					if (this.#destroyed) return;
-					for (const id of event.payload.conversationIds) {
-						this.remove(id);
-						this.#markServerDeleted(id);
-					}
-				},
+					void this.#handleMessageSent(event.payload);
+				}),
+			),
+			this.#trackWebsocketListener(
+				ws.on(
+					"chat.v1.conversation.delete",
+					chatV1ConversationDeleteEventSchema,
+					(event) => {
+						if (this.#destroyed) return;
+						for (const id of event.payload.conversationIds) {
+							this.remove(id);
+							this.#markServerDeleted(id);
+						}
+					},
+				),
 			),
 		);
+	}
+
+	async #trackWebsocketListener(
+		pending: Promise<() => void>,
+	): Promise<() => void> {
+		const release = runtimeOwnership.acquire("websocket-listener");
+		try {
+			const unlisten = await pending;
+			let active = true;
+			return () => {
+				if (!active) return;
+				active = false;
+				try {
+					unlisten();
+				} finally {
+					release();
+				}
+			};
+		} catch (error) {
+			release();
+			throw error;
+		}
 	}
 
 	async #initialize(): Promise<void> {
@@ -171,14 +207,29 @@ class ConversationsState {
 	}
 
 	async destroy(): Promise<void> {
+		if (this.#destroyed) return;
 		this.#destroyed = true;
+		this.#releaseOwnership();
 		this.cancelMessageSearch();
 		this.#messageSearchCorpora.clear();
 		this.#unsubscribeReconcile();
 		this.#unsubscribePreferences();
-		const unlisteners = await Promise.all(this.#wsPromises);
-		for (const unlisten of unlisteners) unlisten();
+		const registrations = await Promise.allSettled(this.#wsPromises);
+		const failures: unknown[] = [];
+		for (const registration of registrations) {
+			if (registration.status === "rejected") {
+				failures.push(registration.reason);
+				continue;
+			}
+			try {
+				registration.value();
+			} catch (error) {
+				failures.push(error);
+			}
+		}
 		this.#wsPromises = [];
+		if (failures.length > 0)
+			throw new AggregateError(failures, "WebSocket listener cleanup failed");
 	}
 
 	async #handleMessageSent(message: ApiResponseMessage): Promise<void> {
@@ -739,7 +790,11 @@ class ConversationsState {
 		id: string,
 	): Promise<CachedConversation | undefined> {
 		const memory = this.#messageCache.get(id);
-		if (memory) return memory;
+		if (memory) {
+			this.#messageCache.delete(id);
+			this.#messageCache.set(id, memory);
+			return memory;
+		}
 		const persisted = await readPersistedConversation(
 			this.ourProfileId,
 			id,
@@ -760,14 +815,29 @@ class ConversationsState {
 			profile: persisted.profile,
 			pageKey: persisted.pageKey,
 			lastReadTimestamp: persisted.lastReadTimestamp,
+			segments: persisted.segments,
 		};
 		this.#messageCache.set(id, cached);
+		this.#trimConversationCache();
 		return cached;
 	}
 
 	setCachedConversation(id: string, data: CachedConversation): void {
-		const normalized = { ...data, failedMessages: data.failedMessages ?? [] };
+		const current = this.#messageCache.get(id);
+		const removedMessageIds = new Set(data.removedMessageIds ?? []);
+		const normalized = {
+			...data,
+			messages: mergeConfirmedMessages(
+				current?.messages ?? [],
+				data.messages,
+				removedMessageIds,
+			),
+			failedMessages: data.failedMessages ?? [],
+			segments: data.segments ?? current?.segments ?? [],
+		};
+		delete normalized.removedMessageIds;
 		this.#messageCache.set(id, normalized);
+		this.#trimConversationCache();
 		const hasFailed = normalized.failedMessages.some(
 			(message) => message.state === "failed",
 		);
@@ -790,6 +860,24 @@ class ConversationsState {
 			corpus.retractedMessageIds.clear();
 		}
 		this.#mergeSearchMessages(id, data.messages);
+	}
+
+	#trimConversationCache(): void {
+		const maximumNonactive = 20;
+		while (
+			this.#messageCache.size >
+			maximumNonactive + (this.#activeConversationId === null ? 0 : 1)
+		) {
+			const oldest = this.#messageCache.keys().next().value;
+			if (oldest === undefined) return;
+			if (oldest === this.#activeConversationId) {
+				const active = this.#messageCache.get(oldest);
+				this.#messageCache.delete(oldest);
+				if (active) this.#messageCache.set(oldest, active);
+				continue;
+			}
+			this.#messageCache.delete(oldest);
+		}
 	}
 
 	invalidateConversation(id: string): void {
@@ -818,6 +906,7 @@ class ConversationsState {
 		this.messageSearchStatus = normalizedQuery === "" ? "idle" : "searching";
 		this.messageSearchScanned = 0;
 		this.messageSearchTotal = 0;
+		if (normalizedQuery === "") this.#messageSearchCorpora.clear();
 	}
 
 	async searchLoadedMessages(query: string): Promise<void> {
@@ -833,19 +922,26 @@ class ConversationsState {
 		this.messageSearchQuery = normalizedQuery;
 		this.messageSearchStatus = "searching";
 		this.messageSearchTotal = candidates.length;
+		let nextCandidate = 0;
+		const concurrency = Math.min(
+			candidates.length,
+			getDeveloperSettingsSnapshot().conversationSearchConcurrency,
+		);
 		await Promise.all(
-			candidates.map((conversation) =>
-				this.getCachedConversation(conversation.data.conversationId).catch(
-					() => undefined,
-				),
-			),
+			Array.from({ length: concurrency }, async () => {
+				while (!this.#isMessageSearchStale(searchEpoch)) {
+					const candidate = candidates[nextCandidate++];
+					if (!candidate) return;
+					const id = candidate.data.conversationId;
+					await this.getCachedConversation(id).catch(() => undefined);
+					if (this.#isMessageSearchStale(searchEpoch)) return;
+					this.#seedSearchCorpus(id);
+					if (id !== this.#activeConversationId) this.#messageCache.delete(id);
+					this.messageSearchScanned += 1;
+				}
+			}),
 		);
 		if (this.#isMessageSearchStale(searchEpoch)) return;
-
-		for (const conversation of candidates) {
-			this.#seedSearchCorpus(conversation.data.conversationId);
-			this.messageSearchScanned += 1;
-		}
 		this.#publishSearchMatches({
 			candidates,
 			normalizedQuery,

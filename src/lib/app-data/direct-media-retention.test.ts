@@ -1,19 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { importLegacyMock, setScopeMock, storeMock, upsertMock } = vi.hoisted(
-	() => ({
+const { importLegacyMock, setScopeMock, storeMock, upsertBatchMock } =
+	vi.hoisted(() => ({
 		importLegacyMock: vi.fn(),
 		setScopeMock: vi.fn().mockResolvedValue(undefined),
 		storeMock: vi.fn(),
-		upsertMock: vi.fn().mockResolvedValue(undefined),
-	}),
-);
+		upsertBatchMock: vi.fn().mockResolvedValue(undefined),
+	}));
 
 vi.mock("$lib/app-data/direct-media-cache", () => ({
 	importLegacyDirectMedia: importLegacyMock,
 	setDirectMediaCacheScope: setScopeMock,
 	storeDirectMedia: storeMock,
-	upsertDirectMediaHistory: upsertMock,
+	upsertDirectMediaHistoryBatch: upsertBatchMock,
 }));
 vi.mock("$lib/app-data/preferences.svelte", () => ({
 	getDeveloperSettingsSnapshot: () => ({
@@ -25,14 +24,76 @@ vi.mock("$lib/app-data/preferences.svelte", () => ({
 vi.mock("$lib/api/account-caches", () => ({ registerAccountCache: vi.fn() }));
 
 import {
+	clearDirectMediaRetentionQueue,
 	importLegacyRetainedDirectMedia,
 	queueVisibleDirectMedia,
 	retainAuthorizedDirectMedia,
 	setDirectMediaRetentionScope,
+	toSharedMediaEntry,
 } from "$lib/app-data/direct-media-retention";
 import type { SharedMediaEntry } from "$lib/chat/shared-media";
 
 describe("direct-media conversation scope fencing", () => {
+	beforeEach(() => {
+		clearDirectMediaRetentionQueue();
+		importLegacyMock.mockClear();
+		setScopeMock.mockClear();
+		storeMock.mockReset();
+		upsertBatchMock.mockClear();
+	});
+
+	it("uses the page-provided opaque protocol URL without a tile lookup", () => {
+		const shared = toSharedMediaEntry({
+			accountProfileId: 1,
+			conversationId: "A",
+			peerProfileId: 2,
+			messageId: "message",
+			mediaId: "media",
+			kind: "image",
+			messageType: "Image",
+			sentAt: 1,
+			remoteAvailability: "available",
+			cacheAvailability: "cached",
+			cacheToken: "opaque",
+			protocolUrl: "direct-media-cache://localhost/opaque",
+			contentType: "image/jpeg",
+			byteLength: 12,
+			lastAccessedMs: 1,
+		});
+		expect(shared.remoteUrl).toBe("direct-media-cache://localhost/opaque");
+	});
+	it("records one visible item with one native batch delta", async () => {
+		storeMock.mockResolvedValueOnce({
+			protocolUrl: "direct-media-cache://localhost/opaque",
+		});
+		setDirectMediaRetentionScope({
+			accountProfileId: 1,
+			conversationId: "A",
+			peerProfileId: 2,
+		});
+		const entry: SharedMediaEntry = {
+			accountProfileId: 1,
+			conversationId: "A",
+			peerProfileId: 2,
+			messageId: "message",
+			mediaId: "media",
+			kind: "image",
+			messageType: "Image",
+			sentAt: 1,
+			remoteAvailability: "available",
+			cacheAvailability: "not_cached",
+			cacheToken: null,
+			consumptive: false,
+			remoteUrl: "https://cdns.grindr.com/media",
+		};
+		await expect(queueVisibleDirectMedia(entry)).resolves.toContain(
+			"direct-media-cache:",
+		);
+		expect(upsertBatchMock).toHaveBeenCalledOnce();
+		expect(upsertBatchMock).toHaveBeenCalledWith([
+			expect.objectContaining({ messageId: "message" }),
+		]);
+	});
 	it("discards a completed conversation-A store after switching to B", async () => {
 		let finishStore!: (value: unknown) => void;
 		storeMock.mockReturnValueOnce(

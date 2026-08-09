@@ -11,6 +11,10 @@
 	import ProfileFacts from "$lib/components/profile/ProfileFacts.svelte";
 	import RelativeTimeDynamic from "$lib/components/shared/RelativeTimeDynamic.svelte";
 	import { Button } from "$lib/components/ui/button";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 	import type { ProfileSummary } from "$lib/api/users/profiles";
 	import type { FeedPost } from "$lib/right-now/posts";
 	import RightNowAvatar from "./RightNowAvatar.svelte";
@@ -19,10 +23,12 @@
 		post,
 		ourProfileId,
 		summary,
+		onOpenMedia,
 	}: {
 		post: FeedPost;
 		ourProfileId: number;
 		summary: ProfileSummary | null;
+		onOpenMedia: (mediaKey: string, opener: HTMLAnchorElement) => void;
 	} = $props();
 
 	const conversationId = $derived(
@@ -63,6 +69,10 @@
 						rel="noreferrer"
 						aria-label="Open image from {post.displayName ?? 'this post'}"
 						class="pswp-trigger block overflow-hidden rounded-xl bg-muted"
+						onclick={(event) => {
+							event.preventDefault();
+							onOpenMedia(`${post.id}:${image.mediaId}`, event.currentTarget);
+						}}
 					>
 						<img
 							src={image.thumbnailUrl}
@@ -104,6 +114,10 @@
 				variant="ghost"
 				size="icon-sm"
 				href="/chat/{conversationId}"
+				onclick={(event) =>
+					interceptAppNavigationClick(event, () =>
+						openAppDetail(`/chat/${conversationId}`),
+					)}
 				aria-label="Message {post.displayName ?? 'this profile'}"
 			>
 				<ChatIcon aria-hidden="true" />

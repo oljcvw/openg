@@ -4,6 +4,7 @@ import {
 	discoverSharedAlbum,
 	listCachedAlbumHistoryPage,
 	reconcileCachedAlbumMembership,
+	releaseCachedAlbumHistory,
 } from "$lib/app-data/album-cache";
 import type { SharedAlbum } from "$lib/model/messaging/albums";
 
@@ -25,6 +26,7 @@ export async function loadSharedAlbumCollection({
 	ownerProfileId: number;
 	cursor?: string | null;
 }): Promise<LoadedSharedAlbumCollection> {
+	releaseCachedAlbumHistory(ownerProfileId);
 	const current = await getAlbumsSharedByProfile(ownerProfileId);
 	if (current.some((album) => album.profileId !== ownerProfileId))
 		throw new Error("Shared-album response contained an unexpected owner");
@@ -66,4 +68,8 @@ export async function loadSharedAlbumHistoryPage({
 	nextCursor: string | null;
 }> {
 	return await listCachedAlbumHistoryPage(ownerProfileId, cursor);
+}
+
+export function releaseSharedAlbumHistory(ownerProfileId: number): void {
+	releaseCachedAlbumHistory(ownerProfileId);
 }

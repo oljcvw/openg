@@ -152,6 +152,7 @@ pub fn run() {
 			api::album_cache::album_cache_trim,
 			api::album_cache::album_cache_clear,
 			api::direct_media_cache::direct_media_cache_upsert,
+			api::direct_media_cache::direct_media_cache_upsert_batch,
 			api::direct_media_cache::direct_media_cache_set_scope,
 			api::direct_media_cache::direct_media_cache_store,
 			api::direct_media_cache::direct_media_cache_import_legacy,

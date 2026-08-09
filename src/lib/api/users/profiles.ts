@@ -15,6 +15,12 @@ import {
 	removeCachedProfile,
 	writeCachedProfile,
 } from "$lib/app-data/profile-cache";
+import {
+	clearProfileMemoryCache,
+	deleteProfileMemoryRecord,
+	getProfileMemoryRecord,
+	mergeProfileMemoryRecord,
+} from "$lib/app-data/profile-memory-cache";
 import { mediaHashPublicSchema } from "$lib/model/media";
 import { rightNowAttributionStatusSchema } from "$lib/model/right-now";
 import {
@@ -104,20 +110,32 @@ const profileResponseSchema = z.object({
 	profiles: z.array(profileSchema).length(1),
 });
 
-const profilesCache = new Map<
-	number,
-	{ profile: Profile; updatedAt: number }
->();
+function getFullProfileRecord(
+	profileId: number,
+): { profile: Profile; updatedAt: number } | null {
+	return (
+		(getProfileMemoryRecord(profileId)?.full as {
+			profile: Profile;
+			updatedAt: number;
+		}) ?? null
+	);
+}
+
+function setFullProfileRecord(
+	profileId: number,
+	record: { profile: Profile; updatedAt: number },
+): void {
+	mergeProfileMemoryRecord(profileId, { full: record }, record.updatedAt);
+}
 
 const profilesInFlight = new Map<string, Promise<Profile>>();
-const profileFreshnessHints = new Map<number, number>();
 
 function profileCacheIsFresh(
 	profileId: number,
 	cached: { profile: Profile; updatedAt: number },
 ): boolean {
 	if (now() - cached.updatedAt >= 1000 * 60) return false;
-	const hint = profileFreshnessHints.get(profileId);
+	const hint = getProfileMemoryRecord(profileId)?.freshnessHint;
 	if (hint === undefined) return true;
 	return (
 		cached.profile.lastUpdatedTime !== null &&
@@ -130,15 +148,15 @@ export function noteProfileFreshness(
 	lastUpdatedTime: number | null,
 ): void {
 	if (lastUpdatedTime === null) return;
-	const current = profileFreshnessHints.get(profileId) ?? 0;
+	const current = getProfileMemoryRecord(profileId)?.freshnessHint ?? 0;
 	if (lastUpdatedTime > current) {
-		profileFreshnessHints.set(profileId, lastUpdatedTime);
+		mergeProfileMemoryRecord(profileId, { freshnessHint: lastUpdatedTime });
 	}
 }
 
 export async function getProfile(profileId: number): Promise<Profile> {
 	const session = getAccountSessionSnapshot();
-	const cached = profilesCache.get(profileId);
+	const cached = getFullProfileRecord(profileId);
 	if (cached && profileCacheIsFresh(profileId, cached)) {
 		return cached.profile;
 	}
@@ -157,7 +175,7 @@ export async function getPersistedProfile(
 	profileId: number,
 ): Promise<Profile | null> {
 	const session = getAccountSessionSnapshot();
-	const cached = profilesCache.get(profileId);
+	const cached = getFullProfileRecord(profileId);
 	if (cached) return structuredClone(cached.profile);
 	const persisted = await readCachedProfileEntry(profileId, now()).catch(() => {
 		console.error("Profile cache hydration failed");
@@ -171,7 +189,7 @@ export async function getPersistedProfile(
 	});
 	assertAccountSessionCurrent(session);
 	if (!persisted) return null;
-	profilesCache.set(profileId, persisted);
+	setFullProfileRecord(profileId, persisted);
 	return structuredClone(persisted.profile);
 }
 
@@ -212,7 +230,7 @@ async function fetchProfile(
 			throw new ProfileUnavailableError();
 		}
 	}
-	profilesCache.set(profileId, { profile, updatedAt: now() });
+	setFullProfileRecord(profileId, { profile, updatedAt: now() });
 	void writeCachedProfile(profile, now()).catch((error: unknown) => {
 		console.error("Profile cache persistence failed", error);
 	});
@@ -228,6 +246,7 @@ const profileSummarySchema = z.object({
 const getProfilesResponseSchema = z.object({
 	profiles: z.array(profileSummarySchema),
 });
+const MY_PROFILE_CACHE_KEY = "me";
 
 export type ProfileSummary = z.infer<typeof profileSummarySchema>;
 
@@ -265,29 +284,23 @@ export async function getProfiles(
 	return profiles;
 }
 
-let myProfileCache: {
-	profile: z.infer<typeof getProfilesResponseSchema>["profiles"][0];
-	updatedAt: number;
-} | null = null;
-
 export async function getMyProfile() {
-	if (myProfileCache && now() - myProfileCache.updatedAt < 1000 * 60) {
-		return myProfileCache.profile;
-	}
 	const session = getAccountSessionSnapshot();
+	const cached = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY)?.me as
+		| z.infer<typeof getProfilesResponseSchema>["profiles"][0]
+		| undefined;
+	if (cached) return cached;
 	const profile = await fetchRest("/v4/me/profile").then(
 		(res) => res.jsonParsed(getProfilesResponseSchema).profiles[0],
 	);
 	assertAccountSessionCurrent(session);
-	myProfileCache = { profile, updatedAt: now() };
+	mergeProfileMemoryRecord(MY_PROFILE_CACHE_KEY, { me: profile });
 	return profile;
 }
 
 export function clearProfileCaches() {
-	myProfileCache = null;
-	profilesCache.clear();
+	clearProfileMemoryCache();
 	profilesInFlight.clear();
-	profileFreshnessHints.clear();
 }
 
 registerAccountCache(clearProfileCaches);
@@ -306,13 +319,15 @@ function assertAccountSessionCurrent(session: AccountSessionSnapshot): void {
 }
 
 export function invalidateProfile(profileId: number) {
-	profilesCache.delete(profileId);
+	deleteProfileMemoryRecord(profileId);
+	const own = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY)?.me as
+		| z.infer<typeof getProfilesResponseSchema>["profiles"][0]
+		| undefined;
+	if (own?.profileId === profileId)
+		deleteProfileMemoryRecord(MY_PROFILE_CACHE_KEY);
 	void removeCachedProfile(profileId).catch((error: unknown) => {
 		console.error("Profile cache invalidation failed", error);
 	});
-	if (myProfileCache?.profile.profileId === profileId) {
-		myProfileCache = null;
-	}
 }
 
 export type ProfileEdit = Partial<
@@ -364,10 +379,10 @@ export function mergeProfileEditIntoCaches(
 	cacheProfileId: number,
 	patch: Partial<Profile>,
 ) {
-	const cached = profilesCache.get(cacheProfileId);
+	const cached = getFullProfileRecord(cacheProfileId);
 	if (cached) {
 		const profile = applyProfileEdit(cached.profile, patch);
-		profilesCache.set(cacheProfileId, {
+		setFullProfileRecord(cacheProfileId, {
 			profile,
 			updatedAt: now(),
 		});
@@ -375,15 +390,18 @@ export function mergeProfileEditIntoCaches(
 			console.error("Profile cache persistence failed", error);
 		});
 	}
-	if (myProfileCache && myProfileCache.profile.profileId === cacheProfileId) {
-		const next: Record<string, unknown> = { ...myProfileCache.profile };
+	const ownRecord = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY);
+	const ownProfile = ownRecord?.me as
+		| z.infer<typeof getProfilesResponseSchema>["profiles"][0]
+		| undefined;
+	if (ownProfile?.profileId === cacheProfileId) {
+		const next: Record<string, unknown> = { ...ownProfile };
 		for (const key of Object.keys(patch)) {
 			if (key in next) next[key] = patch[key as keyof Profile];
 		}
-		myProfileCache = {
-			profile: next as typeof myProfileCache.profile,
-			updatedAt: now(),
-		};
+		mergeProfileMemoryRecord(MY_PROFILE_CACHE_KEY, {
+			me: next,
+		});
 	}
 }
 
@@ -496,9 +514,9 @@ export async function deleteProfilePhotos(
 	});
 	res.assertOk();
 	const removed = new Set(mediaHashes);
-	const cached = profilesCache.get(cacheProfileId);
+	const cached = getFullProfileRecord(cacheProfileId);
 	if (cached) {
-		profilesCache.set(cacheProfileId, {
+		setFullProfileRecord(cacheProfileId, {
 			profile: {
 				...cached.profile,
 				medias: cached.profile.medias.filter((m) => !removed.has(m.mediaHash)),
@@ -506,16 +524,16 @@ export async function deleteProfilePhotos(
 			updatedAt: now(),
 		});
 	}
-	if (myProfileCache && myProfileCache.profile.profileId === cacheProfileId) {
-		myProfileCache = {
-			profile: {
-				...myProfileCache.profile,
-				medias: myProfileCache.profile.medias.filter(
-					(m) => !removed.has(m.mediaHash),
-				),
+	const ownProfile = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY)?.me as
+		| z.infer<typeof getProfilesResponseSchema>["profiles"][0]
+		| undefined;
+	if (ownProfile?.profileId === cacheProfileId) {
+		mergeProfileMemoryRecord(MY_PROFILE_CACHE_KEY, {
+			me: {
+				...ownProfile,
+				medias: ownProfile.medias.filter((m) => !removed.has(m.mediaHash)),
 			},
-			updatedAt: now(),
-		};
+		});
 	}
 }
 

@@ -74,10 +74,65 @@ optional would weaken parity and anti-burst guarantees.
   expands into background history downloads.
 - Profile snapshots retain server freshness hints. A newer summary timestamp makes
   an otherwise recent profile cache entry stale.
+- Full and Browse profile projections share one account-generation-scoped,
+  one-minute TTL/LRU. Expired entries are deleted on access; account changes clear
+  cached projections and prevent stale request completion from becoming current.
+- Cached inbox search indexes compact normalized message corpora with bounded
+  readers, then releases nonactive full transcripts. Cancelling or clearing the
+  query drops the corpus and prevents late workers from repopulating results.
 - Place search runs only after explicit submission, cancels stale requests, and
   keeps a bounded in-memory LRU.
 - Album dimension inspection uses a bounded, cancellable worker pool and preserves
   server slide order.
+
+## Navigation and bounded live state
+
+Open Grind keeps canonical, deep-linkable routes while applying an app-owned
+semantic navigation policy. Browse, Right Now, Interest, Inbox, and Settings are
+peer roots: switching roots or sibling subsections replaces the current browser
+entry. The first detail records one semantic parent, while selecting another chat
+or profile replaces the existing detail. Back closes the highest-priority viewer,
+dialog, drawer, or local mode before closing the current detail, returning to the
+current root, and finally returning to Browse. At Browse root, Android Back
+backgrounds the task.
+
+Route provenance contains only opaque entry IDs and parent routes. Scroll memory
+uses stable item anchors in an account-scoped, process-lifetime store. Conversation
+drafts and reply targets are also process-only and use a 20-conversation LRU; they
+are cleared after sending, explicit discard, account change, or sign-out. Neither
+drafts nor content-bearing snapshots are written into browser history.
+
+Large surfaces render bounded virtual windows rather than retaining prior screen
+trees. Browse retains five fetched payload pages, chat retains eight message pages,
+and album/shared-media drawers retain the focused page plus its immediate
+neighbors and any explicitly opened item. Durable history remains paged on disk;
+these renderer limits are not product history limits.
+
+## Received-media retention and migration
+
+Album history is partitioned by local account and original owner. Direct-message
+media history is partitioned by local account and conversation. Record encryption
+binds the complete identity tuple as authenticated data, while indexes expose only
+hashed identities, ordering data, counts, and encrypted scope-bound cursors. Signed
+remote URLs are never persisted.
+
+Ordinary received media may be retained when its visible gallery tile is eligible
+for caching. View-once media is never fetched speculatively: retention begins only
+after explicit authorization and viewing. When retention is enabled, an encrypted
+cached copy can remain after its view limit is exhausted or the sender retracts
+the message. Media bytes remain subject to the configured LRU and explicit cache
+clearing; lightweight history metadata can outlive byte eviction so the gallery
+can show an unavailable placeholder. Disabling retention clears direct-media
+bytes and entries whose only remaining value was a retained retracted or
+view-once copy.
+
+Beta-4 and earlier beta-5 cache records migrate in bounded batches. A source is
+retired only after the partitioned beta-5 destination is durably written,
+decrypted, parsed, and identity-verified. Corrupt destinations fail closed and
+leave the legacy source readable. Account-session generations and cache epochs
+prevent late downloads, reads, or migrations from repopulating state after
+clear/sign-out. Migration diagnostics are restricted to schema versions, counts,
+duration, and generic outcomes; IDs, URLs, content, and key material are excluded.
 
 ## Background notifications
 
@@ -99,6 +154,9 @@ but server-facing parity caps prevent more aggressive values.
 | --- | ---: | ---: | --- |
 | Profile resolution batch size | 30 | 1-30 | Maximum IDs in one profile-resolution request |
 | Profile batch collection window | 16 ms | 0-1,000 ms | Local coalescing delay before profile resolution |
+| Profile cache size | 500 | 100-2,000 | Fresh profile records retained for the active account |
+| Conversation search concurrency | 3 | 1-6 | Cached conversations read and indexed together |
+| Album-share discovery concurrency | 3 | 1-8 | Per-album recipient-share lookups run together |
 | API request timeout | 35,000 ms | 5,000-120,000 ms | Subscriber wait before native cancellation |
 | Realtime sync throttle | 2,000 ms | 2,000-30,000 ms | Minimum spacing between coalesced reconciliation passes |
 | Place search cache size | 20 | 1-100 | Recent explicit searches retained in memory |

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { tick, untrack } from "svelte";
 
@@ -28,6 +27,10 @@
 		selectProfileForHorizontalSwipe,
 		selectProfileForNavigationKey,
 	} from "$lib/grid/profile-navigation";
+	import {
+		closeAppDetail,
+		replaceAppDetail,
+	} from "$lib/navigation/app-navigation";
 	import type { Profile } from "$lib/model/users/profiles";
 	import AboutMe from "./AboutMe.svelte";
 	import BlockedProfile from "./BlockedProfile.svelte";
@@ -199,8 +202,7 @@
 	}
 
 	function closeProfile() {
-		if (window.navigation?.canGoBack ?? history.length > 1) history.back();
-		else void goto("/", { replaceState: true });
+		void closeAppDetail(page.url.pathname, page.state);
 	}
 
 	async function finishAnimatedProfileClose() {
@@ -314,10 +316,11 @@
 			}
 
 			pendingEntryDirection = direction;
-			await goto(`/profile/${targetProfileId}?from=browse`, {
-				replaceState: true,
-				noScroll: true,
-				keepFocus: true,
+			await replaceAppDetail(`/profile/${targetProfileId}?from=browse`, {
+				navigation: {
+					keepFocus: true,
+					noScroll: true,
+				},
 			});
 			profileScrollShell?.scrollTo({ top: 0, behavior: "auto" });
 

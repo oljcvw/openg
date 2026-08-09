@@ -1,4 +1,5 @@
 const resets = new Set<() => void>();
+const generationSubscribers = new Set<(generation: number) => void>();
 
 export type AccountSessionSnapshot = {
 	accountId: number | null;
@@ -26,6 +27,26 @@ export function getAccountSessionSnapshot(): AccountSessionSnapshot {
 	return { accountId: activeAccountId, generation: accountGeneration };
 }
 
+export function subscribeAccountGeneration(
+	subscriber: (generation: number) => void,
+): () => void {
+	generationSubscribers.add(subscriber);
+	subscriber(accountGeneration);
+	return () => {
+		generationSubscribers.delete(subscriber);
+	};
+}
+
+function notifyAccountGeneration(): void {
+	for (const subscriber of generationSubscribers) {
+		try {
+			subscriber(accountGeneration);
+		} catch {
+			// One subscriber cannot prevent remaining account-scoped resets.
+		}
+	}
+}
+
 export function isAccountSessionCurrent(
 	snapshot: AccountSessionSnapshot,
 ): boolean {
@@ -42,6 +63,7 @@ export function activateAccountSession(
 	accountGeneration += 1;
 	activeAccountId = accountId;
 	clearAccountCaches();
+	notifyAccountGeneration();
 	return getAccountSessionSnapshot();
 }
 
@@ -50,5 +72,6 @@ export function invalidateAccountSession(): AccountSessionSnapshot {
 	accountGeneration += 1;
 	activeAccountId = null;
 	clearAccountCaches();
+	notifyAccountGeneration();
 	return previous;
 }

@@ -3,7 +3,7 @@
 import { cleanup, render, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+import { backLayerManager } from "$lib/navigation/app-navigation";
 import MixedMediaViewer from "./MixedMediaViewer.svelte";
 
 type Handler = (event?: unknown) => void;
@@ -94,7 +94,7 @@ describe("MixedMediaViewer", () => {
 		harness.loadedIndex = -1;
 		harness.registered = null;
 		harness.pswp.currIndex = 0;
-		backGestureEventHandlers.clear();
+		expect(backLayerManager.size).toBe(0);
 	});
 
 	afterEach(() => cleanup());
@@ -135,14 +135,21 @@ describe("MixedMediaViewer", () => {
 		const focus = vi.spyOn(opener, "focus");
 		const onClose = vi.fn();
 		render(MixedMediaViewer, { items, startIndex: 0, opener, onClose });
-		await waitFor(() => expect(backGestureEventHandlers.size).toBe(1));
+		await waitFor(() => expect(backLayerManager.size).toBe(1));
+		const drawerBack = vi.fn(() => "handled" as const);
+		const releaseDrawer = backLayerManager.register({
+			priority: "drawer",
+			handler: drawerBack,
+		});
 
-		const viewerBack = [...backGestureEventHandlers].at(-1);
-		expect(viewerBack?.()).toBe(false);
+		await expect(backLayerManager.handleBack()).resolves.toBe("handled");
 		await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+		expect(drawerBack).not.toHaveBeenCalled();
 		await new Promise<void>((resolve) => queueMicrotask(resolve));
 		expect(focus).toHaveBeenCalledOnce();
-		expect(backGestureEventHandlers.size).toBe(0);
+		expect(backLayerManager.size).toBe(1);
+		releaseDrawer();
+		expect(backLayerManager.size).toBe(0);
 		opener.remove();
 	});
 
@@ -152,5 +159,41 @@ describe("MixedMediaViewer", () => {
 		await waitFor(() => expect(harness.loadedIndex).toBe(0));
 		window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
 		await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+	});
+
+	it("pauses and clears owned video sources on teardown", async () => {
+		const pause = vi
+			.spyOn(HTMLMediaElement.prototype, "pause")
+			.mockImplementation(() => {});
+		const load = vi
+			.spyOn(HTMLMediaElement.prototype, "load")
+			.mockImplementation(() => {});
+		const onClose = vi.fn();
+		const view = render(MixedMediaViewer, { items, startIndex: 1, onClose });
+		await waitFor(() => expect(harness.loadedIndex).toBe(1));
+
+		const content = {
+			index: 1,
+			element: null as HTMLElement | null,
+			state: "idle",
+			onLoaded: vi.fn(),
+			onError: vi.fn(),
+		};
+		const preventDefault = vi.fn();
+		for (const handler of harness.handlers.get("contentLoad") ?? [])
+			handler({ content, preventDefault });
+		const video = content.element?.querySelector("video");
+		expect(video?.getAttribute("src")).toBe("media://video");
+		for (const handler of harness.handlers.get("contentRemove") ?? [])
+			handler({ content });
+		for (const handler of harness.handlers.get("contentDestroy") ?? [])
+			handler({ content });
+		expect(pause).toHaveBeenCalledTimes(1);
+		expect(load).toHaveBeenCalledTimes(1);
+
+		view.unmount();
+		expect(pause).toHaveBeenCalledTimes(1);
+		expect(video?.hasAttribute("src")).toBe(false);
+		expect(load).toHaveBeenCalledTimes(1);
 	});
 });

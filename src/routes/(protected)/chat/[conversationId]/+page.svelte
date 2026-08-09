@@ -1,8 +1,13 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { untrack } from "svelte";
+	import { onDestroy, untrack } from "svelte";
 
+	import {
+		ConversationMediaViewerState,
+		setConversationMediaViewer,
+	} from "$lib/chat/conversation-media-viewer.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
+	import MixedMediaViewer from "$lib/components/media/MixedMediaViewer.svelte";
 	import * as Card from "$lib/components/ui/card";
 	import type { Message } from "$lib/model/messaging/messages";
 	import ChatNavBar from "./conversation-nav-bar/ConversationNavBar.svelte";
@@ -57,6 +62,30 @@
 	});
 
 	setConversationState(() => conversationState);
+	let viewerPinnedState: ConversationState | null = null;
+	const mediaViewer = new ConversationMediaViewerState({
+		pin: (messageId) => {
+			viewerPinnedState = conversationState;
+			void viewerPinnedState.pinMessage(messageId, "viewer");
+		},
+		unpin: (messageId) => {
+			viewerPinnedState?.unpinMessage(messageId, "viewer");
+			viewerPinnedState = null;
+		},
+	});
+	setConversationMediaViewer(() => mediaViewer);
+	onDestroy(() => mediaViewer.clearConversation());
+
+	$effect(() => {
+		const currentConversationId = conversationId;
+		return () => {
+			if (
+				currentConversationId !== conversationId ||
+				mediaViewer.ownerCount > 0
+			)
+				mediaViewer.clearConversation();
+		};
+	});
 
 	let composerHeight = $state(0);
 </script>
@@ -68,9 +97,22 @@
 		onSend={(message: Message) => conversationState.send(message)}
 		disabled={conversationState.loading || conversationState.error !== null}
 		accountProfileId={conversationState.ourProfileId}
+		{conversationId}
+		accountSession={conversationState.accountSession}
 		replyTarget={conversationState.replyTarget}
 		otherName={conversationState.profile?.name}
 		onCancelReply={() => conversationState.clearReplyTarget()}
 		bind:height={composerHeight}
 	/>
 </Card.Content>
+{#if mediaViewer.ready}
+	<MixedMediaViewer
+		items={mediaViewer.items}
+		startIndex={mediaViewer.startIndex}
+		opener={mediaViewer.opener}
+		preload={mediaViewer.preload}
+		statusLabel={mediaViewer.statusLabel}
+		onItemActivate={mediaViewer.onItemActivate}
+		onClose={() => mediaViewer.close()}
+	/>
+{/if}

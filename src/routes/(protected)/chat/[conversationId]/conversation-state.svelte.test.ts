@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// Send transfers ownership synchronously; these tests intentionally inspect the
+// optimistic operation while its separate transport promise remains pending.
+/* eslint-disable @typescript-eslint/no-floating-promises */
+
 const {
 	getConversationMock,
 	markReadMock,
@@ -60,6 +64,11 @@ vi.mock("$lib/ws.svelte", async (importOriginal) => ({
 	},
 }));
 
+import {
+	activateAccountSession,
+	invalidateAccountSession,
+} from "$lib/api/account-caches";
+import { navigationMemory } from "$lib/navigation/navigation-memory";
 import type { Message } from "$lib/model/messaging/messages";
 import { ConversationState } from "./conversation-state.svelte";
 
@@ -92,7 +101,7 @@ function conversationsStub() {
 		setActive: vi.fn(),
 		clearActive: vi.fn(),
 		sharedAlbumsHint: vi.fn(() => null),
-		getCachedConversation: vi.fn(() => undefined),
+		getCachedConversation: vi.fn((): Promise<unknown> => Promise.resolve()),
 		setCachedConversation: vi.fn(),
 		removeMessageFromSearch: vi.fn(),
 		updatePreview: vi.fn(),
@@ -259,6 +268,32 @@ describe("ConversationState send echo matching", () => {
 		emitMessageSent(echo("real-b", "Text", { text: "b" }));
 		expect(b.messageId).toBe("real-b");
 		expect(b.status).toBe("sent");
+	});
+
+	it("resolves accepted ownership only after the optimistic operation is cached", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const conversations = conversationsStub();
+		const state = create(conversations);
+		await flush();
+
+		const accepted = await state.send(outbound("Text", { text: "owned" }));
+
+		expect(accepted).toEqual({
+			kind: "accepted",
+			operationId: expect.stringMatching(/^pending-/),
+		});
+		expect(state.messages[0].messageId).toBe(accepted.operationId);
+		expect(
+			conversations.setCachedConversation.mock.lastCall?.[1].failedMessages[0],
+		).toMatchObject({
+			localId: accepted.operationId,
+			state: "awaitingAck",
+		});
 	});
 
 	it("matches an echo by message type when echoes arrive out of send order", async () => {
@@ -436,6 +471,84 @@ describe("ConversationState send echo matching", () => {
 
 		await state.retryFailedMessage(state.messages[0].messageId);
 		expect(sendMessageMock).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe("ConversationState navigation-memory ownership", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		readHandlers.length = 0;
+		messageSentHandlers.length = 0;
+		reconcileHandlers.length = 0;
+		invalidateAccountSession();
+		sendMessageMock.mockReturnValue(new Promise(() => {}));
+	});
+
+	it("clears text and reply memory after ownership transfers to an optimistic operation", async () => {
+		const session = activateAccountSession(901);
+		const target = { ...message("target", 1000), senderId: PEER_ID };
+		navigationMemory.updateDraft(
+			CONVERSATION_ID,
+			{ text: "owned text", replyTargetMessageId: target.messageId },
+			session,
+		);
+		getConversationMock.mockResolvedValue({
+			messages: [target],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		expect(state.replyTarget).toMatchObject(target);
+		await expect(
+			state.send(outbound("Text", { text: "owned text" })),
+		).resolves.toMatchObject({ kind: "accepted" });
+		expect(
+			navigationMemory.getDetailSession(CONVERSATION_ID, session),
+		).toMatchObject({ draftText: "", replyTargetMessageId: null });
+	});
+
+	it("retains draft memory when send throws before ownership transfer", async () => {
+		const session = activateAccountSession(902);
+		navigationMemory.updateDraft(
+			CONVERSATION_ID,
+			{ text: "not owned", replyTargetMessageId: null },
+			session,
+		);
+		getConversationMock.mockReturnValue(new Promise(() => {}));
+		const state = create();
+
+		await expect(
+			state.send(outbound("Text", { text: "not owned" })),
+		).rejects.toThrow("Conversation is not ready");
+		expect(
+			navigationMemory.getDetailSession(CONVERSATION_ID, session).draftText,
+		).toBe("not owned");
+		expect(state.messages).toHaveLength(0);
+	});
+
+	it("drops an unresolved reply ID while retaining draft text", async () => {
+		const session = activateAccountSession(903);
+		navigationMemory.updateDraft(
+			CONVERSATION_ID,
+			{ text: "keep text", replyTargetMessageId: "missing-message" },
+			session,
+		);
+		getConversationMock.mockResolvedValue({
+			messages: [message("other-message", 1000)],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		expect(state.replyTarget).toBeNull();
+		expect(
+			navigationMemory.getDetailSession(CONVERSATION_ID, session),
+		).toMatchObject({ draftText: "keep text", replyTargetMessageId: null });
 	});
 });
 
@@ -1155,5 +1268,215 @@ describe("ConversationState read receipts", () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+
+	it("discards a queued read when teardown crosses an account generation", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		state.reportRead({ messageId: "old-account-message", timestamp: 1000 });
+		invalidateAccountSession();
+		state.destroy();
+		await flush();
+
+		expect(markConversationAsReadMock).not.toHaveBeenCalled();
+	});
+
+	it("does not mark a conversation read after its initial cache load is destroyed", async () => {
+		let resolveCached!: (value: unknown) => void;
+		const cached = new Promise((resolve) => {
+			resolveCached = resolve;
+		});
+		const conversations = conversationsStub();
+		conversations.getCachedConversation.mockReturnValue(cached);
+		const state = create(conversations);
+
+		state.destroy();
+		resolveCached(undefined);
+		await flush();
+
+		expect(conversations.markRead).not.toHaveBeenCalled();
+		expect(getConversationMock).not.toHaveBeenCalled();
+	});
+});
+
+describe("ConversationState active history window", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		readHandlers.length = 0;
+		messageSentHandlers.length = 0;
+		reconcileHandlers.length = 0;
+	});
+
+	it("evicts the ninth fetched page, keeps a reply pin, and restores only its cached segment", async () => {
+		const allMessages = Array.from({ length: 9 }, (_, index) =>
+			message(`page-${index}`, 9_000 - index),
+		);
+		getConversationMock.mockImplementation(
+			({ pageKey }: { pageKey?: string }) => {
+				const page = pageKey === undefined ? 0 : Number(pageKey.slice(7));
+				return Promise.resolve({
+					messages: [allMessages[page]],
+					profile,
+					pageKey: page < 8 ? `cursor-${page + 1}` : null,
+					lastReadTimestamp: null,
+				});
+			},
+		);
+		const conversations = conversationsStub();
+		conversations.getCachedConversation
+			.mockResolvedValueOnce(undefined)
+			.mockResolvedValue({
+				messages: allMessages,
+				profile,
+				pageKey: null,
+				lastReadTimestamp: null,
+			});
+		const state = create(conversations);
+		await flush();
+		state.setReplyTarget(allMessages[0]);
+
+		for (let page = 1; page < 9; page += 1) await state.loadMore();
+
+		expect(state.messages).toHaveLength(9);
+		expect(state.messages.map(({ messageId }) => messageId)).toContain(
+			"page-0",
+		);
+		state.clearReplyTarget();
+		expect(state.messages).toHaveLength(8);
+		expect(state.messages.map(({ messageId }) => messageId)).not.toContain(
+			"page-0",
+		);
+
+		await expect(state.locateMessage("page-0")).resolves.toBe(0);
+		expect(state.messages).toHaveLength(8);
+		expect(state.messages.map(({ messageId }) => messageId)).toContain(
+			"page-0",
+		);
+		expect(getConversationMock).toHaveBeenCalledTimes(9);
+		expect(
+			conversations.setCachedConversation.mock.lastCall?.[1].segments,
+		).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ messageIds: ["page-0"] }),
+			]),
+		);
+		expect(
+			JSON.stringify(
+				conversations.setCachedConversation.mock.lastCall?.[1].segments,
+			),
+		).not.toContain("body");
+	});
+
+	it("reactivates the adjacent newer page after the active window slides older", async () => {
+		const allMessages = Array.from({ length: 9 }, (_, index) =>
+			message(`page-${index}`, 9_000 - index),
+		);
+		getConversationMock.mockImplementation(
+			({ pageKey }: { pageKey?: string }) => {
+				const page = pageKey === undefined ? 0 : Number(pageKey.slice(7));
+				return Promise.resolve({
+					messages: [allMessages[page]],
+					profile,
+					pageKey: page < 8 ? `cursor-${page + 1}` : null,
+					lastReadTimestamp: null,
+				});
+			},
+		);
+		const conversations = conversationsStub();
+		conversations.getCachedConversation
+			.mockResolvedValueOnce(undefined)
+			.mockResolvedValue({
+				messages: allMessages,
+				profile,
+				pageKey: null,
+				lastReadTimestamp: null,
+			});
+		const state = create(conversations);
+		await flush();
+		for (let page = 1; page < 9; page += 1) await state.loadMore();
+
+		expect(state.messages.map(({ messageId }) => messageId)).not.toContain(
+			"page-0",
+		);
+		await expect(state.loadNewer()).resolves.toBe("loaded");
+		expect(state.messages.map(({ messageId }) => messageId)).toContain(
+			"page-0",
+		);
+		expect(state.messages.map(({ messageId }) => messageId)).not.toContain(
+			"page-8",
+		);
+		expect(getConversationMock).toHaveBeenCalledTimes(9);
+	});
+
+	it("reloads an evicted known segment by its cursor when its cached body was pruned", async () => {
+		const allMessages = Array.from({ length: 9 }, (_, index) =>
+			message(`page-${index}`, 9_000 - index),
+		);
+		getConversationMock.mockImplementation(
+			({ pageKey }: { pageKey?: string }) => {
+				const page = pageKey === undefined ? 0 : Number(pageKey.slice(7));
+				return Promise.resolve({
+					messages: [allMessages[page]],
+					profile,
+					pageKey: page < 8 ? `cursor-${page + 1}` : null,
+					lastReadTimestamp: null,
+				});
+			},
+		);
+		const conversations = conversationsStub();
+		conversations.getCachedConversation
+			.mockResolvedValueOnce(undefined)
+			.mockResolvedValue({
+				messages: allMessages.slice(1),
+				profile,
+				pageKey: null,
+				lastReadTimestamp: null,
+			});
+		const state = create(conversations);
+		await flush();
+		for (let page = 1; page < 9; page += 1) await state.loadMore();
+
+		await expect(state.locateMessage("page-0")).resolves.toBe(0);
+		expect(state.messages.map(({ messageId }) => messageId)).toContain(
+			"page-0",
+		);
+		expect(getConversationMock).toHaveBeenCalledTimes(10);
+	});
+
+	it("does not let repeatedly confirmed sends bypass the eight-page window", async () => {
+		const pages = Array.from({ length: 9 }, (_, index) =>
+			message(`page-${index}`, 9_000 - index),
+		);
+		getConversationMock.mockImplementation(
+			({ pageKey }: { pageKey?: string }) => {
+				const page = pageKey === undefined ? 0 : Number(pageKey.slice(7));
+				return Promise.resolve({
+					messages: [pages[page]],
+					profile,
+					pageKey: page < 8 ? `cursor-${page + 1}` : null,
+					lastReadTimestamp: null,
+				});
+			},
+		);
+		const state = create();
+		await flush();
+
+		for (let index = 0; index < 10; index += 1) {
+			state.send(outbound("Text", { text: `sent-${index}` }));
+			emitMessageSent(echo(`real-${index}`, "Text", { text: `sent-${index}` }));
+		}
+		for (let page = 1; page < 9; page += 1) await state.loadMore();
+
+		expect(state.messages).toHaveLength(8);
+		expect(
+			state.messages.some(({ messageId }) => messageId.startsWith("real-")),
+		).toBe(false);
 	});
 });

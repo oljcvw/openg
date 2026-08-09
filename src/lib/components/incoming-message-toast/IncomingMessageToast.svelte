@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import { toast } from "svelte-sonner";
 
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
@@ -8,6 +7,7 @@
 		previewFromMessage,
 		previewLabel,
 	} from "$lib/model/messaging/messages";
+	import { openInboxConversationDetail } from "$lib/navigation/app-navigation";
 
 	let {
 		conversationId,
@@ -37,16 +37,23 @@
 				window.removeEventListener("pointermove", onPointerMove);
 			}
 		};
-		const onPointerUp = () => {
-			if (!jumpedOff) {
-				void goto(`/chat/${conversationId}`);
+		const navigateToConversation = async () => {
+			try {
+				await openInboxConversationDetail(`/chat/${conversationId}`);
 				toast.dismiss(conversationId);
+			} catch {
+				// Keep toast available when navigation cannot complete.
 			}
+		};
+		const onPointerUp = () => {
 			window.removeEventListener("pointerup", onPointerUp);
 			window.removeEventListener("pointermove", onPointerMove);
+			if (!jumpedOff) void navigateToConversation();
 		};
 		window.addEventListener("pointermove", onPointerMove);
-		window.addEventListener("pointerup", onPointerUp);
+		window.addEventListener("pointerup", onPointerUp, {
+			once: true,
+		});
 	}}
 >
 	<UserAvatar

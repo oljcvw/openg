@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	mergeConfirmedMessages,
 	migratePersistedConversationToV2,
 	pruneConfirmedMessages,
 } from "$lib/app-data/chat-cache";
@@ -82,5 +83,22 @@ describe("chat cache retention", () => {
 		expect(retained).toHaveLength(500);
 		expect(retained[0].messageId).toBe("549");
 		expect(retained.at(-1)?.messageId).toBe("50");
+	});
+
+	it("merges an evicted active window without dropping durable history", () => {
+		const merged = mergeConfirmedMessages(
+			[message("evicted", 1), message("active", 2)],
+			[message("active", 3), message("new", 4)],
+			new Set(["deleted"]),
+		);
+
+		expect(merged.map(({ messageId }) => messageId)).toEqual([
+			"new",
+			"active",
+			"evicted",
+		]);
+		expect(
+			merged.find(({ messageId }) => messageId === "active")?.timestamp,
+		).toBe(3);
 	});
 });

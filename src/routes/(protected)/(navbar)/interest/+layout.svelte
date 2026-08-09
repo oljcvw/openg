@@ -4,6 +4,10 @@
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { toggleVariants } from "$lib/components/ui/toggle";
+	import {
+		activateAppRootRoute,
+		interceptAppNavigationClick,
+	} from "$lib/navigation/app-navigation";
 
 	let { children }: { children?: import("svelte").Snippet } = $props();
 </script>
@@ -12,6 +16,8 @@
 	{@const active = page.url.pathname === href}
 	<Button
 		{href}
+		onclick={(event) =>
+			interceptAppNavigationClick(event, () => activateAppRootRoute(href))}
 		class={[
 			toggleVariants({ variant: "default" }),
 			"text-muted-foreground",

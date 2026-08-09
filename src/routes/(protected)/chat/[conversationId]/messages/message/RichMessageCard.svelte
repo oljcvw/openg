@@ -1,6 +1,10 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
 
+	import {
+		interceptAppNavigationClick,
+		replaceAppDetail,
+	} from "$lib/navigation/app-navigation";
 	import { getMessageContext, getMessageMetaContext } from "./context";
 	import MessageTail from "./MessageTail.svelte";
 
@@ -38,6 +42,8 @@
 	<a
 		bind:this={el}
 		{href}
+		onclick={(event) =>
+			interceptAppNavigationClick(event, () => replaceAppDetail(href))}
 		class={[
 			"relative block w-fit max-w-80 rounded-xl bg-card px-3 py-2 text-start shadow-sm",
 			{ "ms-3": !isOut && !clone, "me-3": isOut && !clone },

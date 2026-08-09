@@ -3,77 +3,25 @@
 import { cleanup, fireEvent, render, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import AlbumMessage from "./AlbumMessage.svelte";
-
-type LightboxHandler = () => void;
-type LightboxFilter = (...args: unknown[]) => unknown;
-
-type PhotoSwipeHarness = {
-	currIndex: number;
-	getNumItems: () => number;
-	on: (name: string, handler: LightboxHandler) => void;
-	ui: { registerElement: (element: RegisteredElement | null) => void };
-};
-
-type RegisteredElement = {
-	name?: string;
-	onInit?: (element: HTMLElement, pswp: PhotoSwipeHarness) => void;
-};
-
-const harness = vi.hoisted(
-	(): {
-		handlers: Map<string, LightboxHandler[]>;
-		filters: Map<string, LightboxFilter>;
-		registeredElement: RegisteredElement | null;
-		pswp: PhotoSwipeHarness;
-	} => ({
-		handlers: new Map<string, LightboxHandler[]>(),
-		filters: new Map<string, LightboxFilter>(),
-		registeredElement: null,
-		pswp: {
-			currIndex: 0,
-			getNumItems: () => 3,
-			on(name: string, handler: LightboxHandler) {
-				harness.handlers.set(name, [
-					...(harness.handlers.get(name) ?? []),
-					handler,
-				]);
-			},
-			ui: {
-				registerElement(element: RegisteredElement | null) {
-					harness.registeredElement = element;
-				},
-			},
-		},
-	}),
-);
-
-vi.mock("photoswipe/lightbox", () => ({
-	default: class PhotoSwipeLightboxMock {
-		pswp = harness.pswp;
-
-		addFilter(name: string, filter: LightboxFilter) {
-			harness.filters.set(name, filter);
-		}
-
-		on(name: string, handler: LightboxHandler) {
-			harness.handlers.set(name, [
-				...(harness.handlers.get(name) ?? []),
-				handler,
-			]);
-		}
-
-		init() {
-			for (const handler of harness.handlers.get("uiRegister") ?? []) handler();
-		}
-
-		loadAndOpen() {}
-
-		destroy() {}
+const viewerHarness = vi.hoisted(() => ({
+	session: null as null | {
+		items: Array<{
+			id: string;
+			kind: "image" | "video";
+			url: string | null;
+			width?: number;
+			height?: number;
+		}>;
+		preload?: [number, number];
+		onItemActivate?: ((item: unknown, index: number) => void) | null;
 	},
+	openExplicit: vi.fn(),
 }));
 
 vi.mock("$app/navigation", () => ({ goto: vi.fn() }));
+vi.mock("$lib/chat/conversation-media-viewer.svelte", () => ({
+	getConversationMediaViewer: () => () => viewerHarness,
+}));
 vi.mock("$lib/api/messaging/albums", () => ({
 	getAlbumContent: vi.fn().mockResolvedValue({
 		albumId: 7,
@@ -116,14 +64,14 @@ vi.mock("$lib/api/messaging/albums", () => ({
 			},
 		],
 	}),
-	recordAlbumContentView: vi.fn(),
+	recordAlbumContentView: vi.fn(() => Promise.resolve()),
 }));
 vi.mock("$lib/app-data/album-cache", () => ({
 	discoverSharedAlbum: vi.fn().mockResolvedValue(undefined),
 	markAlbumUnavailable: vi.fn(),
 	readCachedAlbum: vi.fn().mockResolvedValue(null),
 	resolveCachedAlbum: vi.fn(),
-	retainViewedAlbumContent: vi.fn(),
+	retainViewedAlbumContent: vi.fn(() => Promise.resolve()),
 	subscribeCachedAlbum: vi.fn(() => vi.fn()),
 }));
 vi.mock("$lib/app-data/preferences.svelte", () => ({
@@ -133,9 +81,6 @@ vi.mock("$lib/app-data/preferences.svelte", () => ({
 	}),
 	getKeepUnavailableCachedAlbumsSnapshot: () => false,
 	subscribePreferences: () => vi.fn(),
-}));
-vi.mock("$lib/platform/back-gesture-event.svelte", () => ({
-	backGestureEventHandlers: new Set(),
 }));
 vi.mock("$lib/util/now.svelte", () => ({
 	getNow: () => Date.now(),
@@ -157,6 +102,8 @@ vi.mock("./message-media.svelte", () => ({
 	},
 }));
 
+import AlbumMessage from "./AlbumMessage.svelte";
+
 const message = {
 	albumId: 7,
 	hasUnseenContent: false,
@@ -170,25 +117,43 @@ const message = {
 	viewableUntil: null,
 };
 
-describe("AlbumMessage media position", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		harness.handlers.clear();
-		harness.filters.clear();
-		harness.registeredElement = null;
-		harness.pswp.currIndex = 0;
+const renderAlbum = (
+	overrides: Partial<typeof message> = {},
+	props: {
+		senderProfileId?: number;
+		peerProfileId?: number;
+		isOut?: boolean;
+	} = {},
+) =>
+	render(AlbumMessage, {
+		message: { ...message, ...overrides },
+		messageId: "album-message",
+		...props,
 	});
 
-	afterEach(() => cleanup());
+describe("AlbumMessage conversation viewer session", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		viewerHarness.session = null;
+		viewerHarness.openExplicit.mockImplementation(
+			async ({
+				resolve,
+			}: {
+				resolve: (signal: AbortSignal) => Promise<unknown>;
+			}) => {
+				viewerHarness.session = (await resolve(
+					new AbortController().signal,
+				)) as typeof viewerHarness.session;
+				return true;
+			},
+		);
+	});
+
+	afterEach(cleanup);
 
 	it("only treats the album owner as proven for an incoming active-peer message", async () => {
 		const { discoverSharedAlbum } = await import("$lib/app-data/album-cache");
-		render(AlbumMessage, {
-			message,
-			senderProfileId: 42,
-			peerProfileId: 42,
-			isOut: false,
-		});
+		renderAlbum({}, { senderProfileId: 42, peerProfileId: 42, isOut: false });
 
 		await waitFor(() =>
 			expect(discoverSharedAlbum).toHaveBeenCalledWith(
@@ -197,14 +162,9 @@ describe("AlbumMessage media position", () => {
 		);
 	});
 
-	it("does not prove album ownership from an outgoing or mismatched sender", async () => {
+	it("does not prove album ownership from an outgoing sender", async () => {
 		const { discoverSharedAlbum } = await import("$lib/app-data/album-cache");
-		render(AlbumMessage, {
-			message,
-			senderProfileId: 42,
-			peerProfileId: 42,
-			isOut: true,
-		});
+		renderAlbum({}, { senderProfileId: 42, peerProfileId: 42, isOut: true });
 
 		await waitFor(() => expect(discoverSharedAlbum).toHaveBeenCalledOnce());
 		expect(discoverSharedAlbum).toHaveBeenCalledWith(
@@ -212,46 +172,41 @@ describe("AlbumMessage media position", () => {
 		);
 	});
 
-	it("preserves once-view order and count without speculative preload", async () => {
+	it("preserves once-view order without speculative preload or view recording", async () => {
 		const { preloadAlbumSlides } = await import("./album-media-preload");
-		const { getByRole } = render(AlbumMessage, {
-			message: { ...message, expirationType: "ONCE" },
-		});
-
-		await fireEvent.click(getByRole("button"));
-		await waitFor(() => expect(harness.filters.get("numItems")).toBeDefined());
-
-		expect(preloadAlbumSlides).not.toHaveBeenCalled();
-		expect(harness.filters.get("numItems")?.()).toBe(3);
-		const itemData = harness.filters.get("itemData");
-		expect(itemData?.({}, 0)).toMatchObject({
-			src: "https://example.test/1.jpg",
-			width: 1,
-			height: 1,
-		});
-		expect(itemData?.({}, 1)).toMatchObject({
-			src: "https://example.test/2.mp4",
-			width: 1,
-			height: 1,
-		});
-		expect(itemData?.({}, 2)).toMatchObject({
-			html: expect.stringContaining("not cached"),
-			width: 1,
-			height: 1,
-		});
 		const { recordAlbumContentView } =
 			await import("$lib/api/messaging/albums");
-		harness.pswp.currIndex = 2;
-		for (const handler of harness.handlers.get("afterInit") ?? []) handler();
+		const view = renderAlbum({ expirationType: "ONCE" });
+
+		expect(viewerHarness.openExplicit).not.toHaveBeenCalled();
 		expect(recordAlbumContentView).not.toHaveBeenCalled();
+		await fireEvent.click(view.getByRole("button"));
+		await waitFor(() => expect(viewerHarness.session).not.toBeNull());
+
+		expect(preloadAlbumSlides).not.toHaveBeenCalled();
+		expect(viewerHarness.openExplicit).toHaveBeenCalledWith(
+			expect.objectContaining({ messageId: "album-message" }),
+		);
+		expect(viewerHarness.session?.preload).toEqual([0, 0]);
+		expect(viewerHarness.session?.items).toMatchObject([
+			{ id: "1", kind: "image", url: "https://example.test/1.jpg" },
+			{ id: "2", kind: "video", url: "https://example.test/2.mp4" },
+			{ id: "3", kind: "image", url: null },
+		]);
+		expect(recordAlbumContentView).not.toHaveBeenCalled();
+		viewerHarness.session?.onItemActivate?.(viewerHarness.session.items[2], 2);
+		expect(recordAlbumContentView).not.toHaveBeenCalled();
+		viewerHarness.session?.onItemActivate?.(viewerHarness.session.items[0], 0);
+		await waitFor(() => expect(recordAlbumContentView).toHaveBeenCalledOnce());
 	});
 
-	it("registers an accessible position indicator for mixed album media", async () => {
-		const { getByRole } = render(AlbumMessage, { message });
-
-		await fireEvent.click(getByRole("button"));
-		await waitFor(() => expect(harness.registeredElement).not.toBeNull());
+	it("passes measured mixed media to the conversation viewer", async () => {
 		const { preloadAlbumSlides } = await import("./album-media-preload");
+		const view = renderAlbum();
+
+		await fireEvent.click(view.getByRole("button"));
+		await waitFor(() => expect(viewerHarness.session).not.toBeNull());
+
 		expect(preloadAlbumSlides).toHaveBeenCalledWith(
 			expect.any(Array),
 			expect.objectContaining({
@@ -260,38 +215,25 @@ describe("AlbumMessage media position", () => {
 				signal: expect.any(AbortSignal),
 			}),
 		);
-
-		const indicator = document.createElement("div");
-		harness.registeredElement?.onInit?.(indicator, harness.pswp);
-
-		expect(harness.registeredElement?.name).toBe("album-position");
-		expect(indicator.textContent).toBe("1 / 3");
-		expect(indicator.getAttribute("role")).toBe("status");
-		expect(indicator.getAttribute("aria-live")).toBe("polite");
-		expect(indicator.getAttribute("aria-atomic")).toBe("true");
-
-		harness.pswp.currIndex = 1;
-		for (const handler of harness.handlers.get("change") ?? []) handler();
-		expect(indicator.textContent).toBe("2 / 3");
-
-		harness.pswp.currIndex = 2;
-		for (const handler of harness.handlers.get("change") ?? []) handler();
-		expect(indicator.textContent).toBe("3 / 3");
+		expect(viewerHarness.session?.preload).toEqual([1, 2]);
+		expect(viewerHarness.session?.items[0]).toMatchObject({
+			width: 1080,
+			height: 1920,
+		});
 	});
 
-	it("refetches a remote album each time the viewer is reopened", async () => {
+	it("refetches a remote album for each explicit viewer session", async () => {
 		const { getAlbumContent } = await import("$lib/api/messaging/albums");
-		const { getByRole } = render(AlbumMessage, { message });
+		const view = renderAlbum();
 
-		await fireEvent.click(getByRole("button"));
+		await fireEvent.click(view.getByRole("button"));
 		await waitFor(() => expect(getAlbumContent).toHaveBeenCalledTimes(1));
-		for (const handler of harness.handlers.get("closingAnimationEnd") ?? [])
-			handler();
 		await waitFor(() =>
-			expect((getByRole("button") as HTMLButtonElement).disabled).toBe(false),
+			expect((view.getByRole("button") as HTMLButtonElement).disabled).toBe(
+				false,
+			),
 		);
-
-		await fireEvent.click(getByRole("button"));
+		await fireEvent.click(view.getByRole("button"));
 		await waitFor(() => expect(getAlbumContent).toHaveBeenCalledTimes(2));
 	});
 });

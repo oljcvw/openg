@@ -1,16 +1,23 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import FolderOpenIcon from "phosphor-svelte/lib/FolderOpenIcon";
 	import PlusIcon from "phosphor-svelte/lib/PlusIcon";
+	import { onDestroy } from "svelte";
 
 	import { ApiError } from "$lib/api";
 	import { showErrorToast } from "$lib/api/error";
 	import { createAlbum, getMyAlbums } from "$lib/api/messaging/albums";
 	import { type AlbumAccess } from "$lib/app-data/album-cache";
-	import { loadSharedAlbumCollection } from "$lib/chat/shared-album-loader";
+	import {
+		loadSharedAlbumCollection,
+		releaseSharedAlbumHistory,
+	} from "$lib/chat/shared-album-loader";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 	import type { MyAlbum, SharedAlbum } from "$lib/model/messaging/albums";
 
 	let {
@@ -115,7 +122,17 @@
 	}
 
 	$effect(() => {
-		void load(profileId, self);
+		const ownerProfileId = profileId;
+		const isSelf = self;
+		void load(ownerProfileId, isSelf);
+		return () => {
+			loadGeneration += 1;
+			if (!isSelf) releaseSharedAlbumHistory(ownerProfileId);
+		};
+	});
+
+	onDestroy(() => {
+		if (!self) releaseSharedAlbumHistory(profileId);
 	});
 
 	let creating = $state(false);
@@ -125,7 +142,7 @@
 		creating = true;
 		try {
 			const { albumId } = await createAlbum({ albumName: null });
-			await goto(`/albums/${albumId}`);
+			await openAppDetail(`/albums/${albumId}`);
 		} catch (err) {
 			console.error(err);
 			const status = err instanceof ApiError ? err.response?.status : null;
@@ -179,6 +196,12 @@
 						href={self
 							? `/albums/${album.albumId}`
 							: `/albums/${album.albumId}?owner=${profileId}`}
+						onclick={(event) => {
+							const route = self
+								? `/albums/${album.albumId}`
+								: `/albums/${album.albumId}?owner=${profileId}`;
+							interceptAppNavigationClick(event, () => openAppDetail(route));
+						}}
 						class="flex w-24 shrink-0 flex-col gap-1"
 					>
 						<div class="relative aspect-square">

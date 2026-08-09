@@ -3,50 +3,42 @@
 	import { ArrowLeftIcon } from "phosphor-svelte";
 
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
+	import { closeAppDetail } from "$lib/navigation/app-navigation";
 
 	const base = "/(protected)/(navbar)/settings/(subpage)";
-	const routes: Record<string, { title: string; back: string }> = {
-		[`${base}/account`]: { title: "Account Settings", back: "/settings" },
+	const routes: Record<string, { title: string }> = {
+		[`${base}/account`]: { title: "Account Settings" },
 		[`${base}/account/privacy`]: {
 			title: "Privacy",
-			back: "/settings/account",
 		},
 		[`${base}/account/email`]: {
 			title: "Change Email",
-			back: "/settings/account",
 		},
 		[`${base}/account/password`]: {
 			title: "Change Password",
-			back: "/settings/account",
 		},
 		[`${base}/account/blocked`]: {
 			title: "Blocked Users",
-			back: "/settings/account",
 		},
 		[`${base}/account/hidden`]: {
 			title: "Hidden Users",
-			back: "/settings/account",
 		},
 		[`${base}/account/delete`]: {
 			title: "Delete Account",
-			back: "/settings/account",
 		},
-		[`${base}/app`]: { title: "App Settings", back: "/settings" },
+		[`${base}/app`]: { title: "App Settings" },
 		[`${base}/developer`]: {
 			title: "Developer Settings",
-			back: "/settings",
 		},
 		[`${base}/app/notifications`]: {
 			title: "Notifications",
-			back: "/settings/app",
 		},
-		[`${base}/profile`]: { title: "Edit Profile", back: "/settings" },
+		[`${base}/profile`]: { title: "Edit Profile" },
 	};
 
 	const current = $derived(
 		(page.route.id && routes[page.route.id]) ?? {
 			title: "",
-			back: "/settings",
 		},
 	);
 </script>
@@ -58,12 +50,14 @@
 	contentClass="flex items-center h-full pe-5.5 pt-(--safe-area-top)"
 	tag="nav"
 >
-	<a
-		href={current.back}
+	<button
+		type="button"
+		onclick={() => void closeAppDetail(page.url.pathname, page.state)}
 		class="flex h-full w-19 shrink-0 items-center justify-center"
+		aria-label="Back"
 	>
 		<ArrowLeftIcon size={32} />
-	</a>
+	</button>
 	<span class="min-w-0 truncate">
 		{current.title}
 	</span>

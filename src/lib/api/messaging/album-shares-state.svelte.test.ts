@@ -10,6 +10,10 @@ vi.mock("$lib/api/messaging/albums", async (importOriginal) => ({
 }));
 
 import {
+	activateAccountSession,
+	invalidateAccountSession,
+} from "$lib/api/account-caches";
+import {
 	clearAlbumShareState,
 	ensureAlbumSharesSwept,
 	getAlbumShared,
@@ -152,5 +156,57 @@ describe("ensureAlbumSharesSwept", () => {
 		await ensureAlbumSharesSwept(43, ALBUMS);
 
 		expect(getAlbumSharesMock).toHaveBeenCalledTimes(4);
+	});
+
+	it("bounds lookup concurrency and discards completion after account switch", async () => {
+		activateAccountSession(100);
+		let active = 0;
+		let peak = 0;
+		const releases: Array<() => void> = [];
+		getAlbumSharesMock.mockImplementation(
+			() =>
+				new Promise<number[]>((resolve) => {
+					active += 1;
+					peak = Math.max(peak, active);
+					releases.push(() => {
+						active -= 1;
+						resolve([42]);
+					});
+				}),
+		);
+		const pending = ensureAlbumSharesSwept(
+			42,
+			Array.from({ length: 12 }, (_, index) => ({ albumId: index + 1 })),
+		);
+		await vi.waitFor(() => expect(releases).toHaveLength(3));
+		invalidateAccountSession();
+		while (releases.length > 0) releases.shift()?.();
+		await pending;
+		expect(peak).toBe(3);
+		expect(getAlbumShared(1, 42)).toBeUndefined();
+	});
+
+	it("an obsolete sweep cannot delete a newer same-recipient registration", async () => {
+		activateAccountSession(200);
+		const releases: Array<() => void> = [];
+		getAlbumSharesMock.mockImplementation(
+			() =>
+				new Promise<number[]>((resolve) => {
+					releases.push(() => resolve([]));
+				}),
+		);
+		const obsolete = ensureAlbumSharesSwept(42, [{ albumId: 1 }]);
+		await vi.waitFor(() => expect(releases).toHaveLength(1));
+		invalidateAccountSession();
+		activateAccountSession(201);
+		const current = ensureAlbumSharesSwept(42, [{ albumId: 2 }]);
+		await vi.waitFor(() => expect(releases).toHaveLength(2));
+		releases[0]();
+		await obsolete;
+		const overlapping = ensureAlbumSharesSwept(42, [{ albumId: 2 }]);
+		expect(getAlbumSharesMock).toHaveBeenCalledTimes(2);
+		releases[1]();
+		await Promise.all([current, overlapping]);
+		expect(getAlbumSharesMock).toHaveBeenCalledTimes(2);
 	});
 });

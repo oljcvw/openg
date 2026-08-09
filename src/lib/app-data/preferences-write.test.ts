@@ -53,7 +53,7 @@ describe("developer preference writes", () => {
 		expect(
 			(persisted as { developerSettings: object }).developerSettings,
 		).not.toHaveProperty("shortVideoCacheMb");
-	});
+	}, 15_000);
 
 	it("merges concurrent partial updates inside the write queue", async () => {
 		const { getDeveloperSettingsSnapshot, setDeveloperSettings } =

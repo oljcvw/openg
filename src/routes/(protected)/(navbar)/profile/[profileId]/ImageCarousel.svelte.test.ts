@@ -3,6 +3,7 @@
 import { render, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 import ImageCarousel from "./ImageCarousel.svelte";
 
 const lightboxHarness = vi.hoisted(() => ({
@@ -106,5 +107,16 @@ describe("ImageCarousel profile photo interaction", () => {
 			behavior: "auto",
 			top: 1400,
 		});
+	});
+
+	it("releases its Back handler when the profile is replaced while open", async () => {
+		const baseline = backGestureEventHandlers.size;
+		const { unmount } = await renderCarousel();
+		lightboxHarness.handlers.get("beforeOpen")?.();
+		expect(backGestureEventHandlers.size).toBe(baseline + 1);
+
+		unmount();
+
+		expect(backGestureEventHandlers.size).toBe(baseline);
 	});
 });

@@ -2,10 +2,14 @@
 	import { tick, untrack } from "svelte";
 
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
-	import { Spinner } from "$lib/components/ui/spinner";
+	import {
+		captureScrollAnchor,
+		captureScrollNeighborhood,
+		navigationMemory,
+		resolveConversationScrollRestoration,
+	} from "$lib/navigation/navigation-memory";
 	import { getConversationState } from "../conversation-state.svelte";
 	import ConversationError from "./ConversationError.svelte";
-	import ConversationPaginationSentinel from "./ConversationPaginationSentinel.svelte";
 	import MessagesList from "./MessagesList.svelte";
 	import MessagesListSkeleton from "./MessagesListSkeleton.svelte";
 	import ScrollToBottomButton from "./ScrollToBottomButton.svelte";
@@ -20,6 +24,18 @@
 
 	let container: HTMLDivElement | null = $state(null);
 	let refreshControl: DataRefreshControl | undefined = $state();
+	let messagesList:
+		| {
+				scrollToMessage: (
+					messageId: string,
+					options?: {
+						align?: "start" | "center" | "end" | "auto";
+						behavior?: ScrollBehavior;
+						offsetPx?: number | null;
+					},
+				) => Promise<boolean>;
+		  }
+		| undefined = $state();
 
 	const FLOOR_SLOP_PX = 16;
 
@@ -79,12 +95,40 @@
 			return;
 		}
 		atFloor = floorDistance() <= FLOOR_SLOP_PX;
+		captureTranscriptAnchor(conversationState);
 	}
 
 	function onContainerScrollEnd() {
 		endScrollingToRest();
 		atFloor = floorDistance() <= FLOOR_SLOP_PX;
+		captureTranscriptAnchor(conversationState);
 	}
+
+	function captureTranscriptAnchor(state: typeof conversationState): void {
+		if (!container) return;
+		const anchor = captureScrollAnchor(
+			container,
+			Date.now(),
+			"[data-message-id]",
+			"data-message-id",
+		);
+		navigationMemory.setConversationScrollAnchor(
+			state.conversationId,
+			{ ...anchor, distanceFromEndPx: floorDistance() },
+			state.accountSession,
+			captureScrollNeighborhood(
+				container,
+				anchor.itemKey,
+				"[data-message-id]",
+				"data-message-id",
+			),
+		);
+	}
+
+	$effect(() => {
+		const state = conversationState;
+		return () => captureTranscriptAnchor(state);
+	});
 
 	$effect(() => {
 		return addInputEventsEffect();
@@ -126,7 +170,53 @@
 	function onConversationLoadedEffect(): void {
 		if (!conversationState.loading && !scrollDone && container) {
 			scrollDone = true;
-			void scrollToRest("instant");
+			const state = conversationState;
+			const detailSession = navigationMemory.getDetailSession(
+				state.conversationId,
+				state.accountSession,
+			);
+			const anchor = detailSession.scrollAnchor;
+			if (!anchor) {
+				void scrollToRest("instant");
+				return;
+			}
+			const el = container;
+			void (async () => {
+				if (anchor.distanceFromEndPx > FLOOR_SLOP_PX && anchor.itemKey) {
+					await messagesList?.scrollToMessage(anchor.itemKey, {
+						align: "start",
+						behavior: "auto",
+						offsetPx: anchor.offsetPx,
+					});
+				}
+				await tick();
+				const containerRect = el.getBoundingClientRect();
+				const offsets = new Map<string, number>();
+				for (const item of el.querySelectorAll<HTMLElement>(
+					"[data-message-id]",
+				)) {
+					const key = item.dataset.messageId;
+					if (key)
+						offsets.set(
+							key,
+							el.scrollTop +
+								item.getBoundingClientRect().top -
+								containerRect.top,
+						);
+				}
+				const restored = resolveConversationScrollRestoration(
+					anchor,
+					offsets,
+					{
+						scrollHeight: el.scrollHeight,
+						clientHeight: el.clientHeight,
+						floorSlopPx: FLOOR_SLOP_PX,
+					},
+					detailSession.scrollNeighborhood,
+				);
+				el.scrollTop = restored.scrollTop;
+				atFloor = floorDistance() <= FLOOR_SLOP_PX;
+			})();
 		}
 	}
 
@@ -144,10 +234,7 @@
 			firstId !== lastFirstId &&
 			lastFirstId !== ""
 		) {
-			if (
-				firstMessage.senderId === conversationState.ourProfileId ||
-				untrack(() => atFloor)
-			) {
+			if (untrack(() => atFloor)) {
 				void scrollToRest("smooth");
 			}
 		}
@@ -188,15 +275,7 @@
 		{:else if conversationState.error}
 			<ConversationError />
 		{:else}
-			<div
-				class="flex min-h-overscrollable shrink-0 flex-col justify-end gap-1"
-			>
-				{#if conversationState.loadingMore}
-					<Spinner class="mt-25 shrink-0 self-center" />
-				{/if}
-				<ConversationPaginationSentinel {container} />
-				<MessagesList bind:seenTimestamp />
-			</div>
+			<MessagesList {container} bind:seenTimestamp bind:this={messagesList} />
 		{/if}
 	</div>
 	{#if !conversationState.loading && !conversationState.error}

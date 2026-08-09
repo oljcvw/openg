@@ -4,6 +4,10 @@
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as Avatar from "$lib/components/ui/avatar";
 	import * as Item from "$lib/components/ui/item";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 	import { longPressHandlers } from "$lib/util/long-press";
 
 	let {
@@ -11,6 +15,7 @@
 		title,
 		onlineUntil = null,
 		active,
+		ariaCurrent,
 		selected,
 		link,
 		description,
@@ -32,6 +37,7 @@
 		};
 		onlineUntil?: number | null;
 		active?: boolean;
+		ariaCurrent?: "page";
 		selected?: boolean;
 		link: string;
 		description?: import("svelte").Snippet;
@@ -109,15 +115,20 @@
 	{#if avatar.link}
 		<a
 			href={avatar.link}
-			class="rounded-l-2xl @max-row:hidden"
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () => openAppDetail(avatar.link!))}
+			class="rounded-l-2xl outline-none focus-visible:z-3 focus-visible:ring-[3px] focus-visible:ring-primary/70 @max-row:hidden"
 			tabindex={linkTabindex}
 		>
 			{@render avatarNode()}
 		</a>
 		<a
 			href={link}
+			aria-current={ariaCurrent}
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () => openAppDetail(link))}
 			class={[
-				"content gap-0.5 rounded-r-2xl @max-row:hidden!",
+				"content gap-0.5 rounded-r-2xl outline-none focus-visible:z-3 focus-visible:ring-[3px] focus-visible:ring-primary/70 @max-row:hidden!",
 				compact ? "py-3 ps-1 pe-3" : "p-4 ps-2",
 			]}
 			tabindex={linkTabindex}
@@ -126,7 +137,10 @@
 		</a>
 		<a
 			href={link}
-			class="min-w-24 rounded-2xl @row:hidden"
+			aria-current={ariaCurrent}
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () => openAppDetail(link))}
+			class="min-w-24 rounded-2xl outline-none focus-visible:z-3 focus-visible:ring-[3px] focus-visible:ring-primary/70 @row:hidden"
 			tabindex={linkTabindex}
 		>
 			{@render avatarNode()}
@@ -134,7 +148,10 @@
 	{:else}
 		<a
 			href={link}
-			class="content gap-2.5 overflow-clip rounded-2xl pe-4"
+			aria-current={ariaCurrent}
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () => openAppDetail(link))}
+			class="content gap-2.5 overflow-clip rounded-2xl pe-4 outline-none focus-visible:z-3 focus-visible:ring-[3px] focus-visible:ring-primary/70"
 			tabindex={linkTabindex}
 		>
 			{@render avatarNode()}

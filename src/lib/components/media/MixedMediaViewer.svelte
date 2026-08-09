@@ -2,24 +2,27 @@
 	import "photoswipe/style.css";
 	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
-	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
-
-	type MixedMediaViewerItem = {
-		id: string;
-		kind: "image" | "video";
-		url: string | null;
-		unavailableLabel?: string;
-	};
+	import { runtimeOwnership } from "$lib/dev/runtime-ownership";
+	import { backLayerManager } from "$lib/navigation/app-navigation";
+	import type { ConversationMediaViewerItem } from "$lib/chat/conversation-media-viewer.svelte";
 
 	let {
 		items,
 		startIndex,
 		opener = null,
+		preload = [1, 2],
+		statusLabel = null,
+		onItemActivate = null,
 		onClose,
 	}: {
-		items: MixedMediaViewerItem[];
+		items: ConversationMediaViewerItem[];
 		startIndex: number;
 		opener?: HTMLElement | null;
+		preload?: [number, number];
+		statusLabel?: string | null;
+		onItemActivate?:
+			| ((item: ConversationMediaViewerItem, index: number) => void)
+			| null;
 		onClose: () => void;
 	} = $props();
 
@@ -29,8 +32,37 @@
 			return;
 		}
 		let lightbox: PhotoSwipeLightbox | undefined;
+		const releaseViewer = runtimeOwnership.acquire("media-viewer");
 		let disposed = false;
 		let closeNotified = false;
+		let releaseBackLayer: (() => void) | null = null;
+		const ownedVideos = new Set<HTMLVideoElement>();
+		const videoLeases = new Map<HTMLVideoElement, () => void>();
+		const contentVideos = new WeakMap<object, HTMLVideoElement>();
+		const disposeVideo = (content: object) => {
+			const video = contentVideos.get(content);
+			if (!video || !ownedVideos.delete(video)) return;
+			contentVideos.delete(content);
+			video.pause();
+			video.removeAttribute("src");
+			video.load();
+			videoLeases.get(video)?.();
+			videoLeases.delete(video);
+		};
+		const disposeOwnedVideos = () => {
+			for (const video of ownedVideos) {
+				video.pause();
+				video.removeAttribute("src");
+				video.load();
+				videoLeases.get(video)?.();
+			}
+			ownedVideos.clear();
+			videoLeases.clear();
+		};
+		const unregisterBackLayer = () => {
+			releaseBackLayer?.();
+			releaseBackLayer = null;
+		};
 		const restoreFocus = () => queueMicrotask(() => opener?.focus());
 		const notifyClosed = () => {
 			if (closeNotified) return;
@@ -40,7 +72,7 @@
 		};
 		const closeViewer = () => {
 			lightbox?.pswp?.close();
-			return false;
+			return "handled" as const;
 		};
 		const onKeydown = (event: KeyboardEvent) => {
 			if (event.key !== "Escape") return;
@@ -56,12 +88,17 @@
 					pswpModule: () => import("photoswipe"),
 					mainClass: "pswp--buttons-visible",
 					loop: false,
+					preload,
 				});
 				lightbox.addFilter("numItems", () => items.length);
 				lightbox.addFilter("itemData", (_, index) => {
 					const item = items[index];
 					return item.url
-						? { src: item.url, width: 1, height: 1 }
+						? {
+								src: item.url,
+								width: item.width ?? 1,
+								height: item.height ?? 1,
+							}
 						: {
 								html: `<div class="og-shared-media-unavailable">${escapeHtml(item.unavailableLabel ?? "Media unavailable")}</div>`,
 								width: 1,
@@ -80,9 +117,13 @@
 					const wrapper = document.createElement("div");
 					const video = document.createElement("video");
 					video.src = item.url;
+					if (item.poster) video.poster = item.poster;
 					video.controls = true;
 					video.playsInline = true;
 					video.className = "size-full object-contain";
+					ownedVideos.add(video);
+					contentVideos.set(event.content, video);
+					videoLeases.set(video, runtimeOwnership.acquire("media-element"));
 					wrapper.appendChild(video);
 					event.content.element = wrapper;
 					event.content.state = "loading";
@@ -100,6 +141,8 @@
 						});
 					}
 				});
+				lightbox.on("contentRemove", (event) => disposeVideo(event.content));
+				lightbox.on("contentDestroy", (event) => disposeVideo(event.content));
 				lightbox.on("uiRegister", () => {
 					lightbox?.pswp?.ui?.registerElement({
 						name: "shared-media-position",
@@ -118,17 +161,43 @@
 						},
 					});
 				});
+				if (statusLabel !== null) {
+					lightbox.on("uiRegister", () => {
+						lightbox?.pswp?.ui?.registerElement({
+							name: "shared-media-status",
+							order: 8,
+							isButton: false,
+							appendTo: "wrapper",
+							html: escapeHtml(statusLabel),
+						});
+					});
+				}
+				if (onItemActivate !== null) {
+					const activateCurrent = () => {
+						const index = lightbox?.pswp?.currIndex ?? 0;
+						const item = items[index];
+						if (item) onItemActivate(item, index);
+					};
+					lightbox.on("afterInit", activateCurrent);
+					lightbox.on("change", activateCurrent);
+				}
 				lightbox.on("beforeOpen", () => {
-					backGestureEventHandlers.add(closeViewer);
+					unregisterBackLayer();
+					releaseBackLayer = backLayerManager.register({
+						priority: "viewer",
+						handler: closeViewer,
+					});
 					window.addEventListener("keydown", onKeydown, true);
 				});
 				lightbox.on("close", () => {
-					backGestureEventHandlers.delete(closeViewer);
+					disposeOwnedVideos();
+					unregisterBackLayer();
 					window.removeEventListener("keydown", onKeydown, true);
 					notifyClosed();
 				});
 				lightbox.on("destroy", () => {
-					backGestureEventHandlers.delete(closeViewer);
+					disposeOwnedVideos();
+					unregisterBackLayer();
 					window.removeEventListener("keydown", onKeydown, true);
 				});
 				lightbox.init();
@@ -140,7 +209,9 @@
 
 		return () => {
 			disposed = true;
-			backGestureEventHandlers.delete(closeViewer);
+			releaseViewer();
+			disposeOwnedVideos();
+			unregisterBackLayer();
 			window.removeEventListener("keydown", onKeydown, true);
 			lightbox?.destroy();
 			lightbox = undefined;

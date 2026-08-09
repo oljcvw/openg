@@ -22,15 +22,18 @@ import {
 } from "./profile-navigation";
 
 const MAX_LAZY_RETRY_ATTEMPTS = 2;
+const ACTIVE_PAGE_LIMIT = 5;
 
 export class GridState {
 	filters = new GridSearchFiltersState({ onRefresh: () => this.retry() });
 	items: GridProfile[] = $state([]);
+	orderedProfileIds: number[] = $state([]);
 	nextPage: number | null = $state(0);
 	loadingMore = $state(false);
 	loading = $state(false);
 	refreshing = $state(false);
 	error: Error | null = $state(null);
+	resultGeneration = $state(0);
 
 	get errorMessage(): string | null {
 		return this.error?.message ?? null;
@@ -58,7 +61,6 @@ export class GridState {
 		return adjacent.nextProfileId;
 	}
 	currentQuery: z.infer<typeof cascadeV4QuerySchema> | null = null;
-	scrollY = 0;
 
 	#geohash: string | null = null;
 	#fetchToken = 0;
@@ -73,31 +75,33 @@ export class GridState {
 	#lazyRetryAt = 0;
 	#lazyBatchActive = false;
 	#lazyBatchScheduled = false;
+	#pageProfileIds: number[][] = [];
+	#visibleProfileIds = new Set<number>();
 
 	load(geohash: string): void {
 		if (untrack(() => this.#geohash === geohash && this.items.length > 0))
 			return;
 		this.#geohash = geohash;
+		this.resultGeneration += 1;
 		this.#reset();
-		this.scrollY = 0;
 		this.#queueFetch(geohash);
 	}
 
 	retry(): void {
 		if (!this.#geohash) return;
+		this.resultGeneration += 1;
 		this.#reset();
-		this.scrollY = 0;
 		this.#queueFetch(this.#geohash);
 	}
 
 	invalidate(): void {
+		this.resultGeneration += 1;
 		this.#fetchToken += 1;
 		this.#pendingFetch = null;
 		this.#pendingLoadMore = false;
 		this.#reset();
 		this.loading = false;
 		this.refreshing = false;
-		this.scrollY = 0;
 		this.#geohash = null;
 	}
 
@@ -110,6 +114,9 @@ export class GridState {
 
 	#reset(): void {
 		this.items = [];
+		this.orderedProfileIds = [];
+		this.#pageProfileIds = [];
+		this.#visibleProfileIds.clear();
 		this.nextPage = 0;
 		this.loadingMore = false;
 		this.loading = true;
@@ -124,6 +131,7 @@ export class GridState {
 	}
 
 	reset(): void {
+		this.resultGeneration += 1;
 		this.#fetchToken += 1;
 		this.#pendingFetch = null;
 		this.#pendingLoadMore = false;
@@ -131,7 +139,6 @@ export class GridState {
 		this.#reset();
 		this.loading = false;
 		this.refreshing = false;
-		this.scrollY = 0;
 		this.#geohash = null;
 		this.filters.reset();
 	}
@@ -157,7 +164,10 @@ export class GridState {
 		const cached = getCachedProfile(id);
 		if (cached) {
 			const index = this.items.findIndex((candidate) => candidate.id === id);
-			if (index !== -1) this.items[index] = cached;
+			if (index !== -1) {
+				this.items[index] = cached;
+				this.#compactPayloads();
+			}
 			return Promise.resolve();
 		}
 		this.#pendingLazyIds.add(id);
@@ -170,6 +180,14 @@ export class GridState {
 			}, profileResolutionWindowMs);
 		}
 		return Promise.resolve();
+	}
+
+	setProfileVisible(id: number, visible: boolean): void {
+		if (visible) this.#visibleProfileIds.add(id);
+		else {
+			this.#visibleProfileIds.delete(id);
+			this.#compactPayloads();
+		}
 	}
 
 	#queueFetch(geohash: string, silent = false): void {
@@ -221,7 +239,7 @@ export class GridState {
 				pageNumber: this.nextPage,
 			});
 			if (token !== this.#fetchToken) return;
-			this.items.push(...result.items);
+			this.#appendPage(result.items);
 			this.nextPage = result.nextPage;
 		} catch (error) {
 			console.error("Browse load-more request failed");
@@ -261,9 +279,10 @@ export class GridState {
 							this.items[index] = profile;
 						} else {
 							this.#lazyRetryAttempts.delete(lazy.id);
-							this.items.splice(index, 1);
+							this.#removeProfile(lazy.id);
 						}
 					}
+					this.#compactPayloads();
 				} catch (error) {
 					console.error("Browse lazy-profile batch failed");
 					if (
@@ -413,7 +432,7 @@ export class GridState {
 				if (token !== this.#fetchToken) return;
 				if (cached) {
 					this.currentQuery = cached.query;
-					this.items = cached.items;
+					this.#replacePages(cached.items);
 					this.nextPage = cached.nextPage;
 					this.loading = false;
 				}
@@ -422,7 +441,7 @@ export class GridState {
 			if (token !== this.#fetchToken) return;
 			this.currentQuery = query;
 			this.#pendingLazyIds.clear();
-			this.items = result.items;
+			this.#replacePages(result.items);
 			this.nextPage = result.nextPage;
 			void writeCachedGrid({
 				query,
@@ -452,6 +471,81 @@ export class GridState {
 			this.loading = false;
 			this.refreshing = false;
 		}
+	}
+
+	#replacePages(items: GridProfile[]): void {
+		this.items = [...items];
+		this.orderedProfileIds = [...new Set(items.map((item) => item.id))];
+		this.#pageProfileIds = [items.map((item) => item.id)];
+	}
+
+	#appendPage(items: GridProfile[]): void {
+		const existingIds = new Set(this.orderedProfileIds);
+		for (const item of items) {
+			if (!existingIds.has(item.id)) {
+				this.orderedProfileIds.push(item.id);
+				existingIds.add(item.id);
+			}
+			const index = this.items.findIndex(
+				(candidate) => candidate.id === item.id,
+			);
+			if (index === -1) this.items.push(item);
+			else if (this.items[index].type === "lazy" || item.type === "rendered")
+				this.items[index] = item;
+		}
+		this.#pageProfileIds.push(items.map((item) => item.id));
+		this.#compactPayloads();
+	}
+
+	#compactPayloads(): void {
+		if (this.#pageProfileIds.length === 0) return;
+		const activePageIds = [
+			...new Set(this.#pageProfileIds.slice(-ACTIVE_PAGE_LIMIT).flat()),
+		];
+		const payloadLimit = Math.max(
+			activePageIds.length,
+			[...this.#visibleProfileIds].filter((id) =>
+				this.items.some((item) => item.id === id && item.type === "rendered"),
+			).length,
+		);
+		const retainedIds = new Set<number>();
+		for (const id of this.#visibleProfileIds) {
+			if (this.items.some((item) => item.id === id && item.type === "rendered"))
+				retainedIds.add(id);
+		}
+		for (const page of this.#pageProfileIds
+			.slice(-ACTIVE_PAGE_LIMIT)
+			.toReversed()) {
+			for (const id of page) {
+				if (retainedIds.size >= payloadLimit) break;
+				if (
+					this.items.some((item) => item.id === id && item.type === "rendered")
+				)
+					retainedIds.add(id);
+			}
+			if (retainedIds.size >= payloadLimit) break;
+		}
+		this.items = this.items.map((item) =>
+			item.type === "lazy" || retainedIds.has(item.id)
+				? item
+				: {
+						type: "lazy",
+						id: item.id,
+						unread: item.unread,
+						isVisiting: item.isVisiting,
+					},
+		);
+	}
+
+	#removeProfile(id: number): void {
+		this.items = this.items.filter((item) => item.id !== id);
+		this.orderedProfileIds = this.orderedProfileIds.filter(
+			(profileId) => profileId !== id,
+		);
+		this.#pageProfileIds = this.#pageProfileIds.map((page) =>
+			page.filter((profileId) => profileId !== id),
+		);
+		this.#visibleProfileIds.delete(id);
 	}
 }
 

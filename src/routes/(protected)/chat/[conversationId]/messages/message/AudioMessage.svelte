@@ -4,7 +4,7 @@
 
 	import { getSingleMessage } from "$lib/api/messaging/messages";
 	import type { AudioMessage } from "$lib/model/messaging/messages";
-	import { activateMedia, releaseMedia } from "./media-playback";
+	import { activateMedia, disposeMedia } from "./media-playback";
 	import { MessageMediaState } from "./message-media.svelte";
 
 	let {
@@ -93,8 +93,8 @@
 		};
 		document.addEventListener("visibilitychange", pauseWhenHidden);
 		return () => {
-			element.pause();
-			releaseMedia(element);
+			disposeMedia(element);
+			source = null;
 			document.removeEventListener("visibilitychange", pauseWhenHidden);
 		};
 	});

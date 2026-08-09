@@ -1,15 +1,20 @@
-<script module lang="ts">
-	let savedScrollY = 0;
-</script>
-
 <script lang="ts">
 	import { beforeNavigate } from "$app/navigation";
 	import { onDestroy, tick, untrack } from "svelte";
 
+	import { getAccountSessionSnapshot } from "$lib/api/account-caches";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import { nearestScrollableAncestor } from "$lib/components/feedback/refresh/scroll-chain";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
+	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
+	import { registerRootActivationRefresh } from "$lib/navigation/app-navigation";
+	import {
+		captureScrollAnchor,
+		captureScrollNeighborhood,
+		navigationMemory,
+		restoreVirtualScrollAnchor,
+	} from "$lib/navigation/navigation-memory";
 	import { ProfileSummariesState } from "$lib/profile/profile-summaries.svelte";
 	import EmptyTapsList from "./EmptyTapsList.svelte";
 	import TapReceivedProfile from "./TapReceivedProfile.svelte";
@@ -22,6 +27,7 @@
 	} = $props();
 
 	const taps = untrack(() => new TapsState({ ourProfileId }));
+	const accountSession = getAccountSessionSnapshot();
 	const summaries = new ProfileSummariesState();
 	onDestroy(() => taps.destroy());
 
@@ -30,9 +36,25 @@
 	});
 
 	let container: HTMLDivElement | null = $state(null);
+	let collection: { scrollToIndex(index: number): Promise<void> } | null =
+		$state(null);
+	$effect(() =>
+		registerRootActivationRefresh("/interest/taps", async () => {
+			navigationMemory.clearSurfaceAnchor("interestTaps", accountSession);
+			container?.scrollTo({ top: 0, behavior: "smooth" });
+			await taps.refresh();
+		}),
+	);
 
 	beforeNavigate(() => {
-		if (container) savedScrollY = container.scrollTop;
+		if (!container) return;
+		const anchor = captureScrollAnchor(container);
+		navigationMemory.setSurfaceAnchor(
+			"interestTaps",
+			anchor,
+			accountSession,
+			captureScrollNeighborhood(container, anchor.itemKey),
+		);
 	});
 
 	let scrollRestored = false;
@@ -40,9 +62,23 @@
 		if (scrollRestored || !container || taps.loading || taps.error) return;
 		scrollRestored = true;
 		const el = container;
-		const target = savedScrollY;
+		const position = navigationMemory.getSurfaceScrollPosition(
+			"interestTaps",
+			accountSession,
+		);
 		// Restoring scroll against the empty skeleton frame would clamp the target to 0
-		if (target > 0) void tick().then(() => (el.scrollTop = target));
+		if (position)
+			void tick().then(() => {
+				if (!collection) return;
+				const virtualCollection = collection;
+				return restoreVirtualScrollAnchor({
+					container: el,
+					anchor: position.anchor,
+					neighborhood: position.neighborhood,
+					logicalItemKeys: taps.taps.map((tap) => String(tap.profileId)),
+					scrollToIndex: (index) => virtualCollection.scrollToIndex(index),
+				});
+			});
 	});
 
 	function observeSentinel(node: HTMLElement) {
@@ -79,11 +115,27 @@
 					/>
 				</div>
 			{:else}
-				{#each taps.taps as tap (tap.profileId)}
-					<TapReceivedProfile {tap} summary={summaries.get(tap.profileId)} />
+				{#if taps.taps.length > 0}
+					<VirtualCollection
+						bind:this={collection}
+						items={taps.taps}
+						scrollElement={container}
+						getKey={(tap) => tap.profileId}
+						estimateSize={98}
+						gap={8}
+					>
+						{#snippet children(tap)}
+							<div data-navigation-item-key={String(tap.profileId)}>
+								<TapReceivedProfile
+									{tap}
+									summary={summaries.get(tap.profileId)}
+								/>
+							</div>
+						{/snippet}
+					</VirtualCollection>
 				{:else}
 					<EmptyTapsList />
-				{/each}
+				{/if}
 				{#if taps.hasMore}
 					<div class="h-0" use:observeSentinel></div>
 				{/if}

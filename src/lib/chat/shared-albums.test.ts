@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
 	reconcileSharedAlbumCollection,
@@ -126,6 +126,26 @@ describe("shared-album collection reconciliation", () => {
 });
 
 describe("SharedAlbumCollection authoritative refresh", () => {
+	it("releases retained pages before refresh and on close", async () => {
+		const releaseHistory = vi.fn();
+		const collection = new SharedAlbumCollection({
+			accountProfileId: 7,
+			ownerProfileId: 42,
+			loadCurrent: () => Promise.resolve([]),
+			loadHistory: () => Promise.resolve({ items: [], nextCursor: null }),
+			commitCurrentMembership: () => Promise.resolve(),
+			releaseHistory,
+		});
+
+		await collection.loadCachedPage(null);
+		await collection.refresh();
+		collection.close();
+
+		expect(releaseHistory).toHaveBeenCalledTimes(2);
+		expect(collection.cached).toEqual([]);
+		expect(collection.nextCachedCursor).toBeNull();
+	});
+
 	it("does not change membership after a failed refresh", async () => {
 		const existing = retained(1, true);
 		const collection = new SharedAlbumCollection({

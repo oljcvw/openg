@@ -96,6 +96,9 @@ export const developerSettingsSchema = z
 			.max(1_440)
 			.default(15),
 		placeSearchCacheEntries: z.number().int().min(1).max(100).default(20),
+		profileCacheMaxEntries: z.number().int().min(100).max(2_000).default(500),
+		conversationSearchConcurrency: z.number().int().min(1).max(6).default(3),
+		albumShareDiscoveryConcurrency: z.number().int().min(1).max(8).default(3),
 		profileResolutionBatchSize: z.number().int().min(1).max(30).default(30),
 		profileResolutionWindowMs: z.number().int().min(0).max(1_000).default(16),
 		reconcileThrottleMs: z.number().int().min(2_000).max(30_000).default(2_000),

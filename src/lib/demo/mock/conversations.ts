@@ -1,3 +1,5 @@
+import { registerAccountCache } from "$lib/api/account-caches";
+import { ObjectUrlRegistry } from "$lib/demo/object-url-registry";
 import {
 	type ApiResponseMessage,
 	previewFromMessage,
@@ -7,6 +9,15 @@ import type { Conversation } from "$lib/model/messaging/conversations";
 import { DAY, demoMeProfileId, HOUR, MINUTE, NOW } from "../config";
 import { hashFromSeed } from "./avatars";
 import { lastOnlineOf, onlineUntilOf, photosOf, profileSeed } from "./profiles";
+
+const demoObjectUrls = new ObjectUrlRegistry();
+
+export function resetDemoObjectUrls(): void {
+	demoObjectUrls.clear();
+	uploadedDrawerMedia.splice(0);
+}
+
+registerAccountCache(resetDemoObjectUrls);
 
 type DemoMessage = { fromMe: boolean; reactions?: number } & (
 	| { kind?: "text"; text: string }
@@ -599,7 +610,14 @@ export function demoRenameAlbum(albumId: number, body: unknown) {
 export function demoDeleteAlbum(albumId: number) {
 	const albums = demoAlbumStore();
 	const index = albums.findIndex((item) => item.albumId === albumId);
-	if (index !== -1) albums.splice(index, 1);
+	if (index !== -1) {
+		for (const item of albums[index].content) {
+			demoObjectUrls.release(item.url);
+			demoObjectUrls.release(item.coverUrl);
+			demoObjectUrls.release(item.thumbUrl);
+		}
+		albums.splice(index, 1);
+	}
 }
 
 export function demoReorderAlbumContent(albumId: number, body: unknown) {
@@ -614,6 +632,12 @@ export function demoReorderAlbumContent(albumId: number, body: unknown) {
 export function demoDeleteAlbumContent(albumId: number, contentId: number) {
 	const album = demoAlbumStore().find((item) => item.albumId === albumId);
 	if (!album) return;
+	const removed = album.content.find((item) => item.contentId === contentId);
+	if (removed) {
+		demoObjectUrls.release(removed.url);
+		demoObjectUrls.release(removed.coverUrl);
+		demoObjectUrls.release(removed.thumbUrl);
+	}
 	album.content = album.content.filter((item) => item.contentId !== contentId);
 }
 
@@ -625,8 +649,8 @@ export function demoUploadAlbumMedia(
 	contentType: string,
 ) {
 	const contentId = demoAlbumContentId++;
-	const contentUrl = URL.createObjectURL(
-		new Blob([bytes], { type: contentType }),
+	const contentUrl = demoObjectUrls.add(
+		URL.createObjectURL(new Blob([bytes], { type: contentType })),
 	);
 	const album = demoAlbumStore().find((item) => item.albumId === albumId);
 	if (album) {
@@ -641,7 +665,7 @@ export function demoUploadAlbumMedia(
 			rejectionId: null,
 		});
 		album.updatedAt = localDateTime(Date.now());
-	}
+	} else demoObjectUrls.release(contentUrl);
 	return { contentId, contentUrl };
 }
 
@@ -666,13 +690,23 @@ export function demoSentMessage(body: unknown): ApiResponseMessage {
 	if (sent.type === "Image" && sent.body && typeof sent.body === "object") {
 		const { mediaId } = sent.body as { mediaId: number };
 		const item = demoDrawerMedia().find((media) => media.id === mediaId);
+		const messageUrl = item?.blob
+			? demoObjectUrls.add(URL.createObjectURL(item.blob))
+			: (item?.url ?? DEMO_IMAGE_URL);
+		if (item?.blob) {
+			demoObjectUrls.release(item.url);
+			const index = uploadedDrawerMedia.findIndex(
+				(media) => media.id === mediaId,
+			);
+			if (index !== -1) uploadedDrawerMedia.splice(index, 1);
+		}
 		return {
 			type: "Image",
 			body: {
 				mediaId,
 				width: null,
 				height: null,
-				url: item?.url ?? DEMO_IMAGE_URL,
+				url: messageUrl,
 				imageHash: hashFromSeed(`drawer-${mediaId}`),
 				takenOnGrindr: item?.takenOnGrindr ?? false,
 				createdAt: item?.createdTs ?? timestamp,
@@ -704,6 +738,7 @@ type DemoDrawerMedia = {
 	createdTs: number;
 	used: boolean;
 	takenOnGrindr: boolean;
+	blob: Blob | null;
 };
 
 let uploadedDrawerMediaId = 920_000;
@@ -713,13 +748,15 @@ export function demoUploadChatMedia(
 	bytes: Uint8Array<ArrayBuffer>,
 	contentType: string,
 ): { mediaId: number; url: string; mediaHash: string } {
+	const blob = new Blob([bytes], { type: contentType });
 	const item: DemoDrawerMedia = {
 		id: uploadedDrawerMediaId++,
-		url: URL.createObjectURL(new Blob([bytes], { type: contentType })),
+		url: demoObjectUrls.add(URL.createObjectURL(blob)),
 		contentType,
 		createdTs: Date.now(),
 		used: false,
 		takenOnGrindr: false,
+		blob,
 	};
 	uploadedDrawerMedia.unshift(item);
 	return {
@@ -739,6 +776,7 @@ export function demoDrawerMedia(): DemoDrawerMedia[] {
 			createdTs: NOW - (index + 1) * HOUR,
 			used: index % 3 === 0,
 			takenOnGrindr: false,
+			blob: null,
 		})),
 	];
 }

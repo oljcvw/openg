@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
 	advanceAlbumMigrationProgress,
+	AlbumHistoryCursorRegistry,
 	albumHistoryCursorScopeKey,
+	AlbumHistoryPageCache,
 	albumIdentityKey,
 	classifyDiscoveryAccess,
 	compareAlbumHistoryOrder,
@@ -14,6 +16,46 @@ import {
 	reconcileAlbumMembership,
 	reconcileRetainedItems,
 } from "$lib/app-data/album-cache";
+
+describe("bounded album history memory", () => {
+	it("keeps only three pages per account-owner while identities collide", () => {
+		const cache = new AlbumHistoryPageCache<number>(3);
+		cache.set(1, 2, null, [1]);
+		cache.set(1, 2, "page-2", [2]);
+		cache.set(1, 2, "page-3", [3]);
+		cache.set(9, 2, null, [90]);
+		cache.set(1, 4, null, [40]);
+		cache.set(1, 2, "page-4", [4]);
+
+		expect(cache.get(1, 2, null)).toBeNull();
+		expect(cache.get(1, 2, "page-2")).toEqual([2]);
+		expect(cache.get(1, 2, "page-4")).toEqual([4]);
+		expect(cache.get(9, 2, null)).toEqual([90]);
+		expect(cache.get(1, 4, null)).toEqual([40]);
+	});
+
+	it("bounds and explicitly closes legacy cursor state", () => {
+		let now = 1_000;
+		const cursors = new AlbumHistoryCursorRegistry<number>({
+			capacity: 2,
+			ttlMs: 100,
+			now: () => now,
+		});
+		cursors.set("one", 1, 2, 1);
+		cursors.set("two", 1, 2, 2);
+		cursors.set("three", 1, 2, 3);
+
+		expect(cursors.take("one", 1, 2)).toBeNull();
+		expect(cursors.take("two", 9, 2)).toBeNull();
+		expect(cursors.take("two", 1, 2)).toBe(2);
+		now += 101;
+		expect(cursors.take("three", 1, 2)).toBeNull();
+
+		cursors.set("four", 1, 2, 4);
+		cursors.closeOwner(1, 2);
+		expect(cursors.take("four", 1, 2)).toBeNull();
+	});
+});
 
 describe("album access classification", () => {
 	it("keeps a currently viewable album active", () => {

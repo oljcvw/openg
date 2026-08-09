@@ -16,7 +16,7 @@
 		resolveBoundedLegacyRemoteVideo,
 		resolveLegacyShortVideo,
 	} from "./legacy-video-source";
-	import { activateMedia, releaseMedia } from "./media-playback";
+	import { activateMedia, disposeMedia } from "./media-playback";
 	import { MessageMediaState } from "./message-media.svelte";
 	import { StableExplicitViewOnceMediaSource } from "./view-once-media";
 
@@ -192,8 +192,8 @@
 		};
 		document.addEventListener("visibilitychange", pauseWhenHidden);
 		return () => {
-			element.pause();
-			releaseMedia(element);
+			disposeMedia(element);
+			source = null;
 			document.removeEventListener("visibilitychange", pauseWhenHidden);
 		};
 	});

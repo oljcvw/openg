@@ -243,6 +243,40 @@ describe("GridState profile resolution", () => {
 });
 
 describe("GridState Cascade coordination", () => {
+	it("advances result generation for query resets but not pagination or refresh", async () => {
+		getGrid.mockResolvedValue(page(1, 2));
+		const state = new GridState();
+		await state.filters.ready;
+		expect(state.resultGeneration).toBe(0);
+
+		state.load("first");
+		expect(state.resultGeneration).toBe(1);
+		await vi.waitFor(() => expect(state.items).toHaveLength(1));
+		await state.loadMore();
+		expect(state.resultGeneration).toBe(1);
+		await state.refresh();
+		expect(state.resultGeneration).toBe(1);
+
+		state.retry();
+		expect(state.resultGeneration).toBe(2);
+		state.invalidate();
+		expect(state.resultGeneration).toBe(3);
+		state.reset();
+		expect(state.resultGeneration).toBe(4);
+	});
+
+	it("advances result generation when filters replace Browse results", async () => {
+		getGrid.mockResolvedValue(page(1));
+		const state = new GridState();
+		await state.filters.ready;
+		state.load("first");
+		await vi.waitFor(() => expect(state.items).toHaveLength(1));
+		const previousGeneration = state.resultGeneration;
+
+		state.filters.set({ isOnline: !state.filters.value?.isOnline });
+
+		expect(state.resultGeneration).toBe(previousGeneration + 1);
+	});
 	it("falls back to the network when the disk cache cannot be read", async () => {
 		const consoleError = vi
 			.spyOn(console, "error")
@@ -324,5 +358,58 @@ describe("GridState Cascade coordination", () => {
 		expect(getGrid).toHaveBeenCalledTimes(2);
 		expect(state.items.map((item) => item.id)).toEqual([1, 2]);
 		expect(state.nextPage).toBe(3);
+	});
+
+	it("keeps an ordered ID index while compacting rendered data to five pages", async () => {
+		for (let id = 1; id <= 7; id += 1) {
+			getGrid.mockResolvedValueOnce(page(id, id === 7 ? null : id + 1));
+		}
+		const state = new GridState();
+		await state.filters.ready;
+
+		state.load("first");
+		await vi.waitFor(() => expect(state.items).toHaveLength(1));
+		for (let pageNumber = 2; pageNumber <= 7; pageNumber += 1) {
+			await state.loadMore();
+		}
+
+		expect(state.orderedProfileIds).toEqual([1, 2, 3, 4, 5, 6, 7]);
+		expect(state.items).toHaveLength(7);
+		expect(state.items.filter((item) => item.type === "rendered")).toHaveLength(
+			5,
+		);
+		expect(state.items.slice(0, 2)).toEqual([
+			{ type: "lazy", id: 1, unread: null, isVisiting: false },
+			{ type: "lazy", id: 2, unread: null, isVisiting: false },
+		]);
+	});
+
+	it("keeps a resolved old visible card without exceeding the five-page payload budget", async () => {
+		vi.useFakeTimers();
+		for (let id = 1; id <= 7; id += 1) {
+			getGrid.mockResolvedValueOnce(page(id, id === 7 ? null : id + 1));
+		}
+		const state = new GridState();
+		await state.filters.ready;
+
+		state.load("first");
+		await vi.waitFor(() => expect(state.items).toHaveLength(1));
+		for (let pageNumber = 2; pageNumber <= 7; pageNumber += 1) {
+			await state.loadMore();
+		}
+
+		state.setProfileVisible(1, true);
+		await state.resolveProfile(1);
+		await vi.runAllTimersAsync();
+		await state.resolveProfile(1);
+
+		expect(state.items.find((item) => item.id === 1)?.type).toBe("rendered");
+		expect(state.items.filter((item) => item.type === "rendered")).toHaveLength(
+			5,
+		);
+		expect(resolveLazyProfiles).toHaveBeenCalledOnce();
+
+		state.setProfileVisible(1, false);
+		expect(state.items.find((item) => item.id === 1)?.type).toBe("lazy");
 	});
 });

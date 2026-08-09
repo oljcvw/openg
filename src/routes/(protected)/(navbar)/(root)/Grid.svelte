@@ -1,8 +1,19 @@
 <script lang="ts">
+	import { untrack } from "svelte";
+
 	import { getGridColumnsSnapshot } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { nearestScrollableAncestor } from "$lib/components/feedback/refresh/scroll-chain";
+	import {
+		responsiveGridColumnCount,
+		toGridRows,
+	} from "$lib/components/virtual/virtual-grid";
+	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { gridState } from "$lib/grid/grid-state.svelte";
+	import {
+		restoreVirtualScrollAnchor,
+		type SurfaceScrollPosition,
+	} from "$lib/navigation/navigation-memory";
 	import type { GridProfile } from "$lib/grid/grid";
 	import EmptyGrid from "./EmptyGrid.svelte";
 	import GridProfileMiniCard from "./GridProfileMiniCard.svelte";
@@ -14,6 +25,18 @@
 	} = $props();
 
 	const gridColumns = $derived(getGridColumnsSnapshot());
+	let gridRoot: HTMLDivElement | null = $state(null);
+	let collection: { scrollToIndex(index: number): Promise<void> } | null =
+		$state(null);
+	let gridWidth = $state(0);
+	const scrollElement = $derived(
+		gridRoot
+			? (nearestScrollableAncestor(gridRoot) as HTMLDivElement | null)
+			: null,
+	);
+	const columnCount = $derived(
+		responsiveGridColumnCount(gridWidth, gridColumns),
+	);
 	const gridProfiles = $derived.by(() => {
 		const byId = new Map<number, GridProfile>();
 		for (const item of gridState.items) {
@@ -24,9 +47,14 @@
 		}
 		return [...byId.values()];
 	});
+	const gridRows = $derived(toGridRows(gridProfiles, columnCount));
+	const estimatedRowSize = $derived(
+		Math.max(120, (gridWidth - (columnCount - 1) * 2) / columnCount),
+	);
 
 	$effect.pre(() => {
-		gridState.load(geohash);
+		const activeGeohash = geohash;
+		untrack(() => gridState.load(activeGeohash));
 	});
 
 	function observePageTrigger(node: HTMLElement, params: { enabled: boolean }) {
@@ -72,19 +100,65 @@
 			},
 		};
 	}
+
+	function observeProfileVisibility(node: HTMLElement, params: { id: number }) {
+		let visible = false;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const nextVisible = entries[0].isIntersecting;
+				if (nextVisible === visible) return;
+				visible = nextVisible;
+				gridState.setProfileVisible(params.id, visible);
+			},
+			{ root: nearestScrollableAncestor(node), rootMargin: "200px" },
+		);
+		observer.observe(node);
+		return {
+			destroy() {
+				observer.disconnect();
+				if (visible) gridState.setProfileVisible(params.id, false);
+			},
+		};
+	}
+
+	function observeWidth(node: HTMLDivElement) {
+		const update = () => {
+			gridWidth = node.getBoundingClientRect().width || node.clientWidth;
+		};
+		update();
+		const observer = new ResizeObserver(update);
+		observer.observe(node);
+		return { destroy: () => observer.disconnect() };
+	}
+
+	export async function restoreAnchor(
+		position: SurfaceScrollPosition,
+	): Promise<void> {
+		if (!scrollElement || !collection) return;
+		const virtualCollection = collection;
+		await restoreVirtualScrollAnchor({
+			container: scrollElement,
+			anchor: position.anchor,
+			neighborhood: position.neighborhood,
+			logicalItemKeys: gridProfiles.map((item) => String(item.id)),
+			toVirtualIndex: (itemIndex) => Math.floor(itemIndex / columnCount),
+			scrollToIndex: (index) => virtualCollection.scrollToIndex(index),
+		});
+	}
 </script>
 
 <div
-	class="photo-grid relative"
+	bind:this={gridRoot}
+	class="relative mx-auto w-full max-w-400 overflow-clip rounded-grid"
 	data-columns={gridColumns === "auto" ? undefined : gridColumns}
-	style:grid-template-columns={gridColumns === "auto"
-		? undefined
-		: `repeat(${gridColumns}, minmax(0, 1fr))`}
+	use:observeWidth
 >
 	{#if gridState.loading}
-		{#each Array.from({ length: 20 })}
-			<div class="aspect-square animate-pulse bg-stone-700"></div>
-		{/each}
+		<div class="photo-grid">
+			{#each Array.from({ length: 20 })}
+				<div class="aspect-square animate-pulse bg-stone-700"></div>
+			{/each}
+		</div>
 	{:else if gridState.error}
 		<div class="col-span-full flex p-4">
 			<ApiErrorDisplay
@@ -94,44 +168,67 @@
 			/>
 		</div>
 	{:else}
-		{#each gridProfiles as item, index (item.id)}
-			<div
-				class="aspect-square"
-				use:observePageTrigger={{
-					enabled:
-						gridState.hasMoreProfiles &&
-						index === Math.max(0, gridProfiles.length - 5),
-				}}
+		{#if gridProfiles.length > 0}
+			<VirtualCollection
+				bind:this={collection}
+				items={gridRows}
+				{scrollElement}
+				getKey={(row) => row.map((item) => item.id).join(":")}
+				estimateSize={estimatedRowSize}
+				gap={2}
 			>
-				{#if item.type === "rendered"}
-					<GridProfileMiniCard
-						id={item.id}
-						displayName={item.displayName}
-						distance={item.distance}
-						unread={item.unread}
-						onlineUntil={item.onlineUntil}
-						isFavorite={item.isFavorite}
-						isRightNow={item.isRightNow}
-						isVisiting={item.isVisiting}
-						hadRecentChat={item.hasChattedInLast24Hrs}
-						medias={item.profilePhotosHashes?.map((mediaHash) => ({
-							mediaHash,
-						})) ?? []}
-					/>
-				{:else}
+				{#snippet children(row, rowIndex)}
 					<div
-						class="aspect-square animate-pulse bg-stone-700"
-						use:observeLazy={{ id: item.id }}
-					></div>
-				{/if}
-			</div>
+						class="grid gap-0.5"
+						style:grid-template-columns={`repeat(${columnCount}, minmax(0, 1fr))`}
+					>
+						{#each row as item, cellIndex (item.id)}
+							<div
+								class="aspect-square"
+								data-navigation-item-key={String(item.id)}
+								use:observePageTrigger={{
+									enabled:
+										gridState.hasMoreProfiles &&
+										rowIndex * columnCount + cellIndex ===
+											Math.max(0, gridProfiles.length - 5),
+								}}
+								use:observeProfileVisibility={{ id: item.id }}
+							>
+								{#if item.type === "rendered"}
+									<GridProfileMiniCard
+										id={item.id}
+										displayName={item.displayName}
+										distance={item.distance}
+										unread={item.unread}
+										onlineUntil={item.onlineUntil}
+										isFavorite={item.isFavorite}
+										isRightNow={item.isRightNow}
+										isVisiting={item.isVisiting}
+										hadRecentChat={item.hasChattedInLast24Hrs}
+										medias={item.profilePhotosHashes?.map((mediaHash) => ({
+											mediaHash,
+										})) ?? []}
+									/>
+								{:else}
+									<div
+										class="aspect-square animate-pulse bg-stone-700"
+										use:observeLazy={{ id: item.id }}
+									></div>
+								{/if}
+							</div>
+						{/each}
+					</div>
+				{/snippet}
+			</VirtualCollection>
 		{:else}
 			<EmptyGrid />
-		{/each}
+		{/if}
 		{#if gridState.loadingMore}
-			{#each Array.from({ length: 20 })}
-				<div class="aspect-square animate-pulse bg-stone-700"></div>
-			{/each}
+			<div class="photo-grid">
+				{#each Array.from({ length: 20 })}
+					<div class="aspect-square animate-pulse bg-stone-700"></div>
+				{/each}
+			</div>
 		{/if}
 	{/if}
 </div>

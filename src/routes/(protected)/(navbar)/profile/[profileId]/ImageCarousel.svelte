@@ -24,9 +24,11 @@
 	$effect(() => {
 		if (!gallery) return;
 		let lightbox: PhotoSwipeLightbox | undefined;
+		let disposed = false;
+		let onBackGesture: (() => boolean) | undefined;
 		import("photoswipe/lightbox")
 			.then(({ default: PhotoSwipeLightbox }) => {
-				if (!gallery) return;
+				if (!gallery || disposed) return;
 				lightbox = new PhotoSwipeLightbox({
 					gallery,
 					children: ".item",
@@ -45,12 +47,12 @@
 					}
 					return itemData;
 				});
-				const onBackGesture = () => {
+				onBackGesture = () => {
 					lightbox?.pswp?.close();
 					return false;
 				};
 				lightbox.on("beforeOpen", () => {
-					backGestureEventHandlers.add(onBackGesture);
+					if (onBackGesture) backGestureEventHandlers.add(onBackGesture);
 				});
 				lightbox.on("openingAnimationStart", () => {
 					gallery?.querySelectorAll(".item").forEach((item) => {
@@ -68,9 +70,10 @@
 					});
 				});
 				lightbox.on("close", () => {
-					backGestureEventHandlers.delete(onBackGesture);
+					if (onBackGesture) backGestureEventHandlers.delete(onBackGesture);
 				});
 				lightbox.on("destroy", () => {
+					if (onBackGesture) backGestureEventHandlers.delete(onBackGesture);
 					gallery?.querySelectorAll(".item").forEach((item) => {
 						if (item instanceof HTMLElement) {
 							item.style.visibility = "visible";
@@ -99,7 +102,11 @@
 				lightbox.init();
 			})
 			.catch((error) => console.error(error));
-		return () => lightbox?.destroy();
+		return () => {
+			disposed = true;
+			if (onBackGesture) backGestureEventHandlers.delete(onBackGesture);
+			lightbox?.destroy();
+		};
 	});
 
 	const GAP = 4; //px

@@ -1,6 +1,11 @@
 import { createContext } from "svelte";
 
 import { ApiError } from "$lib/api";
+import {
+	type AccountSessionSnapshot,
+	getAccountSessionSnapshot,
+	isAccountSessionCurrent,
+} from "$lib/api/account-caches";
 import { showErrorToast } from "$lib/api/error";
 import { markConversationAsRead } from "$lib/api/messaging/conversations";
 import {
@@ -14,10 +19,12 @@ import {
 	getShowRetractedMessagesSnapshot,
 	subscribePreferences,
 } from "$lib/app-data/preferences.svelte";
+import { ActiveMessageWindow } from "$lib/chat/active-message-window";
 import {
 	applyMessageRetractions,
 	previewFromMessage,
 } from "$lib/model/messaging/messages";
+import { navigationMemory } from "$lib/navigation/navigation-memory";
 import { now } from "$lib/util/clock";
 import { reconciler } from "$lib/util/reconcile";
 import {
@@ -46,6 +53,11 @@ export type OptimisticMessage = ApiResponseMessage & {
 	attemptRef?: string;
 	outerCommandRef?: string;
 	retryCount?: number;
+};
+
+export type SendOwnershipTransfer = {
+	kind: "accepted";
+	operationId: string;
 };
 
 function stripNestedReply(
@@ -161,6 +173,8 @@ export class ConversationState {
 	pageKey: string | null = $state(null);
 	loading = $state(true);
 	loadingMore = $state(false);
+	loadingNewer = $state(false);
+	newerSegmentId: string | null = $state(null);
 	refreshing = $state(false);
 	error: Error | null = $state(null);
 	lastReadTimestamp: number | null = $state(null);
@@ -169,6 +183,7 @@ export class ConversationState {
 	readonly conversationId: string;
 	readonly ourProfileId: number;
 	readonly hasSharedAlbumsHint: boolean | null;
+	readonly accountSession: AccountSessionSnapshot;
 
 	#conversations: ConversationsState;
 	#readQueue: { messageId: string; timestamp: number }[] = [];
@@ -177,6 +192,10 @@ export class ConversationState {
 	#unsubscribeReconcile: () => void;
 	#unsubscribePreferences: () => void;
 	#retryingMessageIds = new Set<string>();
+	#removedMessageIds = new Set<string>();
+	#messageWindow = new ActiveMessageWindow<OptimisticMessage>({
+		maxFetchedPages: 8,
+	});
 
 	constructor({
 		conversationId,
@@ -189,6 +208,7 @@ export class ConversationState {
 	}) {
 		this.conversationId = conversationId;
 		this.ourProfileId = ourProfileId;
+		this.accountSession = getAccountSessionSnapshot();
 		this.#conversations = conversations;
 		this.hasSharedAlbumsHint = conversations.sharedAlbumsHint(conversationId);
 		conversations.setActive(conversationId);
@@ -219,6 +239,8 @@ export class ConversationState {
 				);
 				if (existing) {
 					Object.assign(existing, incoming, { status: "sent" as const });
+					this.#messageWindow.confirmOptimistic(existing.messageId, existing);
+					this.#syncMessagesFromWindow();
 					this.#syncCache();
 					return;
 				}
@@ -226,8 +248,12 @@ export class ConversationState {
 				if (incoming.senderId === this.ourProfileId) {
 					const pending = this.#matchPendingEcho(incoming);
 					if (pending) {
+						const previousId = pending.messageId;
 						pending.status = "sent";
 						pending.messageId = incoming.messageId;
+						this.#messageWindow.reconcileActive(this.messages);
+						this.#messageWindow.confirmOptimistic(previousId, pending);
+						this.#syncMessagesFromWindow();
 						this.#syncCache();
 						return;
 					}
@@ -240,7 +266,8 @@ export class ConversationState {
 				if (incoming.timestamp < newestTimestamp) return;
 
 				const msg: OptimisticMessage = { ...incoming, status: "sent" };
-				this.messages = [msg, ...this.messages];
+				this.#messageWindow.upsertNewest(msg);
+				this.#syncMessagesFromWindow();
 				this.#syncCache();
 				if (msg.senderId !== this.ourProfileId) {
 					void this.reportRead({
@@ -316,6 +343,10 @@ export class ConversationState {
 			const claimedServerIds = new Set<string>();
 			const duplicateWindowMs =
 				getDeveloperSettingsSnapshot().messageDuplicateReconcileWindowMs;
+			const confirmedOptimistic: Array<{
+				previousId: string;
+				message: OptimisticMessage;
+			}> = [];
 			let dropped = 0;
 			let updated = 0;
 			for (const local of this.messages) {
@@ -343,9 +374,17 @@ export class ConversationState {
 						);
 					}
 					if (serverVersion) {
+						const confirmed = {
+							...serverVersion,
+							status: "sent" as const,
+						};
 						claimedServerIds.add(serverVersion.messageId);
 						seenLocalIds.add(serverVersion.messageId);
-						newValue.push({ ...serverVersion, status: "sent" as const });
+						newValue.push(confirmed);
+						confirmedOptimistic.push({
+							previousId: local.messageId,
+							message: confirmed,
+						});
 						updated++;
 						continue;
 					}
@@ -369,6 +408,7 @@ export class ConversationState {
 					newValue.push(local);
 				} else {
 					dropped++;
+					this.#removedMessageIds.add(local.messageId);
 					this.#conversations.removeMessageFromSearch(
 						this.conversationId,
 						local.messageId,
@@ -395,7 +435,15 @@ export class ConversationState {
 				return;
 			}
 
-			this.messages = removeDuplicateMessages(newValue);
+			this.#messageWindow.reconcileActive(removeDuplicateMessages(newValue));
+			for (const confirmation of confirmedOptimistic) {
+				this.#messageWindow.confirmOptimistic(
+					confirmation.previousId,
+					confirmation.message,
+				);
+			}
+			this.#syncMessagesFromWindow();
+			this.#restoreReplyTargetFromMemory();
 			this.#updatePreview(this.messages.at(0));
 			this.#syncCache();
 
@@ -435,30 +483,43 @@ export class ConversationState {
 		const cached = await this.#conversations.getCachedConversation(
 			this.conversationId,
 		);
+		if (this.#destroyed || !isAccountSessionCurrent(this.accountSession))
+			return;
 		if (cached) {
-			this.messages = removeDuplicateMessages([
-				...(cached.failedMessages ?? []).map(
-					({
-						message,
-						state,
-						lastAttemptAt,
-						attemptRef,
-						outerCommandRef,
-						retryCount,
-					}) => ({
-						...message,
-						status:
-							state === "queued" || state === "awaitingAck"
-								? ("confirming" as const)
-								: state,
-						lastAttemptAt,
-						attemptRef,
-						outerCommandRef,
-						retryCount,
-					}),
-				),
-				...cached.messages.map((m) => ({ ...m, status: "sent" as const })),
-			]);
+			const failed = (cached.failedMessages ?? []).map(
+				({
+					message,
+					state,
+					lastAttemptAt,
+					attemptRef,
+					outerCommandRef,
+					retryCount,
+				}) => ({
+					...message,
+					status:
+						state === "queued" || state === "awaitingAck"
+							? ("confirming" as const)
+							: state,
+					lastAttemptAt,
+					attemptRef,
+					outerCommandRef,
+					retryCount,
+				}),
+			);
+			const confirmed = cached.messages.map((m) => ({
+				...m,
+				status: "sent" as const,
+			}));
+			this.#hydrateMessageWindow({
+				messages: confirmed,
+				pageKey: cached.pageKey,
+				segments: cached.segments,
+			});
+			for (const message of failed) {
+				this.#messageWindow.pin(message, "optimistic");
+			}
+			this.#syncMessagesFromWindow();
+			this.#restoreReplyTargetFromMemory();
 			this.profile = cached.profile;
 			this.pageKey = cached.pageKey;
 			this.lastReadTimestamp = cached.lastReadTimestamp;
@@ -473,14 +534,23 @@ export class ConversationState {
 			const result = await getConversation({
 				conversationId: this.conversationId,
 			});
+			if (this.#destroyed || !isAccountSessionCurrent(this.accountSession))
+				return;
 			void this.#conversations.markRead(this.conversationId);
-			if (this.#destroyed) return;
-			this.messages = removeDuplicateMessages(
+			const confirmed = removeDuplicateMessages(
 				result.messages.map((m) => ({
 					...m,
 					status: "sent" as const,
 				})),
 			);
+			this.#messageWindow.clear();
+			this.#messageWindow.addOlderPage({
+				cursor: null,
+				nextCursor: result.pageKey,
+				messages: confirmed,
+			});
+			this.#syncMessagesFromWindow();
+			this.#restoreReplyTargetFromMemory();
 			this.profile = result.profile;
 			this.pageKey = result.pageKey;
 			this.#updatePreview(this.messages.at(0));
@@ -499,15 +569,21 @@ export class ConversationState {
 		if (this.pageKey === null) return "end";
 		this.loadingMore = true;
 		try {
+			const cursor = this.pageKey;
 			const result = await getConversation({
 				conversationId: this.conversationId,
-				pageKey: this.pageKey,
+				pageKey: cursor,
 			});
 			if (this.#destroyed) return "error";
-			this.messages = removeDuplicateMessages([
-				...this.messages,
-				...result.messages.map((m) => ({ ...m, status: "sent" as const })),
-			]);
+			this.#messageWindow.addOlderPage({
+				cursor,
+				nextCursor: result.pageKey,
+				messages: result.messages.map((m) => ({
+					...m,
+					status: "sent" as const,
+				})),
+			});
+			this.#syncMessagesFromWindow();
 			this.pageKey = result.pageKey;
 			this.#advanceLastRead(result.lastReadTimestamp);
 			this.#syncCache();
@@ -529,18 +605,117 @@ export class ConversationState {
 		}
 	}
 
+	async locateMessage(messageId: string): Promise<number | null> {
+		let location = this.#messageWindow.locateMessage(messageId);
+		if (location.kind === "active") return location.index;
+		if (location.kind === "evicted") {
+			try {
+				await this.#restoreKnownSegment(location.segmentId);
+			} catch {
+				return null;
+			}
+			location = this.#messageWindow.locateMessage(messageId);
+			if (location.kind === "active") return location.index;
+		}
+
+		const seenCursors = new Set<string>();
+		while (this.pageKey !== null) {
+			const cursor = this.pageKey;
+			if (seenCursors.has(cursor)) return null;
+			seenCursors.add(cursor);
+			const outcome = await this.loadMore();
+			if (outcome !== "loaded") return null;
+			location = this.#messageWindow.locateMessage(messageId);
+			if (location.kind === "active") return location.index;
+		}
+		return null;
+	}
+
+	async loadNewer(): Promise<"loaded" | "end" | "busy" | "error"> {
+		if (this.loadingNewer) return "busy";
+		const segment = this.#messageWindow.getAdjacentNewerSegment();
+		if (!segment) return "end";
+		this.loadingNewer = true;
+		try {
+			return (await this.#restoreKnownSegment(segment.segmentId))
+				? "loaded"
+				: "end";
+		} catch (error) {
+			if (!this.#destroyed) {
+				showErrorToast({
+					label: "Failed to load newer messages",
+					error,
+				});
+			}
+			return "error";
+		} finally {
+			this.loadingNewer = false;
+		}
+	}
+
+	pinMessage(messageId: string, reason: "selected" | "viewer"): boolean {
+		const message = this.#messageWindow.getMessage(messageId);
+		if (!message) return false;
+		this.#messageWindow.pin(message, reason);
+		this.#syncMessagesFromWindow();
+		return true;
+	}
+
+	unpinMessage(messageId: string, reason: "selected" | "viewer"): void {
+		this.#messageWindow.unpin(messageId, reason);
+		this.#syncMessagesFromWindow();
+	}
+
 	setReplyTarget(message: ApiResponseMessage): void {
-		this.replyTarget = message;
+		if (message.conversationId !== this.conversationId) return;
+		if (this.replyTarget)
+			this.#messageWindow.unpin(this.replyTarget.messageId, "reply-target");
+		const active = this.#messageWindow.getMessage(message.messageId);
+		const target = active ?? {
+			...message,
+			status: "sent" as const,
+		};
+		this.replyTarget = target;
+		if (active) this.#messageWindow.pin(active, "reply-target");
+		this.#syncMessagesFromWindow();
+		const draft = navigationMemory.getDetailSession(
+			this.conversationId,
+			this.accountSession,
+		);
+		navigationMemory.updateDraft(
+			this.conversationId,
+			{ text: draft.draftText, replyTargetMessageId: message.messageId },
+			this.accountSession,
+		);
 	}
 
 	clearReplyTarget(): void {
+		if (this.replyTarget)
+			this.#messageWindow.unpin(this.replyTarget.messageId, "reply-target");
 		this.replyTarget = null;
+		this.#syncMessagesFromWindow();
+		const draft = navigationMemory.getDetailSession(
+			this.conversationId,
+			this.accountSession,
+		);
+		navigationMemory.updateDraft(
+			this.conversationId,
+			{ text: draft.draftText, replyTargetMessageId: null },
+			this.accountSession,
+		);
 	}
 
-	send(message: MessageType): void {
-		if (!this.profile) return;
-		this.#enqueue(message, this.replyTarget);
+	send(message: MessageType): Promise<SendOwnershipTransfer> {
+		if (!this.profile)
+			return Promise.reject(new Error("Conversation is not ready"));
+		const replyTarget = this.replyTarget;
+		const accepted = this.#enqueue(message, replyTarget);
+		if (replyTarget)
+			this.#messageWindow.unpin(replyTarget.messageId, "reply-target");
 		this.replyTarget = null;
+		this.#syncMessagesFromWindow();
+		navigationMemory.clearDraft(this.conversationId, this.accountSession);
+		return Promise.resolve(accepted);
 	}
 
 	sendAgain(messageId: string): void {
@@ -563,7 +738,7 @@ export class ConversationState {
 	#enqueue(
 		message: MessageType,
 		replyTarget: ApiResponseMessage["replyToMessage"],
-	): void {
+	): SendOwnershipTransfer {
 		const tempId = `pending-${crypto.randomUUID()}`;
 		const attemptRef = crypto.randomUUID();
 		const outerCommandRef = crypto.randomUUID();
@@ -582,8 +757,10 @@ export class ConversationState {
 			outerCommandRef,
 			retryCount: 0,
 		};
-		this.messages = removeDuplicateMessages([optimistic, ...this.messages]);
+		this.#messageWindow.pin(optimistic, "optimistic");
+		this.#syncMessagesFromWindow();
 		this.#updatePreview(optimistic);
+		this.#syncCache();
 		void this.#resolveMessage({
 			tempId,
 			message,
@@ -591,6 +768,33 @@ export class ConversationState {
 			attemptRef,
 			outerCommandRef,
 		});
+		return { kind: "accepted", operationId: tempId };
+	}
+
+	#restoreReplyTargetFromMemory(): void {
+		const draft = navigationMemory.getDetailSession(
+			this.conversationId,
+			this.accountSession,
+		);
+		if (draft.replyTargetMessageId === null) {
+			this.replyTarget = null;
+			return;
+		}
+		const target =
+			this.messages.find(
+				(message) =>
+					message.messageId === draft.replyTargetMessageId &&
+					message.conversationId === this.conversationId,
+			) ?? null;
+		this.replyTarget = target;
+		if (target) this.#messageWindow.pin(target, "reply-target");
+		if (target === null) {
+			navigationMemory.updateDraft(
+				this.conversationId,
+				{ text: draft.draftText, replyTargetMessageId: null },
+				this.accountSession,
+			);
+		}
 	}
 
 	async #resolveMessage({
@@ -626,8 +830,11 @@ export class ConversationState {
 					});
 			const msg = this.messages.find((m) => m.messageId === tempId);
 			if (msg && msg.status !== "sent") {
-				if (outcome.kind === "ack") msg.status = "sent";
-				else if (outcome.kind === "unknown") msg.status = "confirming";
+				if (outcome.kind === "ack") {
+					msg.status = "sent";
+					this.#messageWindow.confirmOptimistic(tempId, msg);
+					this.#syncMessagesFromWindow();
+				} else if (outcome.kind === "unknown") msg.status = "confirming";
 				else {
 					msg.status = "failed";
 					msg.lastAttemptAt = Date.now();
@@ -680,7 +887,10 @@ export class ConversationState {
 						candidate.timestamp <= Date.now() + duplicateWindowMs,
 				);
 				if (duplicate) {
+					const previousId = message.messageId;
 					Object.assign(message, duplicate, { status: "sent" as const });
+					this.#messageWindow.confirmOptimistic(previousId, message);
+					this.#syncMessagesFromWindow();
 					this.#syncCache();
 					return;
 				}
@@ -809,7 +1019,119 @@ export class ConversationState {
 			profile: this.profile,
 			pageKey: this.pageKey,
 			lastReadTimestamp: this.lastReadTimestamp,
+			segments: this.#messageWindow.segmentMetadata,
+			removedMessageIds: [...this.#removedMessageIds],
 		});
+	}
+
+	#hydrateMessageWindow({
+		messages,
+		pageKey,
+		segments,
+	}: {
+		messages: OptimisticMessage[];
+		pageKey: string | null;
+		segments?: readonly {
+			segmentId: string;
+			cursor: string | null;
+			nextCursor: string | null;
+			messageIds: readonly string[];
+		}[];
+	}): void {
+		this.#messageWindow.clear();
+		if (!segments || segments.length === 0) {
+			this.#messageWindow.addOlderPage({
+				cursor: null,
+				nextCursor: pageKey,
+				messages,
+			});
+			return;
+		}
+		const byId = new Map(
+			messages.map((message) => [message.messageId, message] as const),
+		);
+		const assigned = new Set<string>();
+		for (const segment of segments) {
+			const page = segment.messageIds.flatMap((messageId) => {
+				const message = byId.get(messageId);
+				if (!message) return [];
+				assigned.add(messageId);
+				return [message];
+			});
+			this.#messageWindow.hydrateSegment(
+				{
+					segmentId: segment.segmentId,
+					cursor: segment.cursor,
+					nextCursor: segment.nextCursor,
+					messageIds: [...segment.messageIds],
+				},
+				page,
+			);
+		}
+		const unassigned = messages.filter(
+			(message) => !assigned.has(message.messageId),
+		);
+		for (const message of unassigned) this.#messageWindow.upsertNewest(message);
+	}
+
+	#syncMessagesFromWindow(): void {
+		this.messages = removeDuplicateMessages(this.#messageWindow.messages);
+		// Svelte wraps assigned records in deep reactive proxies. Adopt those
+		// proxies so later in-place status/reaction updates remain canonical in
+		// the segmented window instead of being replaced by stale raw objects.
+		this.#messageWindow.reconcileActive(this.messages);
+		this.newerSegmentId =
+			this.#messageWindow.getAdjacentNewerSegment()?.segmentId ?? null;
+	}
+
+	async #restoreKnownSegment(segmentId: string): Promise<boolean> {
+		const metadata = this.#messageWindow.getSegmentMetadata(segmentId);
+		if (!metadata) return false;
+		const expectedIds = new Set(metadata.messageIds);
+		const cached = await this.#conversations.getCachedConversation(
+			this.conversationId,
+		);
+		if (this.#destroyed) return false;
+		if (cached) {
+			const cachedPage = cached.messages.filter((message) =>
+				expectedIds.has(message.messageId),
+			);
+			if (
+				new Set(cachedPage.map((message) => message.messageId)).size ===
+				expectedIds.size
+			) {
+				const restored = this.#messageWindow.restoreSegment(
+					segmentId,
+					cachedPage.map((message) => ({
+						...message,
+						status: "sent" as const,
+					})),
+				);
+				if (restored) {
+					this.#syncMessagesFromWindow();
+					this.#syncCache();
+					return true;
+				}
+			}
+		}
+
+		const result = await getConversation({
+			conversationId: this.conversationId,
+			...(metadata.cursor === null ? {} : { pageKey: metadata.cursor }),
+		});
+		if (this.#destroyed) return false;
+		const restored = this.#messageWindow.restoreSegment(
+			segmentId,
+			result.messages.map((message) => ({
+				...message,
+				status: "sent" as const,
+			})),
+		);
+		if (!restored) return false;
+		this.#syncMessagesFromWindow();
+		this.#advanceLastRead(result.lastReadTimestamp);
+		this.#syncCache();
+		return true;
 	}
 
 	#updatePreview(
@@ -848,7 +1170,10 @@ export class ConversationState {
 		let revert = () => {};
 		const index = this.messages.findIndex((m) => m.messageId === messageId);
 		if (index > -1) {
-			const [removed] = this.messages.splice(index, 1);
+			const removed = this.#messageWindow.remove(messageId);
+			if (!removed) return { revert };
+			this.#removedMessageIds.add(messageId);
+			this.#syncMessagesFromWindow();
 			this.#conversations.removeMessageFromSearch(
 				this.conversationId,
 				messageId,
@@ -856,7 +1181,9 @@ export class ConversationState {
 			if (isLatest) this.#updatePreview(this.messages.at(0));
 			this.#syncCache();
 			const revertDeleteMessage = () => {
-				this.messages.splice(index, 0, removed);
+				this.#removedMessageIds.delete(messageId);
+				this.#messageWindow.reconcileActive([...this.messages, removed]);
+				this.#syncMessagesFromWindow();
 				if (isLatest) this.#updatePreview(removed);
 				this.#syncCache();
 			};
@@ -911,6 +1238,7 @@ export class ConversationState {
 		queue.sort((a, b) => a.timestamp - b.timestamp);
 		const highest = queue[queue.length - 1];
 		const { revealMessageRead } = await getPreferences();
+		if (!isAccountSessionCurrent(this.accountSession)) return;
 		if (revealMessageRead) {
 			try {
 				await markConversationAsRead({

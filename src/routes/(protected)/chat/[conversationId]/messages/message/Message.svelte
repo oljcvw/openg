@@ -260,7 +260,7 @@
 		{#if message.type === "Text"}
 			<TextMessage message={message.body} />
 		{:else if message.type === "Image"}
-			<ImageMessage message={message.body} />
+			<ImageMessage message={message.body} messageId={message.messageId} />
 		{:else if message.type === "Audio"}
 			<AudioMessage
 				message={message.body}
@@ -319,6 +319,7 @@
 		{:else if message.type === "Album" || message.type === "ExpiringAlbum" || message.type === "ExpiringAlbumV2"}
 			<AlbumMessage
 				message={message.body}
+				messageId={message.messageId}
 				senderProfileId={message.senderId}
 				{peerProfileId}
 				{isOut}
