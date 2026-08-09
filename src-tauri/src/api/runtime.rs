@@ -281,7 +281,7 @@ impl ApiRuntime {
 		operation: F,
 	) -> Result<T, RuntimeError>
 	where
-		F: Fn() -> Fut,
+		F: FnOnce() -> Fut,
 		Fut: Future<Output = Result<T, grindr::GrindrError>>,
 	{
 		let class = if policy == RetryPolicy::NeverReplay {
@@ -301,7 +301,7 @@ impl ApiRuntime {
 		operation: F,
 	) -> Result<T, RuntimeError>
 	where
-		F: Fn() -> Fut,
+		F: FnOnce() -> Fut,
 		Fut: Future<Output = Result<T, grindr::GrindrError>>,
 	{
 		self.request_classified_inner(
@@ -323,7 +323,7 @@ impl ApiRuntime {
 		operation: F,
 	) -> Result<grindr::RawResponse, RuntimeError>
 	where
-		F: Fn() -> Fut,
+		F: FnOnce() -> Fut,
 		Fut: Future<Output = Result<grindr::RawResponse, grindr::GrindrError>>,
 	{
 		self.request_raw_classified_cancellable(
@@ -345,7 +345,7 @@ impl ApiRuntime {
 		operation: F,
 	) -> Result<grindr::RawResponse, RuntimeError>
 	where
-		F: Fn() -> Fut,
+		F: FnOnce() -> Fut,
 		Fut: Future<Output = Result<grindr::RawResponse, grindr::GrindrError>>,
 	{
 		self.request_classified_inner(
@@ -369,7 +369,7 @@ impl ApiRuntime {
 		classify: C,
 	) -> Result<T, RuntimeError>
 	where
-		F: Fn() -> Fut,
+		F: FnOnce() -> Fut,
 		Fut: Future<Output = Result<T, grindr::GrindrError>>,
 		C: Fn(&Result<T, grindr::GrindrError>) -> CircuitOutcome,
 	{

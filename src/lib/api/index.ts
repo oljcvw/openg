@@ -139,18 +139,27 @@ export const methods = {
 			currentPassword: z.string().min(1).max(1024),
 			newPassword: z.string().min(8).max(1024),
 		}),
-		response: z.undefined(),
+		response: z.object({
+			remoteApplied: z.boolean(),
+			localCleanupComplete: z.boolean(),
+		}),
 	},
 	update_account_email: {
 		request: z.object({
 			email: z.email(),
 			password: z.string().min(1).max(1024),
 		}),
-		response: z.undefined(),
+		response: z.object({
+			remoteApplied: z.boolean(),
+			localCleanupComplete: z.boolean(),
+		}),
 	},
 	delete_account: {
 		request: z.undefined(),
-		response: z.undefined(),
+		response: z.object({
+			remoteApplied: z.boolean(),
+			localCleanupComplete: z.boolean(),
+		}),
 	},
 	notification_clear_account: {
 		request: z.object({

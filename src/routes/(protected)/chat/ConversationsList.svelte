@@ -5,6 +5,10 @@
 	import { onMount, tick, untrack } from "svelte";
 
 	import {
+		getDeveloperSettingsSnapshot,
+		subscribePreferences,
+	} from "$lib/app-data/preferences.svelte";
+	import {
 		type ConversationFilter,
 		filterConversations,
 		normalizeConversationSearchQuery,
@@ -72,6 +76,9 @@
 	let deleteDialogOpen = $state(false);
 	let deleteIds: string[] = $state([]);
 	let searchQuery = $state("");
+	let searchDebounceMs = $state(
+		getDeveloperSettingsSnapshot().conversationSearchDebounceMs,
+	);
 	let conversationFilter: ConversationFilter = $state("all");
 	const normalizedSearchQuery = $derived(
 		normalizeConversationSearchQuery(searchQuery),
@@ -116,9 +123,16 @@
 		if (normalizedSearchQuery === "") return;
 		const timeout = setTimeout(() => {
 			void conversations.searchLoadedMessages(searchQuery);
-		}, 250);
+		}, searchDebounceMs);
 		return () => clearTimeout(timeout);
 	});
+
+	onMount(() =>
+		subscribePreferences(() => {
+			searchDebounceMs =
+				getDeveloperSettingsSnapshot().conversationSearchDebounceMs;
+		}),
+	);
 
 	async function compensateScroll() {
 		if (!container) return;

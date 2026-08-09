@@ -140,7 +140,7 @@
 						     tab is told whether it is showing rather than fetching
 						     albums every time the sheet opens. -->
 						<ComposerAlbumsTab
-							active={selectedTab === "albums"}
+							active={open && selectedTab === "albums"}
 							onClose={() => (open = false)}
 						/>
 					</Tabs.Content>

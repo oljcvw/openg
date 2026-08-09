@@ -18,10 +18,21 @@ internal data class ShortVideoCacheStats(
 	val entryCount: Int,
 )
 
+internal data class ShortVideoCleanupResult(
+	val removed: Boolean,
+	val staleWriteAbsent: Boolean,
+)
+
 internal class ShortVideoCache(
 	private val root: File,
 	private val crypto: AccountMediaCrypto = AndroidKeystoreMediaCrypto(),
+	private val deleteFileTree: (File) -> Boolean = File::deleteRecursively,
 ) {
+	private val writeTokens = mutableMapOf<CacheIdentity, String>()
+	private val entryGenerations = mutableMapOf<CacheIdentity, Long>()
+	private val accountGenerations = mutableMapOf<String, Long>()
+	private var globalGeneration = 0L
+	private var maximumObservedGeneration = 0L
 	constructor(
 		context: Context,
 		crypto: AccountMediaCrypto = AndroidKeystoreMediaCrypto(),
@@ -32,16 +43,37 @@ internal class ShortVideoCache(
 	}
 
 	@Synchronized
-	fun put(accountId: String, mediaId: String, plaintext: ByteArray, maximumBytes: Long): ShortVideoCacheStats {
+	fun put(
+		accountId: String,
+		mediaId: String,
+		plaintext: ByteArray,
+		maximumBytes: Long,
+		writeToken: String,
+		cacheGeneration: Long,
+	): ShortVideoCacheStats {
+		require(cacheGeneration >= 0) { "Invalid cache generation" }
+		require(
+			writeToken.isNotBlank() &&
+				writeToken.length <= MAX_WRITE_TOKEN_LENGTH &&
+				writeToken.all { it.isLetterOrDigit() || it == '-' || it == '_' },
+		) {
+			"Invalid cache write token"
+		}
 		val identity = CacheIdentity(accountId, mediaId)
+		val currentGeneration = maxOf(globalGeneration, accountGenerations[identity.accountKey] ?: 0L)
+		check(cacheGeneration >= currentGeneration) { "Stale cache generation" }
+		accountGenerations[identity.accountKey] = cacheGeneration
+		maximumObservedGeneration = maxOf(maximumObservedGeneration, cacheGeneration)
 		val destination = identity.file(root)
 		destination.parentFile?.mkdirs()
-		val temporary = File(destination.parentFile, "${destination.name}.tmp")
+		val temporary = File(destination.parentFile, "${destination.name}.$writeToken.tmp")
 		try {
 			temporary.outputStream().use { output ->
 				crypto.encrypt(identity.accountKey, identity.aad, ByteArrayInputStream(plaintext), output)
 			}
 			check(temporary.renameTo(destination)) { "Unable to store cached video" }
+			writeTokens[identity] = writeToken
+			entryGenerations[identity] = cacheGeneration
 			destination.setLastModified(System.currentTimeMillis())
 		} finally {
 			temporary.delete()
@@ -64,28 +96,78 @@ internal class ShortVideoCache(
 			plaintext.toByteArray()
 		} catch (_: Exception) {
 			source.delete()
+			writeTokens.remove(identity)
+			entryGenerations.remove(identity)
 			null
 		}
 	}
 
 	@Synchronized
-	fun remove(accountId: String, mediaId: String): Boolean =
-		CacheIdentity(accountId, mediaId).file(root).delete()
-
-	@Synchronized
-	fun clearAccount(accountId: String) {
-		val accountKey = CacheIdentity.accountKey(accountId)
-		File(root, accountKey).deleteRecursively()
-		crypto.deleteKey(accountKey)
+	fun remove(accountId: String, mediaId: String): Boolean {
+		val identity = CacheIdentity(accountId, mediaId)
+		val removed = identity.file(root).delete()
+		if (removed || !identity.file(root).exists()) {
+			writeTokens.remove(identity)
+			entryGenerations.remove(identity)
+		}
+		return removed
 	}
 
 	@Synchronized
-	fun clearAll() {
-		root.listFiles()?.filter(File::isDirectory)?.forEach { accountDirectory ->
-			crypto.deleteKey(accountDirectory.name)
+	fun removeIfWriteToken(
+		accountId: String,
+		mediaId: String,
+		expectedWriteToken: String,
+	): ShortVideoCleanupResult {
+		require(
+			expectedWriteToken.isNotBlank() &&
+				expectedWriteToken.length <= MAX_WRITE_TOKEN_LENGTH &&
+				expectedWriteToken.all { it.isLetterOrDigit() || it == '-' || it == '_' },
+		) {
+			"Invalid cache write token"
 		}
-		root.deleteRecursively()
-		root.mkdirs()
+		val identity = CacheIdentity(accountId, mediaId)
+		if (writeTokens[identity] != expectedWriteToken) {
+			return ShortVideoCleanupResult(removed = false, staleWriteAbsent = true)
+		}
+		val destination = identity.file(root)
+		if (!destination.exists()) {
+			writeTokens.remove(identity)
+			entryGenerations.remove(identity)
+			return ShortVideoCleanupResult(removed = false, staleWriteAbsent = true)
+		}
+		val removed = destination.delete()
+		if (removed) {
+			writeTokens.remove(identity)
+			entryGenerations.remove(identity)
+		}
+		return ShortVideoCleanupResult(
+			removed = removed,
+			staleWriteAbsent = removed || !destination.exists(),
+		)
+	}
+
+	@Synchronized
+	fun clearAccount(accountId: String, cacheGeneration: Long) {
+		require(cacheGeneration >= 0) { "Invalid cache generation" }
+		val accountKey = CacheIdentity.accountKey(accountId)
+		val currentGeneration = maxOf(globalGeneration, accountGenerations[accountKey] ?: 0L)
+		check(cacheGeneration >= currentGeneration) { "Stale cache generation" }
+		accountGenerations[accountKey] = cacheGeneration
+		maximumObservedGeneration = maxOf(maximumObservedGeneration, cacheGeneration)
+		removeEntriesOlderThan(accountKey, cacheGeneration)
+	}
+
+	@Synchronized
+	fun clearAll(cacheGeneration: Long) {
+		require(cacheGeneration >= 0) { "Invalid cache generation" }
+		check(cacheGeneration >= maximumObservedGeneration) { "Stale cache generation" }
+		globalGeneration = cacheGeneration
+		maximumObservedGeneration = cacheGeneration
+		accountGenerations.clear()
+		root.listFiles()?.filter(File::isDirectory)?.forEach { accountDirectory ->
+			removeEntriesOlderThan(accountDirectory.name, cacheGeneration)
+		}
 	}
 
 	@Synchronized
@@ -98,6 +180,8 @@ internal class ShortVideoCache(
 			val length = entry.length()
 			if (entry.delete()) total -= length
 		}
+		writeTokens.keys.removeAll { !it.file(root).isFile }
+		entryGenerations.keys.removeAll { !it.file(root).isFile }
 		root.listFiles()?.filter { it.isDirectory && it.list()?.isEmpty() == true }?.forEach(File::delete)
 		return ShortVideoCacheStats(total, cacheFiles().size)
 	}
@@ -113,9 +197,37 @@ internal class ShortVideoCache(
 			account.listFiles().orEmpty().filter { it.isFile && it.extension == CACHE_EXTENSION }
 		}
 
+	private fun removeEntriesOlderThan(accountKey: String, cacheGeneration: Long) {
+		val protectedFiles = entryGenerations
+			.filter { (identity, generation) ->
+				identity.accountKey == accountKey && generation >= cacheGeneration
+			}
+			.keys
+			.mapTo(mutableSetOf()) { it.file(root) }
+		val accountDirectory = File(root, accountKey)
+		accountDirectory.listFiles().orEmpty()
+			.filterNot(protectedFiles::contains)
+			.forEach { entry ->
+				check(deleteFileTree(entry) || !entry.exists()) { "Unable to clear cached video" }
+			}
+		writeTokens.keys.removeAll { identity ->
+			identity.accountKey == accountKey && identity.file(root) !in protectedFiles
+		}
+		entryGenerations.keys.removeAll { identity ->
+			identity.accountKey == accountKey && identity.file(root) !in protectedFiles
+		}
+		if (accountDirectory.list()?.isEmpty() != false) {
+			check(accountDirectory.delete() || !accountDirectory.exists()) {
+				"Unable to clear cache directory"
+			}
+			crypto.deleteKey(accountKey)
+		}
+	}
+
 	companion object {
 		private const val CACHE_DIRECTORY = "short-video-cache"
 		private const val CACHE_EXTENSION = "ogv"
+		private const val MAX_WRITE_TOKEN_LENGTH = 128
 	}
 }
 

@@ -215,9 +215,22 @@ class MediaCapturePlugin(private val activity: Activity) : Plugin(activity) {
 			val args = invoke.getArgs()
 			val accountId = args.getString("accountId")
 			val mediaId = args.getString("mediaId")
+			val writeToken = args.getString("writeToken")
+			val cacheGeneration = args.getLong("cacheGeneration")
 			val bytes = Base64.decode(args.getString("dataBase64"), Base64.DEFAULT)
 			val maximumBytes = normalizedCacheLimit(args.optLong("maximumBytes", DEFAULT_CACHE_BYTES))
-			invoke.resolve(cacheStatsJson(shortVideoCache.put(accountId, mediaId, bytes, maximumBytes)))
+			invoke.resolve(
+				cacheStatsJson(
+					shortVideoCache.put(
+						accountId,
+						mediaId,
+						bytes,
+						maximumBytes,
+						writeToken,
+						cacheGeneration,
+					),
+				),
+			)
 			trigger(CACHE_CHANGED_EVENT, cacheStatsJson(shortVideoCache.stats()))
 		} catch (_: Exception) {
 			invoke.reject(ERROR_CACHE)
@@ -255,10 +268,34 @@ class MediaCapturePlugin(private val activity: Activity) : Plugin(activity) {
 	}
 
 	@Command
+	fun removeCachedShortVideoIfToken(invoke: Invoke) {
+		try {
+			val args = invoke.getArgs()
+			val cleanup = shortVideoCache.removeIfWriteToken(
+				args.getString("accountId"),
+				args.getString("mediaId"),
+				args.getString("writeToken"),
+			)
+			invoke.resolve(JSObject().apply {
+				put("removed", cleanup.removed)
+				put("staleWriteAbsent", cleanup.staleWriteAbsent)
+			})
+			trigger(CACHE_CHANGED_EVENT, cacheStatsJson(shortVideoCache.stats()))
+		} catch (_: Exception) {
+			invoke.reject(ERROR_CACHE)
+		}
+	}
+
+	@Command
 	fun clearShortVideoCache(invoke: Invoke) {
 		try {
 			val accountId = invoke.getArgs().optString("accountId").takeIf(String::isNotBlank)
-			if (accountId == null) shortVideoCache.clearAll() else shortVideoCache.clearAccount(accountId)
+			val cacheGeneration = invoke.getArgs().getLong("cacheGeneration")
+			if (accountId == null) {
+				shortVideoCache.clearAll(cacheGeneration)
+			} else {
+				shortVideoCache.clearAccount(accountId, cacheGeneration)
+			}
 			val stats = cacheStatsJson(shortVideoCache.stats())
 			invoke.resolve(stats)
 			trigger(CACHE_CHANGED_EVENT, stats)

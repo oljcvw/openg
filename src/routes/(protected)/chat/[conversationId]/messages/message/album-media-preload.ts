@@ -20,7 +20,11 @@ export type PreloadedAlbumSlide = AlbumContentResponse["content"][number] & {
 
 export async function preloadAlbumSlides(
 	content: AlbumContentResponse["content"],
-	options: { concurrency?: number; signal?: AbortSignal } = {},
+	options: {
+		concurrency?: number;
+		signal?: AbortSignal;
+		timeoutMs?: number;
+	} = {},
 ): Promise<PreloadedAlbumSlide[]> {
 	const displayable = content.filter(
 		(slide) =>
@@ -50,13 +54,21 @@ export async function preloadAlbumSlides(
 			if (slide.contentType.startsWith("video/")) {
 				results[index] = {
 					...slide,
-					...(await preloadAlbumVideo(slide.url, workerAbortController.signal)),
+					...(await preloadAlbumVideo(
+						slide.url,
+						workerAbortController.signal,
+						options.timeoutMs,
+					)),
 				};
 				continue;
 			}
 			results[index] = {
 				...slide,
-				...(await preloadAlbumImage(slide.url, workerAbortController.signal)),
+				...(await preloadAlbumImage(
+					slide.url,
+					workerAbortController.signal,
+					options.timeoutMs,
+				)),
 			};
 		}
 	};
@@ -76,6 +88,7 @@ export async function preloadAlbumSlides(
 export function preloadAlbumImage(
 	source: string,
 	signal?: AbortSignal,
+	timeoutMs = 30_000,
 ): Promise<AlbumImageDimensions> {
 	if (source.length === 0) return Promise.reject(albumMediaLoadError("image"));
 	if (signal?.aborted) return Promise.reject(abortError());
@@ -84,6 +97,7 @@ export function preloadAlbumImage(
 	return new Promise((resolve, reject) => {
 		let settled = false;
 		const cleanup = () => {
+			clearTimeout(timeout);
 			image.removeEventListener("load", onLoad);
 			image.removeEventListener("error", onError);
 			image.removeAttribute("src");
@@ -115,10 +129,18 @@ export function preloadAlbumImage(
 			cleanup();
 			reject(abortError());
 		};
+		const onTimeout = () => {
+			if (settled) return;
+			settled = true;
+			reportMediaOrigin(source, "image", "failed");
+			cleanup();
+			reject(timeoutError("image"));
+		};
 
 		image.addEventListener("load", onLoad);
 		image.addEventListener("error", onError);
 		signal?.addEventListener("abort", onAbort, { once: true });
+		const timeout = setTimeout(onTimeout, normalizeTimeout(timeoutMs));
 		image.src = source;
 		if (image.complete) {
 			if (image.naturalWidth > 0) onLoad();
@@ -130,6 +152,7 @@ export function preloadAlbumImage(
 export function preloadAlbumVideo(
 	source: string,
 	signal?: AbortSignal,
+	timeoutMs = 30_000,
 ): Promise<AlbumVideoDimensions> {
 	if (source.length === 0) return Promise.reject(albumMediaLoadError("video"));
 	if (signal?.aborted) return Promise.reject(abortError());
@@ -138,6 +161,7 @@ export function preloadAlbumVideo(
 	return new Promise((resolve, reject) => {
 		let settled = false;
 		const cleanup = () => {
+			clearTimeout(timeout);
 			video.removeEventListener("loadedmetadata", onLoaded);
 			video.removeEventListener("error", onError);
 			video.pause();
@@ -170,10 +194,18 @@ export function preloadAlbumVideo(
 			cleanup();
 			reject(abortError());
 		};
+		const onTimeout = () => {
+			if (settled) return;
+			settled = true;
+			reportMediaOrigin(source, "video", "failed");
+			cleanup();
+			reject(timeoutError("video"));
+		};
 
 		video.addEventListener("loadedmetadata", onLoaded);
 		video.addEventListener("error", onError);
 		signal?.addEventListener("abort", onAbort, { once: true });
+		const timeout = setTimeout(onTimeout, normalizeTimeout(timeoutMs));
 		video.src = source;
 		video.load();
 		if (video.readyState >= 1) onLoaded();
@@ -182,4 +214,12 @@ export function preloadAlbumVideo(
 
 function abortError(): DOMException {
 	return new DOMException("Album preload cancelled", "AbortError");
+}
+
+function timeoutError(kind: "image" | "video"): DOMException {
+	return new DOMException(`Album ${kind} preload timed out`, "TimeoutError");
+}
+
+function normalizeTimeout(timeoutMs: number): number {
+	return Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 30_000;
 }

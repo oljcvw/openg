@@ -49,6 +49,18 @@ export const developerSettingsSchema = z
 			.default(2_000),
 		albumCacheValidationMinutes: z.number().int().min(5).max(1_440).default(60),
 		albumPreloadConcurrency: z.number().int().min(1).max(8).default(3),
+		albumPreloadTimeoutMs: z
+			.number()
+			.int()
+			.min(5_000)
+			.max(120_000)
+			.default(30_000),
+		conversationSearchDebounceMs: z
+			.number()
+			.int()
+			.min(50)
+			.max(2_000)
+			.default(250),
 		browseAgeScaleMax: z
 			.number()
 			.int()
@@ -87,12 +99,34 @@ export const developerSettingsSchema = z
 		profileResolutionBatchSize: z.number().int().min(1).max(30).default(30),
 		profileResolutionWindowMs: z.number().int().min(0).max(1_000).default(16),
 		reconcileThrottleMs: z.number().int().min(2_000).max(30_000).default(2_000),
-		shortVideoCacheMb: z.number().int().min(10).max(500).default(30),
+		directMediaCacheConcurrency: z.number().int().min(1).max(4).default(2),
+		directMediaCacheMb: z.number().int().min(10).max(500).optional(),
+		legacyShortVideoFetchMaxMb: z.number().int().min(10).max(100).default(30),
+		legacyShortVideoFetchTimeoutMs: z
+			.number()
+			.int()
+			.min(5_000)
+			.max(120_000)
+			.default(30_000),
+		messageDuplicateReconcileWindowMs: z
+			.number()
+			.int()
+			.min(1_000)
+			.max(30_000)
+			.default(5_000),
+		sharedAlbumRefreshSeconds: z.number().int().min(30).max(600).default(150),
+		// Accepted only to migrate preferences written before the direct-media
+		// cache generalized the Android short-video cache.
+		shortVideoCacheMb: z.number().int().min(10).max(500).optional(),
 		shortVideoLooping: z.boolean().default(false),
 		videoCallQualityPreset: videoCallQualityPresetSchema.default("auto"),
 		mediaDiagnostics: z.boolean().default(false),
 		logErrorsToLogcat: z.boolean().default(false),
 	})
+	.transform(({ shortVideoCacheMb, ...settings }) => ({
+		...settings,
+		directMediaCacheMb: settings.directMediaCacheMb ?? shortVideoCacheMb ?? 30,
+	}))
 	.refine(
 		(settings) =>
 			settings.apiCircuitMinimumSamples <= settings.apiCircuitWindowSize,
@@ -118,6 +152,7 @@ export const DEFAULT_DEVELOPER_SETTINGS = developerSettingsSchema.parse({});
 
 const preferencesSchema = z
 	.object({
+		storageVersion: z.literal(2).default(2),
 		contrastMode: contrastModeSchema.default("standard"),
 		cacheSizeMb: z.number().int().min(10).max(1000).default(100),
 		developerSettings: developerSettingsSchema.default(
@@ -127,7 +162,8 @@ const preferencesSchema = z
 		gridSearchFilters: gridSearchFiltersSchema.optional(),
 		gridColumns: gridColumnsSchema.default("auto"),
 		keepBottomNavigationBehindKeyboard: z.boolean().default(true),
-		keepUnavailableCachedAlbums: z.boolean().default(false),
+		keepUnavailableCachedAlbums: z.boolean().default(true),
+		retainSharedChatMedia: z.boolean().default(true),
 		profileSwipeNavigation: z.boolean().optional(),
 		pendingProfileLocation: reportedProfileLocationSchema
 			.nullable()
@@ -191,7 +227,17 @@ async function readFromDisk(): Promise<Preferences> {
 		return parsePreferences({});
 	}
 	const bytes = await readAppDataFile("preferences.data");
-	return parsePreferences(decode(bytes));
+	const decoded = decode(bytes);
+	const preferences = parsePreferences(decoded);
+	if (
+		typeof decoded !== "object" ||
+		decoded === null ||
+		!("storageVersion" in decoded) ||
+		decoded.storageVersion !== 2
+	) {
+		await writeAppDataFileAtomic("preferences.data", encode(preferences));
+	}
+	return preferences;
 }
 
 export async function getPreferences(): Promise<Preferences> {
@@ -250,6 +296,10 @@ export function getGridColumnsSnapshot(): GridColumns {
 
 export function getKeepUnavailableCachedAlbumsSnapshot(): boolean {
 	return preferencesSnapshot.keepUnavailableCachedAlbums;
+}
+
+export function getRetainSharedChatMediaSnapshot(): boolean {
+	return preferencesSnapshot.retainSharedChatMedia;
 }
 
 export function getKeepBottomNavigationBehindKeyboardSnapshot(): boolean {

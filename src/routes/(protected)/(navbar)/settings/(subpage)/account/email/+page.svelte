@@ -29,10 +29,12 @@
 		submitting = true;
 		validationMessage = "";
 		try {
-			await changeEmail({ email: parsed.data, password });
+			const outcome = await changeEmail({ email: parsed.data, password });
 			password = "";
 			toast.success("Email changed", {
-				description: "Sign in again with your new email.",
+				description: outcome.localCleanupComplete
+					? "Sign in again with your new email."
+					: "The email changed, but some local data could not be cleared. Clear app data before signing in again.",
 			});
 			await goto("/auth/sign-in");
 		} catch (error) {

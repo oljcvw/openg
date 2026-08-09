@@ -23,15 +23,20 @@ internal data class NotificationDeliveryState(
 internal data class NotificationProcessingResult(
 	val decision: PollDecision,
 	val displayedCount: Int,
+	val blockedCount: Int,
+	val failedCount: Int,
 )
+
+internal enum class NotificationDisplayResult { Displayed, Blocked, Failed }
 
 internal fun processNotificationResult(
 	result: PollResult.Success,
-	initialized: Boolean,
+	messageInitialized: Boolean,
+	tapInitialized: Boolean,
 	messageWatermark: NotificationWatermark,
 	tapWatermark: NotificationWatermark,
 	readState: () -> NotificationDeliveryState,
-	display: (PendingNotification) -> Boolean,
+	display: (PendingNotification) -> NotificationDisplayResult,
 ): NotificationProcessingResult? {
 	val decisionState = readState()
 	if (!decisionState.canEvaluate()) return null
@@ -39,16 +44,23 @@ internal fun processNotificationResult(
 	val decision = NotificationDecider.decide(
 		result = result,
 		settings = decisionState.settings,
-		initialized = initialized,
+		messageInitialized = messageInitialized,
+		tapInitialized = tapInitialized,
 		messageWatermark = messageWatermark,
 		tapWatermark = tapWatermark,
 		foreground = decisionState.foreground,
 	)
 	var displayedCount = 0
+	var blockedCount = 0
+	var failedCount = 0
 	for (notification in decision.notifications) {
-		if (readState().canDeliver(notification) && display(notification)) {
-			displayedCount += 1
+		if (readState().canDeliver(notification)) {
+			when (display(notification)) {
+				NotificationDisplayResult.Displayed -> displayedCount += 1
+				NotificationDisplayResult.Blocked -> blockedCount += 1
+				NotificationDisplayResult.Failed -> failedCount += 1
+			}
 		}
 	}
-	return NotificationProcessingResult(decision, displayedCount)
+	return NotificationProcessingResult(decision, displayedCount, blockedCount, failedCount)
 }

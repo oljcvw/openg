@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from "svelte";
 	import { toast } from "svelte-sonner";
 
 	import { showErrorToast } from "$lib/api/error";
@@ -37,28 +38,101 @@
 	const ALBUM_MESSAGE_TYPES = ["Album", "ExpiringAlbum", "ExpiringAlbumV2"];
 	let highlightedMessageId: string | null = $state(null);
 	let highlightTimer: ReturnType<typeof setTimeout> | null = null;
+	let replySearchGeneration = 0;
+	let replySearchInFlight = false;
+
+	function findMessage(messageId: string): HTMLElement | null {
+		return document.querySelector<HTMLElement>(
+			`[data-message-id="${CSS.escape(messageId)}"]`,
+		);
+	}
+
+	function highlightTarget(target: HTMLElement, messageId: string): void {
+		target.scrollIntoView({ behavior: "smooth", block: "center" });
+		highlightedMessageId = messageId;
+		if (highlightTimer !== null) clearTimeout(highlightTimer);
+		highlightTimer = setTimeout(() => {
+			highlightedMessageId = null;
+			highlightTimer = null;
+		}, 1600);
+	}
+
+	function offerContinue(messageId: string): void {
+		toast.info("Search paused before the end of the conversation", {
+			action: {
+				label: "Continue",
+				onClick: () => void revealReplyTarget(messageId),
+			},
+		});
+	}
 
 	async function revealReplyTarget(messageId: string) {
-		for (let page = 0; page < 5; page++) {
-			const target = document.querySelector<HTMLElement>(
-				`[data-message-id="${CSS.escape(messageId)}"]`,
-			);
+		if (replySearchInFlight) return;
+		replySearchInFlight = true;
+		const generation = ++replySearchGeneration;
+		const state = conversationState;
+		const conversationId = state.conversationId;
+		const seenCursors = new Set<string>();
+		try {
+			for (let page = 0; page < 5; page++) {
+				const target = findMessage(messageId);
+				if (target) {
+					highlightTarget(target, messageId);
+					return;
+				}
+				const cursor = state.pageKey;
+				if (cursor === null) {
+					toast.info("Original message is no longer available");
+					return;
+				}
+				if (seenCursors.has(cursor)) {
+					toast.info("Original message is no longer available");
+					return;
+				}
+				seenCursors.add(cursor);
+				const outcome = await state.loadMore();
+				await new Promise(requestAnimationFrame);
+				if (
+					generation !== replySearchGeneration ||
+					conversationState !== state ||
+					conversationState.conversationId !== conversationId
+				)
+					return;
+				if (outcome === "busy" || outcome === "error") {
+					offerContinue(messageId);
+					return;
+				}
+				if (outcome === "end" || state.pageKey === null) {
+					const finalTarget = findMessage(messageId);
+					if (finalTarget) highlightTarget(finalTarget, messageId);
+					else toast.info("Original message is no longer available");
+					return;
+				}
+				if (state.pageKey === cursor) {
+					toast.info("Original message is no longer available");
+					return;
+				}
+			}
+
+			const target = findMessage(messageId);
 			if (target) {
-				target.scrollIntoView({ behavior: "smooth", block: "center" });
-				highlightedMessageId = messageId;
-				if (highlightTimer !== null) clearTimeout(highlightTimer);
-				highlightTimer = setTimeout(() => {
-					highlightedMessageId = null;
-					highlightTimer = null;
-				}, 1600);
+				highlightTarget(target, messageId);
 				return;
 			}
-			if (conversationState.pageKey === null) break;
-			await conversationState.loadMore();
-			await new Promise(requestAnimationFrame);
+			if (state.pageKey === null) {
+				toast.info("Original message is no longer available");
+			} else {
+				offerContinue(messageId);
+			}
+		} finally {
+			if (generation === replySearchGeneration) replySearchInFlight = false;
 		}
-		toast.info("Original message is no longer available");
 	}
+
+	onDestroy(() => {
+		replySearchGeneration += 1;
+		if (highlightTimer !== null) clearTimeout(highlightTimer);
+	});
 
 	/**
 	 * The album to offer unsharing for, or null when the message isn't an album
@@ -110,11 +184,20 @@
 		dayStart={message.dayStart}
 		status={message.status}
 		ourProfileId={conversationState.ourProfileId}
+		peerProfileId={conversationState.profile?.profileId ?? null}
 		otherName={conversationState.profile?.name}
 		highlighted={highlightedMessageId === message.messageId}
-		onRetry={() => conversationState.retryFailedMessage(message.messageId)}
+		onRetry={(message.status === "failed" || message.status === "handled") &&
+		(message.retryCount ?? 0) < 1
+			? () => conversationState.retryFailedMessage(message.messageId)
+			: undefined}
 		onMarkHandled={() =>
 			conversationState.markFailedMessageHandled(message.messageId)}
+		onSendAgain={message.status === "confirming" ||
+		((message.status === "failed" || message.status === "handled") &&
+			(message.retryCount ?? 0) >= 1)
+			? () => conversationState.sendAgain(message.messageId)
+			: undefined}
 		isRead={isOut && message.messageId === messages[0].messageId
 			? conversationState.lastReadTimestamp === message.timestamp
 			: null}

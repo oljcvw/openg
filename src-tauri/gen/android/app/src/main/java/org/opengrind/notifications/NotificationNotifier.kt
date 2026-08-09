@@ -33,12 +33,17 @@ class NotificationNotifier(private val context: Context) {
 				context,
 				android.Manifest.permission.POST_NOTIFICATIONS,
 			) == PackageManager.PERMISSION_GRANTED
-		return permissionGranted && NotificationManagerCompat.from(context)
-			.areNotificationsEnabled()
+		val appEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+		val channelEnabled = Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+			context.getSystemService(NotificationManager::class.java)
+				.getNotificationChannel(CHANNEL_ID)?.importance?.let {
+					it != NotificationManager.IMPORTANCE_NONE
+				} == true
+		return permissionGranted && appEnabled && channelEnabled
 	}
 
-	fun show(notification: PendingNotification): Boolean {
-		if (!canNotify()) return false
+	internal fun show(notification: PendingNotification): NotificationDisplayResult {
+		if (!canNotify()) return NotificationDisplayResult.Blocked
 		createChannel()
 		val pendingIntent = PendingIntent.getActivity(
 			context,
@@ -59,9 +64,11 @@ class NotificationNotifier(private val context: Context) {
 			.build()
 		return try {
 			NotificationManagerCompat.from(context).notify(notification.id, built)
-			true
+			NotificationDisplayResult.Displayed
 		} catch (_: SecurityException) {
-			false
+			NotificationDisplayResult.Blocked
+		} catch (_: RuntimeException) {
+			NotificationDisplayResult.Failed
 		}
 	}
 
@@ -72,7 +79,7 @@ class NotificationNotifier(private val context: Context) {
 			body = "Open Grind can notify you in the background",
 			route = "/settings/app/notifications",
 		),
-	)
+	) == NotificationDisplayResult.Displayed
 
 	companion object {
 		const val EXTRA_ROUTE = "org.opengrind.extra.NOTIFICATION_ROUTE"

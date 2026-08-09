@@ -76,7 +76,7 @@
 		{:else}
 			<img
 				src={message.previewUrl}
-				alt=""
+				alt="Shared album item"
 				class={[
 					// rounded-xl to match LockedMedia, which this swaps with, and the
 					// album cover in AlbumMessage.

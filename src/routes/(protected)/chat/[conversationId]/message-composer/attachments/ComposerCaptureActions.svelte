@@ -73,7 +73,7 @@
 	}
 
 	async function recordVideo(): Promise<void> {
-		if (disabled || capturingVideo) return;
+		if (disabled || capturingVideo || pendingVideo !== null) return;
 		capturingVideo = true;
 		reportMediaWorkflowDiagnostic("short_video_capture", "availability_check");
 		try {
@@ -187,11 +187,15 @@
 	</Button>
 	<Button
 		variant="secondary"
-		disabled={disabled || capturingVideo}
+		disabled={disabled || capturingVideo || pendingVideo !== null}
 		onclick={() => void recordVideo()}
 	>
 		<VideoCameraIcon weight="fill" />
-		{capturingVideo ? "Opening camera…" : "Short video"}
+		{capturingVideo
+			? "Opening camera…"
+			: pendingVideo !== null
+				? "Review video below"
+				: "Short video"}
 	</Button>
 </div>
 

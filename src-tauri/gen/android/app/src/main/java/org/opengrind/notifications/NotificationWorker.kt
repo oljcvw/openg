@@ -31,7 +31,10 @@ class NotificationWorker(
 
 		AppLog.info(applicationContext, TAG, "poll started")
 		return when (val result = tryPoll(settings)) {
-			PollResult.SignedOut -> Result.success()
+			PollResult.SignedOut -> {
+				NotificationScheduler.cancel(applicationContext)
+				Result.success()
+			}
 			PollResult.Deferred -> {
 				AppLog.info(applicationContext, TAG, "poll deferred by API runtime")
 				Result.success()
@@ -65,10 +68,12 @@ class NotificationWorker(
 		preferences: NotificationPreferences,
 		notifier: NotificationNotifier,
 	): Result {
-		val initialized = preferences.isInitialized(result.accountId)
+		val messageInitialized = preferences.isMessageInitialized(result.accountId)
+		val tapInitialized = preferences.isTapInitialized(result.accountId)
 		val processed = processNotificationResult(
 			result = result,
-			initialized = initialized,
+			messageInitialized = messageInitialized,
+			tapInitialized = tapInitialized,
 			messageWatermark = preferences.messageWatermark(result.accountId),
 			tapWatermark = preferences.tapWatermark(result.accountId),
 			readState = {
@@ -88,10 +93,16 @@ class NotificationWorker(
 
 		preferences.saveMessageWatermark(result.accountId, decision.messageWatermark)
 		preferences.saveTapWatermark(result.accountId, decision.tapWatermark)
-		if (!initialized) preferences.initialize(result.accountId)
+		if (preferences.settings().messages) preferences.initializeMessages(result.accountId)
+		if (preferences.settings().taps) preferences.initializeTaps(result.accountId)
 
 		preferences.recordSuccess(System.currentTimeMillis())
-		AppLog.info(applicationContext, TAG, "poll completed: displayed=${processed.displayedCount}")
+		if (processed.failedCount > 0) preferences.recordFailure()
+		AppLog.info(
+			applicationContext,
+			TAG,
+			"poll completed: displayed=${processed.displayedCount} blocked=${processed.blockedCount} failed=${processed.failedCount}",
+		)
 		return Result.success()
 	}
 

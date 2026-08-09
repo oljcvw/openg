@@ -66,10 +66,10 @@ class MediaPolicyTest {
 		val root = Files.createTempDirectory("open-grind-media-cache").toFile()
 		try {
 			val cache = ShortVideoCache(root, ReversingCrypto())
-			cache.put("100", "old", byteArrayOf(1, 2, 3), 1_000)
+			cache.put("100", "old", byteArrayOf(1, 2, 3), 1_000, "write-old", 0)
 			val oldFile = CacheIdentity("100", "old").file(root)
 			oldFile.setLastModified(1_000)
-			cache.put("100", "new", byteArrayOf(4, 5, 6), 1_000)
+			cache.put("100", "new", byteArrayOf(4, 5, 6), 1_000, "write-new", 0)
 			val newFile = CacheIdentity("100", "new").file(root)
 			newFile.setLastModified(2_000)
 
@@ -80,6 +80,127 @@ class MediaPolicyTest {
 			assertFalse(oldFile.exists())
 			assertTrue(newFile.exists())
 			assertEquals(1, cache.stats().entryCount)
+		} finally {
+			root.deleteRecursively()
+		}
+	}
+
+	@Test
+	fun `stale cleanup cannot delete replacement written after clear`() {
+		val root = Files.createTempDirectory("open-grind-media-cache-race").toFile()
+		try {
+			val cache = ShortVideoCache(root, ReversingCrypto())
+			cache.put("100", "same", byteArrayOf(1), 1_000, "old-write", 0)
+			cache.clearAccount("100", 1)
+			cache.put("100", "same", byteArrayOf(2), 1_000, "new-write", 1)
+
+			val cleanup = cache.removeIfWriteToken("100", "same", "old-write")
+			assertFalse(cleanup.removed)
+			assertTrue(cleanup.staleWriteAbsent)
+			assertTrue(cache.get("100", "same")!!.contentEquals(byteArrayOf(2)))
+		} finally {
+			root.deleteRecursively()
+		}
+	}
+
+	@Test
+	fun `delayed stale put cannot overwrite a newer generation`() {
+		val root = Files.createTempDirectory("open-grind-media-cache-delayed-put").toFile()
+		try {
+			val cache = ShortVideoCache(root, ReversingCrypto())
+			cache.clearAccount("100", 1)
+			cache.put("100", "same", byteArrayOf(2), 1_000, "new-write", 1)
+
+			val rejected = runCatching {
+				cache.put("100", "same", byteArrayOf(1), 1_000, "delayed-old-write", 0)
+			}
+			assertTrue(rejected.isFailure)
+			assertTrue(cache.get("100", "same")!!.contentEquals(byteArrayOf(2)))
+		} finally {
+			root.deleteRecursively()
+		}
+	}
+
+	@Test
+	fun `delayed clear cannot erase a write from a newer generation`() {
+		val root = Files.createTempDirectory("open-grind-media-cache-delayed-clear").toFile()
+		try {
+			val cache = ShortVideoCache(root, ReversingCrypto())
+			cache.put("100", "same", byteArrayOf(2), 1_000, "new-write", 2)
+
+			val rejected = runCatching { cache.clearAccount("100", 1) }
+			assertTrue(rejected.isFailure)
+			assertTrue(cache.get("100", "same")!!.contentEquals(byteArrayOf(2)))
+		} finally {
+			root.deleteRecursively()
+		}
+	}
+
+	@Test
+	fun `delayed clear preserves a post-clear write from the same generation`() {
+		val root = Files.createTempDirectory("open-grind-media-cache-equal-clear").toFile()
+		try {
+			val cache = ShortVideoCache(root, ReversingCrypto())
+			cache.put("100", "old", byteArrayOf(1), 1_000, "old-write", 0)
+			cache.put("100", "new", byteArrayOf(2), 1_000, "new-write", 1)
+
+			cache.clearAccount("100", 1)
+
+			assertEquals(null, cache.get("100", "old"))
+			assertTrue(cache.get("100", "new")!!.contentEquals(byteArrayOf(2)))
+		} finally {
+			root.deleteRecursively()
+		}
+	}
+
+	@Test
+	fun `clear rejects when an old cache entry remains`() {
+		val root = Files.createTempDirectory("open-grind-media-cache-clear-failure").toFile()
+		try {
+			val cache = ShortVideoCache(root, ReversingCrypto()) { false }
+			cache.put("100", "old", byteArrayOf(1), 1_000, "old-write", 0)
+			val oldFile = CacheIdentity("100", "old").file(root)
+
+			val rejected = runCatching { cache.clearAccount("100", 1) }
+
+			assertTrue(rejected.isFailure)
+			assertTrue(oldFile.exists())
+		} finally {
+			root.deleteRecursively()
+		}
+	}
+
+	@Test
+	fun `stale cleanup reports an undeletable owned destination`() {
+		val root = Files.createTempDirectory("open-grind-media-cache-delete-failure").toFile()
+		try {
+			val cache = ShortVideoCache(root, ReversingCrypto())
+			cache.put("100", "same", byteArrayOf(1), 1_000, "owned-write", 0)
+			val destination = CacheIdentity("100", "same").file(root)
+			assertTrue(destination.delete())
+			assertTrue(destination.mkdirs())
+			File(destination, "prevents-delete").writeText("occupied")
+
+			val cleanup = cache.removeIfWriteToken("100", "same", "owned-write")
+			assertFalse(cleanup.removed)
+			assertFalse(cleanup.staleWriteAbsent)
+		} finally {
+			root.deleteRecursively()
+		}
+	}
+
+	@Test(expected = IllegalArgumentException::class)
+	fun `cache write tokens reject path separators`() {
+		val root = Files.createTempDirectory("open-grind-media-cache-token").toFile()
+		try {
+			ShortVideoCache(root, ReversingCrypto()).put(
+				"100",
+				"same",
+				byteArrayOf(1),
+				1_000,
+				"../unsafe",
+				0,
+			)
 		} finally {
 			root.deleteRecursively()
 		}

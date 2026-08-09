@@ -17,6 +17,7 @@ import {
 	subscribeAlbumMediaCacheStats,
 	trimAlbumMediaCache,
 } from "./album-media-cache";
+import { clearDirectMediaCache } from "./direct-media-cache";
 import {
 	clearShortVideoCache,
 	getShortVideoCacheStats,
@@ -29,6 +30,7 @@ export const cacheKindSchema = z.enum([
 	"inbox",
 	"conversation",
 	"album",
+	"migration",
 	"taps",
 	"views",
 ]);
@@ -137,6 +139,9 @@ async function evictToLimit(value: CacheManifest): Promise<void> {
 		([, left], [, right]) => left.lastAccessedAt - right.lastAccessedAt,
 	)) {
 		if (used <= limit) break;
+		// Migration ledgers are correctness state, not disposable cache data.
+		// They remain tiny and are removed only with their owning account/cache.
+		if (entry.kind === "migration") continue;
 		await removeAppDataFile(entry.path);
 		delete value.entries[id];
 		used -= entry.sizeBytes;
@@ -199,6 +204,56 @@ export async function listCacheEntries<T>(
 	});
 }
 
+export async function listCacheEntryPage<T>(
+	accountId: number,
+	kind: CacheKind,
+	parse: (value: unknown) => T,
+	cursor: string | null = null,
+	pageSize = 60,
+): Promise<{
+	items: Array<{ key: string; value: T }>;
+	nextCursor: string | null;
+}> {
+	const session = getAccountSessionSnapshot();
+	if (session.accountId !== accountId) return { items: [], nextCursor: null };
+	return await enqueue(async () => {
+		if (!isAccountSessionCurrent(session))
+			return { items: [], nextCursor: null };
+		const value = await loadManifest();
+		const entries = Object.entries(value.entries)
+			.filter(
+				([, entry]) => entry.accountId === accountId && entry.kind === kind,
+			)
+			.map(([id, entry]) => ({ id, entry }))
+			.filter(({ entry }) => cursor === null || entry.key > cursor)
+			.toSorted((left, right) => left.entry.key.localeCompare(right.entry.key))
+			.slice(0, Math.min(60, Math.max(1, Math.trunc(pageSize))));
+		const items: Array<{ key: string; value: T }> = [];
+		for (const { id, entry } of entries) {
+			try {
+				items.push({
+					key: entry.key,
+					value: parse(decode(await readAppDataFile(entry.path))),
+				});
+			} catch (error) {
+				console.error("Cache entry hydration failed", error);
+				await removeAppDataFile(entry.path);
+				delete value.entries[id];
+			}
+		}
+		await persistManifest(value);
+		if (!isAccountSessionCurrent(session))
+			return { items: [], nextCursor: null };
+		return {
+			items,
+			nextCursor:
+				entries.length === Math.min(60, Math.max(1, Math.trunc(pageSize)))
+					? (entries.at(-1)?.entry.key ?? null)
+					: null,
+		};
+	});
+}
+
 export async function writeCacheEntry(
 	accountId: number,
 	kind: CacheKind,
@@ -247,8 +302,22 @@ export async function removeCacheEntry(
 }
 
 export async function removeAccountCache(accountId: number): Promise<void> {
-	await clearAlbumMediaCache();
-	await clearShortVideoCache(accountId);
+	const results = await Promise.allSettled([
+		clearAlbumMediaCache(accountId),
+		clearDirectMediaCache(accountId),
+		clearShortVideoCache(accountId),
+		removeGenericAccountCache(accountId),
+	]);
+	const failures = results
+		.filter((result) => result.status === "rejected")
+		.map((result) => result.reason);
+	if (failures.length > 0)
+		throw new AggregateError(failures, "Account cache cleanup was incomplete");
+}
+
+export async function removeGenericAccountCache(
+	accountId: number,
+): Promise<void> {
 	await enqueue(async () => {
 		const value = await loadManifest();
 		for (const [id, entry] of Object.entries(value.entries)) {
@@ -262,6 +331,7 @@ export async function removeAccountCache(accountId: number): Promise<void> {
 
 export async function clearAllCachedData(): Promise<void> {
 	await clearAlbumMediaCache();
+	await clearDirectMediaCache();
 	await clearShortVideoCache();
 	await enqueue(async () => {
 		const value = await loadManifest();

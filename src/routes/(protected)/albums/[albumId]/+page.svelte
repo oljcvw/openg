@@ -82,6 +82,12 @@
 	let { data }: import("./$types").PageProps = $props();
 
 	const albumId = $derived(Number(page.params.albumId));
+	const expectedOwnerProfileId = $derived.by(() => {
+		const raw = page.url.searchParams.get("owner");
+		if (raw === null) return null;
+		const parsed = Number(raw);
+		return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : Number.NaN;
+	});
 
 	let album = $state<AlbumContentResponse | null>(null);
 	let error = $state<unknown>(null);
@@ -128,8 +134,12 @@
 		);
 	}
 
-	async function load(id: number) {
+	async function load(id: number, expectedOwner: number | null) {
 		const generation = ++loadGeneration;
+		const isCurrentLoad = () =>
+			generation === loadGeneration &&
+			Object.is(id, albumId) &&
+			Object.is(expectedOwner, expectedOwnerProfileId);
 		album = null;
 		error = null;
 		busy = false;
@@ -138,32 +148,56 @@
 		deleteAlbumOpen = false;
 		retainedAccess = null;
 		retainedLocked = false;
-		if (!Number.isFinite(id)) {
-			if (generation === loadGeneration && id === albumId)
-				error = new Error("Invalid album");
+		if (!Number.isFinite(id) || Number.isNaN(expectedOwner)) {
+			if (isCurrentLoad()) error = new Error("Invalid album");
 			return;
 		}
 		try {
 			const loaded = await getAlbumContent(id);
-			if (generation !== loadGeneration || id !== albumId) return;
+			if (!isCurrentLoad()) return;
+			if (expectedOwner !== null && loaded.profileId !== expectedOwner) {
+				error = new Error("Album owner did not match the shared collection");
+				return;
+			}
 			album = loaded;
 			if (loaded.profileId !== data.ourProfileId) {
 				void discoverSharedAlbum({
 					albumId: loaded.albumId,
 					ownerProfileId: loaded.profileId,
 					isViewable: loaded.albumViewable,
+					ownerValidated: true,
 				});
 			}
 		} catch (err) {
-			if (generation !== loadGeneration || id !== albumId) return;
+			if (!isCurrentLoad()) return;
 			if (
 				err instanceof ApiError &&
 				err.response?.status === 403 &&
 				err.kind !== "RequestBlocked" &&
 				err.kind !== "RequestCooldown"
 			) {
-				await markAlbumUnavailable(id, "revoked_or_removed");
-				const cached = await readCachedAlbum(id);
+				const identity =
+					expectedOwner === null
+						? null
+						: {
+								accountProfileId: data.ourProfileId,
+								ownerProfileId: expectedOwner,
+								albumId: id,
+							};
+				if (identity === null) {
+					error = err;
+					return;
+				}
+				await markAlbumUnavailable(identity, "revoked_or_removed").catch(
+					(cacheError) =>
+						console.error("Failed to mark cached album", cacheError),
+				);
+				if (!isCurrentLoad()) return;
+				const cached = await readCachedAlbum(identity).catch((cacheError) => {
+					console.error("Failed to read cached album", cacheError);
+					return null;
+				});
+				if (!isCurrentLoad()) return;
 				if (cached && cached.media.length > 0) {
 					retainedAccess = {
 						status: "unavailable",
@@ -171,7 +205,18 @@
 						detectedAt: Date.now(),
 					};
 					if (getKeepUnavailableCachedAlbumsSnapshot()) {
-						album = await resolveCachedAlbum(cached);
+						const resolved = await resolveCachedAlbum(cached).catch(
+							(cacheError) => {
+								console.error("Failed to resolve cached album", cacheError);
+								return null;
+							},
+						);
+						if (!isCurrentLoad()) return;
+						if (resolved === null) {
+							error = err;
+							return;
+						}
+						album = resolved;
 					} else {
 						retainedLocked = true;
 					}
@@ -184,7 +229,7 @@
 	}
 
 	$effect(() => {
-		void load(albumId);
+		void load(albumId, expectedOwnerProfileId);
 	});
 
 	async function submitRename() {
@@ -322,7 +367,7 @@
 				if (!isCurrentAction(context)) return;
 				if (uploadProgress !== null) uploadProgress.completed += 1;
 			}
-			await load(context.id);
+			await load(context.id, expectedOwnerProfileId);
 			if (context.id === albumId) {
 				toast.success(
 					`${selected.length} ${selected.length === 1 ? "item" : "items"} added`,
@@ -332,7 +377,7 @@
 			if (!isCurrentAction(context)) return;
 			console.error(err);
 			// Reload because an earlier item in a multi-upload may have succeeded.
-			await load(context.id);
+			await load(context.id, expectedOwnerProfileId);
 			if (context.id === albumId)
 				showErrorToast({ label: "Failed to add album media", error: err });
 		} finally {
@@ -416,7 +461,7 @@
 				{:else if error !== null}
 					<ApiErrorDisplay
 						{error}
-						onRetry={() => void load(albumId)}
+						onRetry={() => void load(albumId, expectedOwnerProfileId)}
 						class="m-auto mt-8"
 					/>
 				{:else if album === null}

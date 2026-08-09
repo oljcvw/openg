@@ -40,24 +40,48 @@
 	let textContent = $state("");
 	let form: HTMLFormElement | null = $state(null);
 	let savedPhrases: SavedPhrase[] = $state([]);
+	let savedPhrasesAccountId: number | null = $state(null);
+	let savedPhrasesGeneration = 0;
 
-	async function loadSavedPhrases(profileId: number) {
+	async function loadSavedPhrases(profileId: number, generation: number) {
 		try {
 			const phrases = await listSavedPhrases(profileId);
-			if (accountProfileId === profileId) savedPhrases = phrases;
+			if (
+				accountProfileId === profileId &&
+				generation === savedPhrasesGeneration
+			) {
+				savedPhrases = phrases;
+				savedPhrasesAccountId = profileId;
+			}
 		} catch (error) {
-			showErrorToast({ label: "Failed to load saved phrases", error });
+			if (
+				accountProfileId === profileId &&
+				generation === savedPhrasesGeneration
+			)
+				showErrorToast({ label: "Failed to load saved phrases", error });
 		}
 	}
 
 	$effect(() => {
 		const id = accountProfileId;
-		void loadSavedPhrases(id);
-		return subscribeSavedPhrases(id, () => void loadSavedPhrases(id));
+		const generation = ++savedPhrasesGeneration;
+		savedPhrases = [];
+		savedPhrasesAccountId = null;
+		void loadSavedPhrases(id, generation);
+		const unsubscribe = subscribeSavedPhrases(
+			id,
+			() => void loadSavedPhrases(id, generation),
+		);
+		return () => {
+			if (generation === savedPhrasesGeneration) savedPhrasesGeneration += 1;
+			unsubscribe();
+		};
 	});
 
 	const phraseSuggestions = $derived(
-		filterSavedPhrases(savedPhrases, textContent),
+		savedPhrasesAccountId === accountProfileId
+			? filterSavedPhrases(savedPhrases, textContent)
+			: [],
 	);
 
 	async function onSubmit() {

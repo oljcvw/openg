@@ -4,7 +4,11 @@
 	import { callMethod } from "$lib/api";
 	import { showErrorToast } from "$lib/api/error";
 	import { syncApiRuntimeSettings } from "$lib/api/runtime-settings";
-	import { resetDeveloperSettings } from "$lib/app-data/preferences.svelte";
+	import { trimDirectMediaCache } from "$lib/app-data/direct-media-cache";
+	import {
+		getDeveloperSettingsSnapshot,
+		resetDeveloperSettings,
+	} from "$lib/app-data/preferences.svelte";
 	import { trimShortVideoCache } from "$lib/app-data/short-video-cache";
 	import { Button } from "$lib/components/ui/button";
 	import { applyLogcatSetting } from "$lib/platform/logcat-settings";
@@ -25,8 +29,13 @@
 		await syncApiRuntimeSettings();
 	}
 
-	async function applyShortVideoCacheLimit(): Promise<void> {
-		await trimShortVideoCache();
+	async function applyDirectMediaCacheLimit(): Promise<void> {
+		const maximumBytes =
+			getDeveloperSettingsSnapshot().directMediaCacheMb * 1024 * 1024;
+		await Promise.all([
+			trimDirectMediaCache(maximumBytes),
+			trimShortVideoCache(),
+		]);
 	}
 
 	async function reset(): Promise<void> {
@@ -68,13 +77,39 @@
 
 <h2>Chat media</h2>
 <DeveloperNumberSetting
-	setting="shortVideoCacheMb"
-	title="Short-video cache"
-	description="Maximum encrypted app-private storage used for sent and received short videos."
+	setting="directMediaCacheMb"
+	title="Direct-media cache"
+	description="Maximum encrypted app-private storage used for received chat images and videos."
 	min={10}
 	max={500}
 	unit="MB"
-	onsaved={applyShortVideoCacheLimit}
+	onsaved={applyDirectMediaCacheLimit}
+/>
+<DeveloperNumberSetting
+	setting="directMediaCacheConcurrency"
+	title="Direct-media cache concurrency"
+	description="Maximum visible received media files cached at the same time."
+	min={1}
+	max={4}
+	unit="media items"
+/>
+<DeveloperNumberSetting
+	setting="legacyShortVideoFetchTimeoutMs"
+	title="Legacy video fetch timeout"
+	description="Maximum time spent downloading an older received short video for encrypted cache promotion."
+	min={5000}
+	max={120000}
+	step={5000}
+	unit="milliseconds"
+/>
+<DeveloperNumberSetting
+	setting="legacyShortVideoFetchMaxMb"
+	title="Legacy video fetch limit"
+	description="Maximum size of one older received short video downloaded for encrypted cache promotion."
+	min={10}
+	max={100}
+	step={5}
+	unit="MB"
 />
 <DeveloperBooleanSetting
 	setting="shortVideoLooping"
@@ -88,6 +123,24 @@
 	min={1}
 	max={8}
 	unit="media items"
+/>
+<DeveloperNumberSetting
+	setting="albumPreloadTimeoutMs"
+	title="Album preload timeout"
+	description="Maximum time spent preparing album media before the viewer opens with placeholders."
+	min={5000}
+	max={120000}
+	step={5000}
+	unit="milliseconds"
+/>
+<DeveloperNumberSetting
+	setting="sharedAlbumRefreshSeconds"
+	title="Shared-album refresh interval"
+	description="Foreground refresh interval while the received-albums drawer is open."
+	min={30}
+	max={600}
+	step={30}
+	unit="seconds"
 />
 <DeveloperNumberSetting
 	setting="albumCacheRequestIntervalMs"
@@ -141,6 +194,24 @@
 />
 
 <h2>Search and sync</h2>
+<DeveloperNumberSetting
+	setting="conversationSearchDebounceMs"
+	title="Conversation search debounce"
+	description="Delay before searching cached message text after the inbox search query changes."
+	min={50}
+	max={2000}
+	step={50}
+	unit="milliseconds"
+/>
+<DeveloperNumberSetting
+	setting="messageDuplicateReconcileWindowMs"
+	title="Message duplicate reconciliation window"
+	description="Time window used only to reconcile older cached sends that lack an exact delivery reference."
+	min={1000}
+	max={30000}
+	step={1000}
+	unit="milliseconds"
+/>
 <DeveloperNumberSetting
 	setting="placeSearchCacheEntries"
 	title="Place search cache size"

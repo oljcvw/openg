@@ -1,3 +1,4 @@
+import { decode, encode } from "@msgpack/msgpack";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { defaultFilters } from "$lib/components/filters/filters";
@@ -26,6 +27,34 @@ beforeEach(() => {
 });
 
 describe("developer preference writes", () => {
+	it("atomically rewrites a beta-4 preference payload in canonical beta-5 form", async () => {
+		existsAppDataFileMock.mockResolvedValue(true);
+		readAppDataFileMock.mockResolvedValue(
+			encode({
+				keepUnavailableCachedAlbums: false,
+				developerSettings: { shortVideoCacheMb: 125 },
+			}),
+		);
+		const { getPreferences } = await import("./preferences.svelte");
+
+		const migrated = await getPreferences();
+		expect(migrated.storageVersion).toBe(2);
+		expect(migrated.keepUnavailableCachedAlbums).toBe(false);
+		expect(migrated.retainSharedChatMedia).toBe(true);
+		expect(migrated.developerSettings.directMediaCacheMb).toBe(125);
+		expect(writeAppDataFileAtomicMock).toHaveBeenCalledOnce();
+		const persisted = decode(writeAppDataFileAtomicMock.mock.calls[0][1]);
+		expect(persisted).toMatchObject({
+			storageVersion: 2,
+			keepUnavailableCachedAlbums: false,
+			retainSharedChatMedia: true,
+			developerSettings: { directMediaCacheMb: 125 },
+		});
+		expect(
+			(persisted as { developerSettings: object }).developerSettings,
+		).not.toHaveProperty("shortVideoCacheMb");
+	});
+
 	it("merges concurrent partial updates inside the write queue", async () => {
 		const { getDeveloperSettingsSnapshot, setDeveloperSettings } =
 			await import("./preferences.svelte");

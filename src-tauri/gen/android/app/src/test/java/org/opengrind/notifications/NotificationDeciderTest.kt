@@ -17,7 +17,8 @@ class NotificationDeciderTest {
 		val decision = NotificationDecider.decide(
 			result = result(),
 			settings = privateSettings,
-			initialized = false,
+			messageInitialized = false,
+			tapInitialized = false,
 			messageWatermark = NotificationWatermark(),
 			tapWatermark = NotificationWatermark(),
 			foreground = false,
@@ -33,7 +34,8 @@ class NotificationDeciderTest {
 		val decision = NotificationDecider.decide(
 			result = result(),
 			settings = privateSettings,
-			initialized = true,
+			messageInitialized = true,
+			tapInitialized = true,
 			messageWatermark = NotificationWatermark(99),
 			tapWatermark = NotificationWatermark(100),
 			foreground = false,
@@ -63,7 +65,8 @@ class NotificationDeciderTest {
 		val decision = NotificationDecider.decide(
 			result = result(),
 			settings = privateSettings.copy(showPreviews = true),
-			initialized = true,
+			messageInitialized = true,
+			tapInitialized = true,
 			messageWatermark = NotificationWatermark(99),
 			tapWatermark = NotificationWatermark(100),
 			foreground = true,

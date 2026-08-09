@@ -14,7 +14,7 @@
 	} = $props();
 </script>
 
-<a href="/profile/{profile.profileId}" class="flex-1 py-4 ps-0 pe-4">
+<a href="/profile/{profile.profileId}" class="min-w-0 flex-1 py-4 ps-0 pe-4">
 	<Card.Header class="flex items-center gap-4 px-0">
 		<Avatar.Root class="size-avatar after:rounded-full">
 			<UserAvatar

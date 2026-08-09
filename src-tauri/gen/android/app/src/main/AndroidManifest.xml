@@ -51,6 +51,7 @@
 
 		<activity
 			android:name=".media.ShortVideoCaptureActivity"
+			android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
 			android:exported="false"
 			android:theme="@style/Theme.OpenGrind.MediaCapture" />
 

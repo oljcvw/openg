@@ -12,6 +12,12 @@ const fail = (message: string): never => {
 const cargo = readFileSync(join(root, "src-tauri/Cargo.toml"), "utf8");
 const cargoVersion = /^version = "(.+)"$/m.exec(cargo)?.[1];
 if (!cargoVersion) fail("no version found in src-tauri/Cargo.toml");
+const packageVersion = (
+	JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
+		version?: string;
+	}
+).version;
+if (!packageVersion) fail("no version found in package.json");
 
 const config: {
 	version?: string;
@@ -25,6 +31,11 @@ if (cargoVersion !== configVersion) {
 		`version mismatch: Cargo.toml is ${cargoVersion}, tauri.conf.json is ${configVersion}. ` +
 			`Tauri reads the version from tauri.conf.json, so drift here silently changes the ` +
 			`user agent and the update check.`,
+	);
+}
+if (packageVersion !== configVersion) {
+	fail(
+		`version mismatch: package.json is ${packageVersion}, but the native app is ${configVersion}.`,
 	);
 }
 

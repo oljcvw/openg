@@ -137,6 +137,14 @@ export type ChatV1ConversationReadEventPayload = z.infer<
 
 export type WsStatus = "disconnected" | "connecting" | "connected" | "error";
 
+export type NativeWsRequestOutcome =
+	| { kind: "ack"; payload: unknown }
+	| { kind: "notSent"; error: Error }
+	| {
+			kind: "unknown";
+			reason: "timeout" | "disconnect" | "ambiguousResponse";
+	  };
+
 class WsState {
 	status = $state<WsStatus>("disconnected");
 
@@ -277,6 +285,88 @@ class WsState {
 					});
 				})
 				.catch((error: unknown) => finish({ error }));
+		});
+	}
+
+	requestOutcome(
+		type: string,
+		payload: unknown,
+		ref_id: string = crypto.randomUUID(),
+	): Promise<NativeWsRequestOutcome> {
+		const responseType = `${type}.response`;
+		const safeName = responseType.replaceAll(".", "_");
+		const responseSchema = z.object({
+			type: z.literal(responseType),
+			ref: z.string(),
+			status: z.number().int(),
+			payload: z.unknown(),
+		});
+		const { apiRequestTimeoutMs } = getDeveloperSettingsSnapshot();
+
+		return new Promise((resolve) => {
+			let settled = false;
+			let enqueueAttempted = false;
+			let timeout: ReturnType<typeof setTimeout> | undefined;
+			const unlisteners: (() => void)[] = [];
+			const finish = (outcome: NativeWsRequestOutcome) => {
+				if (settled) return;
+				settled = true;
+				if (timeout !== undefined) clearTimeout(timeout);
+				for (const unlisten of unlisteners.splice(0)) unlisten();
+				resolve(outcome);
+			};
+
+			const responseListener = (event: { payload: unknown }) => {
+				const envelope = responseSchema.safeParse(event.payload);
+				if (!envelope.success || envelope.data.ref !== ref_id) return;
+				if (envelope.data.status >= 200 && envelope.data.status < 300) {
+					finish({ kind: "ack", payload: envelope.data.payload });
+					return;
+				}
+				finish({
+					kind: "notSent",
+					error: new Error(
+						`WebSocket request failed with status ${envelope.data.status}`,
+					),
+				});
+			};
+
+			void listen<unknown>(`grindr:${safeName}`, responseListener)
+				.then((removeResponseListener) => {
+					unlisteners.push(removeResponseListener);
+					if (settled) {
+						for (const unlisten of unlisteners.splice(0)) unlisten();
+						return;
+					}
+					return listen<void>("ws:disconnected", () => {
+						finish({ kind: "unknown", reason: "disconnect" });
+					});
+				})
+				.then((removeDisconnectListener) => {
+					if (!removeDisconnectListener) return;
+					unlisteners.push(removeDisconnectListener);
+					if (settled) {
+						for (const unlisten of unlisteners.splice(0)) unlisten();
+						return;
+					}
+					timeout = setTimeout(
+						() => finish({ kind: "unknown", reason: "timeout" }),
+						apiRequestTimeoutMs,
+					);
+					enqueueAttempted = true;
+					return invoke("ws_send", {
+						command: { type, ref_id, payload },
+					});
+				})
+				.catch((error: unknown) => {
+					const failure =
+						error instanceof Error ? error : new Error("WebSocket send failed");
+					finish(
+						enqueueAttempted
+							? { kind: "unknown", reason: "ambiguousResponse" }
+							: { kind: "notSent", error: failure },
+					);
+				});
 		});
 	}
 

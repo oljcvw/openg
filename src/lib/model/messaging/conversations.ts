@@ -41,6 +41,9 @@ export const fullConversationSchema = z.object({
 		rightNow: rightNowStatusSchema,
 		onlineUntil: z.number().nullable(),
 		hasUnreadThrob: z.boolean(),
+		metadata: z
+			.object({ hasSharedAlbums: z.boolean().nullable().default(null) })
+			.optional(),
 	}),
 });
 

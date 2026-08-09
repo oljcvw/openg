@@ -24,11 +24,9 @@
 	let elapsed = $state(0);
 	let measuredDuration = $state<number | null>(null);
 	let refreshed = $state(false);
+	let refreshing = $state(false);
 	let unavailable = $state(false);
 	const duration = $derived(measuredDuration ?? (message.length ?? 0) / 1000);
-	$effect(() => {
-		if (source === null && message.url === null) unavailable = true;
-	});
 
 	function formatDuration(seconds: number): string {
 		const safe = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
@@ -46,20 +44,24 @@
 		}
 		source ??= message.url;
 		if (!source) {
-			unavailable = true;
+			await refreshSource();
 			return;
 		}
 		await tick();
 		activateMedia(audio);
-		await audio.play();
+		await audio.play().catch((error) => {
+			console.error("Audio playback could not start", error);
+		});
 	}
 
 	async function refreshSource(): Promise<void> {
+		if (refreshing) return;
 		if (refreshed) {
 			unavailable = true;
 			return;
 		}
 		refreshed = true;
+		refreshing = true;
 		try {
 			const response = await getSingleMessage({ conversationId, messageId });
 			if (
@@ -71,10 +73,16 @@
 			}
 			source = response.message.body.url;
 			await tick();
-			await audio?.play();
 		} catch {
 			unavailable = true;
+			return;
+		} finally {
+			refreshing = false;
 		}
+		if (audio) activateMedia(audio);
+		await audio?.play().catch((error) => {
+			console.error("Audio playback could not start", error);
+		});
 	}
 
 	$effect(() => {
@@ -103,7 +111,7 @@
 	<button
 		type="button"
 		class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-40"
-		disabled={unavailable || media.clone}
+		disabled={unavailable || refreshing || media.clone}
 		onclick={() => void togglePlayback()}
 		aria-label={playing ? "Pause voice message" : "Play voice message"}
 	>

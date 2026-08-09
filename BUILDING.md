@@ -73,6 +73,9 @@ Open Grind ships a [Nix flake](./flake.nix) that pins the entire Android toolcha
 
 If you already have an Android toolchain (e.g. via Android Studio) and Rust installed, you can build against those directly. This reuses what is already on your machine instead of downloading the pinned ~12 GB toolchain, so it saves a lot of disk — at the cost of a build that is **not** guaranteed byte-for-byte identical to a release (your tool versions, paths, and timestamps differ). Use it for developing and testing patches; use Nix when you need to [reproduce a published release](#verifying-a-published-release).
 
+> [!WARNING]
+> `bun run tauri android init --ci` is only for creating a missing Android project. It regenerates committed Android scaffold and launcher resources, so do not run it before routine development or builds. If initialization is necessary, review the generated diff and run `bun run gen:icons` afterward to restore the canonical Open Grind icons.
+
 Prerequisites (match the pinned versions where you can — see the [Reproducibility](#reproducibility) table):
 
 - **Rust** via [rustup](https://rustup.rs) — [rust-toolchain.toml](./rust-toolchain.toml) pins 1.95.0 and lists the Android targets, which rustup installs automatically the first time you build in the repo

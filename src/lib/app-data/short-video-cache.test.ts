@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { invokeMock, isTauriMock } = vi.hoisted(() => ({
+const { invokeMock, isTauriMock, getSessionMock } = vi.hoisted(() => ({
 	invokeMock: vi.fn(),
 	isTauriMock: vi.fn(() => true),
+	getSessionMock: vi.fn(() => ({ accountId: 42, generation: 1 })),
 }));
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -10,16 +11,17 @@ vi.mock("@tauri-apps/api/core", () => ({
 	isTauri: isTauriMock,
 }));
 vi.mock("$lib/api/account-caches", () => ({
-	getAccountSessionSnapshot: () => ({ accountId: 42, generation: 1 }),
+	getAccountSessionSnapshot: getSessionMock,
 }));
 vi.mock("$lib/app-data/preferences.svelte", () => ({
-	getDeveloperSettingsSnapshot: () => ({ shortVideoCacheMb: 30 }),
+	getDeveloperSettingsSnapshot: () => ({ directMediaCacheMb: 30 }),
 }));
 
 import {
 	cacheShortVideo,
 	clearShortVideoCache,
 	getCachedShortVideo,
+	removeCachedShortVideo,
 	trimShortVideoCache,
 } from "$lib/app-data/short-video-cache";
 
@@ -27,6 +29,13 @@ describe("short-video cache bridge", () => {
 	beforeEach(() => {
 		invokeMock.mockReset();
 		isTauriMock.mockReturnValue(true);
+		getSessionMock.mockReturnValue({ accountId: 42, generation: 1 });
+	});
+
+	it("does not read or delete a different account's colliding media ID", async () => {
+		await expect(getCachedShortVideo(9, 7)).resolves.toEqual({ found: false });
+		await expect(removeCachedShortVideo(9, 7)).resolves.toBe(false);
+		expect(invokeMock).not.toHaveBeenCalled();
 	});
 
 	it("stores encrypted-cache input with account and bounded limit", async () => {

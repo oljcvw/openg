@@ -17,10 +17,21 @@ import {
 } from "$lib/app-data/preferences.svelte";
 import { albumContentSchema } from "$lib/model/messaging/albums";
 import { observeBackgroundTask } from "$lib/platform/client-diagnostics";
-import { lookupAlbumMedia, storeAlbumMedia } from "./album-media-cache";
 import {
-	listCacheEntries,
+	bindLegacyAlbumMediaOwner,
+	lookupAlbumMedia,
+	pageAlbumRecords,
+	readAlbumMembershipSnapshotRecord,
+	readAlbumRecord,
+	reconcileAlbumRecordsMembership,
+	storeAlbumMedia,
+	storeAlbumMembershipSnapshotRecord,
+	storeAlbumRecord,
+} from "./album-media-cache";
+import {
+	listCacheEntryPage,
 	readCacheEntry,
+	removeCacheEntry,
 	writeCacheEntry,
 } from "./cache-manager";
 
@@ -54,7 +65,7 @@ const cachedAlbumMetadataSchema = albumContentResponseSchema
 		),
 	});
 
-export const cachedAlbumRecordSchema = z.object({
+const cachedAlbumRecordV1Schema = z.object({
 	version: z.literal(1),
 	albumId: z.number().int(),
 	ownerProfileId: z.number().int().nullable(),
@@ -66,8 +77,324 @@ export const cachedAlbumRecordSchema = z.object({
 	lastAccessedAt: z.number().int(),
 });
 
+const retainedItemSchema = z.object({
+	contentId: z.number().int(),
+	contentType: z.string(),
+	firstSeenAt: z.number().int(),
+	lastSeenAt: z.number().int(),
+	removedAt: z.number().int().nullable(),
+	cacheToken: z.string().min(1).nullable(),
+	byteLength: z.number().int().nonnegative().nullable(),
+});
+
+export const cachedAlbumRecordSchema = cachedAlbumRecordV1Schema.extend({
+	version: z.literal(2),
+	identity: z.object({
+		accountProfileId: z.number().int(),
+		ownerProfileId: z.number().int(),
+		albumId: z.number().int(),
+	}),
+	membership: z.object({
+		isCurrentlyShared: z.boolean(),
+		lastListedAt: z.number().int(),
+		unavailableReason: z
+			.enum(["unshared", "expired", "views_exhausted", "deleted"])
+			.nullable(),
+	}),
+	currentSnapshot: z
+		.object({
+			albumName: z.string().nullable(),
+			updatedAt: z.string(),
+			contentFingerprint: z.string(),
+			orderedContentIds: z.array(z.number().int()),
+		})
+		.nullable(),
+	retainedItems: z.array(retainedItemSchema),
+	historyOrder: z
+		.object({
+			source: z.literal("beta4"),
+			sequence: z.number().int().nonnegative(),
+		})
+		.nullable()
+		.default(null),
+});
+
 export type CachedAlbumRecord = z.infer<typeof cachedAlbumRecordSchema>;
 export type AlbumAccess = CachedAlbumRecord["access"];
+export type SharedAlbumIdentity = CachedAlbumRecord["identity"];
+export type RetainedAlbumItem = CachedAlbumRecord["retainedItems"][number];
+
+export function albumIdentityKey(identity: SharedAlbumIdentity): string {
+	return `${identity.accountProfileId}:${identity.ownerProfileId}:${identity.albumId}`;
+}
+
+export function contentFingerprint<
+	T extends { contentId: number; contentType: string },
+>(items: ReadonlyArray<T>): string {
+	return items.map((item) => `${item.contentId}:${item.contentType}`).join("|");
+}
+
+export function reconcileRetainedItems(
+	previous: RetainedAlbumItem[],
+	current: ReadonlyArray<{ contentId: number; contentType: string }>,
+	now: number,
+): RetainedAlbumItem[] {
+	const currentIds = new Set(current.map((item) => item.contentId));
+	const byId = new Map(previous.map((item) => [item.contentId, item]));
+	const retained = previous.map((item) => ({
+		...item,
+		removedAt: currentIds.has(item.contentId) ? null : (item.removedAt ?? now),
+	}));
+	for (const item of current) {
+		const existing = byId.get(item.contentId);
+		if (existing) {
+			const index = retained.findIndex(
+				(candidate) => candidate.contentId === item.contentId,
+			);
+			retained[index] = {
+				...existing,
+				contentType: item.contentType,
+				lastSeenAt: now,
+				removedAt: null,
+			};
+		} else {
+			retained.push({
+				...item,
+				firstSeenAt: now,
+				lastSeenAt: now,
+				removedAt: null,
+				cacheToken: null,
+				byteLength: null,
+			});
+		}
+	}
+	return retained;
+}
+
+const ALBUM_HISTORY_PAGE_SIZE = 60;
+const albumMigrationLedgerSchema = z.object({
+	version: z.literal(5),
+	cursor: z.string().nullable(),
+	complete: z.boolean(),
+	nextHistorySequence: z.number().int().nonnegative().default(0),
+});
+
+const albumMembershipSnapshotSchema = z.object({
+	version: z.literal(5),
+	currentAlbumIds: z.array(z.number().int()),
+	listedAt: z.number().int(),
+});
+
+export type AlbumMembershipSnapshot = z.infer<
+	typeof albumMembershipSnapshotSchema
+>;
+
+export function pageAlbumHistoryRecords<T>(
+	records: T[],
+	offset: number,
+): { items: T[]; nextOffset: number | null } {
+	const safeOffset = Math.max(0, Math.trunc(offset));
+	const items = records.slice(safeOffset, safeOffset + ALBUM_HISTORY_PAGE_SIZE);
+	const nextOffset =
+		safeOffset + items.length < records.length
+			? safeOffset + items.length
+			: null;
+	return { items, nextOffset };
+}
+
+export function ownerScopedAlbumMigrationRecords<
+	T extends { identity: { ownerProfileId: number } },
+>(records: T[], ownerProfileId: number): T[] {
+	return records.filter(
+		(record) => record.identity.ownerProfileId === ownerProfileId,
+	);
+}
+
+export function advanceAlbumMigrationProgress(
+	currentCursor: string | null,
+	processedKeys: readonly string[],
+	nextCursor: string | null,
+	processedPage: boolean,
+): { cursor: string | null; complete: boolean } {
+	return {
+		cursor: processedKeys.at(-1) ?? currentCursor,
+		complete: processedPage && nextCursor === null,
+	};
+}
+
+export function reconcileAlbumMembership<
+	T extends {
+		albumId: number;
+		membership: CachedAlbumRecord["membership"];
+	},
+>(records: T[], currentAlbumIds: ReadonlySet<number>, listedAt: number): T[] {
+	return records.map((record) => {
+		const isCurrentlyShared = currentAlbumIds.has(record.albumId);
+		return {
+			...record,
+			membership: {
+				...record.membership,
+				isCurrentlyShared,
+				lastListedAt: listedAt,
+				unavailableReason: isCurrentlyShared
+					? null
+					: (record.membership.unavailableReason ?? "unshared"),
+			},
+		};
+	});
+}
+
+export function applyAuthoritativeAlbumMembership<
+	T extends {
+		albumId: number;
+		membership: CachedAlbumRecord["membership"];
+	},
+>(record: T, snapshot: AlbumMembershipSnapshot | null): T {
+	if (snapshot === null) return record;
+	return reconcileAlbumMembership(
+		[record],
+		new Set(snapshot.currentAlbumIds),
+		snapshot.listedAt,
+	)[0];
+}
+
+export function albumHistoryCursorScopeKey(
+	accountProfileId: number,
+	ownerProfileId: number,
+	cursor: string,
+): string {
+	return JSON.stringify([accountProfileId, ownerProfileId, cursor]);
+}
+
+export function compareAlbumHistoryOrder(
+	left: CachedAlbumRecord,
+	right: CachedAlbumRecord,
+): number {
+	if (left.historyOrder === null && right.historyOrder !== null) return -1;
+	if (left.historyOrder !== null && right.historyOrder === null) return 1;
+	if (left.historyOrder !== null && right.historyOrder !== null) {
+		const bySequence = left.historyOrder.sequence - right.historyOrder.sequence;
+		if (bySequence !== 0) return bySequence;
+	}
+	const byAccess = right.lastAccessedAt - left.lastAccessedAt;
+	if (byAccess !== 0) return byAccess;
+	return albumIdentityKey(left.identity).localeCompare(
+		albumIdentityKey(right.identity),
+	);
+}
+
+const historyCursors = new Map<
+	string,
+	{
+		accountProfileId: number;
+		ownerProfileId: number;
+		offset: number;
+		seenKeys?: string[];
+	}
+>();
+const nativeHistorySeenKeys = new Map<string, Set<string>>();
+const genericAlbumMigrationProgress = new Map<
+	string,
+	{
+		cursor: string | null;
+		complete: boolean;
+		nextHistorySequence: number;
+	}
+>();
+const albumMigrationContinuation = new Map<string, boolean>();
+
+export function migrateBeta4AlbumRecord(
+	identity: SharedAlbumIdentity,
+	legacy: z.infer<typeof cachedAlbumRecordV1Schema>,
+	membershipSnapshot: AlbumMembershipSnapshot | null = null,
+	historyOrder: CachedAlbumRecord["historyOrder"] = null,
+): CachedAlbumRecord {
+	const now = Date.now();
+	return applyAuthoritativeAlbumMembership(
+		{
+			...legacy,
+			version: 2,
+			ownerProfileId: identity.ownerProfileId,
+			identity,
+			membership: {
+				isCurrentlyShared: legacy.access.status === "active",
+				lastListedAt: legacy.lastAccessedAt,
+				unavailableReason:
+					legacy.access.status !== "unavailable"
+						? null
+						: legacy.access.reason === "expired"
+							? "expired"
+							: legacy.access.reason === "views_exhausted"
+								? "views_exhausted"
+								: "unshared",
+			},
+			currentSnapshot: {
+				albumName: legacy.album.albumName,
+				updatedAt: legacy.album.updatedAt,
+				contentFingerprint: contentFingerprint(legacy.album.content),
+				orderedContentIds: legacy.album.content.map((item) => item.contentId),
+			},
+			retainedItems: legacy.album.content.map((item) => {
+				const media = legacy.media.find(
+					(candidate) => candidate.contentId === item.contentId,
+				);
+				return {
+					contentId: item.contentId,
+					contentType: item.contentType,
+					firstSeenAt: legacy.lastAccessedAt || now,
+					lastSeenAt: legacy.lastAccessedAt || now,
+					removedAt: null,
+					cacheToken: media?.token ?? null,
+					byteLength: media?.byteLength ?? null,
+				};
+			}),
+			historyOrder,
+		},
+		membershipSnapshot,
+	);
+}
+
+function albumMembershipSnapshotKey(ownerProfileId: number): string {
+	return `beta5-album-membership-${ownerProfileId}`;
+}
+
+async function readAlbumMembershipSnapshot(
+	accountProfileId: number,
+	ownerProfileId: number,
+): Promise<AlbumMembershipSnapshot | null> {
+	const native = albumMembershipSnapshotSchema.safeParse(
+		await readAlbumMembershipSnapshotRecord({
+			accountId: accountProfileId,
+			ownerProfileId,
+		}),
+	);
+	if (native.success) return native.data;
+	return await readCacheEntry(
+		accountProfileId,
+		"migration",
+		albumMembershipSnapshotKey(ownerProfileId),
+		(value) => albumMembershipSnapshotSchema.parse(value),
+	);
+}
+
+function identityForDiscovery(
+	discovery: AlbumDiscovery,
+	accountProfileId: number,
+): SharedAlbumIdentity | null {
+	if (discovery.ownerProfileId === null) return null;
+	return {
+		accountProfileId,
+		ownerProfileId: discovery.ownerProfileId,
+		albumId: discovery.albumId,
+	};
+}
+
+export function ownerlessLegacyMatchesValidatedIdentity(
+	legacy: { albumId: number; ownerProfileId: number | null },
+	identity: SharedAlbumIdentity,
+): boolean {
+	return legacy.ownerProfileId === null && legacy.albumId === identity.albumId;
+}
 
 export type AlbumDiscovery = {
 	albumId: number;
@@ -75,6 +402,8 @@ export type AlbumDiscovery = {
 	expirationType?: string | null;
 	expiresAt?: number | null;
 	isViewable?: boolean;
+	/** Set only after a parsed message/list/detail proves the owner identity. */
+	ownerValidated?: boolean;
 };
 
 type NativeCachedMedia = NonNullable<
@@ -97,35 +426,44 @@ function stripRemoteMediaUrls(
 	};
 }
 
-const records = new Map<number, CachedAlbumRecord | null>();
+const records = new Map<string, CachedAlbumRecord | null>();
 const listeners = new Map<
-	number,
+	string,
 	Set<(record: CachedAlbumRecord | null) => void>
 >();
-const queue: AlbumDiscovery[] = [];
-const queued = new Set<number>();
+const queue: Array<{
+	discovery: AlbumDiscovery;
+	identity: SharedAlbumIdentity;
+}> = [];
+const queued = new Set<string>();
 let processing = false;
 let lastRequestStartedAt = 0;
 
-function cacheKey(albumId: number): string {
-	return String(albumId);
+function cacheKey(ownerProfileId: number, albumId: number): string {
+	return `${ownerProfileId}:${albumId}`;
 }
 
-function notify(albumId: number, record: CachedAlbumRecord | null): void {
-	records.set(albumId, record);
-	for (const listener of listeners.get(albumId) ?? []) listener(record);
+function notify(
+	identity: SharedAlbumIdentity,
+	record: CachedAlbumRecord | null,
+): void {
+	const key = albumIdentityKey(identity);
+	records.set(key, record);
+	for (const listener of listeners.get(key) ?? []) listener(record);
 }
 
 export function subscribeCachedAlbum(
-	albumId: number,
+	identity: SharedAlbumIdentity | number,
 	listener: (record: CachedAlbumRecord | null) => void,
 ): () => void {
-	const albumListeners = listeners.get(albumId) ?? new Set();
+	if (typeof identity === "number") return () => {};
+	const key = albumIdentityKey(identity);
+	const albumListeners = listeners.get(key) ?? new Set();
 	albumListeners.add(listener);
-	listeners.set(albumId, albumListeners);
-	if (records.has(albumId)) listener(records.get(albumId) ?? null);
+	listeners.set(key, albumListeners);
+	if (records.has(key)) listener(records.get(key) ?? null);
 	else {
-		observeBackgroundTask(readCachedAlbum(albumId).then(listener), {
+		observeBackgroundTask(readCachedAlbum(identity).then(listener), {
 			category: "cache_recovery",
 			component: "album",
 			code: "album_cache_hydration_failed",
@@ -133,24 +471,142 @@ export function subscribeCachedAlbum(
 	}
 	return () => {
 		albumListeners.delete(listener);
-		if (albumListeners.size === 0) listeners.delete(albumId);
+		if (albumListeners.size === 0) listeners.delete(key);
 	};
 }
 
 export async function readCachedAlbum(
-	albumId: number,
+	identity: SharedAlbumIdentity | number,
 ): Promise<CachedAlbumRecord | null> {
-	if (records.has(albumId)) return records.get(albumId) ?? null;
+	if (typeof identity === "number") return null;
+	const key = albumIdentityKey(identity);
+	if (records.has(key)) return records.get(key) ?? null;
 	const accountId = getAccountSessionSnapshot().accountId;
-	if (accountId === null) return null;
-	const record = await readCacheEntry(
+	if (accountId !== identity.accountProfileId) return null;
+	const nativeRecord = await readAlbumRecord({
 		accountId,
-		"album",
-		cacheKey(albumId),
-		(value) => cachedAlbumRecordSchema.parse(value),
-	);
-	notify(albumId, record);
+		ownerProfileId: identity.ownerProfileId,
+		albumId: identity.albumId,
+	});
+	let record =
+		nativeRecord === null ? null : cachedAlbumRecordSchema.parse(nativeRecord);
+	if (!record)
+		record = await readCacheEntry(
+			accountId,
+			"album",
+			cacheKey(identity.ownerProfileId, identity.albumId),
+			(value) => cachedAlbumRecordSchema.parse(value),
+		);
+	if (!record) {
+		const legacy = await readCacheEntry(
+			accountId,
+			"album",
+			String(identity.albumId),
+			(value) => cachedAlbumRecordV1Schema.parse(value),
+		);
+		if (legacy?.ownerProfileId === identity.ownerProfileId) {
+			record = await migrateLegacyAlbumRecord(identity, legacy);
+		}
+	}
+	if (record !== null) {
+		record = applyAuthoritativeAlbumMembership(
+			record,
+			await readAlbumMembershipSnapshot(
+				identity.accountProfileId,
+				identity.ownerProfileId,
+			),
+		);
+	}
+	notify(identity, record);
 	return record;
+}
+
+async function migrateLegacyAlbumRecord(
+	identity: SharedAlbumIdentity,
+	legacy: z.infer<typeof cachedAlbumRecordV1Schema>,
+	membershipSnapshot?: AlbumMembershipSnapshot | null,
+	historyOrder: CachedAlbumRecord["historyOrder"] = null,
+): Promise<CachedAlbumRecord> {
+	const session = getAccountSessionSnapshot();
+	const authoritativeMembership =
+		membershipSnapshot === undefined
+			? await readAlbumMembershipSnapshot(
+					identity.accountProfileId,
+					identity.ownerProfileId,
+				)
+			: membershipSnapshot;
+	const migrated = migrateBeta4AlbumRecord(
+		identity,
+		legacy,
+		authoritativeMembership,
+		historyOrder,
+	);
+	if (session.accountId !== identity.accountProfileId) return migrated;
+	await bindLegacyAlbumMediaOwner({
+		accountId: identity.accountProfileId,
+		ownerProfileId: identity.ownerProfileId,
+		albumId: identity.albumId,
+	});
+	if (!isAccountSessionCurrent(session)) return migrated;
+	const verified = await storeAndVerifyAlbumRecord(migrated, session);
+	if (verified === null) return migrated;
+	await removeCacheEntry(
+		identity.accountProfileId,
+		"album",
+		String(identity.albumId),
+	);
+	return verified;
+}
+
+async function storeAndVerifyAlbumRecord(
+	record: CachedAlbumRecord,
+	session: ReturnType<typeof getAccountSessionSnapshot>,
+): Promise<CachedAlbumRecord | null> {
+	const identity = record.identity;
+	const stored = await storeAlbumRecord({
+		accountId: identity.accountProfileId,
+		ownerProfileId: identity.ownerProfileId,
+		albumId: identity.albumId,
+		record,
+	});
+	if (!stored || !isAccountSessionCurrent(session)) return null;
+	const verified = cachedAlbumRecordSchema.safeParse(
+		await readAlbumRecord({
+			accountId: identity.accountProfileId,
+			ownerProfileId: identity.ownerProfileId,
+			albumId: identity.albumId,
+		}),
+	);
+	if (
+		!verified.success ||
+		albumIdentityKey(verified.data.identity) !== albumIdentityKey(identity) ||
+		!isAccountSessionCurrent(session)
+	)
+		return null;
+	return verified.data;
+}
+
+export async function bindOwnerlessLegacyAlbum(
+	identity: SharedAlbumIdentity,
+): Promise<CachedAlbumRecord | null> {
+	const session = getAccountSessionSnapshot();
+	if (session.accountId !== identity.accountProfileId) return null;
+	const legacy = await readCacheEntry(
+		identity.accountProfileId,
+		"album",
+		String(identity.albumId),
+		(value) => cachedAlbumRecordV1Schema.parse(value),
+	);
+	if (
+		legacy === null ||
+		!ownerlessLegacyMatchesValidatedIdentity(legacy, identity) ||
+		!isAccountSessionCurrent(session)
+	)
+		return null;
+	const migrated = await migrateLegacyAlbumRecord(identity, legacy);
+	if (!isAccountSessionCurrent(session)) return null;
+	notify(identity, migrated);
+	return migrated;
 }
 
 export async function listCachedAlbumsByOwner(
@@ -158,20 +614,456 @@ export async function listCachedAlbumsByOwner(
 ): Promise<CachedAlbumRecord[]> {
 	const accountId = getAccountSessionSnapshot().accountId;
 	if (accountId === null) return [];
-	const cached = await listCacheEntries(accountId, "album", (value) =>
-		cachedAlbumRecordSchema.parse(value),
+	const nativePage = await pageAlbumRecords({
+		accountId,
+		ownerProfileId,
+		cursor: null,
+	});
+	const nativeRecords =
+		nativePage?.records.map((record) =>
+			cachedAlbumRecordSchema.parse(record),
+		) ?? [];
+	const migrationKey = `beta5-albums-${ownerProfileId}`;
+	const migrationLedger = (await readCacheEntry(
+		accountId,
+		"migration",
+		migrationKey,
+		(value) => albumMigrationLedgerSchema.parse(value),
+	)) ?? {
+		version: 5 as const,
+		cursor: null,
+		complete: false,
+		nextHistorySequence: 0,
+	};
+	const genericProgressKey = `${accountId}:${ownerProfileId}`;
+	const migrationProgress =
+		nativePage === null
+			? (genericAlbumMigrationProgress.get(genericProgressKey) ?? {
+					cursor: null,
+					complete: false,
+					nextHistorySequence: 0,
+				})
+			: migrationLedger;
+	const membershipSnapshot = await readAlbumMembershipSnapshot(
+		accountId,
+		ownerProfileId,
 	);
-	for (const record of cached) records.set(record.albumId, record);
-	return cached
-		.filter((record) => record.ownerProfileId === ownerProfileId)
-		.toSorted((left, right) => right.lastAccessedAt - left.lastAccessedAt);
+	const cachedPage = migrationProgress.complete
+		? { items: [], nextCursor: null }
+		: await listCacheEntryPage(
+				accountId,
+				"album",
+				(
+					value,
+				): {
+					record: CachedAlbumRecord | null;
+					migrated: boolean;
+				} => {
+					const v2 = cachedAlbumRecordSchema.safeParse(value);
+					if (v2.success)
+						return {
+							record:
+								v2.data.identity.ownerProfileId === ownerProfileId
+									? applyAuthoritativeAlbumMembership(
+											v2.data,
+											membershipSnapshot,
+										)
+									: v2.data,
+							migrated: false,
+						};
+					const v1 = cachedAlbumRecordV1Schema.parse(value);
+					if (v1.ownerProfileId === null)
+						return { record: null, migrated: false };
+					return {
+						record: migrateBeta4AlbumRecord(
+							{
+								accountProfileId: accountId,
+								ownerProfileId: v1.ownerProfileId,
+								albumId: v1.albumId,
+							},
+							v1,
+							v1.ownerProfileId === ownerProfileId ? membershipSnapshot : null,
+						),
+						migrated: true,
+					};
+				},
+				migrationProgress.cursor,
+				ALBUM_HISTORY_PAGE_SIZE,
+			);
+	let allocatedHistorySequence = migrationProgress.nextHistorySequence;
+	const cached = cachedPage.items.map((item) => {
+		let record = item.value.record;
+		if (
+			record !== null &&
+			record.identity.accountProfileId === accountId &&
+			record.identity.ownerProfileId === ownerProfileId &&
+			record.historyOrder === null
+		) {
+			record = {
+				...record,
+				historyOrder: {
+					source: "beta4",
+					sequence: allocatedHistorySequence,
+				},
+			};
+			allocatedHistorySequence += 1;
+		}
+		return {
+			...item.value,
+			record,
+			key: item.key,
+		};
+	});
+	const usable = [
+		...nativeRecords,
+		...[...records.values()].filter(
+			(record): record is CachedAlbumRecord =>
+				record !== null &&
+				record.identity.accountProfileId === accountId &&
+				record.identity.ownerProfileId === ownerProfileId,
+		),
+		...cached
+			.map((entry) => entry.record)
+			.filter((record): record is CachedAlbumRecord => record !== null),
+	];
+	const unique = [
+		...new Map(
+			usable.map((record) => [albumIdentityKey(record.identity), record]),
+		).values(),
+	];
+	for (const record of unique)
+		records.set(albumIdentityKey(record.identity), record);
+	const session = getAccountSessionSnapshot();
+	const processedKeys: string[] = [];
+	let processedNextHistorySequence = migrationProgress.nextHistorySequence;
+	let processedPage = true;
+	for (const source of cached) {
+		if (!isAccountSessionCurrent(session)) return [];
+		const record = source.record;
+		if (
+			record?.identity.accountProfileId === accountId &&
+			record.identity.ownerProfileId === ownerProfileId &&
+			nativePage !== null
+		) {
+			let verified: CachedAlbumRecord | null;
+			if (source.migrated) {
+				const legacy = await readCacheEntry(
+					accountId,
+					"album",
+					source.key,
+					(value) => cachedAlbumRecordV1Schema.parse(value),
+				);
+				verified =
+					legacy === null
+						? null
+						: await migrateLegacyAlbumRecord(
+								record.identity,
+								legacy,
+								membershipSnapshot,
+								record.historyOrder,
+							);
+			} else {
+				verified = await storeAndVerifyAlbumRecord(record, session);
+				if (verified !== null)
+					await removeCacheEntry(accountId, "album", source.key);
+			}
+			const durable = cachedAlbumRecordSchema.safeParse(
+				await readAlbumRecord({
+					accountId,
+					ownerProfileId: record.identity.ownerProfileId,
+					albumId: record.identity.albumId,
+				}),
+			);
+			if (
+				verified === null ||
+				!durable.success ||
+				albumIdentityKey(durable.data.identity) !==
+					albumIdentityKey(record.identity)
+			) {
+				processedPage = false;
+				break;
+			}
+		}
+		if (
+			record?.identity.accountProfileId === accountId &&
+			record.identity.ownerProfileId === ownerProfileId &&
+			record.historyOrder !== null
+		)
+			processedNextHistorySequence = Math.max(
+				processedNextHistorySequence,
+				record.historyOrder.sequence + 1,
+			);
+		processedKeys.push(source.key);
+	}
+	const nextProgress = advanceAlbumMigrationProgress(
+		migrationProgress.cursor,
+		processedKeys,
+		cachedPage.nextCursor,
+		processedPage,
+	);
+	const migrationComplete = nextProgress.complete;
+	albumMigrationContinuation.set(genericProgressKey, !migrationComplete);
+	if (nativePage === null) {
+		genericAlbumMigrationProgress.set(genericProgressKey, {
+			cursor: nextProgress.cursor,
+			complete: migrationComplete,
+			nextHistorySequence: processedNextHistorySequence,
+		});
+	} else if (isAccountSessionCurrent(session) && !migrationLedger.complete) {
+		await writeCacheEntry(accountId, "migration", migrationKey, {
+			version: 5,
+			cursor: nextProgress.cursor,
+			complete: migrationComplete,
+			nextHistorySequence: processedNextHistorySequence,
+		});
+	}
+	return unique
+		.filter(
+			(record) =>
+				record.identity.accountProfileId === accountId &&
+				record.identity.ownerProfileId === ownerProfileId,
+		)
+		.toSorted(compareAlbumHistoryOrder);
+}
+
+export async function listCachedAlbumHistoryPage(
+	ownerProfileId: number,
+	cursor: string | null = null,
+): Promise<{ items: CachedAlbumRecord[]; nextCursor: string | null }> {
+	const accountProfileId = getAccountSessionSnapshot().accountId;
+	if (accountProfileId === null) return { items: [], nextCursor: null };
+	const localCursor = cursor === null ? null : historyCursors.get(cursor);
+	if (localCursor) {
+		if (
+			localCursor.accountProfileId !== accountProfileId ||
+			localCursor.ownerProfileId !== ownerProfileId
+		)
+			return { items: [], nextCursor: null };
+		const records = await listCachedAlbumsByOwner(ownerProfileId);
+		historyCursors.delete(cursor!);
+		const migrationPending =
+			albumMigrationContinuation.get(
+				`${accountProfileId}:${ownerProfileId}`,
+			) === true;
+		if (localCursor.seenKeys) {
+			const seen = new Set(localCursor.seenKeys);
+			const unseen = records.filter(
+				(record) => !seen.has(albumIdentityKey(record.identity)),
+			);
+			const items = unseen.slice(0, ALBUM_HISTORY_PAGE_SIZE);
+			for (const record of items) seen.add(albumIdentityKey(record.identity));
+			if (unseen.length <= items.length && !migrationPending)
+				return { items, nextCursor: null };
+			const nextCursor = crypto.randomUUID();
+			historyCursors.set(nextCursor, {
+				accountProfileId,
+				ownerProfileId,
+				offset: 0,
+				seenKeys: [...seen],
+			});
+			return { items, nextCursor };
+		}
+		const page = pageAlbumHistoryRecords(records, localCursor.offset);
+		if (page.nextOffset === null && !migrationPending)
+			return { items: page.items, nextCursor: null };
+		const nextCursor = crypto.randomUUID();
+		historyCursors.set(nextCursor, {
+			accountProfileId,
+			ownerProfileId,
+			offset: page.nextOffset ?? localCursor.offset + page.items.length,
+		});
+		return { items: page.items, nextCursor };
+	}
+	const nativeCursorScope =
+		cursor === null
+			? null
+			: albumHistoryCursorScopeKey(accountProfileId, ownerProfileId, cursor);
+	if (
+		cursor !== null &&
+		nativeCursorScope !== null &&
+		!nativeHistorySeenKeys.has(nativeCursorScope)
+	)
+		return { items: [], nextCursor: null };
+	let compatibleLegacy: CachedAlbumRecord[] | null = null;
+	if (cursor === null) {
+		// Advance one bounded generic beta-4 page on every collection load,
+		// including after the native history has become non-empty.
+		compatibleLegacy = await listCachedAlbumsByOwner(ownerProfileId);
+	}
+	let nativePage = await pageAlbumRecords({
+		accountId: accountProfileId,
+		ownerProfileId,
+		cursor,
+	});
+	if (
+		nativePage !== null &&
+		cursor === null &&
+		nativePage.records.length === 0
+	) {
+		// A first-page miss may mean this account still has generic v1 records.
+		// Migrate at most one page, then retry the durable native index.
+		compatibleLegacy ??= await listCachedAlbumsByOwner(ownerProfileId);
+		nativePage = await pageAlbumRecords({
+			accountId: accountProfileId,
+			ownerProfileId,
+			cursor: null,
+		});
+		if (nativePage?.records.length === 0 && compatibleLegacy.length > 0)
+			nativePage = null;
+	}
+	if (nativePage !== null) {
+		const items = nativePage.records.map((record) =>
+			cachedAlbumRecordSchema.parse(record),
+		);
+		for (const record of items)
+			records.set(albumIdentityKey(record.identity), record);
+		const seen =
+			cursor === null
+				? new Set<string>()
+				: (nativeHistorySeenKeys.get(nativeCursorScope!) ?? new Set<string>());
+		if (nativeCursorScope !== null)
+			nativeHistorySeenKeys.delete(nativeCursorScope);
+		for (const record of items) seen.add(albumIdentityKey(record.identity));
+		let nextCursor = nativePage.nextCursor;
+		if (nextCursor !== null)
+			nativeHistorySeenKeys.set(
+				albumHistoryCursorScopeKey(
+					accountProfileId,
+					ownerProfileId,
+					nextCursor,
+				),
+				seen,
+			);
+		if (
+			nextCursor === null &&
+			albumMigrationContinuation.get(
+				`${accountProfileId}:${ownerProfileId}`,
+			) === true
+		) {
+			nextCursor = crypto.randomUUID();
+			historyCursors.set(nextCursor, {
+				accountProfileId,
+				ownerProfileId,
+				offset: 0,
+				seenKeys: [...seen],
+			});
+		}
+		return {
+			items,
+			nextCursor,
+		};
+	}
+	const cursorState = cursor === null ? null : historyCursors.get(cursor);
+	if (
+		cursor !== null &&
+		(!cursorState ||
+			cursorState.accountProfileId !== accountProfileId ||
+			cursorState.ownerProfileId !== ownerProfileId)
+	) {
+		return { items: [], nextCursor: null };
+	}
+	const historyRecords =
+		compatibleLegacy ?? (await listCachedAlbumsByOwner(ownerProfileId));
+	const page = pageAlbumHistoryRecords(
+		historyRecords,
+		cursorState?.offset ?? 0,
+	);
+	if (cursor !== null) historyCursors.delete(cursor);
+	if (page.nextOffset === null) return { items: page.items, nextCursor: null };
+	const nextCursor = crypto.randomUUID();
+	historyCursors.set(nextCursor, {
+		accountProfileId,
+		ownerProfileId,
+		offset: page.nextOffset,
+	});
+	return { items: page.items, nextCursor };
+}
+
+/** Apply only after a complete, successfully parsed shares response. */
+export async function reconcileCachedAlbumMembership(
+	ownerProfileId: number,
+	currentAlbumIds: ReadonlySet<number>,
+	listedAt = Date.now(),
+): Promise<void> {
+	const session = getAccountSessionSnapshot();
+	const accountId = session.accountId;
+	if (accountId === null) return;
+	const membershipSnapshot: AlbumMembershipSnapshot = {
+		version: 5,
+		currentAlbumIds: [...currentAlbumIds].toSorted(
+			(left, right) => left - right,
+		),
+		listedAt,
+	};
+	if (
+		!(await storeAlbumMembershipSnapshotRecord({
+			accountId,
+			ownerProfileId,
+			currentAlbumIds: membershipSnapshot.currentAlbumIds,
+			listedAt: membershipSnapshot.listedAt,
+		}))
+	)
+		await writeCacheEntry(
+			accountId,
+			"migration",
+			albumMembershipSnapshotKey(ownerProfileId),
+			membershipSnapshot,
+		);
+	if (!isAccountSessionCurrent(session)) return;
+	if (
+		await reconcileAlbumRecordsMembership({
+			accountId,
+			ownerProfileId,
+			currentAlbumIds: [...currentAlbumIds],
+			listedAt,
+		})
+	) {
+		for (const record of records.values()) {
+			if (
+				record?.identity.accountProfileId !== accountId ||
+				record.identity.ownerProfileId !== ownerProfileId
+			)
+				continue;
+			const reconciled = applyAuthoritativeAlbumMembership(
+				record,
+				membershipSnapshot,
+			);
+			notify(reconciled.identity, reconciled);
+		}
+		return;
+	}
+	const cachedRecords = await listCachedAlbumsByOwner(ownerProfileId);
+	for (const record of reconcileAlbumMembership(
+		cachedRecords,
+		currentAlbumIds,
+		listedAt,
+	)) {
+		await persist(record);
+	}
 }
 
 async function persist(record: CachedAlbumRecord): Promise<void> {
 	const accountId = getAccountSessionSnapshot().accountId;
 	if (accountId === null) return;
-	await writeCacheEntry(accountId, "album", cacheKey(record.albumId), record);
-	notify(record.albumId, record);
+	if (accountId !== record.identity.accountProfileId) return;
+	if (
+		await storeAlbumRecord({
+			accountId,
+			ownerProfileId: record.identity.ownerProfileId,
+			albumId: record.identity.albumId,
+			record,
+		})
+	) {
+		notify(record.identity, record);
+		return;
+	}
+	await writeCacheEntry(
+		accountId,
+		"album",
+		cacheKey(record.identity.ownerProfileId, record.identity.albumId),
+		record,
+	);
+	notify(record.identity, record);
 }
 
 export function classifyDiscoveryAccess(
@@ -196,7 +1088,14 @@ export function classifyDiscoveryAccess(
 export async function discoverSharedAlbum(
 	discovery: AlbumDiscovery,
 ): Promise<void> {
-	const cached = await readCachedAlbum(discovery.albumId);
+	const accountId = getAccountSessionSnapshot().accountId;
+	if (accountId === null) return;
+	const identity = identityForDiscovery(discovery, accountId);
+	if (!identity) return;
+	let cached = await readCachedAlbum(identity);
+	if (cached === null && discovery.ownerValidated) {
+		cached = await bindOwnerlessLegacyAlbum(identity);
+	}
 	const forcedAccess = classifyDiscoveryAccess(discovery);
 	if (cached && forcedAccess) {
 		await persist({ ...cached, access: forcedAccess });
@@ -207,9 +1106,10 @@ export async function discoverSharedAlbum(
 			getDeveloperSettingsSnapshot().albumCacheValidationMinutes * 60_000;
 		if (Date.now() - cached.access.validatedAt < maximumAge) return;
 	}
-	if (queued.has(discovery.albumId)) return;
-	queued.add(discovery.albumId);
-	queue.push(discovery);
+	const queueKey = albumIdentityKey(identity);
+	if (queued.has(queueKey)) return;
+	queued.add(queueKey);
+	queue.push({ discovery, identity });
 	observeBackgroundTask(processQueue(), {
 		category: "background_task",
 		component: "album",
@@ -218,14 +1118,24 @@ export async function discoverSharedAlbum(
 }
 
 export async function markAlbumUnavailable(
-	albumId: number,
+	identity: SharedAlbumIdentity | number,
 	reason: "revoked_or_removed" | "expired" | "views_exhausted",
 ): Promise<void> {
-	const cached = await readCachedAlbum(albumId);
+	const cached = await readCachedAlbum(identity);
 	if (!cached) return;
 	await persist({
 		...cached,
 		access: { status: "unavailable", reason, detectedAt: Date.now() },
+		membership: {
+			...cached.membership,
+			isCurrentlyShared: false,
+			unavailableReason:
+				reason === "expired"
+					? "expired"
+					: reason === "views_exhausted"
+						? "views_exhausted"
+						: "unshared",
+		},
 	});
 }
 
@@ -234,11 +1144,12 @@ async function processQueue(): Promise<void> {
 	processing = true;
 	try {
 		while (queue.length > 0) {
-			const discovery = queue.shift();
-			if (!discovery) break;
-			queued.delete(discovery.albumId);
+			const queuedDiscovery = queue.shift();
+			if (!queuedDiscovery) break;
+			const { discovery, identity } = queuedDiscovery;
+			queued.delete(albumIdentityKey(identity));
 			const session = getAccountSessionSnapshot();
-			if (session.accountId === null) continue;
+			if (session.accountId !== identity.accountProfileId) continue;
 			const interval =
 				getDeveloperSettingsSnapshot().albumCacheRequestIntervalMs;
 			const waitMs = lastRequestStartedAt + interval - Date.now();
@@ -257,7 +1168,7 @@ async function processQueue(): Promise<void> {
 					error.kind !== "RequestBlocked" &&
 					error.kind !== "RequestCooldown"
 				) {
-					await markAlbumUnavailable(discovery.albumId, "revoked_or_removed");
+					await markAlbumUnavailable(identity, "revoked_or_removed");
 				}
 			}
 		}
@@ -271,7 +1182,9 @@ async function cacheLoadedAlbum(
 	album: AlbumContentResponse,
 	accountId: number,
 ): Promise<void> {
-	const previous = await readCachedAlbum(album.albumId);
+	const identity = identityForDiscovery(discovery, accountId);
+	if (!identity || album.profileId !== identity.ownerProfileId) return;
+	const previous = await readCachedAlbum(identity);
 	let media = previous?.media ?? [];
 	if (discovery.expirationType !== "ONCE") {
 		const candidates = album.content.filter(
@@ -285,7 +1198,13 @@ async function cacheLoadedAlbum(
 			candidates,
 			getDeveloperSettingsSnapshot().albumCacheMediaConcurrency,
 			(item) =>
-				cacheMediaWithRetry(accountId, album.albumId, item, maximumBytes),
+				cacheMediaWithRetry(
+					accountId,
+					identity.ownerProfileId,
+					album.albumId,
+					item,
+					maximumBytes,
+				),
 		);
 		media = cached
 			.filter((item) => item !== null)
@@ -296,10 +1215,37 @@ async function cacheLoadedAlbum(
 				token,
 			}));
 	}
+	const now = Date.now();
+	const retainedItems = reconcileRetainedItems(
+		previous?.retainedItems ?? [],
+		album.content,
+		now,
+	).map((item) => {
+		const cached = media.find(
+			(candidate) => candidate.contentId === item.contentId,
+		);
+		return cached
+			? { ...item, cacheToken: cached.token, byteLength: cached.byteLength }
+			: item;
+	});
 	await persist({
-		version: 1,
+		version: 2,
 		albumId: album.albumId,
-		ownerProfileId: discovery.ownerProfileId,
+		ownerProfileId: identity.ownerProfileId,
+		identity,
+		membership: {
+			isCurrentlyShared: true,
+			lastListedAt: now,
+			unavailableReason: null,
+		},
+		currentSnapshot: {
+			albumName: album.albumName,
+			updatedAt: album.updatedAt,
+			contentFingerprint: contentFingerprint(album.content),
+			orderedContentIds: album.content.map((item) => item.contentId),
+		},
+		retainedItems,
+		historyOrder: previous?.historyOrder ?? null,
 		expirationType: discovery.expirationType ?? null,
 		expiresAt: discovery.expiresAt ?? null,
 		access: { status: "active", validatedAt: Date.now() },
@@ -311,6 +1257,7 @@ async function cacheLoadedAlbum(
 
 async function cacheMediaWithRetry(
 	accountId: number,
+	ownerProfileId: number,
 	albumId: number,
 	item: AlbumContentResponse["content"][number],
 	maximumBytes: number,
@@ -322,6 +1269,7 @@ async function cacheMediaWithRetry(
 		try {
 			const result = await storeAlbumMedia({
 				accountId,
+				ownerProfileId,
 				albumId,
 				contentId: item.contentId,
 				sourceUrl: item.url,
@@ -354,6 +1302,7 @@ export async function resolveCachedAlbum(
 				return { ...item, coverUrl: null, thumbUrl: "", url: "" };
 			const resolved = await lookupAlbumMedia({
 				accountId,
+				ownerProfileId: record.identity.ownerProfileId,
 				albumId: record.albumId,
 				contentId: item.contentId,
 			});
@@ -376,18 +1325,21 @@ export async function retainViewedAlbumContent(
 ): Promise<void> {
 	const accountId = getAccountSessionSnapshot().accountId;
 	if (accountId === null) return;
+	const identity = identityForDiscovery(discovery, accountId);
+	if (!identity || album.profileId !== identity.ownerProfileId) return;
 	const item = album.content.find(
 		(candidate) => candidate.contentId === contentId,
 	);
 	if (!item || item.url.length === 0) return;
 	const cached = await cacheMediaWithRetry(
 		accountId,
+		identity.ownerProfileId,
 		album.albumId,
 		item,
 		getCacheSizeMbSnapshot() * 1024 * 1024,
 	);
 	if (!cached) return;
-	const previous = await readCachedAlbum(album.albumId);
+	const previous = await readCachedAlbum(identity);
 	const media = [
 		...(previous?.media ?? []).filter(
 			(candidate) => candidate.contentId !== contentId,
@@ -399,10 +1351,37 @@ export async function retainViewedAlbumContent(
 			token: cached.token,
 		},
 	];
+	const now = Date.now();
 	await persist({
-		version: 1,
+		version: 2,
 		albumId: album.albumId,
-		ownerProfileId: discovery.ownerProfileId,
+		ownerProfileId: identity.ownerProfileId,
+		identity,
+		membership: {
+			isCurrentlyShared: true,
+			lastListedAt: now,
+			unavailableReason: null,
+		},
+		currentSnapshot: {
+			albumName: album.albumName,
+			updatedAt: album.updatedAt,
+			contentFingerprint: contentFingerprint(album.content),
+			orderedContentIds: album.content.map((item) => item.contentId),
+		},
+		retainedItems: reconcileRetainedItems(
+			previous?.retainedItems ?? [],
+			album.content,
+			now,
+		).map((retained) =>
+			retained.contentId === contentId
+				? {
+						...retained,
+						cacheToken: cached.token,
+						byteLength: cached.byteLength,
+					}
+				: retained,
+		),
+		historyOrder: previous?.historyOrder ?? null,
 		expirationType: discovery.expirationType ?? null,
 		expiresAt: discovery.expiresAt ?? null,
 		access: { status: "active", validatedAt: Date.now() },
@@ -440,6 +1419,10 @@ export function clearAlbumCacheMemory(): void {
 	records.clear();
 	queue.length = 0;
 	queued.clear();
+	historyCursors.clear();
+	nativeHistorySeenKeys.clear();
+	genericAlbumMigrationProgress.clear();
+	albumMigrationContinuation.clear();
 	processing = false;
 	lastRequestStartedAt = 0;
 }

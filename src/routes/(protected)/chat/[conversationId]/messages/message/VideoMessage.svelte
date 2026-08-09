@@ -3,17 +3,22 @@
 	import { tick } from "svelte";
 
 	import { getSingleMessage } from "$lib/api/messaging/messages";
-	import {
-		cacheShortVideo,
-		getCachedShortVideo,
-	} from "$lib/app-data/short-video-cache";
+	import { getCachedShortVideo } from "$lib/app-data/short-video-cache";
 	import {
 		type VideoMessage,
 		videoMessageSchema,
 	} from "$lib/model/messaging/messages";
-	import { toBase64 } from "$lib/util/base64";
+	import type {
+		SharedMediaEntry,
+		SharedMediaMessageType,
+	} from "$lib/chat/shared-media";
+	import {
+		resolveBoundedLegacyRemoteVideo,
+		resolveLegacyShortVideo,
+	} from "./legacy-video-source";
 	import { activateMedia, releaseMedia } from "./media-playback";
 	import { MessageMediaState } from "./message-media.svelte";
+	import { StableExplicitViewOnceMediaSource } from "./view-once-media";
 
 	let {
 		message,
@@ -21,12 +26,22 @@
 		messageId,
 		isOut,
 		privateMedia = false,
+		accountProfileId,
+		peerProfileId,
+		receivedFromPeer,
+		sentAt,
+		messageType,
 	}: {
 		message: VideoMessage["body"];
 		conversationId: string;
 		messageId: string;
 		isOut: boolean;
 		privateMedia?: boolean;
+		accountProfileId: number;
+		peerProfileId: number | null;
+		receivedFromPeer: boolean;
+		sentAt: number;
+		messageType: SharedMediaMessageType;
 	} = $props();
 
 	const media = new MessageMediaState();
@@ -34,44 +49,83 @@
 	let activated = $state(false);
 	let source: string | null = $state(null);
 	let refreshed = $state(false);
+	let activating = $state(false);
 	let unavailable = $state(false);
 	const consumptive = $derived(message.maxViews !== null);
+	const directEntry = $derived.by((): SharedMediaEntry | null =>
+		message.mediaId === null || !receivedFromPeer || peerProfileId === null
+			? null
+			: {
+					accountProfileId,
+					conversationId,
+					peerProfileId,
+					messageId,
+					mediaId: String(message.mediaId),
+					kind: "video",
+					messageType,
+					sentAt,
+					remoteAvailability:
+						message.viewsRemaining === 0 ? "views_exhausted" : "available",
+					cacheAvailability: "not_cached",
+					cacheToken: null,
+					consumptive: true,
+					remoteUrl: message.url,
+				},
+	);
+	const directSourceState = new StableExplicitViewOnceMediaSource();
+	const directSource = $derived.by(() =>
+		directSourceState.forEntry(directEntry),
+	);
 	$effect(() => {
-		if (
-			source === null &&
-			(message.viewsRemaining === 0 || (!consumptive && message.url === null))
-		) {
+		if (source === null && !consumptive && message.url === null) {
 			unavailable = true;
 		}
 	});
 
 	async function activate(): Promise<void> {
-		if (unavailable) return;
+		if (unavailable || activating) return;
+		activating = true;
 		try {
 			if (consumptive) {
-				const authorizedBody = isOut ? message : await authorizeRecipientView();
-				if (authorizedBody === null) {
-					unavailable = true;
-					return;
+				const legacySource =
+					!isOut && directEntry && message.mediaId !== null
+						? await resolveLegacyShortVideo(directEntry, message.mediaId)
+						: null;
+				if (legacySource !== null) {
+					source = legacySource;
+				} else if (!isOut && directSource) {
+					source = await directSource.open(async () => {
+						const authorizedBody = await authorizeRecipientView();
+						if (authorizedBody?.url == null) return null;
+						return {
+							url: authorizedBody.url,
+							contentType: authorizedBody.contentType ?? "video/*",
+						};
+					}, message.viewsRemaining !== 0);
+				} else {
+					source = await resolveConsumptiveSource(message);
 				}
-				source = await resolveConsumptiveSource(authorizedBody);
 			} else {
 				source ??= message.url;
 			}
-		} catch (error) {
-			console.error("Video authorization or cache lookup failed", error);
+			if (source === null) {
+				unavailable = true;
+				return;
+			}
+			activated = true;
+			await tick();
+			if (video) {
+				activateMedia(video);
+				await video.play().catch((error) => {
+					console.error("Video playback could not start", error);
+					activated = false;
+				});
+			}
+		} catch {
+			console.error("Video authorization or cache lookup failed");
 			unavailable = true;
-			return;
-		}
-		if (source === null) {
-			unavailable = true;
-			return;
-		}
-		activated = true;
-		await tick();
-		if (video) {
-			activateMedia(video);
-			await video.play();
+		} finally {
+			activating = false;
 		}
 	}
 
@@ -96,17 +150,7 @@
 		}
 		if (body.url === null) return null;
 		if (body.mediaId === null) return body.url;
-		try {
-			const response = await fetch(body.url);
-			if (!response.ok) return body.url;
-			const bytes = new Uint8Array(await response.arrayBuffer());
-			const dataBase64 = toBase64(bytes);
-			await cacheShortVideo(body.mediaId, dataBase64);
-			return `data:video/mp4;base64,${dataBase64}`;
-		} catch (error) {
-			console.error("Received short-video cache fill failed", error);
-			return body.url;
-		}
+		return await resolveBoundedLegacyRemoteVideo(body.url, body.mediaId);
 	}
 
 	async function refreshSource(): Promise<void> {
@@ -131,10 +175,13 @@
 			}
 			source = refreshedBody.url;
 			await tick();
-			await video?.play();
 		} catch {
 			unavailable = true;
+			return;
 		}
+		await video?.play().catch((error) => {
+			console.error("Video playback could not start", error);
+		});
 	}
 
 	$effect(() => {
@@ -172,7 +219,7 @@
 			type="button"
 			class="flex size-full flex-col items-center justify-center gap-2 p-4 disabled:opacity-70"
 			onclick={() => void activate()}
-			disabled={media.clone}
+			disabled={media.clone || activating}
 			aria-label={privateMedia ? "View private video" : "Play video"}
 		>
 			<span
@@ -181,11 +228,16 @@
 				<PlayIcon weight="fill" />
 			</span>
 			<span class="text-sm text-muted-foreground">
-				{privateMedia ? "View private video" : "Play video"}
+				{message.viewsRemaining === 0
+					? "View cached video"
+					: privateMedia
+						? "View private video"
+						: "Play video"}
 			</span>
-			{#if message.viewsRemaining !== undefined}
+			{#if message.viewsRemaining !== null && message.viewsRemaining !== undefined}
 				<span class="text-xs text-muted-foreground"
-					>{message.viewsRemaining} views remaining</span
+					>{message.viewsRemaining}
+					{message.viewsRemaining === 1 ? "view" : "views"} remaining</span
 				>
 			{/if}
 		</button>

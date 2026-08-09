@@ -25,12 +25,18 @@ export type CachedShortVideo = z.infer<typeof cachedVideoSchema>;
 const listeners = new Set<(stats: ShortVideoCacheStats) => void>();
 const emptyStats: ShortVideoCacheStats = { byteLength: 0, entryCount: 0 };
 
-function activeAccountId(): string | null {
-	return getAccountSessionSnapshot().accountId?.toString() ?? null;
+function activeAccountId(expectedAccountId?: number): string | null {
+	const accountId = getAccountSessionSnapshot().accountId;
+	if (
+		accountId === null ||
+		(expectedAccountId !== undefined && accountId !== expectedAccountId)
+	)
+		return null;
+	return accountId.toString();
 }
 
 function maximumBytes(): number {
-	return getDeveloperSettingsSnapshot().shortVideoCacheMb * 1024 * 1024;
+	return getDeveloperSettingsSnapshot().directMediaCacheMb * 1024 * 1024;
 }
 
 function notify(stats: ShortVideoCacheStats): ShortVideoCacheStats {
@@ -41,8 +47,9 @@ function notify(stats: ShortVideoCacheStats): ShortVideoCacheStats {
 export async function cacheShortVideo(
 	mediaId: number,
 	dataBase64: string,
+	expectedAccountId?: number,
 ): Promise<ShortVideoCacheStats> {
-	const accountId = activeAccountId();
+	const accountId = activeAccountId(expectedAccountId);
 	if (!isTauri() || accountId === null) return emptyStats;
 	const response = await invoke("short_video_cache_put", {
 		accountId,
@@ -55,8 +62,9 @@ export async function cacheShortVideo(
 
 export async function getCachedShortVideo(
 	mediaId: number,
+	expectedAccountId?: number,
 ): Promise<CachedShortVideo> {
-	const accountId = activeAccountId();
+	const accountId = activeAccountId(expectedAccountId);
 	if (!isTauri() || accountId === null) return { found: false };
 	return cachedVideoSchema.parse(
 		await invoke("short_video_cache_get", {
@@ -74,6 +82,20 @@ export async function clearShortVideoCache(
 		accountId: accountId?.toString(),
 	});
 	return notify(cacheStatsSchema.parse(response));
+}
+
+export async function removeCachedShortVideo(
+	mediaId: number,
+	expectedAccountId?: number,
+): Promise<boolean> {
+	const accountId = activeAccountId(expectedAccountId);
+	if (!isTauri() || accountId === null) return false;
+	return z.boolean().parse(
+		await invoke("short_video_cache_remove", {
+			accountId,
+			mediaId: String(mediaId),
+		}),
+	);
 }
 
 export async function trimShortVideoCache(): Promise<ShortVideoCacheStats> {

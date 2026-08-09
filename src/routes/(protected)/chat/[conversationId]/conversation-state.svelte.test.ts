@@ -10,6 +10,7 @@ const {
 	messageSentHandlers,
 	reconcileHandlers,
 	showErrorToastMock,
+	developerSettings,
 } = vi.hoisted(() => ({
 	getConversationMock: vi.fn(),
 	markReadMock: vi.fn(),
@@ -20,11 +21,13 @@ const {
 	messageSentHandlers: [] as ((event: unknown) => void)[],
 	reconcileHandlers: [] as (() => void | Promise<void>)[],
 	showErrorToastMock: vi.fn(),
+	developerSettings: { messageDuplicateReconcileWindowMs: 5_000 },
 }));
 
 vi.mock("$lib/api/error", () => ({ showErrorToast: showErrorToastMock }));
 vi.mock("$lib/app-data/preferences.svelte", () => ({
 	getPreferences: () => Promise.resolve({ revealMessageRead: true }),
+	getDeveloperSettingsSnapshot: () => developerSettings,
 	getShowRetractedMessagesSnapshot: () => false,
 	subscribePreferences: () => vi.fn(),
 }));
@@ -88,6 +91,7 @@ function conversationsStub() {
 	return {
 		setActive: vi.fn(),
 		clearActive: vi.fn(),
+		sharedAlbumsHint: vi.fn(() => null),
 		getCachedConversation: vi.fn(() => undefined),
 		setCachedConversation: vi.fn(),
 		removeMessageFromSearch: vi.fn(),
@@ -241,7 +245,7 @@ describe("ConversationState send echo matching", () => {
 		const bodyText = (m: { body: unknown }) =>
 			(m.body as { text: string }).text;
 		expect(state.messages.map(bodyText)).toEqual(["b", "a"]);
-		expect(state.messages.every((m) => m.status === "pending")).toBe(true);
+		expect(state.messages.every((m) => m.status === "awaitingAck")).toBe(true);
 
 		emitMessageSent(echo("real-a", "Text", { text: "a" }));
 
@@ -249,7 +253,7 @@ describe("ConversationState send echo matching", () => {
 		const b = state.messages.find((m) => bodyText(m) === "b")!;
 		expect(a.messageId).toBe("real-a");
 		expect(a.status).toBe("sent");
-		expect(b.status).toBe("pending");
+		expect(b.status).toBe("awaitingAck");
 		expect(b.messageId).not.toBe("real-a");
 
 		emitMessageSent(echo("real-b", "Text", { text: "b" }));
@@ -273,17 +277,165 @@ describe("ConversationState send echo matching", () => {
 
 		const text = () => state.messages.find((m) => m.type === "Text")!;
 		const image = () => state.messages.find((m) => m.type === "Image")!;
-		expect(text().status).toBe("pending");
-		expect(image().status).toBe("pending");
+		expect(text().status).toBe("awaitingAck");
+		expect(image().status).toBe("awaitingAck");
 
 		emitMessageSent(echo("real-img", "Image", { mediaId: 5 }));
 		expect(image().messageId).toBe("real-img");
 		expect(image().status).toBe("sent");
-		expect(text().status).toBe("pending");
+		expect(text().status).toBe("awaitingAck");
 
 		emitMessageSent(echo("real-text", "Text", { text: "hello" }));
 		expect(text().messageId).toBe("real-text");
 		expect(text().status).toBe("sent");
+	});
+
+	it("persists all delivery identities and confirming state for an ambiguous ordinary send", async () => {
+		sendMessageMock.mockResolvedValue({
+			kind: "unknown",
+			reason: "ambiguousResponse",
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const conversations = conversationsStub();
+		const state = create(conversations);
+		await flush();
+
+		state.send(outbound("Text", { text: "ordinary" }));
+		await flush();
+
+		const pending = state.messages[0];
+		expect(pending).toMatchObject({
+			status: "confirming",
+			refValue: expect.any(String),
+			attemptRef: expect.any(String),
+			outerCommandRef: expect.any(String),
+		});
+		expect(pending.refValue).toBe(pending.attemptRef);
+		expect(sendMessageMock).toHaveBeenCalledWith({
+			toUserId: PEER_ID,
+			message: outbound("Text", { text: "ordinary" }),
+			ref: pending.attemptRef,
+			commandRef: pending.outerCommandRef,
+		});
+		expect(
+			conversations.setCachedConversation.mock.lastCall?.[1].failedMessages[0],
+		).toMatchObject({
+			state: "confirming",
+			attemptRef: pending.attemptRef,
+			outerCommandRef: pending.outerCommandRef,
+		});
+	});
+
+	it("lets an exact event heal an ambiguous ordinary send and ignores its late outcome", async () => {
+		let finish!: (outcome: { kind: "unknown"; reason: "timeout" }) => void;
+		sendMessageMock.mockReturnValue(
+			new Promise((resolve) => {
+				finish = resolve;
+			}),
+		);
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.send(outbound("Text", { text: "ordinary" }));
+		await flush();
+		const attemptRef = state.messages[0].attemptRef!;
+
+		emitMessageSent({
+			...echo("server-ordinary", "Text", { text: "ordinary" }),
+			refValue: attemptRef,
+		});
+		finish({ kind: "unknown", reason: "timeout" });
+		await flush();
+
+		expect(state.messages[0]).toMatchObject({
+			messageId: "server-ordinary",
+			status: "sent",
+			refValue: attemptRef,
+		});
+	});
+
+	it("heals an ambiguous ordinary send from history by exact attempt reference", async () => {
+		sendMessageMock.mockResolvedValue({
+			kind: "unknown",
+			reason: "timeout",
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const conversations = conversationsStub();
+		const state = create(conversations);
+		await flush();
+
+		state.send(outbound("Text", { text: "history ordinary" }));
+		await flush();
+		const attemptRef = state.messages[0].attemptRef!;
+		expect(state.messages[0].status).toBe("confirming");
+
+		getConversationMock.mockResolvedValue({
+			messages: [
+				{
+					...echo("server-history-ordinary", "Text", {
+						text: "history ordinary",
+					}),
+					refValue: attemptRef,
+				},
+			],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await state.refresh();
+
+		expect(state.messages).toHaveLength(1);
+		expect(state.messages[0]).toMatchObject({
+			messageId: "server-history-ordinary",
+			status: "sent",
+			refValue: attemptRef,
+		});
+		expect(
+			conversations.setCachedConversation.mock.lastCall?.[1].failedMessages,
+		).toEqual([]);
+	});
+
+	it("retries a definitively failed ordinary send once with fresh transport identities", async () => {
+		sendMessageMock.mockResolvedValue({
+			kind: "notSent",
+			error: new Error("rejected"),
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.send(outbound("Text", { text: "ordinary" }));
+		await flush();
+		const first = sendMessageMock.mock.calls[0][0];
+		expect(state.messages[0].status).toBe("failed");
+
+		await state.retryFailedMessage(state.messages[0].messageId);
+		await flush();
+		const second = sendMessageMock.mock.calls[1][0];
+		expect(second.ref).not.toBe(first.ref);
+		expect(second.commandRef).not.toBe(first.commandRef);
+
+		await state.retryFailedMessage(state.messages[0].messageId);
+		expect(sendMessageMock).toHaveBeenCalledTimes(2);
 	});
 });
 
@@ -322,6 +474,566 @@ describe("ConversationState replies", () => {
 			message: { type: "Text", body: { text: "answer" } },
 			replyToMessageId: "target",
 			ref: optimistic.refValue,
+			commandRef: optimistic.outerCommandRef,
+		});
+	});
+
+	it("moves an ambiguous reply outcome to confirming, not not-sent", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "unknown",
+			reason: "timeout",
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		await flush();
+
+		expect(state.messages[0].status).toBe("confirming");
+	});
+
+	it("send again intentionally creates a new logical reply and handles the ambiguous original", async () => {
+		sendReplyMessageMock
+			.mockResolvedValueOnce({ kind: "unknown", reason: "timeout" })
+			.mockReturnValueOnce(new Promise(() => {}));
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		await flush();
+		const original = state.messages[0];
+		const firstAttemptRef = original.attemptRef;
+
+		state.sendAgain(original.messageId);
+		const duplicate = state.messages[0];
+		expect(original.status).toBe("handled");
+		expect(duplicate.messageId).not.toBe(original.messageId);
+		expect(duplicate.replyToMessage?.messageId).toBe("target");
+		expect(duplicate.attemptRef).not.toBe(firstAttemptRef);
+		expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("lets an exact message-sent reference heal a failed reply", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "notSent",
+			error: new Error("rejected"),
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		await flush();
+		const attemptRef = state.messages[0].refValue!;
+		expect(state.messages[0].status).toBe("failed");
+
+		emitMessageSent({
+			...echo("server-message", "Text", { text: "answer" }),
+			refValue: attemptRef,
+			replyToMessage: message("target", 1000),
+		});
+
+		expect(state.messages[0]).toMatchObject({
+			messageId: "server-message",
+			status: "sent",
+		});
+	});
+
+	it("does not let a late definitive failure regress an acknowledged reply", async () => {
+		let settle!: (value: unknown) => void;
+		sendReplyMessageMock.mockReturnValue(
+			new Promise((resolve) => {
+				settle = resolve;
+			}),
+		);
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		const logicalMessageId = state.messages[0].messageId;
+		const attemptRef = state.messages[0].refValue!;
+		emitMessageSent({
+			...echo(logicalMessageId, "Text", { text: "answer" }),
+			refValue: attemptRef,
+			replyToMessage: message("target", 1000),
+		});
+		settle({ kind: "notSent", error: new Error("late rejection") });
+		await flush();
+
+		expect(state.messages[0].status).toBe("sent");
+	});
+
+	it("does not let a late thrown transport error regress an event-confirmed reply", async () => {
+		let reject!: (error: Error) => void;
+		sendReplyMessageMock.mockReturnValue(
+			new Promise((_resolve, rejectPromise) => {
+				reject = rejectPromise;
+			}),
+		);
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		const logicalMessageId = state.messages[0].messageId;
+		const attemptRef = state.messages[0].refValue!;
+		emitMessageSent({
+			...echo(logicalMessageId, "Text", { text: "answer" }),
+			refValue: attemptRef,
+			replyToMessage: message("target", 1000),
+		});
+		reject(new Error("late bridge failure"));
+		await flush();
+
+		expect(state.messages[0]).toMatchObject({
+			messageId: logicalMessageId,
+			status: "sent",
+		});
+	});
+
+	it("replaces an acknowledged local reply with its exact server echo", async () => {
+		sendReplyMessageMock.mockResolvedValue({ kind: "ack", payload: null });
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		await flush();
+		const attemptRef = state.messages[0].refValue!;
+		expect(state.messages[0].status).toBe("sent");
+
+		emitMessageSent({
+			...echo("server-message", "Text", { text: "answer" }),
+			refValue: attemptRef,
+			replyToMessage: message("target", 1000),
+		});
+
+		expect(state.messages).toHaveLength(1);
+		expect(state.messages[0].messageId).toBe("server-message");
+	});
+
+	it("persists ambiguous delivery state and all three operation identities", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "unknown",
+			reason: "timeout",
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const conversations = conversationsStub();
+		const state = create(conversations);
+		await flush();
+
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		await flush();
+
+		const stored =
+			conversations.setCachedConversation.mock.lastCall?.[1].failedMessages[0];
+		expect(stored).toMatchObject({
+			localId: expect.stringMatching(/^pending-/),
+			state: "confirming",
+			attemptRef: expect.any(String),
+			outerCommandRef: expect.any(String),
+			retryCount: 0,
+		});
+		expect(stored.localId).not.toBe(stored.attemptRef);
+		expect(stored.attemptRef).not.toBe(stored.outerCommandRef);
+	});
+
+	it("retries a definitive failure once with fresh attempt and command refs", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "notSent",
+			error: new Error("rejected"),
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		await flush();
+		const first = sendReplyMessageMock.mock.calls[0][0];
+
+		await state.retryFailedMessage(state.messages[0].messageId);
+		await flush();
+		const second = sendReplyMessageMock.mock.calls[1][0];
+		expect(second.ref).not.toBe(first.ref);
+		expect(second.commandRef).not.toBe(first.commandRef);
+
+		await state.retryFailedMessage(state.messages[0].messageId);
+		expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("legacy retry reconciliation includes the reply target", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "notSent",
+			error: new Error("rejected"),
+		});
+		const target = { ...message("target", 1000), senderId: PEER_ID };
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.setReplyTarget(target);
+		state.send(outbound("Text", { text: "same" }));
+		await flush();
+
+		getConversationMock.mockResolvedValue({
+			messages: [
+				{
+					...echo("different-reply", "Text", { text: "same" }),
+					timestamp: Date.now(),
+					replyToMessage: message("other-target", 900),
+				},
+			],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await state.retryFailedMessage(state.messages[0].messageId);
+		await flush();
+
+		expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("reconciles a legacy text reply only when its stable fields and reply target match", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "notSent",
+			error: new Error("rejected"),
+		});
+		const target = { ...message("target", 1000), senderId: PEER_ID };
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.setReplyTarget(target);
+		state.send(outbound("Text", { text: "same" }));
+		await flush();
+
+		getConversationMock.mockResolvedValue({
+			messages: [
+				{
+					...echo("server-reply", "Text", { text: "same" }),
+					timestamp: Date.now(),
+					replyToMessage: target,
+				},
+			],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await state.retryFailedMessage(state.messages[0].messageId);
+
+		expect(sendReplyMessageMock).toHaveBeenCalledOnce();
+		expect(state.messages[0]).toMatchObject({
+			messageId: "server-reply",
+			status: "sent",
+		});
+	});
+
+	it("heals an ambiguous legacy reply from history only with the same reply target", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "unknown",
+			reason: "disconnect",
+		});
+		const target = { ...message("target", 1000), senderId: PEER_ID };
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.setReplyTarget(target);
+		state.send(outbound("Text", { text: "legacy history reply" }));
+		await flush();
+
+		const pending = state.messages[0];
+		pending.attemptRef = undefined;
+		pending.refValue = null;
+		expect(pending.status).toBe("confirming");
+
+		getConversationMock.mockResolvedValue({
+			messages: [
+				{
+					...echo("server-history-reply", "Text", {
+						text: "legacy history reply",
+					}),
+					timestamp: pending.timestamp,
+					replyToMessage: target,
+				},
+			],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await state.refresh();
+
+		expect(state.messages).toHaveLength(1);
+		expect(state.messages[0]).toMatchObject({
+			messageId: "server-history-reply",
+			status: "sent",
+			replyToMessage: expect.objectContaining({ messageId: "target" }),
+		});
+	});
+
+	it("uses the configured duplicate reconciliation window", async () => {
+		developerSettings.messageDuplicateReconcileWindowMs = 100;
+		try {
+			sendReplyMessageMock.mockResolvedValue({
+				kind: "notSent",
+				error: new Error("rejected"),
+			});
+			const target = { ...message("target", 1000), senderId: PEER_ID };
+			getConversationMock.mockResolvedValue({
+				messages: [],
+				profile,
+				pageKey: null,
+				lastReadTimestamp: null,
+			});
+			const state = create();
+			await flush();
+			state.setReplyTarget(target);
+			state.send(outbound("Text", { text: "same" }));
+			await flush();
+			const previousAttemptAt = state.messages[0].lastAttemptAt!;
+
+			getConversationMock.mockResolvedValue({
+				messages: [
+					{
+						...echo("outside-window", "Text", { text: "same" }),
+						timestamp: previousAttemptAt - 250,
+						replyToMessage: target,
+					},
+				],
+				profile,
+				pageKey: null,
+				lastReadTimestamp: null,
+			});
+			await state.retryFailedMessage(state.messages[0].messageId);
+			await flush();
+
+			expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
+		} finally {
+			developerSettings.messageDuplicateReconcileWindowMs = 5_000;
+		}
+	});
+
+	it("does not use structural equality to reconcile an unsupported legacy body", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "notSent",
+			error: new Error("rejected"),
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		const target = { ...message("target", 1000), senderId: PEER_ID };
+		state.setReplyTarget(target);
+		state.send(outbound("Unknown", { sourceType: "future-message" }));
+		await flush();
+
+		getConversationMock.mockResolvedValue({
+			messages: [
+				{
+					...echo("server-unknown", "Unknown", {
+						sourceType: "future-message",
+					}),
+					timestamp: Date.now(),
+					replyToMessage: target,
+				},
+			],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await state.retryFailedMessage(state.messages[0].messageId);
+		await flush();
+
+		expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("coalesces concurrent retry requests before reconciliation completes", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "notSent",
+			error: new Error("rejected"),
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		await flush();
+
+		let finishReconcile!: (value: unknown) => void;
+		getConversationMock.mockReturnValue(
+			new Promise((resolve) => {
+				finishReconcile = resolve;
+			}),
+		);
+		const messageId = state.messages[0].messageId;
+		const first = state.retryFailedMessage(messageId);
+		const second = state.retryFailedMessage(messageId);
+		expect(getConversationMock).toHaveBeenCalledTimes(2);
+
+		finishReconcile({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await Promise.all([first, second]);
+		await flush();
+
+		expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("does not retry after an exact echo arrives during reconciliation", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "notSent",
+			error: new Error("rejected"),
+		});
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
+		state.send(outbound("Text", { text: "answer" }));
+		await flush();
+		const attemptRef = state.messages[0].refValue!;
+
+		let finishReconcile!: (value: unknown) => void;
+		getConversationMock.mockReturnValue(
+			new Promise((resolve) => {
+				finishReconcile = resolve;
+			}),
+		);
+		const retry = state.retryFailedMessage(state.messages[0].messageId);
+		emitMessageSent({
+			...echo("server-message", "Text", { text: "answer" }),
+			refValue: attemptRef,
+			replyToMessage: message("target", 1000),
+		});
+		finishReconcile({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await retry;
+		await flush();
+
+		expect(sendReplyMessageMock).toHaveBeenCalledOnce();
+		expect(state.messages[0].status).toBe("sent");
+	});
+
+	it("semantically matches legacy bodies regardless of object key order", async () => {
+		sendReplyMessageMock.mockResolvedValue({
+			kind: "notSent",
+			error: new Error("rejected"),
+		});
+		const target = { ...message("target", 1000), senderId: PEER_ID };
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+		state.setReplyTarget(target);
+		state.send(outbound("Location", { lat: 53.35, lon: -6.26 }));
+		await flush();
+
+		getConversationMock.mockResolvedValue({
+			messages: [
+				{
+					...echo("server-location", "Location", {
+						lon: -6.26,
+						lat: 53.35,
+					}),
+					timestamp: Date.now(),
+					replyToMessage: target,
+				},
+			],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await state.retryFailedMessage(state.messages[0].messageId);
+
+		expect(sendReplyMessageMock).toHaveBeenCalledOnce();
+		expect(state.messages[0]).toMatchObject({
+			messageId: "server-location",
+			status: "sent",
 		});
 	});
 });

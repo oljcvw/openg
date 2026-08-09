@@ -5,6 +5,7 @@
 	import { Skeleton } from "$lib/components/ui/skeleton";
 	import VideoCallButton from "$lib/video-call/components/VideoCallButton.svelte";
 	import { getConversationState } from "../conversation-state.svelte";
+	import ConversationCollections from "./ConversationCollections.svelte";
 	import ConversationNavBarProfile from "./ConversationNavBarProfile.svelte";
 
 	const conversationState = $derived(getConversationState()());
@@ -17,7 +18,11 @@
 	contentClass="flex items-center h-full"
 	tag="nav"
 >
-	<a href="/chat" class="flex h-full w-19 items-center justify-center">
+	<a
+		href="/chat"
+		class="flex h-full w-19 shrink-0 items-center justify-center"
+		aria-label="Back to conversations"
+	>
 		<ArrowLeftIcon size={32} />
 	</a>
 	{#if conversationState.loading || conversationState.profile === null}
@@ -32,7 +37,13 @@
 		<span class="flex-1">Failed to load conversation</span>
 	{:else}
 		<ConversationNavBarProfile profile={conversationState.profile} />
-		<VideoCallButton
+		<div class="max-chat-compact:hidden">
+			<VideoCallButton
+				peerProfileId={conversationState.profile.profileId}
+				peerLabel={conversationState.profile.name}
+			/>
+		</div>
+		<ConversationCollections
 			peerProfileId={conversationState.profile.profileId}
 			peerLabel={conversationState.profile.name}
 		/>

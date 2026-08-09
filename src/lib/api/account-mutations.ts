@@ -5,12 +5,10 @@ import { clearLocalAccountState } from "$lib/api/sign-out";
 import { deleteFavoriteNotesForAccount } from "$lib/app-data/favorite-notes";
 import { deleteSavedPhrasesForAccount } from "$lib/app-data/saved-phrases";
 
-export class AccountDeletionCleanupError extends Error {
-	constructor(options: ErrorOptions) {
-		super("Account deleted, but local account data cleanup failed.", options);
-		this.name = "AccountDeletionCleanupError";
-	}
-}
+export type AccountMutationOutcome = {
+	remoteApplied: boolean;
+	localCleanupComplete: boolean;
+};
 
 export const emailSchema = z.email("Enter a valid email address");
 export const passwordSchema = z
@@ -27,25 +25,34 @@ export async function validatePasswordComplexity(
 export async function changePassword(input: {
 	currentPassword: string;
 	newPassword: string;
-}): Promise<void> {
-	await callMethod("update_account_password", input);
-	await clearLocalAccountState();
+}): Promise<AccountMutationOutcome> {
+	const result = await callMethod("update_account_password", input);
+	const browserCleanupComplete = await clearLocalAccountState();
+	return {
+		remoteApplied: result.remoteApplied,
+		localCleanupComplete: result.localCleanupComplete && browserCleanupComplete,
+	};
 }
 
 export async function changeEmail(input: {
 	email: string;
 	password: string;
-}): Promise<void> {
-	await callMethod("update_account_email", input);
-	await clearLocalAccountState();
+}): Promise<AccountMutationOutcome> {
+	const result = await callMethod("update_account_email", input);
+	const browserCleanupComplete = await clearLocalAccountState();
+	return {
+		remoteApplied: result.remoteApplied,
+		localCleanupComplete: result.localCleanupComplete && browserCleanupComplete,
+	};
 }
 
-export async function deleteAccount(): Promise<void> {
+export async function deleteAccount(): Promise<AccountMutationOutcome> {
 	const accountProfileId = await callMethod("auth_state");
 	if (accountProfileId === null) {
 		throw new Error("Cannot delete a signed-out account.");
 	}
-	await callMethod("delete_account");
+	const result = await callMethod("delete_account");
+	let privateCleanupComplete = true;
 	try {
 		await Promise.all([
 			deleteFavoriteNotesForAccount(accountProfileId),
@@ -54,9 +61,15 @@ export async function deleteAccount(): Promise<void> {
 				accountId: accountProfileId,
 			}),
 		]);
-	} catch (error) {
-		throw new AccountDeletionCleanupError({ cause: error });
-	} finally {
-		await clearLocalAccountState();
+	} catch {
+		privateCleanupComplete = false;
 	}
+	const browserCleanupComplete = await clearLocalAccountState();
+	return {
+		remoteApplied: result.remoteApplied,
+		localCleanupComplete:
+			result.localCleanupComplete &&
+			privateCleanupComplete &&
+			browserCleanupComplete,
+	};
 }

@@ -53,6 +53,7 @@ class ShortVideoCaptureActivity : AppCompatActivity() {
 	private var lensFacing = CameraSelector.LENS_FACING_FRONT
 	private var isMuted = false
 	private var isCancelling = false
+	private var isTerminal = false
 	private var recordingStartedAtMs = 0L
 	private val handler = Handler(Looper.getMainLooper())
 	private val stopAtLimit = Runnable { stopRecording() }
@@ -82,6 +83,9 @@ class ShortVideoCaptureActivity : AppCompatActivity() {
 	}
 
 	private fun buildContentView() {
+		val audioAllowed = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+			PackageManager.PERMISSION_GRANTED
+		isMuted = !audioAllowed
 		previewView = PreviewView(this).apply {
 			implementationMode = PreviewView.ImplementationMode.COMPATIBLE
 			scaleType = PreviewView.ScaleType.FILL_CENTER
@@ -101,6 +105,8 @@ class ShortVideoCaptureActivity : AppCompatActivity() {
 		}
 		muteButton = controlButton("Mic") { toggleMute() }.apply {
 			contentDescription = getString(R.string.media_toggle_mute)
+			isEnabled = audioAllowed
+			text = if (audioAllowed) "Mic" else "Silent"
 		}
 		val cancelButton = controlButton("×") { cancelCapture() }.apply {
 			contentDescription = getString(R.string.media_cancel)
@@ -205,6 +211,7 @@ class ShortVideoCaptureActivity : AppCompatActivity() {
 	}
 
 	private fun finalizeRecording(event: VideoRecordEvent.Finalize) {
+		if (isTerminal) return
 		handler.removeCallbacks(stopAtLimit)
 		handler.removeCallbacks(updateTimer)
 		activeRecording = null
@@ -218,6 +225,7 @@ class ShortVideoCaptureActivity : AppCompatActivity() {
 			return
 		}
 		val metadata = ShortVideoMetadata.read(file, event.recordingStats.recordedDurationNanos)
+		isTerminal = true
 		setResult(Activity.RESULT_OK, Intent().apply {
 			putExtra(EXTRA_CAPTURE_ID, captureId)
 			putExtra(EXTRA_FILE_PATH, file.absolutePath)
@@ -259,6 +267,8 @@ class ShortVideoCaptureActivity : AppCompatActivity() {
 	}
 
 	private fun finishCancelled() {
+		if (isTerminal) return
+		isTerminal = true
 		outputFile?.delete()
 		setResult(Activity.RESULT_CANCELED)
 		finish()
@@ -282,7 +292,10 @@ class ShortVideoCaptureActivity : AppCompatActivity() {
 		handler.removeCallbacksAndMessages(null)
 		if (isFinishing && activeRecording != null) {
 			isCancelling = true
+			isTerminal = true
 			activeRecording?.stop()
+			activeRecording = null
+			outputFile?.delete()
 		}
 		super.onDestroy()
 	}

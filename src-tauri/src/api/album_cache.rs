@@ -1,36 +1,47 @@
 use std::{
 	collections::{HashMap, HashSet},
-	fs::{self, File},
-	io::{BufReader, BufWriter, Read, Seek, SeekFrom, Write},
+	fs,
 	path::{Path, PathBuf},
-	time::{SystemTime, UNIX_EPOCH},
+	sync::atomic::{AtomicU64, Ordering},
 };
 
-use aes_gcm::{
-	aead::{Aead, KeyInit, Payload},
-	Aes256Gcm, Nonce,
-};
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
-use rand::{rngs::OsRng, RngCore};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use tauri::{http, Manager};
 
-use crate::{error::AppError, storage::AuthStorage};
+use crate::{
+	api::encrypted_media_store::{
+		aad_prefix as encrypted_aad_prefix, cdn_host_allowed,
+		delete_key as delete_encryption_key, identifier_hash, load_json_index,
+		load_key as load_encryption_key,
+		load_or_create_key as load_or_create_encryption_key, media_error,
+		now_ms as encrypted_now_ms, parse_range,
+		protocol_url as encrypted_protocol_url,
+		random_token as encrypted_random_token, read_encrypted_range,
+		same_media_category, save_json_index, stream_encrypted_atomic,
+		validate_cdn_url, validate_content_type, validate_identifier,
+		write_encrypted_atomic,
+	},
+	error::AppError,
+	storage::AuthStorage,
+};
 
 const SCHEME: &str = "album-cache";
 const CACHE_DIR: &str = "album-cache-v1";
 const INDEX_FILE: &str = "index.json";
+const RECORD_INDEX_FILE: &str = "records.json";
 const MAGIC: &[u8; 8] = b"OGALBC01";
-const CHUNK_SIZE: usize = 256 * 1024;
-const MAX_RANGE_BYTES: u64 = 8 * 1024 * 1024;
+const RECORD_MAGIC: &[u8; 8] = b"OGALBR02";
+const MEMBERSHIP_MAGIC: &[u8; 8] = b"OGALMS05";
 const KEY_SERVICE: &str = "open-grind-album-cache";
 static CACHE_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+static CACHE_EPOCH: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct CacheEntry {
 	account_hash: String,
+	#[serde(default)]
+	owner_hash: String,
 	album_hash: String,
 	content_hash: String,
 	content_type: String,
@@ -43,6 +54,38 @@ struct CacheEntry {
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct CacheIndex {
 	entries: Vec<CacheEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AlbumRecordEntry {
+	account_hash: String,
+	owner_hash: String,
+	album_hash: String,
+	file_name: String,
+	last_accessed_ms: u64,
+	#[serde(default)]
+	history_order: Option<u64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AlbumMembershipSnapshot {
+	version: u8,
+	current_album_ids: Vec<u64>,
+	listed_at: u64,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+struct AlbumRecordIndex {
+	entries: Vec<AlbumRecordEntry>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AlbumRecordPage {
+	pub records: Vec<serde_json::Value>,
+	pub next_cursor: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -91,6 +134,7 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 pub async fn album_cache_store(
 	app: tauri::AppHandle,
 	account_id: String,
+	owner_profile_id: String,
 	album_id: String,
 	content_id: String,
 	source_url: String,
@@ -99,6 +143,7 @@ pub async fn album_cache_store(
 ) -> Result<AlbumCacheStored, AppError> {
 	validate_identifier(&account_id)?;
 	ensure_active_account(&account_id)?;
+	validate_identifier(&owner_profile_id)?;
 	validate_identifier(&album_id)?;
 	validate_identifier(&content_id)?;
 	validate_content_type(&content_type)?;
@@ -107,6 +152,7 @@ pub async fn album_cache_store(
 		return Err(cache_error("maximumBytes must be greater than zero"));
 	}
 
+	let operation_epoch = CACHE_EPOCH.load(Ordering::Acquire);
 	let client = reqwest::Client::builder()
 		.redirect(reqwest::redirect::Policy::custom(|attempt| {
 			if attempt.previous().len() >= 5 {
@@ -153,11 +199,12 @@ pub async fn album_cache_store(
 
 	let root = cache_root(&app)?;
 	let account_hash = identifier_hash(&account_id);
+	let owner_hash = identifier_hash(&owner_profile_id);
 	let album_hash = identifier_hash(&album_id);
 	let content_hash = identifier_hash(&content_id);
 	let key = {
 		let _guard = CACHE_LOCK.lock().await;
-		load_or_create_key(&account_hash)?
+		load_or_create_encryption_key(KEY_SERVICE, &account_hash)?
 	};
 	let token = random_token();
 	let file_name = format!("{}.ogac", random_token());
@@ -169,18 +216,38 @@ pub async fn album_cache_store(
 		response,
 		&destination,
 		&key,
-		&aad_prefix(&account_hash, &album_hash, &content_hash, &content_type),
+		&aad_prefix_v2(
+			&account_hash,
+			&owner_hash,
+			&album_hash,
+			&content_hash,
+			&content_type,
+		),
 		maximum_bytes,
+		MAGIC,
 	)
 	.await?;
+	if CACHE_EPOCH.load(Ordering::Acquire) != operation_epoch
+		|| ensure_active_account(&account_id).is_err()
+	{
+		let _ = fs::remove_file(&destination);
+		return Err(AppError::RequestCancelled);
+	}
 
 	let _guard = CACHE_LOCK.lock().await;
+	if CACHE_EPOCH.load(Ordering::Acquire) != operation_epoch
+		|| ensure_active_account(&account_id).is_err()
+	{
+		let _ = fs::remove_file(&destination);
+		return Err(AppError::RequestCancelled);
+	}
 	let mut index = load_index(&root)?;
 	let old_files: Vec<PathBuf> = index
 		.entries
 		.iter()
 		.filter(|entry| {
 			entry.account_hash == account_hash
+				&& entry.owner_hash == owner_hash
 				&& entry.album_hash == album_hash
 				&& entry.content_hash == content_hash
 		})
@@ -188,11 +255,13 @@ pub async fn album_cache_store(
 		.collect();
 	index.entries.retain(|entry| {
 		!(entry.account_hash == account_hash
+			&& entry.owner_hash == owner_hash
 			&& entry.album_hash == album_hash
 			&& entry.content_hash == content_hash)
 	});
 	index.entries.push(CacheEntry {
 		account_hash,
+		owner_hash,
 		album_hash,
 		content_hash,
 		content_type,
@@ -220,18 +289,22 @@ pub async fn album_cache_store(
 pub async fn album_cache_lookup(
 	app: tauri::AppHandle,
 	account_id: String,
+	owner_profile_id: String,
 	album_id: String,
 	content_id: String,
 ) -> Result<AlbumCacheLookup, AppError> {
 	ensure_active_account(&account_id)?;
+	validate_identifier(&owner_profile_id)?;
 	let root = cache_root(&app)?;
 	let account_hash = identifier_hash(&account_id);
+	let owner_hash = identifier_hash(&owner_profile_id);
 	let album_hash = identifier_hash(&album_id);
 	let content_hash = identifier_hash(&content_id);
 	let _guard = CACHE_LOCK.lock().await;
 	let mut index = load_index(&root)?;
 	let Some(entry) = index.entries.iter_mut().find(|entry| {
 		entry.account_hash == account_hash
+			&& entry.owner_hash == owner_hash
 			&& entry.album_hash == album_hash
 			&& entry.content_hash == content_hash
 	}) else {
@@ -262,6 +335,365 @@ pub async fn album_cache_lookup(
 	};
 	save_index(&root, &index)?;
 	Ok(result)
+}
+
+#[tauri::command]
+pub async fn album_cache_bind_legacy_owner(
+	app: tauri::AppHandle,
+	account_id: String,
+	owner_profile_id: String,
+	album_id: String,
+) -> Result<u64, AppError> {
+	let operation_epoch = CACHE_EPOCH.load(Ordering::Acquire);
+	validate_composite_identity(&account_id, &owner_profile_id, &album_id)?;
+	ensure_active_account(&account_id)?;
+	let root = cache_root(&app)?;
+	let account_hash = identifier_hash(&account_id);
+	let owner_hash = identifier_hash(&owner_profile_id);
+	let album_hash = identifier_hash(&album_id);
+	let _guard = CACHE_LOCK.lock().await;
+	if CACHE_EPOCH.load(Ordering::Acquire) != operation_epoch
+		|| ensure_active_account(&account_id).is_err()
+	{
+		return Err(AppError::RequestCancelled);
+	}
+	let key = load_encryption_key(KEY_SERVICE, &account_hash)?;
+	let mut index = load_index(&root)?;
+	let legacy = index
+		.entries
+		.iter()
+		.filter(|entry| {
+			entry.account_hash == account_hash
+				&& entry.owner_hash.is_empty()
+				&& entry.album_hash == album_hash
+		})
+		.cloned()
+		.collect::<Vec<_>>();
+	let mut replacements = Vec::with_capacity(legacy.len());
+	for entry in &legacy {
+		let bytes = read_encrypted_range(
+			&entry_path(&root, entry),
+			&key,
+			&aad_prefix(
+				&entry.account_hash,
+				&entry.album_hash,
+				&entry.content_hash,
+				&entry.content_type,
+			),
+			None,
+			MAGIC,
+		)?;
+		let mut replacement = entry.clone();
+		replacement.owner_hash = owner_hash.clone();
+		replacement.file_name = format!("{}.ogac", random_token());
+		if let Err(error) = write_encrypted_atomic(
+			&entry_path(&root, &replacement),
+			&bytes,
+			&key,
+			&entry_aad(&replacement),
+			MAGIC,
+		) {
+			for (_, created) in &replacements {
+				let _ = fs::remove_file(entry_path(&root, created));
+			}
+			return Err(error);
+		}
+		replacements.push((entry.clone(), replacement));
+	}
+	for (legacy, replacement) in &replacements {
+		if let Some(entry) = index.entries.iter_mut().find(|entry| {
+			entry.account_hash == legacy.account_hash
+				&& entry.owner_hash.is_empty()
+				&& entry.album_hash == legacy.album_hash
+				&& entry.content_hash == legacy.content_hash
+				&& entry.file_name == legacy.file_name
+		}) {
+			*entry = replacement.clone();
+		}
+	}
+	if let Err(error) = save_index(&root, &index) {
+		for (_, created) in &replacements {
+			let _ = fs::remove_file(entry_path(&root, created));
+		}
+		return Err(error);
+	}
+	for (legacy, _) in &replacements {
+		let _ = fs::remove_file(entry_path(&root, legacy));
+	}
+	Ok(replacements.len() as u64)
+}
+
+#[tauri::command]
+pub async fn album_cache_record_store(
+	app: tauri::AppHandle,
+	account_id: String,
+	owner_profile_id: String,
+	album_id: String,
+	record: serde_json::Value,
+) -> Result<(), AppError> {
+	let operation_epoch = CACHE_EPOCH.load(Ordering::Acquire);
+	validate_composite_identity(&account_id, &owner_profile_id, &album_id)?;
+	ensure_active_account(&account_id)?;
+	if contains_remote_url(&record) {
+		return Err(cache_error("album metadata must not contain remote URLs"));
+	}
+	let bytes = serde_json::to_vec(&record)
+		.map_err(|_| cache_error("could not encode album metadata"))?;
+	if bytes.is_empty() || bytes.len() > 4 * 1024 * 1024 {
+		return Err(cache_error(
+			"album metadata size is outside the supported range",
+		));
+	}
+	let root = cache_root(&app)?;
+	let account_hash = identifier_hash(&account_id);
+	let owner_hash = identifier_hash(&owner_profile_id);
+	let album_hash = identifier_hash(&album_id);
+	let _guard = CACHE_LOCK.lock().await;
+	if CACHE_EPOCH.load(Ordering::Acquire) != operation_epoch
+		|| ensure_active_account(&account_id).is_err()
+	{
+		return Err(AppError::RequestCancelled);
+	}
+	let key = load_or_create_encryption_key(KEY_SERVICE, &account_hash)?;
+	let mut index: AlbumRecordIndex =
+		load_json_index(&root, RECORD_INDEX_FILE)?;
+	let previous = index.entries.iter().find(|entry| {
+		entry.account_hash == account_hash
+			&& entry.owner_hash == owner_hash
+			&& entry.album_hash == album_hash
+	});
+	let history_order = history_order_for_record(&record, previous);
+	let file_name = previous
+		.map(|entry| entry.file_name.clone())
+		.unwrap_or_else(|| format!("record-{}.ogar", random_token()));
+	let account_dir = root.join(&account_hash);
+	fs::create_dir_all(&account_dir)
+		.map_err(|_| cache_error("could not create album cache directory"))?;
+	write_encrypted_atomic(
+		&account_dir.join(&file_name),
+		&bytes,
+		&key,
+		&record_aad(&account_hash, &owner_hash, &album_hash),
+		RECORD_MAGIC,
+	)?;
+	index.entries.retain(|entry| {
+		!(entry.account_hash == account_hash
+			&& entry.owner_hash == owner_hash
+			&& entry.album_hash == album_hash)
+	});
+	index.entries.push(AlbumRecordEntry {
+		account_hash,
+		owner_hash,
+		album_hash,
+		file_name,
+		last_accessed_ms: record
+			.get("lastAccessedAt")
+			.and_then(serde_json::Value::as_u64)
+			.unwrap_or_else(now_ms),
+		history_order,
+	});
+	save_json_index(&root, RECORD_INDEX_FILE, &index)
+}
+
+#[tauri::command]
+pub async fn album_cache_record_read(
+	app: tauri::AppHandle,
+	account_id: String,
+	owner_profile_id: String,
+	album_id: String,
+) -> Result<Option<serde_json::Value>, AppError> {
+	validate_composite_identity(&account_id, &owner_profile_id, &album_id)?;
+	ensure_active_account(&account_id)?;
+	let root = cache_root(&app)?;
+	let account_hash = identifier_hash(&account_id);
+	let owner_hash = identifier_hash(&owner_profile_id);
+	let album_hash = identifier_hash(&album_id);
+	let _guard = CACHE_LOCK.lock().await;
+	let index: AlbumRecordIndex = load_json_index(&root, RECORD_INDEX_FILE)?;
+	let Some(entry) = index.entries.iter().find(|entry| {
+		entry.account_hash == account_hash
+			&& entry.owner_hash == owner_hash
+			&& entry.album_hash == album_hash
+	}) else {
+		return Ok(None);
+	};
+	read_record(&root, entry).map(Some)
+}
+
+#[tauri::command]
+pub async fn album_cache_records_page(
+	app: tauri::AppHandle,
+	account_id: String,
+	owner_profile_id: String,
+	cursor: Option<String>,
+) -> Result<AlbumRecordPage, AppError> {
+	validate_identifier(&account_id)?;
+	validate_identifier(&owner_profile_id)?;
+	ensure_active_account(&account_id)?;
+	let root = cache_root(&app)?;
+	let account_hash = identifier_hash(&account_id);
+	let owner_hash = identifier_hash(&owner_profile_id);
+	let _guard = CACHE_LOCK.lock().await;
+	let index: AlbumRecordIndex = load_json_index(&root, RECORD_INDEX_FILE)?;
+	let mut matching: Vec<_> = index
+		.entries
+		.iter()
+		.filter(|entry| {
+			entry.account_hash == account_hash && entry.owner_hash == owner_hash
+		})
+		.collect();
+	matching.sort_by(|left, right| compare_record_entries(left, right));
+	let start = match cursor {
+		None => 0,
+		Some(cursor) => matching
+			.iter()
+			.position(|entry| entry.album_hash == cursor)
+			.map(|index| index + 1)
+			.ok_or_else(|| cache_error("album history cursor is invalid"))?,
+	};
+	let page = matching
+		.into_iter()
+		.skip(start)
+		.take(61)
+		.collect::<Vec<_>>();
+	let has_more = page.len() > 60;
+	let records = page
+		.iter()
+		.take(60)
+		.map(|entry| read_record(&root, entry))
+		.collect::<Result<Vec<_>, _>>()?;
+	let next_cursor = has_more.then(|| page[59].album_hash.clone());
+	Ok(AlbumRecordPage {
+		records,
+		next_cursor,
+	})
+}
+
+#[tauri::command]
+pub async fn album_cache_membership_snapshot_store(
+	app: tauri::AppHandle,
+	account_id: String,
+	owner_profile_id: String,
+	current_album_ids: Vec<u64>,
+	listed_at: u64,
+) -> Result<(), AppError> {
+	validate_identifier(&account_id)?;
+	validate_identifier(&owner_profile_id)?;
+	ensure_active_account(&account_id)?;
+	let snapshot = AlbumMembershipSnapshot {
+		version: 5,
+		current_album_ids,
+		listed_at,
+	};
+	let root = cache_root(&app)?;
+	let account_hash = identifier_hash(&account_id);
+	let owner_hash = identifier_hash(&owner_profile_id);
+	let _guard = CACHE_LOCK.lock().await;
+	ensure_active_account(&account_id)?;
+	let key = load_or_create_encryption_key(KEY_SERVICE, &account_hash)?;
+	store_membership_snapshot(
+		&root,
+		&account_hash,
+		&owner_hash,
+		&snapshot,
+		&key,
+	)
+}
+
+#[tauri::command]
+pub async fn album_cache_membership_snapshot_read(
+	app: tauri::AppHandle,
+	account_id: String,
+	owner_profile_id: String,
+) -> Result<Option<AlbumMembershipSnapshot>, AppError> {
+	validate_identifier(&account_id)?;
+	validate_identifier(&owner_profile_id)?;
+	ensure_active_account(&account_id)?;
+	let root = cache_root(&app)?;
+	let account_hash = identifier_hash(&account_id);
+	let owner_hash = identifier_hash(&owner_profile_id);
+	let _guard = CACHE_LOCK.lock().await;
+	if !membership_snapshot_path(&root, &account_hash, &owner_hash).is_file() {
+		return Ok(None);
+	}
+	let key = load_encryption_key(KEY_SERVICE, &account_hash)?;
+	read_membership_snapshot(&root, &account_hash, &owner_hash, &key)
+}
+
+#[tauri::command]
+pub async fn album_cache_records_reconcile_membership(
+	app: tauri::AppHandle,
+	account_id: String,
+	owner_profile_id: String,
+	current_album_ids: Vec<String>,
+	listed_at: u64,
+) -> Result<(), AppError> {
+	validate_identifier(&account_id)?;
+	validate_identifier(&owner_profile_id)?;
+	for album_id in &current_album_ids {
+		validate_identifier(album_id)?;
+	}
+	ensure_active_account(&account_id)?;
+	let current = current_album_ids.into_iter().collect::<HashSet<_>>();
+	let root = cache_root(&app)?;
+	let account_hash = identifier_hash(&account_id);
+	let owner_hash = identifier_hash(&owner_profile_id);
+	let _guard = CACHE_LOCK.lock().await;
+	let index: AlbumRecordIndex = load_json_index(&root, RECORD_INDEX_FILE)?;
+	let key = load_or_create_encryption_key(KEY_SERVICE, &account_hash)?;
+	for entry in index.entries.iter().filter(|entry| {
+		entry.account_hash == account_hash && entry.owner_hash == owner_hash
+	}) {
+		let mut record = read_record(&root, entry)?;
+		reconcile_record_membership(&mut record, &current, listed_at)?;
+		let bytes = serde_json::to_vec(&record)
+			.map_err(|_| cache_error("could not encode album metadata"))?;
+		write_encrypted_atomic(
+			&root.join(&account_hash).join(&entry.file_name),
+			&bytes,
+			&key,
+			&record_aad(&account_hash, &owner_hash, &entry.album_hash),
+			RECORD_MAGIC,
+		)?;
+	}
+	Ok(())
+}
+
+fn reconcile_record_membership(
+	record: &mut serde_json::Value,
+	current_album_ids: &HashSet<String>,
+	listed_at: u64,
+) -> Result<(), AppError> {
+	let album_id = record
+		.pointer("/identity/albumId")
+		.and_then(serde_json::Value::as_u64)
+		.map(|value| value.to_string())
+		.ok_or_else(|| cache_error("album history identity is invalid"))?;
+	let is_current = current_album_ids.contains(&album_id);
+	let membership = record
+		.get_mut("membership")
+		.and_then(serde_json::Value::as_object_mut)
+		.ok_or_else(|| cache_error("album history membership is invalid"))?;
+	membership.insert(
+		"isCurrentlyShared".into(),
+		serde_json::Value::Bool(is_current),
+	);
+	membership.insert(
+		"lastListedAt".into(),
+		serde_json::Value::Number(listed_at.into()),
+	);
+	if is_current {
+		membership.insert("unavailableReason".into(), serde_json::Value::Null);
+	} else if membership
+		.get("unavailableReason")
+		.is_none_or(serde_json::Value::is_null)
+	{
+		membership.insert(
+			"unavailableReason".into(),
+			serde_json::Value::String("unshared".into()),
+		);
+	}
+	Ok(())
 }
 
 #[tauri::command]
@@ -296,14 +728,17 @@ pub async fn album_cache_clear(
 	app: tauri::AppHandle,
 	account_id: Option<String>,
 ) -> Result<AlbumCacheStats, AppError> {
+	CACHE_EPOCH.fetch_add(1, Ordering::AcqRel);
 	if let Some(account_id) = account_id.as_deref() {
 		ensure_active_account(account_id)?;
 	}
 	let root = cache_root(&app)?;
 	let _guard = CACHE_LOCK.lock().await;
 	let mut index = load_index(&root)?;
+	let mut record_index: AlbumRecordIndex =
+		load_json_index(&root, RECORD_INDEX_FILE)?;
 	let requested_hash = account_id.as_deref().map(identifier_hash);
-	let removed_accounts: HashSet<String> = index
+	let mut removed_accounts: HashSet<String> = index
 		.entries
 		.iter()
 		.filter(|entry| {
@@ -313,6 +748,22 @@ pub async fn album_cache_clear(
 		})
 		.map(|entry| entry.account_hash.clone())
 		.collect();
+	removed_accounts.extend(
+		record_index
+			.entries
+			.iter()
+			.filter(|entry| {
+				requested_hash
+					.as_ref()
+					.is_none_or(|id| id == &entry.account_hash)
+			})
+			.map(|entry| entry.account_hash.clone()),
+	);
+	if let Some(requested_hash) = requested_hash.as_ref() {
+		removed_accounts.insert(requested_hash.clone());
+	} else {
+		removed_accounts.extend(account_directories(&root)?);
+	}
 	for entry in &index.entries {
 		if requested_hash
 			.as_ref()
@@ -326,12 +777,66 @@ pub async fn album_cache_clear(
 			.as_ref()
 			.is_some_and(|id| id != &entry.account_hash)
 	});
-	for account in removed_accounts {
-		delete_key(&account)?;
-		let _ = fs::remove_dir_all(root.join(account));
-	}
+	record_index.entries.retain(|entry| {
+		requested_hash
+			.as_ref()
+			.is_some_and(|id| id != &entry.account_hash)
+	});
+	clear_account_artifacts(&root, removed_accounts, |account_hash| {
+		delete_encryption_key(KEY_SERVICE, account_hash)
+	})?;
 	save_index(&root, &index)?;
+	save_json_index(&root, RECORD_INDEX_FILE, &record_index)?;
 	Ok(stats_for(&index, None))
+}
+
+fn account_directories(root: &Path) -> Result<HashSet<String>, AppError> {
+	let entries = match fs::read_dir(root) {
+		Ok(entries) => entries,
+		Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+			return Ok(HashSet::new());
+		}
+		Err(_) => {
+			return Err(cache_error("could not enumerate album cache accounts"))
+		}
+	};
+	let mut account_hashes = HashSet::new();
+	for entry in entries {
+		let entry = entry.map_err(|_| {
+			cache_error("could not enumerate album cache accounts")
+		})?;
+		if entry
+			.file_type()
+			.map_err(|_| cache_error("could not inspect album cache account"))?
+			.is_dir()
+		{
+			account_hashes
+				.insert(entry.file_name().to_string_lossy().into_owned());
+		}
+	}
+	Ok(account_hashes)
+}
+
+fn clear_account_artifacts<F>(
+	root: &Path,
+	account_hashes: HashSet<String>,
+	mut delete_key: F,
+) -> Result<(), AppError>
+where
+	F: FnMut(&str) -> Result<(), AppError>,
+{
+	for account_hash in account_hashes {
+		let account_dir = root.join(&account_hash);
+		match fs::remove_dir_all(&account_dir) {
+			Ok(()) => {}
+			Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+			Err(_) => {
+				return Err(cache_error("could not clear album cache account"))
+			}
+		}
+		delete_key(&account_hash)?;
+	}
+	Ok(())
 }
 
 async fn serve_protocol(
@@ -385,8 +890,11 @@ async fn serve_protocol_inner(
 	if entry.account_hash != active_account_hash {
 		return Err(http::StatusCode::NOT_FOUND);
 	}
-	let key =
-		load_key(&entry.account_hash).map_err(|_| http::StatusCode::GONE)?;
+	if entry.owner_hash.is_empty() {
+		return Err(http::StatusCode::GONE);
+	}
+	let key = load_encryption_key(KEY_SERVICE, &entry.account_hash)
+		.map_err(|_| http::StatusCode::GONE)?;
 	let range = parse_range(
 		request.headers().get(http::header::RANGE),
 		entry.byte_length,
@@ -397,13 +905,9 @@ async fn serve_protocol_inner(
 		read_encrypted_range(
 			&entry_path(&root, entry),
 			&key,
-			&aad_prefix(
-				&entry.account_hash,
-				&entry.album_hash,
-				&entry.content_hash,
-				&entry.content_type,
-			),
+			&entry_aad(entry),
 			range,
+			MAGIC,
 		)
 		.map_err(|_| http::StatusCode::GONE)?
 	};
@@ -456,17 +960,6 @@ fn cache_root(app: &tauri::AppHandle) -> Result<PathBuf, AppError> {
 		.map_err(|_| cache_error("could not resolve album cache directory"))
 }
 
-fn validate_identifier(value: &str) -> Result<(), AppError> {
-	if value.is_empty()
-		|| value.len() > 256
-		|| value.chars().any(char::is_control)
-	{
-		Err(cache_error("invalid album cache identifier"))
-	} else {
-		Ok(())
-	}
-}
-
 fn ensure_active_account(account_id: &str) -> Result<(), AppError> {
 	let session = AuthStorage::get_session()?
 		.ok_or_else(|| cache_error("album cache requires an active account"))?;
@@ -479,79 +972,147 @@ fn ensure_active_account(account_id: &str) -> Result<(), AppError> {
 	}
 }
 
-fn validate_content_type(value: &str) -> Result<(), AppError> {
-	if matches!(value.split(';').next(), Some(kind) if kind.starts_with("image/") || kind.starts_with("video/"))
-	{
-		Ok(())
-	} else {
-		Err(cache_error("contentType must be image or video media"))
-	}
+fn validate_composite_identity(
+	account_id: &str,
+	owner_profile_id: &str,
+	album_id: &str,
+) -> Result<(), AppError> {
+	validate_identifier(account_id)?;
+	validate_identifier(owner_profile_id)?;
+	validate_identifier(album_id)
 }
 
-fn validate_cdn_url(value: &str) -> Result<reqwest::Url, AppError> {
-	let url = reqwest::Url::parse(value)
-		.map_err(|_| cache_error("invalid media URL"))?;
-	if cdn_host_allowed(&url) {
-		Ok(url)
-	} else {
-		Err(cache_error("media URL host is not allowed"))
-	}
-}
-
-fn cdn_host_allowed(url: &reqwest::Url) -> bool {
-	url.scheme() == "https"
-		&& url.host_str().is_some_and(|host| {
-			host.eq_ignore_ascii_case("cdns.grindr.com")
-				|| host.to_ascii_lowercase().ends_with(".cloudfront.net")
-		})
-}
-
-fn same_media_category(expected: &str, actual: &str) -> bool {
-	expected.split('/').next() == actual.split('/').next()
-}
-
-fn identifier_hash(identifier: &str) -> String {
-	URL_SAFE_NO_PAD.encode(Sha256::digest(identifier.as_bytes()))
-}
-
-fn key_entry(account_hash: &str) -> Result<keyring_core::Entry, AppError> {
-	keyring_core::Entry::new(KEY_SERVICE, account_hash)
-		.map_err(|_| cache_error("could not access album cache key"))
-}
-
-fn load_or_create_key(account_hash: &str) -> Result<[u8; 32], AppError> {
-	match key_entry(account_hash)?.get_secret() {
-		Ok(bytes) => key_from_bytes(&bytes),
-		Err(keyring_core::Error::NoEntry) => {
-			let mut key = [0_u8; 32];
-			OsRng.fill_bytes(&mut key);
-			key_entry(account_hash)?.set_secret(&key).map_err(|_| {
-				cache_error("could not persist album cache key")
-			})?;
-			Ok(key)
+fn contains_remote_url(value: &serde_json::Value) -> bool {
+	match value {
+		serde_json::Value::String(value) => {
+			value.starts_with("http://") || value.starts_with("https://")
 		}
-		Err(_) => Err(cache_error("could not read album cache key")),
+		serde_json::Value::Array(values) => {
+			values.iter().any(contains_remote_url)
+		}
+		serde_json::Value::Object(values) => {
+			values.values().any(contains_remote_url)
+		}
+		_ => false,
 	}
 }
 
-fn load_key(account_hash: &str) -> Result<[u8; 32], AppError> {
-	let bytes = key_entry(account_hash)?
-		.get_secret()
-		.map_err(|_| cache_error("album cache key is unavailable"))?;
-	key_from_bytes(&bytes)
+fn record_aad(
+	account_hash: &str,
+	owner_hash: &str,
+	album_hash: &str,
+) -> Vec<u8> {
+	encrypted_aad_prefix("record-v2", &[account_hash, owner_hash, album_hash])
 }
 
-fn key_from_bytes(bytes: &[u8]) -> Result<[u8; 32], AppError> {
-	bytes
-		.try_into()
-		.map_err(|_| cache_error("album cache key is invalid"))
-}
-
-fn delete_key(account_hash: &str) -> Result<(), AppError> {
-	match key_entry(account_hash)?.delete_credential() {
-		Ok(()) | Err(keyring_core::Error::NoEntry) => Ok(()),
-		Err(_) => Err(cache_error("could not delete album cache key")),
+fn compare_record_entries(
+	left: &AlbumRecordEntry,
+	right: &AlbumRecordEntry,
+) -> std::cmp::Ordering {
+	match (left.history_order, right.history_order) {
+		(None, None) => right
+			.last_accessed_ms
+			.cmp(&left.last_accessed_ms)
+			.then_with(|| left.album_hash.cmp(&right.album_hash)),
+		(None, Some(_)) => std::cmp::Ordering::Less,
+		(Some(_), None) => std::cmp::Ordering::Greater,
+		(Some(left_order), Some(right_order)) => left_order
+			.cmp(&right_order)
+			.then_with(|| left.album_hash.cmp(&right.album_hash)),
 	}
+}
+
+fn history_order_for_record(
+	record: &serde_json::Value,
+	previous: Option<&AlbumRecordEntry>,
+) -> Option<u64> {
+	record
+		.pointer("/historyOrder/sequence")
+		.and_then(serde_json::Value::as_u64)
+		.or_else(|| previous.and_then(|entry| entry.history_order))
+}
+
+fn membership_snapshot_path(
+	root: &Path,
+	account_hash: &str,
+	owner_hash: &str,
+) -> PathBuf {
+	root.join(account_hash)
+		.join(format!("membership-{owner_hash}.ogam"))
+}
+
+fn membership_snapshot_aad(account_hash: &str, owner_hash: &str) -> Vec<u8> {
+	encrypted_aad_prefix("membership-v5", &[account_hash, owner_hash])
+}
+
+fn store_membership_snapshot(
+	root: &Path,
+	account_hash: &str,
+	owner_hash: &str,
+	snapshot: &AlbumMembershipSnapshot,
+	key: &[u8; 32],
+) -> Result<(), AppError> {
+	if snapshot.version != 5 {
+		return Err(cache_error(
+			"album membership snapshot version is invalid",
+		));
+	}
+	let account_dir = root.join(account_hash);
+	fs::create_dir_all(&account_dir)
+		.map_err(|_| cache_error("could not create album cache directory"))?;
+	let bytes = serde_json::to_vec(snapshot).map_err(|_| {
+		cache_error("could not encode album membership snapshot")
+	})?;
+	write_encrypted_atomic(
+		&membership_snapshot_path(root, account_hash, owner_hash),
+		&bytes,
+		key,
+		&membership_snapshot_aad(account_hash, owner_hash),
+		MEMBERSHIP_MAGIC,
+	)
+}
+
+fn read_membership_snapshot(
+	root: &Path,
+	account_hash: &str,
+	owner_hash: &str,
+	key: &[u8; 32],
+) -> Result<Option<AlbumMembershipSnapshot>, AppError> {
+	let path = membership_snapshot_path(root, account_hash, owner_hash);
+	if !path.is_file() {
+		return Ok(None);
+	}
+	let bytes = read_encrypted_range(
+		&path,
+		key,
+		&membership_snapshot_aad(account_hash, owner_hash),
+		None,
+		MEMBERSHIP_MAGIC,
+	)?;
+	let snapshot: AlbumMembershipSnapshot = serde_json::from_slice(&bytes)
+		.map_err(|_| cache_error("album membership snapshot is invalid"))?;
+	if snapshot.version != 5 {
+		return Err(cache_error(
+			"album membership snapshot version is invalid",
+		));
+	}
+	Ok(Some(snapshot))
+}
+
+fn read_record(
+	root: &Path,
+	entry: &AlbumRecordEntry,
+) -> Result<serde_json::Value, AppError> {
+	let key = load_encryption_key(KEY_SERVICE, &entry.account_hash)?;
+	let bytes = read_encrypted_range(
+		&root.join(&entry.account_hash).join(&entry.file_name),
+		&key,
+		&record_aad(&entry.account_hash, &entry.owner_hash, &entry.album_hash),
+		None,
+		RECORD_MAGIC,
+	)?;
+	serde_json::from_slice(&bytes)
+		.map_err(|_| cache_error("album metadata is invalid"))
 }
 
 fn aad_prefix(
@@ -560,332 +1121,56 @@ fn aad_prefix(
 	content_hash: &str,
 	content_type: &str,
 ) -> Vec<u8> {
-	format!("v1\0{account_hash}\0{album_hash}\0{content_hash}\0{content_type}")
-		.into_bytes()
+	encrypted_aad_prefix(
+		"v1",
+		&[account_hash, album_hash, content_hash, content_type],
+	)
 }
 
-fn chunk_aad(prefix: &[u8], index: u64) -> Vec<u8> {
-	let mut aad = Vec::with_capacity(prefix.len() + 8);
-	aad.extend_from_slice(prefix);
-	aad.extend_from_slice(&index.to_le_bytes());
-	aad
+fn aad_prefix_v2(
+	account_hash: &str,
+	owner_hash: &str,
+	album_hash: &str,
+	content_hash: &str,
+	content_type: &str,
+) -> Vec<u8> {
+	encrypted_aad_prefix(
+		"v2",
+		&[
+			account_hash,
+			owner_hash,
+			album_hash,
+			content_hash,
+			content_type,
+		],
+	)
 }
 
-#[cfg(test)]
-fn write_encrypted_atomic(
-	path: &Path,
-	bytes: &[u8],
-	key: &[u8; 32],
-	aad: &[u8],
-) -> Result<(), AppError> {
-	let parent = path
-		.parent()
-		.ok_or_else(|| cache_error("invalid cache path"))?;
-	let temp = parent.join(format!(".{}.tmp", random_token()));
-	let result = (|| {
-		let cipher = Aes256Gcm::new_from_slice(key).map_err(|_| {
-			cache_error("could not initialize album encryption")
-		})?;
-		let mut writer = BufWriter::new(
-			File::create(&temp)
-				.map_err(|_| cache_error("could not create cache file"))?,
-		);
-		writer.write_all(MAGIC).map_err(io_error)?;
-		writer
-			.write_all(&(CHUNK_SIZE as u32).to_le_bytes())
-			.map_err(io_error)?;
-		writer
-			.write_all(&(bytes.len() as u64).to_le_bytes())
-			.map_err(io_error)?;
-		for (index, chunk) in bytes.chunks(CHUNK_SIZE).enumerate() {
-			let mut nonce = [0_u8; 12];
-			OsRng.fill_bytes(&mut nonce);
-			let ciphertext = cipher
-				.encrypt(
-					Nonce::from_slice(&nonce),
-					Payload {
-						msg: chunk,
-						aad: &chunk_aad(aad, index as u64),
-					},
-				)
-				.map_err(|_| cache_error("album encryption failed"))?;
-			writer.write_all(&nonce).map_err(io_error)?;
-			writer
-				.write_all(&(ciphertext.len() as u32).to_le_bytes())
-				.map_err(io_error)?;
-			writer.write_all(&ciphertext).map_err(io_error)?;
-		}
-		writer.flush().map_err(io_error)?;
-		writer.get_ref().sync_all().map_err(io_error)?;
-		fs::rename(&temp, path)
-			.map_err(|_| cache_error("could not commit cache file"))?;
-		File::open(parent)
-			.and_then(|file| file.sync_all())
-			.map_err(io_error)?;
-		Ok(())
-	})();
-	if result.is_err() {
-		let _ = fs::remove_file(&temp);
-	}
-	result
-}
-
-async fn stream_encrypted_atomic(
-	mut response: reqwest::Response,
-	path: &Path,
-	key: &[u8; 32],
-	aad: &[u8],
-	maximum_bytes: u64,
-) -> Result<u64, AppError> {
-	let parent = path
-		.parent()
-		.ok_or_else(|| cache_error("invalid cache path"))?;
-	let temp = parent.join(format!(".{}.tmp", random_token()));
-	let result = async {
-		let cipher = Aes256Gcm::new_from_slice(key).map_err(|_| {
-			cache_error("could not initialize album encryption")
-		})?;
-		let mut writer = BufWriter::new(
-			File::create(&temp)
-				.map_err(|_| cache_error("could not create cache file"))?,
-		);
-		writer.write_all(MAGIC).map_err(io_error)?;
-		writer
-			.write_all(&(CHUNK_SIZE as u32).to_le_bytes())
-			.map_err(io_error)?;
-		writer.write_all(&0_u64.to_le_bytes()).map_err(io_error)?;
-
-		let mut pending = Vec::with_capacity(CHUNK_SIZE * 2);
-		let mut byte_length = 0_u64;
-		let mut chunk_index = 0_u64;
-		while let Some(chunk) = response
-			.chunk()
-			.await
-			.map_err(|_| cache_error("media download failed"))?
-		{
-			byte_length = byte_length
-				.checked_add(chunk.len() as u64)
-				.ok_or_else(|| cache_error("media size overflow"))?;
-			if byte_length > maximum_bytes {
-				return Err(cache_error("media exceeds maximumBytes"));
-			}
-			pending.extend_from_slice(&chunk);
-			while pending.len() >= CHUNK_SIZE {
-				let remainder = pending.split_off(CHUNK_SIZE);
-				write_encrypted_chunk(
-					&mut writer,
-					&cipher,
-					&pending,
-					aad,
-					chunk_index,
-				)?;
-				pending = remainder;
-				chunk_index += 1;
-			}
-		}
-		if byte_length == 0 {
-			return Err(cache_error("media response was empty"));
-		}
-		if !pending.is_empty() {
-			write_encrypted_chunk(
-				&mut writer,
-				&cipher,
-				&pending,
-				aad,
-				chunk_index,
-			)?;
-		}
-		writer.seek(SeekFrom::Start(12)).map_err(io_error)?;
-		writer
-			.write_all(&byte_length.to_le_bytes())
-			.map_err(io_error)?;
-		writer.flush().map_err(io_error)?;
-		writer.get_ref().sync_all().map_err(io_error)?;
-		fs::rename(&temp, path)
-			.map_err(|_| cache_error("could not commit cache file"))?;
-		File::open(parent)
-			.and_then(|file| file.sync_all())
-			.map_err(io_error)?;
-		Ok(byte_length)
-	}
-	.await;
-	if result.is_err() {
-		let _ = fs::remove_file(&temp);
-	}
-	result
-}
-
-fn write_encrypted_chunk(
-	writer: &mut impl Write,
-	cipher: &Aes256Gcm,
-	plaintext: &[u8],
-	aad: &[u8],
-	chunk_index: u64,
-) -> Result<(), AppError> {
-	let mut nonce = [0_u8; 12];
-	OsRng.fill_bytes(&mut nonce);
-	let ciphertext = cipher
-		.encrypt(
-			Nonce::from_slice(&nonce),
-			Payload {
-				msg: plaintext,
-				aad: &chunk_aad(aad, chunk_index),
-			},
-		)
-		.map_err(|_| cache_error("album encryption failed"))?;
-	writer.write_all(&nonce).map_err(io_error)?;
-	writer
-		.write_all(&(ciphertext.len() as u32).to_le_bytes())
-		.map_err(io_error)?;
-	writer.write_all(&ciphertext).map_err(io_error)
-}
-
-fn read_encrypted_range(
-	path: &Path,
-	key: &[u8; 32],
-	aad: &[u8],
-	range: Option<(u64, u64)>,
-) -> Result<Vec<u8>, AppError> {
-	let cipher = Aes256Gcm::new_from_slice(key)
-		.map_err(|_| cache_error("could not initialize album encryption"))?;
-	let mut reader = BufReader::new(
-		File::open(path)
-			.map_err(|_| cache_error("cache file is unavailable"))?,
-	);
-	let (chunk_size, total) = read_header(&mut reader)?;
-	let (start, end) = range.unwrap_or((0, total.saturating_sub(1)));
-	let first_chunk = start / chunk_size as u64;
-	let last_chunk = end / chunk_size as u64;
-	let mut output = Vec::with_capacity((end - start + 1) as usize);
-	for index in 0..=(total.saturating_sub(1) / chunk_size as u64) {
-		let mut nonce = [0_u8; 12];
-		reader.read_exact(&mut nonce).map_err(io_error)?;
-		let ciphertext_len = read_u32(&mut reader)? as usize;
-		if index < first_chunk || index > last_chunk {
-			reader
-				.seek(SeekFrom::Current(ciphertext_len as i64))
-				.map_err(io_error)?;
-			continue;
-		}
-		let mut ciphertext = vec![0_u8; ciphertext_len];
-		reader.read_exact(&mut ciphertext).map_err(io_error)?;
-		let plaintext = cipher
-			.decrypt(
-				Nonce::from_slice(&nonce),
-				Payload {
-					msg: &ciphertext,
-					aad: &chunk_aad(aad, index),
-				},
-			)
-			.map_err(|_| cache_error("cached media authentication failed"))?;
-		let chunk_start = index * chunk_size as u64;
-		let local_start = start.saturating_sub(chunk_start) as usize;
-		let local_end = ((end - chunk_start + 1) as usize).min(plaintext.len());
-		output.extend_from_slice(&plaintext[local_start..local_end]);
-	}
-	Ok(output)
-}
-
-fn read_header(reader: &mut impl Read) -> Result<(usize, u64), AppError> {
-	let mut magic = [0_u8; 8];
-	reader.read_exact(&mut magic).map_err(io_error)?;
-	if &magic != MAGIC {
-		return Err(cache_error("invalid album cache file"));
-	}
-	let chunk_size = read_u32(reader)? as usize;
-	let mut total = [0_u8; 8];
-	reader.read_exact(&mut total).map_err(io_error)?;
-	let total = u64::from_le_bytes(total);
-	if chunk_size == 0 || total == 0 {
-		return Err(cache_error("invalid album cache header"));
-	}
-	Ok((chunk_size, total))
-}
-
-fn read_u32(reader: &mut impl Read) -> Result<u32, AppError> {
-	let mut bytes = [0_u8; 4];
-	reader.read_exact(&mut bytes).map_err(io_error)?;
-	Ok(u32::from_le_bytes(bytes))
-}
-
-fn parse_range(
-	value: Option<&http::HeaderValue>,
-	total: u64,
-) -> Result<Option<(u64, u64)>, http::StatusCode> {
-	let Some(value) = value else {
-		return Ok(None);
-	};
-	let value = value
-		.to_str()
-		.map_err(|_| http::StatusCode::RANGE_NOT_SATISFIABLE)?;
-	let spec = value
-		.strip_prefix("bytes=")
-		.filter(|value| !value.contains(','))
-		.ok_or(http::StatusCode::RANGE_NOT_SATISFIABLE)?;
-	let (start, end) = spec
-		.split_once('-')
-		.ok_or(http::StatusCode::RANGE_NOT_SATISFIABLE)?;
-	let (start, end) = if start.is_empty() {
-		let suffix = end
-			.parse::<u64>()
-			.map_err(|_| http::StatusCode::RANGE_NOT_SATISFIABLE)?;
-		if suffix == 0 {
-			return Err(http::StatusCode::RANGE_NOT_SATISFIABLE);
-		}
-		(
-			total.saturating_sub(suffix.min(total)),
-			total.saturating_sub(1),
+fn entry_aad(entry: &CacheEntry) -> Vec<u8> {
+	if entry.owner_hash.is_empty() {
+		aad_prefix(
+			&entry.account_hash,
+			&entry.album_hash,
+			&entry.content_hash,
+			&entry.content_type,
 		)
 	} else {
-		let start = start
-			.parse::<u64>()
-			.map_err(|_| http::StatusCode::RANGE_NOT_SATISFIABLE)?;
-		let end = if end.is_empty() {
-			total.saturating_sub(1)
-		} else {
-			end.parse::<u64>()
-				.map_err(|_| http::StatusCode::RANGE_NOT_SATISFIABLE)?
-		};
-		(start, end.min(total.saturating_sub(1)))
-	};
-	if total == 0
-		|| start > end
-		|| start >= total
-		|| end - start + 1 > MAX_RANGE_BYTES
-	{
-		return Err(http::StatusCode::RANGE_NOT_SATISFIABLE);
+		aad_prefix_v2(
+			&entry.account_hash,
+			&entry.owner_hash,
+			&entry.album_hash,
+			&entry.content_hash,
+			&entry.content_type,
+		)
 	}
-	Ok(Some((start, end)))
 }
 
 fn load_index(root: &Path) -> Result<CacheIndex, AppError> {
-	let path = root.join(INDEX_FILE);
-	match fs::read(path) {
-		Ok(bytes) => serde_json::from_slice(&bytes)
-			.map_err(|_| cache_error("album cache index is invalid")),
-		Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-			Ok(CacheIndex::default())
-		}
-		Err(_) => Err(cache_error("could not read album cache index")),
-	}
+	load_json_index(root, INDEX_FILE)
 }
 
 fn save_index(root: &Path, index: &CacheIndex) -> Result<(), AppError> {
-	fs::create_dir_all(root)
-		.map_err(|_| cache_error("could not create album cache directory"))?;
-	let temp = root.join(format!(".{INDEX_FILE}.tmp"));
-	let bytes = serde_json::to_vec(index)
-		.map_err(|_| cache_error("could not encode album cache index"))?;
-	fs::write(&temp, bytes)
-		.map_err(|_| cache_error("could not write album cache index"))?;
-	File::open(&temp)
-		.and_then(|file| file.sync_all())
-		.map_err(io_error)?;
-	fs::rename(&temp, root.join(INDEX_FILE))
-		.map_err(|_| cache_error("could not commit album cache index"))?;
-	File::open(root)
-		.and_then(|file| file.sync_all())
-		.map_err(io_error)
+	save_json_index(root, INDEX_FILE, index)
 }
 
 fn trim_index(
@@ -895,10 +1180,15 @@ fn trim_index(
 ) -> Result<(), AppError> {
 	let mut total: u64 =
 		index.entries.iter().map(|entry| entry.byte_length).sum();
-	let mut albums: HashMap<(String, String), (u64, u64)> = HashMap::new();
+	let mut albums: HashMap<(String, String, String), (u64, u64)> =
+		HashMap::new();
 	for entry in &index.entries {
 		let album = albums
-			.entry((entry.account_hash.clone(), entry.album_hash.clone()))
+			.entry((
+				entry.account_hash.clone(),
+				entry.owner_hash.clone(),
+				entry.album_hash.clone(),
+			))
 			.or_insert((0, entry.last_accessed_ms));
 		album.0 += entry.byte_length;
 		album.1 = album.1.max(entry.last_accessed_ms);
@@ -906,22 +1196,28 @@ fn trim_index(
 	let mut albums: Vec<_> = albums.into_iter().collect();
 	albums.sort_by_key(|(_, (_, accessed))| *accessed);
 	let mut evict = HashSet::new();
-	for ((account, album), (bytes, _)) in albums {
+	for ((account, owner, album), (bytes, _)) in albums {
 		if total <= maximum_bytes {
 			break;
 		}
 		total = total.saturating_sub(bytes);
-		evict.insert((account, album));
+		evict.insert((account, owner, album));
 	}
 	for entry in &index.entries {
-		if evict
-			.contains(&(entry.account_hash.clone(), entry.album_hash.clone()))
-		{
+		if evict.contains(&(
+			entry.account_hash.clone(),
+			entry.owner_hash.clone(),
+			entry.album_hash.clone(),
+		)) {
 			let _ = fs::remove_file(entry_path(root, entry));
 		}
 	}
 	index.entries.retain(|entry| {
-		!evict.contains(&(entry.account_hash.clone(), entry.album_hash.clone()))
+		!evict.contains(&(
+			entry.account_hash.clone(),
+			entry.owner_hash.clone(),
+			entry.album_hash.clone(),
+		))
 	});
 	Ok(())
 }
@@ -937,7 +1233,9 @@ fn stats_for(index: &CacheIndex, account_id: Option<&str>) -> AlbumCacheStats {
 		entry_count: entries.len() as u64,
 		album_count: entries
 			.iter()
-			.map(|entry| (&entry.account_hash, &entry.album_hash))
+			.map(|entry| {
+				(&entry.account_hash, &entry.owner_hash, &entry.album_hash)
+			})
 			.collect::<HashSet<_>>()
 			.len() as u64,
 		account_count: entries
@@ -953,42 +1251,60 @@ fn entry_path(root: &Path, entry: &CacheEntry) -> PathBuf {
 }
 
 fn protocol_url(token: &str) -> String {
-	if cfg!(any(target_os = "android", target_os = "windows")) {
-		format!("http://{SCHEME}.localhost/{token}")
-	} else {
-		format!("{SCHEME}://localhost/{token}")
-	}
+	encrypted_protocol_url(SCHEME, token)
 }
 fn random_token() -> String {
-	let mut bytes = [0_u8; 24];
-	OsRng.fill_bytes(&mut bytes);
-	URL_SAFE_NO_PAD.encode(bytes)
+	encrypted_random_token()
 }
 fn now_ms() -> u64 {
-	SystemTime::now()
-		.duration_since(UNIX_EPOCH)
-		.unwrap_or_default()
-		.as_millis() as u64
-}
-fn io_error(_: std::io::Error) -> AppError {
-	cache_error("album cache I/O failed")
+	encrypted_now_ms()
 }
 fn cache_error(message: &str) -> AppError {
-	AppError::Api {
-		code: 500,
-		message: message.to_owned(),
-	}
+	media_error(message)
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use crate::api::encrypted_media_store::CHUNK_SIZE;
+	use std::io::{Read, Seek, SeekFrom, Write};
+
+	use crate::api::encrypted_media_store::{
+		write_encrypted_atomic, MAX_RANGE_BYTES,
+	};
 
 	fn temp_dir() -> PathBuf {
 		let path = std::env::temp_dir()
 			.join(format!("open-grind-album-cache-test-{}", random_token()));
 		fs::create_dir_all(&path).unwrap();
 		path
+	}
+
+	#[test]
+	fn authoritative_membership_reconciliation_handles_arbitrary_album_ids() {
+		let mut record = serde_json::json!({
+			"identity": { "albumId": 9001 },
+			"membership": {
+				"isCurrentlyShared": true,
+				"lastListedAt": 1,
+				"unavailableReason": null
+			}
+		});
+		reconcile_record_membership(&mut record, &HashSet::new(), 50).unwrap();
+		assert_eq!(record["membership"]["isCurrentlyShared"], false);
+		assert_eq!(record["membership"]["lastListedAt"], 50);
+		assert_eq!(record["membership"]["unavailableReason"], "unshared");
+		reconcile_record_membership(
+			&mut record,
+			&HashSet::from(["9001".to_owned()]),
+			75,
+		)
+		.unwrap();
+		assert_eq!(record["membership"]["isCurrentlyShared"], true);
+		assert_eq!(
+			record["membership"]["unavailableReason"],
+			serde_json::Value::Null
+		);
 	}
 
 	#[test]
@@ -999,15 +1315,17 @@ mod tests {
 		let bytes: Vec<u8> = (0..CHUNK_SIZE * 2 + 91)
 			.map(|index| (index % 251) as u8)
 			.collect();
-		write_encrypted_atomic(&path, &bytes, &key, b"identity").unwrap();
+		write_encrypted_atomic(&path, &bytes, &key, b"identity", MAGIC)
+			.unwrap();
 		assert_ne!(fs::read(&path).unwrap(), bytes);
 		assert_eq!(
-			read_encrypted_range(&path, &key, b"identity", None).unwrap(),
+			read_encrypted_range(&path, &key, b"identity", None, MAGIC)
+				.unwrap(),
 			bytes
 		);
 		let range = (CHUNK_SIZE as u64 - 17, CHUNK_SIZE as u64 + 23);
 		assert_eq!(
-			read_encrypted_range(&path, &key, b"identity", Some(range))
+			read_encrypted_range(&path, &key, b"identity", Some(range), MAGIC,)
 				.unwrap(),
 			bytes[range.0 as usize..=range.1 as usize]
 		);
@@ -1019,9 +1337,16 @@ mod tests {
 		let root = temp_dir();
 		let path = root.join("media.ogac");
 		let key = [9_u8; 32];
-		write_encrypted_atomic(&path, b"private media", &key, b"account-a")
-			.unwrap();
-		assert!(read_encrypted_range(&path, &key, b"account-b", None).is_err());
+		write_encrypted_atomic(
+			&path,
+			b"private media",
+			&key,
+			b"account-a",
+			MAGIC,
+		)
+		.unwrap();
+		assert!(read_encrypted_range(&path, &key, b"account-b", None, MAGIC)
+			.is_err());
 		let mut file = fs::OpenOptions::new()
 			.read(true)
 			.write(true)
@@ -1032,8 +1357,189 @@ mod tests {
 		file.read_exact(&mut byte).unwrap();
 		file.seek(SeekFrom::End(-1)).unwrap();
 		file.write_all(&[byte[0] ^ 1]).unwrap();
-		assert!(read_encrypted_range(&path, &key, b"account-a", None).is_err());
+		assert!(read_encrypted_range(&path, &key, b"account-a", None, MAGIC)
+			.is_err());
 		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn owner_bound_aad_separates_colliding_album_ids() {
+		assert_ne!(
+			aad_prefix_v2(
+				"account",
+				"owner-a",
+				"album",
+				"content",
+				"image/jpeg"
+			),
+			aad_prefix_v2(
+				"account",
+				"owner-b",
+				"album",
+				"content",
+				"image/jpeg"
+			),
+		);
+	}
+
+	#[test]
+	fn encrypted_membership_snapshots_are_isolated_by_owner() {
+		let root = temp_dir();
+		let key = [17_u8; 32];
+		let snapshot = AlbumMembershipSnapshot {
+			version: 5,
+			current_album_ids: vec![11, 22],
+			listed_at: 123,
+		};
+		store_membership_snapshot(
+			&root,
+			"account-hash",
+			"owner-a-hash",
+			&snapshot,
+			&key,
+		)
+		.unwrap();
+		assert_eq!(
+			read_membership_snapshot(
+				&root,
+				"account-hash",
+				"owner-a-hash",
+				&key
+			)
+			.unwrap(),
+			Some(snapshot)
+		);
+		fs::copy(
+			membership_snapshot_path(&root, "account-hash", "owner-a-hash"),
+			membership_snapshot_path(&root, "account-hash", "owner-b-hash"),
+		)
+		.unwrap();
+		assert!(read_membership_snapshot(
+			&root,
+			"account-hash",
+			"owner-b-hash",
+			&key
+		)
+		.is_err());
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn account_clear_removes_a_snapshot_only_account() {
+		let root = temp_dir();
+		let key = [23_u8; 32];
+		let account_hash = "snapshot-only-account";
+		store_membership_snapshot(
+			&root,
+			account_hash,
+			"owner",
+			&AlbumMembershipSnapshot {
+				version: 5,
+				current_album_ids: vec![1],
+				listed_at: 10,
+			},
+			&key,
+		)
+		.unwrap();
+		let mut deleted_keys = Vec::new();
+		clear_account_artifacts(
+			&root,
+			HashSet::from([account_hash.to_owned()]),
+			|hash| {
+				deleted_keys.push(hash.to_owned());
+				Ok(())
+			},
+		)
+		.unwrap();
+		assert!(!root.join(account_hash).exists());
+		assert_eq!(deleted_keys, vec![account_hash]);
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn global_clear_discovers_snapshot_only_accounts() {
+		let root = temp_dir();
+		let key = [29_u8; 32];
+		for account_hash in ["snapshot-account-a", "snapshot-account-b"] {
+			store_membership_snapshot(
+				&root,
+				account_hash,
+				"owner",
+				&AlbumMembershipSnapshot {
+					version: 5,
+					current_album_ids: vec![1],
+					listed_at: 10,
+				},
+				&key,
+			)
+			.unwrap();
+		}
+		let discovered = account_directories(&root).unwrap();
+		assert_eq!(discovered.len(), 2);
+		let mut deleted_keys = HashSet::new();
+		clear_account_artifacts(&root, discovered, |hash| {
+			deleted_keys.insert(hash.to_owned());
+			Ok(())
+		})
+		.unwrap();
+		assert_eq!(
+			deleted_keys,
+			HashSet::from([
+				"snapshot-account-a".to_owned(),
+				"snapshot-account-b".to_owned(),
+			])
+		);
+		assert!(account_directories(&root).unwrap().is_empty());
+		fs::remove_dir_all(root).unwrap();
+	}
+
+	#[test]
+	fn migration_history_order_is_stable_when_timestamps_change() {
+		let entry =
+			|album_hash: &str, sequence: u64, accessed: u64| AlbumRecordEntry {
+				account_hash: "account".to_owned(),
+				owner_hash: "owner".to_owned(),
+				album_hash: album_hash.to_owned(),
+				file_name: format!("{album_hash}.ogar"),
+				last_accessed_ms: accessed,
+				history_order: Some(sequence),
+			};
+		let mut entries = vec![
+			entry("album-2", 2, 100),
+			entry("album-0", 0, 200),
+			entry("album-1", 1, 9_999),
+		];
+		entries.sort_by(compare_record_entries);
+		assert_eq!(
+			entries
+				.iter()
+				.map(|entry| entry.album_hash.as_str())
+				.collect::<Vec<_>>(),
+			vec!["album-0", "album-1", "album-2"]
+		);
+	}
+
+	#[test]
+	fn record_updates_preserve_an_omitted_history_order() {
+		let previous = AlbumRecordEntry {
+			account_hash: "account".to_owned(),
+			owner_hash: "owner".to_owned(),
+			album_hash: "album".to_owned(),
+			file_name: "record.ogar".to_owned(),
+			last_accessed_ms: 1,
+			history_order: Some(7),
+		};
+		assert_eq!(
+			history_order_for_record(&serde_json::json!({}), Some(&previous)),
+			Some(7)
+		);
+		assert_eq!(
+			history_order_for_record(
+				&serde_json::json!({ "historyOrder": { "sequence": 8 } }),
+				Some(&previous)
+			),
+			Some(8)
+		);
 	}
 
 	#[test]
@@ -1151,6 +1657,7 @@ mod tests {
 	) -> CacheEntry {
 		CacheEntry {
 			account_hash: account.into(),
+			owner_hash: "owner".into(),
 			album_hash: album.into(),
 			content_hash: content.into(),
 			content_type: "image/jpeg".into(),

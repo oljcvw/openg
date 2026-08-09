@@ -6,6 +6,7 @@
 	import KeyboardNavigationSetting from "./KeyboardNavigationSetting.svelte";
 	import NotificationsLink from "./NotificationsLink.svelte";
 	import ProfileSwipeNavigationSetting from "./ProfileSwipeNavigationSetting.svelte";
+	import RetainSharedChatMediaSetting from "./RetainSharedChatMediaSetting.svelte";
 	import RevealMessageReadSetting from "./RevealMessageReadSetting.svelte";
 	import RevealProfileViewSetting from "./RevealProfileViewSetting.svelte";
 	import ShowRetractedMessagesSetting from "./ShowRetractedMessagesSetting.svelte";
@@ -21,6 +22,7 @@
 <h2>Storage</h2>
 <CacheSetting />
 <KeepUnavailableCachedAlbumsSetting />
+<RetainSharedChatMediaSetting />
 <h2>Accessibility</h2>
 <ProfileSwipeNavigationSetting />
 <h2>Messages</h2>

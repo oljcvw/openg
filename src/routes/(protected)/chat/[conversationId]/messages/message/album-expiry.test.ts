@@ -106,4 +106,9 @@ describe("albumExpiry", () => {
 			),
 		).toBe(null);
 	});
+
+	it("degrades to no marker for inherited object property names", () => {
+		expect(albumExpiry({ expirationType: "constructor" }, NOW)).toBe(null);
+		expect(albumExpiry({ expirationType: "toString" }, NOW)).toBe(null);
+	});
 });

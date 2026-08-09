@@ -53,6 +53,8 @@
 	let selectedAlbumId = $state<number | null>(null);
 	let expirationType = $state<AlbumExpirationType>("INDEFINITE");
 	let sharing = $state(false);
+	let loadedRecipientId = $state<number | null>(null);
+	let loadGeneration = 0;
 
 	/**
 	 * Derived from the shared record rather than kept alongside it, so reopening
@@ -76,11 +78,12 @@
 	);
 
 	async function load() {
+		const targetProfileId = recipientId;
+		const generation = ++loadGeneration;
 		albums = null;
 		error = null;
 		try {
 			const list = await getMyAlbums();
-			const targetProfileId = recipientId;
 			if (targetProfileId !== null) {
 				await ensureAlbumSharesSwept(targetProfileId, list);
 				if (
@@ -95,8 +98,13 @@
 					);
 				}
 			}
+			if (generation !== loadGeneration || targetProfileId !== recipientId)
+				return;
 			albums = list;
+			loadedRecipientId = targetProfileId;
 		} catch (err) {
+			if (generation !== loadGeneration || targetProfileId !== recipientId)
+				return;
 			console.error(err);
 			error = err;
 		}
@@ -106,7 +114,14 @@
 	// its tab is showing, so mounting would fetch albums every time the
 	// attachments sheet is opened, including to send a photo.
 	$effect(() => {
-		if (active && albums === null && error === null) void load();
+		const targetProfileId = recipientId;
+		if (!active) return;
+		if (loadedRecipientId !== targetProfileId) {
+			albums = null;
+			error = null;
+			selectedAlbumId = null;
+		}
+		if (albums === null && error === null) void load();
 	});
 
 	function albumCover(album: MyAlbum): string | null {

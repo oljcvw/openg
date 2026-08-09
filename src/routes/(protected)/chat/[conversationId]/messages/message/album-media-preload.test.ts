@@ -57,6 +57,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	vi.useRealTimers();
 	vi.restoreAllMocks();
 });
 
@@ -160,6 +161,33 @@ describe("detached album media preload diagnostics", () => {
 		expect(removeElement).toHaveBeenCalledOnce();
 	});
 
+	it("times out a detached image and cleans up its source and timer", async () => {
+		vi.useFakeTimers();
+		const image = createElement("img");
+		const removeSource = vi.spyOn(image, "removeAttribute");
+		const removeElement = vi.spyOn(image, "remove");
+		Object.defineProperty(image, "complete", {
+			configurable: true,
+			value: false,
+		});
+		returnElementFor("img", image);
+
+		const pending = preloadAlbumImage(
+			"https://d-album-timeout.cloudfront.net/private/id",
+			undefined,
+			5_000,
+		);
+		const rejection = expect(pending).rejects.toMatchObject({
+			name: "TimeoutError",
+		});
+		await vi.advanceTimersByTimeAsync(5_000);
+		await rejection;
+
+		expect(removeSource).toHaveBeenCalledWith("src");
+		expect(removeElement).toHaveBeenCalledOnce();
+		expect(vi.getTimerCount()).toBe(0);
+	});
+
 	it("cancels sibling media inspection after the first failure", async () => {
 		const images = [createElement("img"), createElement("img")];
 		for (const image of images) {
@@ -210,6 +238,37 @@ describe("detached album media preload diagnostics", () => {
 		expect(pause).toHaveBeenCalledOnce();
 		expect(removeSource).toHaveBeenCalledWith("src");
 		expect(load).toHaveBeenCalledTimes(2);
+	});
+
+	it("times out a detached video and unloads it exactly once", async () => {
+		vi.useFakeTimers();
+		const video = createElement("video");
+		const pause = vi.fn();
+		const load = vi.fn();
+		const removeSource = vi.spyOn(video, "removeAttribute");
+		Object.defineProperties(video, {
+			load: { configurable: true, value: load },
+			pause: { configurable: true, value: pause },
+			readyState: { configurable: true, value: 0 },
+		});
+		returnElementFor("video", video);
+
+		const pending = preloadAlbumVideo(
+			"https://d-album-video-timeout.cloudfront.net/private/id",
+			undefined,
+			5_000,
+		);
+		const rejection = expect(pending).rejects.toMatchObject({
+			name: "TimeoutError",
+		});
+		await vi.advanceTimersByTimeAsync(5_000);
+		await rejection;
+
+		expect(pause).toHaveBeenCalledOnce();
+		expect(removeSource).toHaveBeenCalledWith("src");
+		// Initial load plus one cleanup unload; no late timer cleanup repeats it.
+		expect(load).toHaveBeenCalledTimes(2);
+		expect(vi.getTimerCount()).toBe(0);
 	});
 
 	it("reports a successful detached image preload without private URL data", async () => {

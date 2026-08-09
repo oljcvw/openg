@@ -5,17 +5,9 @@
 
 	import { ApiError } from "$lib/api";
 	import { showErrorToast } from "$lib/api/error";
-	import {
-		createAlbum,
-		getAlbumsSharedByProfile,
-		getMyAlbums,
-	} from "$lib/api/messaging/albums";
-	import {
-		type AlbumAccess,
-		discoverSharedAlbum,
-		listCachedAlbumsByOwner,
-		markAlbumUnavailable,
-	} from "$lib/app-data/album-cache";
+	import { createAlbum, getMyAlbums } from "$lib/api/messaging/albums";
+	import { type AlbumAccess } from "$lib/app-data/album-cache";
+	import { loadSharedAlbumCollection } from "$lib/chat/shared-album-loader";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { Skeleton } from "$lib/components/ui/skeleton";
@@ -78,41 +70,26 @@
 	}
 
 	let albums = $state<AlbumEntry[] | null>(null);
+	let albumPage = $state(0);
 	let error = $state<unknown>(null);
 	let loadGeneration = 0;
 
 	async function load(id: number, isSelf: boolean) {
 		const generation = ++loadGeneration;
 		albums = null;
+		albumPage = 0;
 		error = null;
 		try {
 			let loaded: AlbumEntry[];
 			if (isSelf) {
 				loaded = (await getMyAlbums()).map(fromMyAlbum);
 			} else {
-				const shared = await getAlbumsSharedByProfile(id);
-				const remoteIds = new Set(shared.map((album) => album.albumId));
-				for (const album of shared) {
-					void discoverSharedAlbum({
-						albumId: album.albumId,
-						ownerProfileId: album.profileId,
-						expirationType: album.expirationType,
-						expiresAt: album.expiresAt,
-						isViewable: album.albumViewable,
-					});
-				}
-				const cached = await listCachedAlbumsByOwner(id);
-				const missing = cached.filter(
-					(record) => !remoteIds.has(record.albumId),
-				);
-				await Promise.all(
-					missing.map((record) =>
-						markAlbumUnavailable(record.albumId, "revoked_or_removed"),
-					),
-				);
+				const collection = await loadSharedAlbumCollection({
+					ownerProfileId: id,
+				});
 				loaded = [
-					...shared.map(fromSharedAlbum),
-					...missing.map((record) => ({
+					...collection.current.map(fromSharedAlbum),
+					...collection.cached.map((record) => ({
 						albumId: record.albumId,
 						albumName: record.album.albumName,
 						coverUrl: null,
@@ -194,10 +171,14 @@
 				{/each}
 			</div>
 		{:else}
-			<div class="flex gap-2 overflow-x-auto pb-1">
-				{#each albums as album (album.albumId)}
+			<div
+				class="grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2 pb-1"
+			>
+				{#each albums.slice(albumPage * 60, (albumPage + 1) * 60) as album (album.albumId)}
 					<a
-						href="/albums/{album.albumId}"
+						href={self
+							? `/albums/${album.albumId}`
+							: `/albums/${album.albumId}?owner=${profileId}`}
 						class="flex w-24 shrink-0 flex-col gap-1"
 					>
 						<div class="relative aspect-square">
@@ -239,6 +220,24 @@
 					</a>
 				{/each}
 			</div>
+			{#if albums.length > 60}
+				<div class="flex items-center justify-center gap-3 pt-2">
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={albumPage === 0}
+						onclick={() => (albumPage -= 1)}>Newer</Button
+					>
+					<span class="text-xs text-muted-foreground">Page {albumPage + 1}</span
+					>
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={(albumPage + 1) * 60 >= albums.length}
+						onclick={() => (albumPage += 1)}>Older</Button
+					>
+				</div>
+			{/if}
 		{/if}
 	</div>
 {/if}

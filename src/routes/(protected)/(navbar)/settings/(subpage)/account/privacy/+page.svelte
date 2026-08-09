@@ -44,10 +44,20 @@
 		settings = { ...settings, [key]: value };
 		try {
 			await setAccountPreferences({ [key]: value });
-			settings = await getAccountPreferences();
 		} catch (error) {
 			settings = previous;
 			showErrorToast({ label: "Failed to update privacy setting", error });
+			return;
+		}
+		try {
+			settings = await getAccountPreferences();
+		} catch (error) {
+			// The remote mutation succeeded. Preserve the optimistic value so the
+			// UI never claims the prior privacy state is still active.
+			showErrorToast({
+				label: "Privacy setting updated, but refresh failed",
+				error,
+			});
 		} finally {
 			const next = new Set(updating);
 			next.delete(key);

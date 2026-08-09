@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { toast } from "svelte-sonner";
 
 	import { deleteAccount } from "$lib/api/account-mutations";
 	import { showErrorToast } from "$lib/api/error";
@@ -19,7 +20,13 @@
 		if (confirmation !== confirmationText) return;
 		submitting = true;
 		try {
-			await deleteAccount();
+			const outcome = await deleteAccount();
+			if (!outcome.localCleanupComplete) {
+				toast.warning("Account deleted, but local cleanup was incomplete", {
+					description:
+						"Clear app data before another person uses this device. The account deletion must not be retried.",
+				});
+			}
 			await goto("/auth/sign-in");
 		} catch (error) {
 			showErrorToast({ label: "Failed to delete account", error });

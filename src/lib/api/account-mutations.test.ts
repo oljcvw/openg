@@ -35,9 +35,20 @@ const deleteSavedPhrasesForAccountMock = vi.mocked(
 describe("account mutation local cleanup", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		callMethodMock.mockImplementation((method) =>
-			Promise.resolve(method === "auth_state" ? 100 : undefined),
-		);
+		callMethodMock.mockImplementation((method) => {
+			if (method === "auth_state") return Promise.resolve(100);
+			if (
+				method === "update_account_email" ||
+				method === "update_account_password" ||
+				method === "delete_account"
+			)
+				return Promise.resolve({
+					remoteApplied: true,
+					localCleanupComplete: true,
+				});
+			return Promise.resolve(undefined);
+		});
+		clearLocalAccountStateMock.mockResolvedValue(true);
 	});
 
 	it("deletes only the current account's private local data after account deletion", async () => {
@@ -72,5 +83,37 @@ describe("account mutation local cleanup", () => {
 			expect.anything(),
 		);
 		expect(clearLocalAccountStateMock).toHaveBeenCalledTimes(2);
+	});
+
+	it("preserves remote success while reporting incomplete native cleanup", async () => {
+		callMethodMock.mockResolvedValueOnce({
+			remoteApplied: true,
+			localCleanupComplete: false,
+		});
+
+		await expect(
+			changePassword({
+				currentPassword: "current-password",
+				newPassword: "different-password",
+			}),
+		).resolves.toEqual({
+			remoteApplied: true,
+			localCleanupComplete: false,
+		});
+	});
+
+	it("aggregates browser cleanup failure without retrying the remote mutation", async () => {
+		clearLocalAccountStateMock.mockResolvedValueOnce(false);
+
+		await expect(
+			changeEmail({
+				email: "new@example.com",
+				password: "current-password",
+			}),
+		).resolves.toEqual({
+			remoteApplied: true,
+			localCleanupComplete: false,
+		});
+		expect(callMethodMock).toHaveBeenCalledOnce();
 	});
 });

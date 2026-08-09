@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { untrack } from "svelte";
+	import { onMount, untrack } from "svelte";
 
-	import { getKeepBottomNavigationBehindKeyboardSnapshot } from "$lib/app-data/preferences.svelte";
+	import {
+		getKeepBottomNavigationBehindKeyboardSnapshot,
+		subscribePreferences,
+	} from "$lib/app-data/preferences.svelte";
 	import {
 		getOrCreateConversationsState,
 		setConversations,
@@ -25,6 +28,16 @@
 	let conversationsListCollapsedSizePercentage = $state(0);
 	let conversationsListMinWidthPercentage = $state(0);
 	let pageContentMinWidthPercentage = $state(0);
+	let keepBottomNavigationBehindKeyboard = $state(
+		getKeepBottomNavigationBehindKeyboardSnapshot(),
+	);
+
+	onMount(() =>
+		subscribePreferences(() => {
+			keepBottomNavigationBehindKeyboard =
+				getKeepBottomNavigationBehindKeyboardSnapshot();
+		}),
+	);
 
 	$effect(() => {
 		if (!paneGroup) return;
@@ -45,9 +58,7 @@
 
 	$effect(() => {
 		const enabled =
-			isChatSelected &&
-			!mobile.current &&
-			getKeepBottomNavigationBehindKeyboardSnapshot();
+			isChatSelected && !mobile.current && keepBottomNavigationBehindKeyboard;
 		setChatImeOverlayEnabled(enabled);
 		return () => setChatImeOverlayEnabled(false);
 	});

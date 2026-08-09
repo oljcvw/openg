@@ -10,17 +10,27 @@
 		expiringImageMessageSchema,
 	} from "$lib/model/messaging/messages";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+	import type { SharedMediaEntry } from "$lib/chat/shared-media";
 	import LockedMedia from "./LockedMedia.svelte";
 	import { MessageMediaState } from "./message-media.svelte";
+	import { StableExplicitViewOnceMediaSource } from "./view-once-media";
 
 	let {
 		conversationId,
 		messageId,
 		message,
+		accountProfileId,
+		peerProfileId,
+		receivedFromPeer,
+		sentAt,
 	}: {
 		conversationId: string;
 		messageId: string;
 		message: ExpiringImageMessage["body"];
+		accountProfileId: number;
+		peerProfileId: number | null;
+		receivedFromPeer: boolean;
+		sentAt: number;
 	} = $props();
 
 	const media = new MessageMediaState();
@@ -46,31 +56,58 @@
 		| { status: "open"; image: LoadedImage };
 
 	let imageState = $state<ImageState>({ status: "idle" });
-	let cachedImage: LoadedImage | null = null;
+	let unavailable = $state(false);
+	const entry = $derived.by((): SharedMediaEntry | null =>
+		receivedFromPeer && peerProfileId !== null
+			? {
+					accountProfileId,
+					conversationId,
+					peerProfileId,
+					messageId,
+					mediaId: String(message.mediaId),
+					kind: "image",
+					messageType: "ExpiringImage",
+					sentAt,
+					remoteAvailability:
+						message.viewsRemaining === 0 ? "views_exhausted" : "available",
+					cacheAvailability: "not_cached",
+					cacheToken: null,
+					consumptive: true,
+					remoteUrl: null,
+				}
+			: null,
+	);
+	const sourceState = new StableExplicitViewOnceMediaSource();
+	const source = $derived.by(() => sourceState.forEntry(entry));
 
-	function openImage() {
-		if (cachedImage) {
-			imageState = { status: "open", image: cachedImage };
-		} else {
-			imageState = { status: "loading" };
-		}
-	}
-
-	$effect(() => {
-		if (imageState.status !== "loading") return;
+	function openImage(): void {
+		if (imageState.status !== "idle") return;
+		imageState = { status: "loading" };
 		void (async () => {
 			try {
-				const { body: image } = await getSingleMessage({
-					conversationId,
-					messageId,
-				}).then((res) => expiringImageMessageSchema.parse(res.message));
-				if (image.url === null) throw new Error("Image URL is null");
-				cachedImage = { url: image.url };
+				const authorize = async () => {
+					const { body: image } = await getSingleMessage({
+						conversationId,
+						messageId,
+					}).then((res) => expiringImageMessageSchema.parse(res.message));
+					return image.url;
+				};
+				const url = source
+					? await source.open(async () => {
+							const authorizedUrl = await authorize();
+							return authorizedUrl === null
+								? null
+								: { url: authorizedUrl, contentType: "image/*" };
+						}, message.viewsRemaining !== 0)
+					: await authorize();
+				if (url == null) {
+					unavailable = true;
+					imageState = { status: "idle" };
+					return;
+				}
 				imageState = {
 					status: "open",
-					image: {
-						url: image.url,
-					},
+					image: { url },
 				};
 			} catch (error) {
 				console.error(error);
@@ -78,10 +115,11 @@
 					label: "Failed to load expiring image",
 					error,
 				});
+				unavailable = true;
 				imageState = { status: "idle" };
 			}
 		})();
-	});
+	}
 
 	$effect(() => {
 		if (imageState.status !== "open") return;
@@ -126,7 +164,7 @@
 	});
 </script>
 
-{#if message.viewsRemaining === null || message.viewsRemaining > 0}
+{#if !unavailable}
 	<button
 		class={[
 			"flex w-50 items-center gap-2 px-4 py-3 text-start font-medium",
@@ -143,7 +181,11 @@
 		bind:this={media.el}
 	>
 		<ImagesIcon size={24} weight="fill" />
-		<span>View expiring image</span>
+		<span
+			>{message.viewsRemaining === 0
+				? "View cached image"
+				: "View expiring image"}</span
+		>
 		{@render media.adornments?.()}
 	</button>
 {:else}
@@ -152,7 +194,7 @@
 			class={[media.cornerClass, "gap-2 font-medium text-neutral-600"]}
 			size="sm"
 		>
-			Expired image
+			Image unavailable
 		</LockedMedia>
 		{@render media.adornments?.()}
 	</div>

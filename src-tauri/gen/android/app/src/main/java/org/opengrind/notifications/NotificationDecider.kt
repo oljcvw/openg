@@ -20,7 +20,8 @@ object NotificationDecider {
 	fun decide(
 		result: PollResult.Success,
 		settings: StoredNotificationSettings,
-		initialized: Boolean,
+		messageInitialized: Boolean,
+		tapInitialized: Boolean,
 		messageWatermark: NotificationWatermark,
 		tapWatermark: NotificationWatermark,
 		foreground: Boolean,
@@ -44,15 +45,15 @@ object NotificationDecider {
 			PollTap::timestamp,
 		) { it.profileId.toString() }
 
-		if (!initialized || foreground) {
+		if (foreground) {
 			return PollDecision(emptyList(), nextMessageWatermark, nextTapWatermark)
 		}
 
 		val notifications = buildList {
-			if (settings.messages && newMessages.isNotEmpty()) {
+			if (settings.messages && messageInitialized && newMessages.isNotEmpty()) {
 				add(formatMessages(newMessages, settings.showPreviews))
 			}
-			if (settings.taps && newTaps.isNotEmpty()) {
+			if (settings.taps && tapInitialized && newTaps.isNotEmpty()) {
 				add(formatTaps(newTaps, settings.showPreviews))
 			}
 		}

@@ -64,6 +64,26 @@ class NotificationDeliveryTest {
 	}
 
 	@Test
+	fun `display outcomes distinguish blocked from failed delivery`() {
+		val outcomes = ArrayDeque(
+			listOf(NotificationDisplayResult.Blocked, NotificationDisplayResult.Failed),
+		)
+		val processed = processNotificationResult(
+			result = result(),
+			messageInitialized = true,
+			tapInitialized = true,
+			messageWatermark = NotificationWatermark(99),
+			tapWatermark = NotificationWatermark(100),
+			readState = { state(enabled) },
+			display = { outcomes.removeFirst() },
+		)
+
+		assertEquals(0, processed?.displayedCount)
+		assertEquals(1, processed?.blockedCount)
+		assertEquals(1, processed?.failedCount)
+	}
+
+	@Test
 	fun `category changes are rechecked before each notification`() {
 		val tapsOnly = enabled.copy(messages = false)
 		val states = ArrayDeque(
@@ -89,12 +109,31 @@ class NotificationDeliveryTest {
 		assertNull(
 			processNotificationResult(
 				result = result(),
-				initialized = true,
+				messageInitialized = true,
+				tapInitialized = true,
 				messageWatermark = NotificationWatermark(99),
 				tapWatermark = NotificationWatermark(100),
 				readState = { state(enabled.copy(enabled = false)) },
-				display = { true },
+				display = { NotificationDisplayResult.Displayed },
 			),
+		)
+	}
+
+	@Test
+	fun `newly enabled taps initialize without suppressing initialized messages`() {
+		val processed = processNotificationResult(
+			result = result(),
+			messageInitialized = true,
+			tapInitialized = false,
+			messageWatermark = NotificationWatermark(99),
+			tapWatermark = NotificationWatermark(0),
+			readState = { state(enabled) },
+			display = { NotificationDisplayResult.Displayed },
+		)
+
+		assertEquals(
+			listOf(NotificationDecider.MESSAGE_NOTIFICATION_ID),
+			processed?.decision?.notifications?.map(PendingNotification::id),
 		)
 	}
 
@@ -105,7 +144,8 @@ class NotificationDeliveryTest {
 		var last = states.first()
 		return processNotificationResult(
 			result = result(),
-			initialized = true,
+			messageInitialized = true,
+			tapInitialized = true,
 			messageWatermark = NotificationWatermark(99),
 			tapWatermark = NotificationWatermark(100),
 			readState = {
@@ -114,7 +154,7 @@ class NotificationDeliveryTest {
 			},
 			display = {
 				displayed += it
-				true
+				NotificationDisplayResult.Displayed
 			},
 		)
 	}

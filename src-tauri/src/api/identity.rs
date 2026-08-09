@@ -122,6 +122,21 @@ pub fn align_device(_device: &mut grindr::DeviceInfo) -> Result<(), String> {
 	Ok(())
 }
 
+/// Generates a fresh pseudonymous device and aligns only its physical fields
+/// with the current Android device. Sign-out, account mutation, and background
+/// recovery must all use this path so the next client and persisted identity
+/// cannot diverge.
+pub fn generate_aligned_device() -> grindr::DeviceInfo {
+	let mut device = grindr::DeviceInfo::generate();
+	if let Err(error) = align_device(&mut device) {
+		tracing::warn!(
+			target: "open_grind_lib::api::identity",
+			"[api-identity] physical field alignment failed: {error}"
+		);
+	}
+	device
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;

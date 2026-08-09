@@ -2,7 +2,10 @@ import { goto } from "$app/navigation";
 
 import { callMethod } from "$lib/api";
 import { invalidateAccountSession } from "$lib/api/account-caches";
-import { removeAccountCache } from "$lib/app-data/cache-manager";
+import {
+	removeAccountCache,
+	removeGenericAccountCache,
+} from "$lib/app-data/cache-manager";
 import { clearAccountPreferences } from "$lib/app-data/preferences.svelte";
 import { getProfileCacheAccount } from "$lib/app-data/profile-cache";
 import { invalidateProfileLocationMutations } from "$lib/location/profile-location";
@@ -17,20 +20,37 @@ export async function signOut(): Promise<void> {
 		console.error(error);
 	}
 
+	await removeLocalAccountCache(accountId);
+
 	try {
 		await callMethod("logout");
 	} catch (error) {
 		console.error(error);
 	}
 
-	await finishLocalAccountTeardown(accountId);
+	await finishLocalAccountTeardown(accountId, false);
 
 	await goto("/auth/sign-in");
 }
 
-export async function clearLocalAccountState(): Promise<void> {
+export async function clearLocalAccountState(): Promise<boolean> {
 	const accountId = beginLocalAccountTeardown();
-	await finishLocalAccountTeardown(accountId);
+	const genericCacheComplete = await removeLocalGenericCache(accountId);
+	return (
+		(await finishLocalAccountTeardown(accountId, false)) && genericCacheComplete
+	);
+}
+
+async function removeLocalGenericCache(
+	accountId: number | null,
+): Promise<boolean> {
+	try {
+		if (accountId !== null) await removeGenericAccountCache(accountId);
+		return true;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
 
 function beginLocalAccountTeardown(): number | null {
@@ -42,18 +62,29 @@ function beginLocalAccountTeardown(): number | null {
 
 async function finishLocalAccountTeardown(
 	accountId: number | null,
-): Promise<void> {
-	try {
-		if (accountId !== null) await removeAccountCache(accountId);
-	} catch (error) {
-		console.error(error);
-	}
+	removeCache = true,
+): Promise<boolean> {
+	let complete = removeCache ? await removeLocalAccountCache(accountId) : true;
 	try {
 		await clearAccountPreferences();
 	} catch (error) {
 		console.error(error);
+		complete = false;
 	}
 	clearInboxMarkers();
+	return complete;
+}
+
+async function removeLocalAccountCache(
+	accountId: number | null,
+): Promise<boolean> {
+	try {
+		if (accountId !== null) await removeAccountCache(accountId);
+		return true;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
 }
 
 function clearInboxMarkers(): void {

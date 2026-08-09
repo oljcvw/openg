@@ -44,12 +44,14 @@
 		validationMessage = "";
 		try {
 			await validatePasswordComplexity(newPassword);
-			await changePassword({ currentPassword, newPassword });
+			const outcome = await changePassword({ currentPassword, newPassword });
 			currentPassword = "";
 			newPassword = "";
 			confirmation = "";
 			toast.success("Password changed", {
-				description: "Sign in again with your new password.",
+				description: outcome.localCleanupComplete
+					? "Sign in again with your new password."
+					: "The password changed, but some local data could not be cleared. Clear app data before signing in again.",
 			});
 			await goto("/auth/sign-in");
 		} catch (error) {

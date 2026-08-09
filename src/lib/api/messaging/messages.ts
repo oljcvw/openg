@@ -69,21 +69,27 @@ export function toOutboundBody(
 export async function sendMessage({
 	toUserId,
 	message,
+	ref = crypto.randomUUID(),
+	commandRef,
 }: {
 	toUserId: number;
 	message: z.infer<typeof messageSchema>;
+	ref?: string;
+	commandRef?: string;
 }) {
-	return await fetchRest("/v4/chat/message/send", {
-		method: "POST",
-		body: {
+	return await ws.requestOutcome(
+		"chat.v1.message.send",
+		{
 			type: message.type,
 			target: {
 				type: "Direct",
 				targetId: toUserId,
 			},
 			body: toOutboundBody(message),
+			ref,
 		},
-	}).then((res) => res.jsonParsed(apiResponseMessageSchema));
+		commandRef,
+	);
 }
 
 export async function sendReplyMessage({
@@ -91,13 +97,15 @@ export async function sendReplyMessage({
 	message,
 	replyToMessageId,
 	ref = crypto.randomUUID(),
+	commandRef,
 }: {
 	toUserId: number;
 	message: z.infer<typeof messageSchema>;
 	replyToMessageId: string;
 	ref?: string;
+	commandRef?: string;
 }) {
-	return await ws.request(
+	return await ws.requestOutcome(
 		"chat.v1.message.send",
 		{
 			type: message.type,
@@ -109,7 +117,7 @@ export async function sendReplyMessage({
 			ref,
 			replyToMessageId,
 		},
-		apiResponseMessageSchema,
+		commandRef,
 	);
 }
 

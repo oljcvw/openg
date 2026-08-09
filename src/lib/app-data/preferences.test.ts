@@ -18,13 +18,16 @@ describe("preference migration", () => {
 		});
 
 		expect(preferences).toMatchObject({
+			storageVersion: 2,
 			cacheSizeMb: 100,
 			contrastMode: "standard",
 			developerSettings: DEFAULT_DEVELOPER_SETTINGS,
 			gridColumns: "auto",
 			keepBottomNavigationBehindKeyboard: true,
+			keepUnavailableCachedAlbums: true,
 			pendingProfileLocation: null,
 			profileSwipeNavigation: true,
+			retainSharedChatMedia: true,
 			reportedProfileLocation: null,
 			revealMessageRead: true,
 			stayAwake: false,
@@ -39,6 +42,8 @@ describe("preference migration", () => {
 			albumCacheRequestIntervalMs: 2_000,
 			albumCacheValidationMinutes: 60,
 			albumPreloadConcurrency: 3,
+			albumPreloadTimeoutMs: 30_000,
+			conversationSearchDebounceMs: 250,
 			browseAgeScaleMax: 102,
 			browseAgeScaleMin: 18,
 			apiCircuitFailurePercent: 50,
@@ -52,7 +57,12 @@ describe("preference migration", () => {
 			profileResolutionBatchSize: 30,
 			profileResolutionWindowMs: 16,
 			reconcileThrottleMs: 2_000,
-			shortVideoCacheMb: 30,
+			directMediaCacheConcurrency: 2,
+			directMediaCacheMb: 30,
+			legacyShortVideoFetchMaxMb: 30,
+			legacyShortVideoFetchTimeoutMs: 30_000,
+			messageDuplicateReconcileWindowMs: 5_000,
+			sharedAlbumRefreshSeconds: 150,
 			shortVideoLooping: false,
 			videoCallQualityPreset: "auto",
 			mediaDiagnostics: false,
@@ -80,7 +90,37 @@ describe("preference migration", () => {
 			developerSettingsSchema.safeParse({ reconcileThrottleMs: 1_999 }).success,
 		).toBe(false);
 		expect(
-			developerSettingsSchema.safeParse({ shortVideoCacheMb: 501 }).success,
+			developerSettingsSchema.safeParse({ directMediaCacheMb: 501 }).success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ directMediaCacheConcurrency: 5 })
+				.success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ sharedAlbumRefreshSeconds: 29 })
+				.success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ albumPreloadTimeoutMs: 120_001 })
+				.success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ conversationSearchDebounceMs: 49 })
+				.success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({ legacyShortVideoFetchMaxMb: 101 })
+				.success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({
+				legacyShortVideoFetchTimeoutMs: 4_999,
+			}).success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({
+				messageDuplicateReconcileWindowMs: 30_001,
+			}).success,
 		).toBe(false);
 		expect(
 			developerSettingsSchema.safeParse({
@@ -119,12 +159,24 @@ describe("preference migration", () => {
 		).toBe(true);
 	});
 
-	it("keeps unavailable cached albums locked by default", () => {
-		expect(parsePreferences({}).keepUnavailableCachedAlbums).toBe(false);
+	it("keeps received media available by default while preserving opt-outs", () => {
+		expect(parsePreferences({}).keepUnavailableCachedAlbums).toBe(true);
+		expect(parsePreferences({}).retainSharedChatMedia).toBe(true);
 		expect(
-			parsePreferences({ keepUnavailableCachedAlbums: true })
+			parsePreferences({ keepUnavailableCachedAlbums: false })
 				.keepUnavailableCachedAlbums,
-		).toBe(true);
+		).toBe(false);
+		expect(
+			parsePreferences({ retainSharedChatMedia: false }).retainSharedChatMedia,
+		).toBe(false);
+	});
+
+	it("migrates the short-video cache limit into the direct-media limit", () => {
+		expect(
+			parsePreferences({
+				developerSettings: { shortVideoCacheMb: 125 },
+			}).developerSettings.directMediaCacheMb,
+		).toBe(125);
 	});
 
 	it("keeps bottom navigation behind the keyboard by default", () => {

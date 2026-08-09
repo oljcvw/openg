@@ -26,6 +26,8 @@
 	let loading = $state(false);
 	let saving = $state(false);
 	let loadedKey = $state<string | null>(null);
+	let loadFailed = $state(false);
+	let loadAttempt = $state(0);
 	let saved = $state(false);
 
 	const length = $derived(favoriteNoteLength(note));
@@ -33,11 +35,13 @@
 	const dirty = $derived(note !== savedNote);
 
 	$effect(() => {
+		void loadAttempt;
 		const requestedKey = `${accountProfileId}:${profileId}`;
 		if (!isFavorite || loadedKey === requestedKey) return;
 		const requestedAccountProfileId = accountProfileId;
 		const requestedProfileId = profileId;
 		loading = true;
+		loadFailed = false;
 		saved = false;
 		note = "";
 		savedNote = "";
@@ -53,6 +57,11 @@
 				loadedKey = requestedKey;
 			})
 			.catch((error) => {
+				if (
+					accountProfileId === requestedAccountProfileId &&
+					profileId === requestedProfileId
+				)
+					loadFailed = true;
 				console.error(error);
 				showErrorToast({ label: "Failed to load private note", error });
 			})
@@ -66,7 +75,7 @@
 	});
 
 	async function save(): Promise<void> {
-		if (saving || overLimit) return;
+		if (saving || overLimit || loadFailed || loadedKey === null) return;
 		saving = true;
 		saved = false;
 		try {
@@ -83,7 +92,7 @@
 	}
 
 	async function deleteNote(): Promise<void> {
-		if (saving || savedNote === "") return;
+		if (saving || savedNote === "" || loadFailed || loadedKey === null) return;
 		saving = true;
 		saved = false;
 		try {
@@ -111,27 +120,41 @@
 		</div>
 		<Textarea
 			bind:value={note}
-			disabled={loading || saving}
+			disabled={loading || saving || loadFailed}
 			aria-invalid={overLimit}
 			aria-label="Private note about this favorite"
 			placeholder="Add a short note about this favorite"
 			class="min-h-20 resize-y"
 		/>
 		<div class="flex items-center justify-between gap-3">
-			<span
-				class={[
-					"text-xs text-muted-foreground",
-					overLimit && "text-destructive",
-				]}
-			>
-				{length}/{FAVORITE_NOTE_MAX_LENGTH}
-			</span>
+			{#if loadFailed}
+				<Button
+					variant="outline"
+					size="sm"
+					onclick={() => {
+						loadFailed = false;
+						loadedKey = null;
+						loadAttempt += 1;
+					}}
+				>
+					Retry loading note
+				</Button>
+			{:else}
+				<span
+					class={[
+						"text-xs text-muted-foreground",
+						overLimit && "text-destructive",
+					]}
+				>
+					{length}/{FAVORITE_NOTE_MAX_LENGTH}
+				</span>
+			{/if}
 			<div class="flex items-center gap-2">
 				{#if savedNote !== ""}
 					<Button
 						variant="destructive"
 						size="sm"
-						disabled={loading || saving}
+						disabled={loading || saving || loadFailed}
 						onclick={() => void deleteNote()}
 					>
 						Delete
@@ -145,7 +168,7 @@
 				{/if}
 				<Button
 					size="sm"
-					disabled={loading || saving || overLimit || !dirty}
+					disabled={loading || saving || loadFailed || overLimit || !dirty}
 					onclick={() => void save()}
 				>
 					{saving ? "Saving…" : "Save note"}

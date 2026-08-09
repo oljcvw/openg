@@ -1,5 +1,6 @@
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use serde::{Deserialize, Serialize};
+use tokio::sync::Semaphore;
 
 use crate::error::AppError;
 use crate::state::AppState;
@@ -21,7 +22,8 @@ pub struct AlbumMediaUploadResponse {
 	pub content_url: Option<String>,
 }
 
-const MAX_ALBUM_UPLOAD_BYTES: usize = 128 * 1024 * 1024;
+const MAX_UPLOAD_BYTES: usize = 128 * 1024 * 1024;
+static UPLOAD_PERMITS: Semaphore = Semaphore::const_new(1);
 const ALBUM_MEDIA_TYPES: &[&str] =
 	&["image/jpeg", "image/png", "video/mp4", "video/webm"];
 
@@ -71,9 +73,7 @@ pub async fn upload_chat_media(
 	// https://github.com/tauri-apps/tauri/issues/10573
 	data: String,
 ) -> Result<MediaUploadResponse, AppError> {
-	let bytes = STANDARD.decode(&data).map_err(|e| {
-		AppError::Http(format!("Failed to decode base64 media: {e}"))
-	})?;
+	let (_upload_permit, bytes) = decode_upload(data).await?;
 	if length.is_some_and(|value| value < 0) {
 		return Err(AppError::Api {
 			code: 400,
@@ -85,11 +85,9 @@ pub async fn upload_chat_media(
 		.ok_or_else(|| AppError::Http("API runtime unavailable".to_owned()))?;
 	let client = state.client()?.clone();
 	let response = runtime
-		.request(super::runtime::RetryPolicy::NeverReplay, move || {
-			let client = client.clone();
-			let bytes = bytes.clone();
-			let content_type = content_type.clone();
-			async move {
+		.request(
+			super::runtime::RetryPolicy::NeverReplay,
+			move || async move {
 				client
 					.upload_chat_media(
 						bytes,
@@ -99,8 +97,8 @@ pub async fn upload_chat_media(
 						taken_on_grindr,
 					)
 					.await
-			}
-		})
+			},
+		)
 		.await
 		.map_err(runtime_error)?;
 
@@ -128,9 +126,7 @@ pub async fn upload_expiring_chat_video(
 				.to_owned(),
 		});
 	}
-	let bytes = STANDARD.decode(&data).map_err(|error| {
-		AppError::Http(format!("Failed to decode base64 media: {error}"))
-	})?;
+	let (_upload_permit, bytes) = decode_upload(data).await?;
 	if bytes.is_empty() {
 		return Err(AppError::Api {
 			code: 400,
@@ -142,15 +138,14 @@ pub async fn upload_expiring_chat_video(
 		.ok_or_else(|| AppError::Http("API runtime unavailable".to_owned()))?;
 	let client = state.client()?.clone();
 	let response = runtime
-		.request(super::runtime::RetryPolicy::NeverReplay, move || {
-			let client = client.clone();
-			let bytes = bytes.clone();
-			async move {
+		.request(
+			super::runtime::RetryPolicy::NeverReplay,
+			move || async move {
 				client
 					.upload_expiring_chat_video(bytes, length, looping)
 					.await
-			}
-		})
+			},
+		)
 		.await
 		.map_err(runtime_error)?;
 
@@ -184,10 +179,8 @@ pub async fn upload_album_media(
 			message: "Unsupported album media type".to_owned(),
 		});
 	}
-	let bytes = STANDARD.decode(&data).map_err(|e| {
-		AppError::Http(format!("Failed to decode base64 media: {e}"))
-	})?;
-	if bytes.is_empty() || bytes.len() > MAX_ALBUM_UPLOAD_BYTES {
+	let (_upload_permit, bytes) = decode_upload(data).await?;
+	if bytes.is_empty() {
 		return Err(AppError::Api {
 			code: 413,
 			message: "Album media size is outside the supported range"
@@ -204,22 +197,19 @@ pub async fn upload_album_media(
 		.ok_or_else(|| AppError::Http("API runtime unavailable".to_owned()))?;
 	let client = state.client()?.clone();
 	let response = runtime
-		.request(super::runtime::RetryPolicy::NeverReplay, move || {
-			let client = client.clone();
-			let path = path.clone();
-			let content_type = multipart_content_type.clone();
-			let body = body.clone();
-			async move {
+		.request(
+			super::runtime::RetryPolicy::NeverReplay,
+			move || async move {
 				client
 					.request_authenticated_bytes(
 						grindr::Method::POST,
 						&path,
-						&content_type,
+						&multipart_content_type,
 						body,
 					)
 					.await
-			}
-		})
+			},
+		)
 		.await
 		.map_err(runtime_error)?;
 	if !(200..300).contains(&response.status) {
@@ -249,6 +239,13 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn encoded_upload_limit_rejects_oversized_input_before_decoding() {
+		assert!(validate_encoded_upload_length(MAX_UPLOAD_BYTES * 4 / 3 + 8)
+			.is_err());
+		assert!(validate_encoded_upload_length(4).is_ok());
+	}
+
+	#[test]
 	fn album_multipart_contains_one_content_part_and_exact_bytes() {
 		let bytes = [0, 1, b'\r', b'\n', 255];
 		let (boundary, body) = album_multipart_body(42, "image/jpeg", &bytes);
@@ -272,4 +269,34 @@ mod tests {
 		let (boundary, _) = album_multipart_body(7, "image/png", bytes);
 		assert_eq!(boundary, "open-grind-album-7-1");
 	}
+}
+
+fn validate_encoded_upload_length(encoded_len: usize) -> Result<(), AppError> {
+	let maximum_encoded_len = MAX_UPLOAD_BYTES.div_ceil(3) * 4;
+	if encoded_len > maximum_encoded_len {
+		return Err(AppError::Api {
+			code: 413,
+			message: "Media size is outside the supported range".to_owned(),
+		});
+	}
+	Ok(())
+}
+
+async fn decode_upload(
+	data: String,
+) -> Result<(tokio::sync::SemaphorePermit<'static>, Vec<u8>), AppError> {
+	validate_encoded_upload_length(data.len())?;
+	let permit = UPLOAD_PERMITS.acquire().await.map_err(|_| {
+		AppError::Http("Media upload service unavailable".to_owned())
+	})?;
+	let bytes = STANDARD.decode(data).map_err(|_| {
+		AppError::Http("Failed to decode base64 media".to_owned())
+	})?;
+	if bytes.len() > MAX_UPLOAD_BYTES {
+		return Err(AppError::Api {
+			code: 413,
+			message: "Media size is outside the supported range".to_owned(),
+		});
+	}
+	Ok((permit, bytes))
 }

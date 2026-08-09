@@ -22,7 +22,24 @@ function allowedPaths(identifier: string): string[] {
 	return permission?.allow?.map(({ path }) => path) ?? [];
 }
 
-describe("cache filesystem capabilities", () => {
+describe("app-data filesystem capabilities", () => {
+	it("allows saved phrases persistence paths", () => {
+		const savedPhrasesPath = "$APPDATA/saved-phrases.data";
+		const savedPhrasesTempPath = "$APPDATA/saved-phrases.data.tmp";
+
+		for (const identifier of ["fs:allow-exists", "fs:allow-read-file"]) {
+			expect(allowedPaths(identifier)).toEqual(
+				expect.arrayContaining([savedPhrasesPath]),
+			);
+		}
+		expect(allowedPaths("fs:allow-write-file")).toEqual(
+			expect.arrayContaining([savedPhrasesPath, savedPhrasesTempPath]),
+		);
+		expect(allowedPaths("fs:allow-rename")).toEqual(
+			expect.arrayContaining([savedPhrasesPath, savedPhrasesTempPath]),
+		);
+	});
+
 	it("allows every operation used by atomic cache persistence", () => {
 		const cacheDataPath = "$APPDATA/cache-*.data";
 		const cacheTempPath = "$APPDATA/cache-*.data.tmp";

@@ -10,12 +10,21 @@ class NotificationPreferencesTest {
 		val first = notificationAccountKeys("100")
 		val second = notificationAccountKeys("101")
 
-		assertTrue(first.contains("account_100_initialized"))
+		assertTrue(first.contains("account_100_messages_initialized"))
+		assertTrue(first.contains("account_100_taps_initialized"))
 		assertTrue(first.contains("account_100_message_timestamp"))
 		assertTrue(first.contains("account_100_message_ids"))
 		assertTrue(first.contains("account_100_tap_timestamp"))
 		assertTrue(first.contains("account_100_tap_ids"))
+		assertTrue(first.contains("account_100_category_initialization_v2"))
 		assertFalse(first.any(second::contains))
+	}
+
+	@Test
+	fun `beta4 category migration requires category specific baseline evidence`() {
+		assertFalse(migratedCategoryInitialized(legacyInitialized = false, watermarkTimestamp = 10))
+		assertFalse(migratedCategoryInitialized(legacyInitialized = true, watermarkTimestamp = 0))
+		assertTrue(migratedCategoryInitialized(legacyInitialized = true, watermarkTimestamp = 10))
 	}
 
 	@Test(expected = IllegalArgumentException::class)

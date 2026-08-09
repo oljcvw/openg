@@ -1,6 +1,7 @@
 <script lang="ts">
 	import MapPinIcon from "phosphor-svelte/lib/MapPinIcon";
 
+	import { showErrorToast } from "$lib/api/error";
 	import {
 		getPendingProfileLocationSnapshot,
 		getReportedProfileLocationSnapshot,
@@ -23,7 +24,6 @@
 
 	$effect(() => {
 		if (!active) {
-			sending = false;
 			loadTiles = false;
 		}
 	});
@@ -44,7 +44,7 @@
 			});
 			onClose();
 		} catch (error) {
-			console.error("Failed to share profile location", error);
+			showErrorToast({ label: "Failed to share profile location", error });
 		} finally {
 			sending = false;
 		}

@@ -132,6 +132,7 @@ pub fn run() {
         .plugin(api::voice_recorder::plugin())
 		.plugin(api::video_call::plugin())
 		.plugin(api::album_cache::plugin())
+		.plugin(api::direct_media_cache::plugin())
         .manage(AppState)
         .invoke_handler(tauri::generate_handler![
             api::account::validate_password_complexity,
@@ -140,9 +141,26 @@ pub fn run() {
             api::account::delete_account,
 			api::album_cache::album_cache_store,
 			api::album_cache::album_cache_lookup,
+			api::album_cache::album_cache_bind_legacy_owner,
+			api::album_cache::album_cache_record_store,
+			api::album_cache::album_cache_record_read,
+			api::album_cache::album_cache_records_page,
+			api::album_cache::album_cache_records_reconcile_membership,
+			api::album_cache::album_cache_membership_snapshot_store,
+			api::album_cache::album_cache_membership_snapshot_read,
 			api::album_cache::album_cache_stats,
 			api::album_cache::album_cache_trim,
 			api::album_cache::album_cache_clear,
+			api::direct_media_cache::direct_media_cache_upsert,
+			api::direct_media_cache::direct_media_cache_set_scope,
+			api::direct_media_cache::direct_media_cache_store,
+			api::direct_media_cache::direct_media_cache_import_legacy,
+			api::direct_media_cache::direct_media_cache_lookup,
+			api::direct_media_cache::direct_media_cache_presence,
+			api::direct_media_cache::direct_media_cache_list,
+			api::direct_media_cache::direct_media_cache_stats,
+			api::direct_media_cache::direct_media_cache_trim,
+			api::direct_media_cache::direct_media_cache_clear,
             api::auth::login,
             api::auth::login_with_google,
             api::auth::google_sign_in,
@@ -163,6 +181,7 @@ pub fn run() {
 			api::media_capture::short_video_cache_put,
 			api::media_capture::short_video_cache_get,
 			api::media_capture::short_video_cache_clear,
+			api::media_capture::short_video_cache_remove,
 			api::media_capture::short_video_cache_trim,
 			api::media_capture::short_video_cache_stats,
             api::notifications::notification_get_settings,

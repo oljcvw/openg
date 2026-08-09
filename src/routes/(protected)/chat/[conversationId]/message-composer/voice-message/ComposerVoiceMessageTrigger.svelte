@@ -17,12 +17,24 @@
 		stopVoiceRecording,
 	} from "$lib/api/voice-recorder";
 	import { fromBase64 } from "$lib/util/base64";
+	import type { Message } from "$lib/model/messaging/messages";
 	import { getMessageComposerContext } from "../message-composer-context.svelte";
 	import PrimaryComposerButton from "../PrimaryComposerButton.svelte";
 
 	const composer = $derived(getMessageComposerContext()());
-	const supported = platform() === "android";
+	type VoiceMessage = Extract<Message, { type: "Audio" }>;
+
+	function supportsVoiceRecording(): boolean {
+		try {
+			return platform() === "android";
+		} catch {
+			return false;
+		}
+	}
+
+	const supported = supportsVoiceRecording();
 	let recording = $state(false);
+	let starting = $state(false);
 	let canceling = $state(false);
 	let sending = $state(false);
 	let pressing = false;
@@ -32,6 +44,8 @@
 	let timer: ReturnType<typeof setInterval> | null = null;
 	let maxDurationListener: { unregister(): Promise<void> } | null = null;
 	let recordingErrorListener: { unregister(): Promise<void> } | null = null;
+	let listenerGeneration = 0;
+	let destroyed = false;
 
 	function stopTimer(): void {
 		if (timer !== null) clearInterval(timer);
@@ -47,32 +61,40 @@
 		elapsedMs = 0;
 	}
 
-	async function sendRecording(result: ReadyVoiceRecording): Promise<void> {
+	async function sendRecording(
+		result: ReadyVoiceRecording,
+		preparedMessage: VoiceMessage | null = null,
+	): Promise<void> {
 		if (sending) return;
 		sending = true;
+		let message = preparedMessage;
 		try {
-			const bytes = new Uint8Array(fromBase64(result.dataBase64));
-			const uploaded = await uploadChatMedia(bytes, result.contentType, {
-				length: result.durationMs,
-				takenOnGrindr: false,
-			});
-			await composer.sendMessage({
-				type: "Audio",
-				body: {
-					mediaId: uploaded.mediaId,
-					mediaHash: uploaded.mediaHash,
-					url: uploaded.url,
-					contentType: result.contentType,
+			if (message === null) {
+				const bytes = new Uint8Array(fromBase64(result.dataBase64));
+				const uploaded = await uploadChatMedia(bytes, result.contentType, {
 					length: result.durationMs,
-					expiresAt: Date.now() + 15 * 60 * 1000,
-				},
-			});
-		} catch (error) {
-			console.error("Failed to send voice message", error);
+					takenOnGrindr: false,
+				});
+				message = {
+					type: "Audio",
+					body: {
+						mediaId: uploaded.mediaId,
+						mediaHash: uploaded.mediaHash,
+						url: uploaded.url,
+						contentType: result.contentType,
+						length: result.durationMs,
+						expiresAt: Date.now() + 15 * 60 * 1000,
+					},
+				};
+			}
+			await composer.sendMessage(message);
+		} catch {
+			console.warn("Failed to send voice message");
+			const retryMessage = message;
 			toast.error("Failed to send voice message", {
 				action: {
 					label: "Retry",
-					onClick: () => void sendRecording(result),
+					onClick: () => void sendRecording(result, retryMessage),
 				},
 			});
 		} finally {
@@ -80,12 +102,16 @@
 		}
 	}
 
-	async function begin(event: PointerEvent): Promise<void> {
-		if (composer.disabled || sending || recording) return;
+	async function begin(event?: PointerEvent): Promise<void> {
+		if (composer.disabled || sending || starting || recording || destroyed)
+			return;
+		starting = true;
 		pressing = true;
-		pointerId = event.pointerId;
-		const button = event.currentTarget as HTMLButtonElement;
-		button.setPointerCapture(event.pointerId);
+		pointerId = event?.pointerId ?? null;
+		if (event) {
+			const button = event.currentTarget as HTMLButtonElement;
+			button.setPointerCapture(event.pointerId);
+		}
 		try {
 			const status = await getVoicePermissionStatus();
 			if (status !== "granted") {
@@ -112,8 +138,18 @@
 			}, 100);
 		} catch (error) {
 			resetRecordingState();
-			showErrorToast({ label: "Failed to start voice recording", error });
+			if (!destroyed)
+				showErrorToast({ label: "Failed to start voice recording", error });
+		} finally {
+			starting = false;
 		}
+	}
+
+	function toggleFromKeyboard(event: KeyboardEvent): void {
+		if ((event.key !== "Enter" && event.key !== " ") || event.repeat) return;
+		event.preventDefault();
+		if (recording) void finish();
+		else void begin();
 	}
 
 	function move(event: PointerEvent): void {
@@ -158,8 +194,9 @@
 
 	onMount(() => {
 		if (!supported) return;
+		const generation = ++listenerGeneration;
 		void onVoiceRecordingMaxDuration(() => {
-			if (!recording) return;
+			if (destroyed || generation !== listenerGeneration || !recording) return;
 			resetRecordingState();
 			void stopVoiceRecording()
 				.then((result) => {
@@ -168,12 +205,24 @@
 				.catch((error) =>
 					showErrorToast({ label: "Failed to finish voice recording", error }),
 				);
-		}).then((listener) => (maxDurationListener = listener));
+		}).then(async (listener) => {
+			if (destroyed || generation !== listenerGeneration) {
+				await listener.unregister();
+				return;
+			}
+			maxDurationListener = listener;
+		});
 		void onVoiceRecordingError(() => {
-			if (!recording) return;
+			if (destroyed || generation !== listenerGeneration || !recording) return;
 			resetRecordingState();
 			toast.error("Voice recording stopped unexpectedly.");
-		}).then((listener) => (recordingErrorListener = listener));
+		}).then(async (listener) => {
+			if (destroyed || generation !== listenerGeneration) {
+				await listener.unregister();
+				return;
+			}
+			recordingErrorListener = listener;
+		});
 		const onBlur = () => void cancel();
 		const onVisibility = () => {
 			if (document.hidden) void cancel();
@@ -187,9 +236,13 @@
 	});
 
 	onDestroy(() => {
+		destroyed = true;
+		listenerGeneration += 1;
 		void cancel();
 		void maxDurationListener?.unregister();
 		void recordingErrorListener?.unregister();
+		maxDurationListener = null;
+		recordingErrorListener = null;
 	});
 </script>
 
@@ -223,8 +276,11 @@
 			if (pressing) void cancel();
 		}}
 		onclick={(event) => event.preventDefault()}
+		onkeydown={toggleFromKeyboard}
 		class="z-30 touch-none ps-0"
-		disabled={composer.disabled || sending}
+		disabled={composer.disabled || sending || starting}
+		role="switch"
+		aria-checked={recording}
 		aria-label={recording
 			? "Recording voice message"
 			: "Hold to record voice message"}

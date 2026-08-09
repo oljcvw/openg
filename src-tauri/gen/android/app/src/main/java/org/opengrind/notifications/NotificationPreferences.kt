@@ -41,11 +41,17 @@ class NotificationPreferences(context: Context) {
 			.apply()
 	}
 
-	fun isInitialized(accountId: String): Boolean =
-		preferences.getBoolean(accountKey(accountId, "initialized"), false)
+	fun isMessageInitialized(accountId: String): Boolean =
+		initialized(accountId, "messages")
 
-	fun initialize(accountId: String) {
-		preferences.edit().putBoolean(accountKey(accountId, "initialized"), true).apply()
+	fun isTapInitialized(accountId: String): Boolean = initialized(accountId, "taps")
+
+	fun initializeMessages(accountId: String) {
+		preferences.edit().putBoolean(accountKey(accountId, "messages_initialized"), true).apply()
+	}
+
+	fun initializeTaps(accountId: String) {
+		preferences.edit().putBoolean(accountKey(accountId, "taps_initialized"), true).apply()
 	}
 
 	fun messageWatermark(accountId: String): NotificationWatermark =
@@ -111,6 +117,45 @@ class NotificationPreferences(context: Context) {
 		return "account_${accountId}_$suffix"
 	}
 
+	private fun initialized(accountId: String, category: String): Boolean {
+		migrateCategoryInitialization(accountId)
+		val key = accountKey(accountId, "${category}_initialized")
+		return preferences.getBoolean(key, false)
+	}
+
+	private fun migrateCategoryInitialization(accountId: String) {
+		val marker = accountKey(accountId, "category_initialization_v2")
+		if (preferences.getBoolean(marker, false)) return
+		val legacyInitialized = preferences.getBoolean(
+			accountKey(accountId, "initialized"),
+			false,
+		)
+		val messagesKey = accountKey(accountId, "messages_initialized")
+		val tapsKey = accountKey(accountId, "taps_initialized")
+		preferences.edit().apply {
+			if (!preferences.contains(messagesKey)) {
+				putBoolean(
+					messagesKey,
+					migratedCategoryInitialized(
+						legacyInitialized,
+						preferences.getLong(accountKey(accountId, "message_timestamp"), 0),
+					),
+				)
+			}
+			if (!preferences.contains(tapsKey)) {
+				putBoolean(
+					tapsKey,
+					migratedCategoryInitialized(
+						legacyInitialized,
+						preferences.getLong(accountKey(accountId, "tap_timestamp"), 0),
+					),
+				)
+			}
+			remove(accountKey(accountId, "initialized"))
+			putBoolean(marker, true)
+		}.commit()
+	}
+
 	private companion object {
 		const val FILE_NAME = "notification_preferences"
 		const val KEY_ENABLED = "enabled"
@@ -134,9 +179,17 @@ internal fun notificationAccountKeys(accountId: String): Set<String> {
 	require(accountId.matches(Regex("^[0-9]+$"))) { "Invalid account id" }
 	return setOf(
 		"account_${accountId}_initialized",
+		"account_${accountId}_messages_initialized",
+		"account_${accountId}_taps_initialized",
 		"account_${accountId}_message_timestamp",
 		"account_${accountId}_message_ids",
 		"account_${accountId}_tap_timestamp",
 		"account_${accountId}_tap_ids",
+		"account_${accountId}_category_initialization_v2",
 	)
 }
+
+internal fun migratedCategoryInitialized(
+	legacyInitialized: Boolean,
+	watermarkTimestamp: Long,
+): Boolean = legacyInitialized && watermarkTimestamp > 0

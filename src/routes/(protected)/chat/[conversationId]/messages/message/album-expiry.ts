@@ -1,12 +1,12 @@
 import { formatDistanceStrict } from "date-fns";
 
 /** Static labels for shares that carry a type but no concrete expiry stamp. */
-const EXPIRATION_LABELS: Record<string, string> = {
-	ONCE: "View once",
-	TEN_MINUTES: "10 minutes",
-	ONE_HOUR: "1 hour",
-	ONE_DAY: "24 hours",
-};
+const EXPIRATION_LABELS = new Map<string, string>([
+	["ONCE", "View once"],
+	["TEN_MINUTES", "10 minutes"],
+	["ONE_HOUR", "1 hour"],
+	["ONE_DAY", "24 hours"],
+]);
 
 export type AlbumExpiry = { label: string; expired: boolean };
 
@@ -28,7 +28,7 @@ export function albumExpiry(
 
 	// `expirationType` is the only field that declares an album expires at all.
 	if (expirationType === undefined || expirationType === null) return null;
-	const staticLabel = EXPIRATION_LABELS[expirationType];
+	const staticLabel = EXPIRATION_LABELS.get(expirationType);
 	// Covers INDEFINITE and any type added server-side that we don't know.
 	if (staticLabel === undefined) return null;
 

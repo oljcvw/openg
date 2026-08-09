@@ -11,6 +11,22 @@ const MAX_SECRET_LENGTH: usize = 1024;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct AccountMutationResult {
+	pub remote_applied: bool,
+	pub local_cleanup_complete: bool,
+}
+
+impl AccountMutationResult {
+	fn after_remote_success(local_cleanup_complete: bool) -> Self {
+		Self {
+			remote_applied: true,
+			local_cleanup_complete,
+		}
+	}
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct ValidatePasswordComplexityRequest<'a> {
 	password: &'a str,
 }
@@ -118,21 +134,46 @@ async fn account_request(
 }
 
 async fn purge_account_state(
+	app: &tauri::AppHandle,
 	client: &grindr::GrindrClient,
-) -> Result<(), AppError> {
+) -> bool {
+	let caches_cleared = match AuthStorage::get_session() {
+		Ok(Some(session)) => {
+			let account_id = session.profile_id;
+			let album = super::album_cache::album_cache_clear(
+				app.clone(),
+				Some(account_id.clone()),
+			)
+			.await
+			.is_ok();
+			let direct = super::direct_media_cache::direct_media_cache_clear(
+				app.clone(),
+				Some(account_id.clone()),
+			)
+			.await
+			.is_ok();
+			let short = super::media_capture::short_video_cache_clear(
+				app.clone(),
+				Some(account_id),
+			)
+			.await
+			.is_ok();
+			album && direct && short
+		}
+		_ => false,
+	};
+	// Clear the live session first. A local persistence failure after a remote
+	// mutation must never leave the process authenticated or turn the command
+	// into a retryable remote mutation.
+	client.logout().await;
 	let _storage_guard = account_storage_lock().lock().await;
 	AuthStorage::delete_session();
 	SigningKeyStorage::delete();
 
-	let new_device = grindr::DeviceInfo::generate();
-	DeviceStorage::save(&new_device).map_err(|_| {
-		AppError::Auth("Could not secure the next sign-in.".to_owned())
-	})?;
-	client
-		.sign_out_rotating(new_device)
-		.await
-		.map_err(safe_account_error)?;
-	Ok(())
+	let new_device = super::identity::generate_aligned_device();
+	let persisted = DeviceStorage::save(&new_device).is_ok();
+	let rotated = client.rotate_device(new_device).await.is_ok();
+	caches_cleared && persisted && rotated
 }
 
 #[tauri::command]
@@ -158,10 +199,11 @@ pub async fn validate_password_complexity(
 
 #[tauri::command]
 pub async fn update_account_password(
+	app: tauri::AppHandle,
 	state: tauri::State<'_, AppState>,
 	current_password: String,
 	new_password: String,
-) -> Result<(), AppError> {
+) -> Result<AccountMutationResult, AppError> {
 	validate_secret(&current_password, 1)?;
 	validate_secret(&new_password, 8)?;
 	if current_password == new_password {
@@ -185,15 +227,18 @@ pub async fn update_account_password(
 		Some(body),
 	)
 	.await?;
-	purge_account_state(client).await
+	Ok(AccountMutationResult::after_remote_success(
+		purge_account_state(&app, client).await,
+	))
 }
 
 #[tauri::command]
 pub async fn update_account_email(
+	app: tauri::AppHandle,
 	state: tauri::State<'_, AppState>,
 	email: String,
 	password: String,
-) -> Result<(), AppError> {
+) -> Result<AccountMutationResult, AppError> {
 	validate_email(&email)?;
 	validate_secret(&password, 1)?;
 	let normalized_email = email.trim().to_lowercase();
@@ -212,17 +257,22 @@ pub async fn update_account_email(
 		Some(body),
 	)
 	.await?;
-	purge_account_state(client).await
+	Ok(AccountMutationResult::after_remote_success(
+		purge_account_state(&app, client).await,
+	))
 }
 
 #[tauri::command]
 pub async fn delete_account(
+	app: tauri::AppHandle,
 	state: tauri::State<'_, AppState>,
-) -> Result<(), AppError> {
+) -> Result<AccountMutationResult, AppError> {
 	let client = state.client()?;
 	account_request(client, grindr::Method::DELETE, "/v3/me/profile", None)
 		.await?;
-	purge_account_state(client).await
+	Ok(AccountMutationResult::after_remote_success(
+		purge_account_state(&app, client).await,
+	))
 }
 
 #[cfg(test)]
@@ -268,5 +318,12 @@ mod tests {
 			message: "echoed-password".to_owned(),
 		});
 		assert!(!error.to_string().contains("echoed-password"));
+	}
+
+	#[test]
+	fn mutation_result_distinguishes_remote_success_from_local_cleanup() {
+		let result = AccountMutationResult::after_remote_success(false);
+		assert!(result.remote_applied);
+		assert!(!result.local_cleanup_complete);
 	}
 }

@@ -9,6 +9,7 @@ import {
 	sendReplyMessage,
 } from "$lib/api/messaging/messages";
 import {
+	getDeveloperSettingsSnapshot,
 	getPreferences,
 	getShowRetractedMessagesSnapshot,
 	subscribePreferences,
@@ -34,8 +35,17 @@ import type {
 import { getConversation } from "./messages";
 
 export type OptimisticMessage = ApiResponseMessage & {
-	status: "sent" | "pending" | "error" | "handled";
+	status:
+		| "queued"
+		| "awaitingAck"
+		| "confirming"
+		| "sent"
+		| "failed"
+		| "handled";
 	lastAttemptAt?: number;
+	attemptRef?: string;
+	outerCommandRef?: string;
+	retryCount?: number;
 };
 
 function stripNestedReply(
@@ -44,6 +54,98 @@ function stripNestedReply(
 	const { replyToMessage: _nested, ...preview } = message;
 	void _nested;
 	return preview;
+}
+
+function sameLegacyMessage(
+	candidate: ApiResponseMessage,
+	local: OptimisticMessage,
+): boolean {
+	if (
+		candidate.type !== local.type ||
+		candidate.replyToMessage?.messageId !== local.replyToMessage?.messageId
+	)
+		return false;
+	switch (local.type) {
+		case "Text":
+			return (
+				candidate.type === "Text" && candidate.body.text === local.body.text
+			);
+		case "Location":
+			return (
+				candidate.type === "Location" &&
+				candidate.body.lat === local.body.lat &&
+				candidate.body.lon === local.body.lon
+			);
+		case "Image":
+		case "ExpiringImage":
+			return (
+				candidate.type === local.type &&
+				candidate.body.mediaId === local.body.mediaId
+			);
+		case "Audio":
+			return (
+				candidate.type === "Audio" &&
+				candidate.body.mediaId === local.body.mediaId
+			);
+		case "Video":
+		case "PrivateVideo":
+			return (
+				candidate.type === local.type &&
+				candidate.body.mediaId !== null &&
+				candidate.body.mediaId === local.body.mediaId
+			);
+		case "Album":
+		case "ExpiringAlbum":
+		case "ExpiringAlbumV2":
+			return (
+				candidate.type === local.type &&
+				candidate.body.albumId === local.body.albumId
+			);
+		case "AlbumContentReaction":
+			return (
+				candidate.type === "AlbumContentReaction" &&
+				candidate.body.albumId === local.body.albumId &&
+				candidate.body.albumContentId === local.body.albumContentId
+			);
+		case "AlbumContentReply":
+			return (
+				candidate.type === "AlbumContentReply" &&
+				candidate.body.albumId === local.body.albumId &&
+				candidate.body.albumContentId === local.body.albumContentId &&
+				candidate.body.albumContentReply === local.body.albumContentReply
+			);
+		case "Giphy":
+			return candidate.type === "Giphy" && candidate.body.id === local.body.id;
+		case "Gaymoji":
+			return (
+				candidate.type === "Gaymoji" &&
+				candidate.body.imageHash === local.body.imageHash
+			);
+		case "ProfilePhotoReply":
+			return (
+				candidate.type === "ProfilePhotoReply" &&
+				candidate.body.imageHash === local.body.imageHash &&
+				candidate.body.photoContentReply === local.body.photoContentReply
+			);
+		case "Retract":
+			return (
+				candidate.type === "Retract" &&
+				candidate.body.targetMessageId === local.body.targetMessageId
+			);
+		default:
+			return false;
+	}
+}
+
+function sameAttemptReference(
+	candidate: ApiResponseMessage,
+	local: OptimisticMessage,
+): boolean {
+	if (!candidate.refValue) return false;
+	return (
+		candidate.refValue === local.attemptRef ||
+		candidate.refValue === local.refValue
+	);
 }
 
 const READ_DEBOUNCE_MS = 500;
@@ -66,6 +168,7 @@ export class ConversationState {
 
 	readonly conversationId: string;
 	readonly ourProfileId: number;
+	readonly hasSharedAlbumsHint: boolean | null;
 
 	#conversations: ConversationsState;
 	#readQueue: { messageId: string; timestamp: number }[] = [];
@@ -73,6 +176,7 @@ export class ConversationState {
 	#readDeadline: number | null = null;
 	#unsubscribeReconcile: () => void;
 	#unsubscribePreferences: () => void;
+	#retryingMessageIds = new Set<string>();
 
 	constructor({
 		conversationId,
@@ -86,6 +190,7 @@ export class ConversationState {
 		this.conversationId = conversationId;
 		this.ourProfileId = ourProfileId;
 		this.#conversations = conversations;
+		this.hasSharedAlbumsHint = conversations.sharedAlbumsHint(conversationId);
 		conversations.setActive(conversationId);
 		this.lastReadTimestamp = null;
 		void this.#initialLoad();
@@ -208,16 +313,49 @@ export class ConversationState {
 
 			const newValue: OptimisticMessage[] = [];
 			const seenLocalIds = new Set<string>();
+			const claimedServerIds = new Set<string>();
+			const duplicateWindowMs =
+				getDeveloperSettingsSnapshot().messageDuplicateReconcileWindowMs;
 			let dropped = 0;
 			let updated = 0;
 			for (const local of this.messages) {
 				if (local.status !== "sent") {
+					let serverVersion = result.messages.find(
+						(candidate) =>
+							!claimedServerIds.has(candidate.messageId) &&
+							candidate.senderId === this.ourProfileId &&
+							sameAttemptReference(candidate, local),
+					);
+					if (
+						serverVersion === undefined &&
+						local.status === "confirming" &&
+						local.attemptRef === undefined &&
+						!local.refValue
+					) {
+						const previousAttemptAt = local.lastAttemptAt ?? local.timestamp;
+						serverVersion = result.messages.find(
+							(candidate) =>
+								!claimedServerIds.has(candidate.messageId) &&
+								candidate.senderId === this.ourProfileId &&
+								sameLegacyMessage(candidate, local) &&
+								candidate.timestamp >= previousAttemptAt - duplicateWindowMs &&
+								candidate.timestamp <= Date.now() + duplicateWindowMs,
+						);
+					}
+					if (serverVersion) {
+						claimedServerIds.add(serverVersion.messageId);
+						seenLocalIds.add(serverVersion.messageId);
+						newValue.push({ ...serverVersion, status: "sent" as const });
+						updated++;
+						continue;
+					}
 					newValue.push(local);
 					continue;
 				}
 				seenLocalIds.add(local.messageId);
 				const serverVersion = serverById.get(local.messageId);
 				if (serverVersion) {
+					claimedServerIds.add(serverVersion.messageId);
 					newValue.push({ ...serverVersion, status: "sent" as const });
 					if (
 						serverVersion.unsent !== local.unsent ||
@@ -240,7 +378,11 @@ export class ConversationState {
 
 			const fresh: OptimisticMessage[] = [];
 			for (const sv of result.messages) {
-				if (seenLocalIds.has(sv.messageId)) continue;
+				if (
+					seenLocalIds.has(sv.messageId) ||
+					claimedServerIds.has(sv.messageId)
+				)
+					continue;
 				const msg: OptimisticMessage = { ...sv, status: "sent" as const };
 				newValue.push(msg);
 				fresh.push(msg);
@@ -296,11 +438,23 @@ export class ConversationState {
 		if (cached) {
 			this.messages = removeDuplicateMessages([
 				...(cached.failedMessages ?? []).map(
-					({ message, state, lastAttemptAt }) => ({
+					({
+						message,
+						state,
+						lastAttemptAt,
+						attemptRef,
+						outerCommandRef,
+						retryCount,
+					}) => ({
 						...message,
 						status:
-							state === "failed" ? ("error" as const) : ("handled" as const),
+							state === "queued" || state === "awaitingAck"
+								? ("confirming" as const)
+								: state,
 						lastAttemptAt,
+						attemptRef,
+						outerCommandRef,
+						retryCount,
 					}),
 				),
 				...cached.messages.map((m) => ({ ...m, status: "sent" as const })),
@@ -340,15 +494,16 @@ export class ConversationState {
 		}
 	}
 
-	async loadMore(): Promise<void> {
-		if (this.loadingMore || this.pageKey === null) return;
+	async loadMore(): Promise<"loaded" | "end" | "busy" | "error"> {
+		if (this.loadingMore) return "busy";
+		if (this.pageKey === null) return "end";
 		this.loadingMore = true;
 		try {
 			const result = await getConversation({
 				conversationId: this.conversationId,
 				pageKey: this.pageKey,
 			});
-			if (this.#destroyed) return;
+			if (this.#destroyed) return "error";
 			this.messages = removeDuplicateMessages([
 				...this.messages,
 				...result.messages.map((m) => ({ ...m, status: "sent" as const })),
@@ -356,8 +511,9 @@ export class ConversationState {
 			this.pageKey = result.pageKey;
 			this.#advanceLastRead(result.lastReadTimestamp);
 			this.#syncCache();
+			return "loaded";
 		} catch (error) {
-			if (this.#destroyed) return;
+			if (this.#destroyed) return "error";
 			console.error(error);
 			if (error instanceof ApiError && error.response?.status === 403) {
 				this.error = error;
@@ -367,6 +523,7 @@ export class ConversationState {
 					error,
 				});
 			}
+			return "error";
 		} finally {
 			this.loadingMore = false;
 		}
@@ -382,9 +539,34 @@ export class ConversationState {
 
 	send(message: MessageType): void {
 		if (!this.profile) return;
+		this.#enqueue(message, this.replyTarget);
+		this.replyTarget = null;
+	}
+
+	sendAgain(messageId: string): void {
+		if (!this.profile) return;
+		const original = this.messages.find(
+			(message) => message.messageId === messageId,
+		);
+		if (
+			!original ||
+			(original.status !== "confirming" &&
+				original.status !== "failed" &&
+				original.status !== "handled")
+		)
+			return;
+		const message = { type: original.type, body: original.body } as MessageType;
+		original.status = "handled";
+		this.#enqueue(message, original.replyToMessage);
+	}
+
+	#enqueue(
+		message: MessageType,
+		replyTarget: ApiResponseMessage["replyToMessage"],
+	): void {
 		const tempId = `pending-${crypto.randomUUID()}`;
-		const replyTarget = this.replyTarget;
-		const ref = replyTarget ? crypto.randomUUID() : undefined;
+		const attemptRef = crypto.randomUUID();
+		const outerCommandRef = crypto.randomUUID();
 		const optimistic: OptimisticMessage = {
 			...message,
 			messageId: tempId,
@@ -393,18 +575,21 @@ export class ConversationState {
 			timestamp: Date.now(),
 			unsent: false,
 			reactions: [],
-			refValue: ref ?? null,
+			refValue: attemptRef ?? null,
 			replyToMessage: replyTarget ? stripNestedReply(replyTarget) : null,
-			status: "pending" as const,
+			status: "queued" as const,
+			attemptRef,
+			outerCommandRef,
+			retryCount: 0,
 		};
 		this.messages = removeDuplicateMessages([optimistic, ...this.messages]);
 		this.#updatePreview(optimistic);
-		this.replyTarget = null;
 		void this.#resolveMessage({
 			tempId,
 			message,
 			replyToMessageId: replyTarget?.messageId,
-			ref,
+			attemptRef,
+			outerCommandRef,
 		});
 	}
 
@@ -412,35 +597,48 @@ export class ConversationState {
 		tempId,
 		message,
 		replyToMessageId,
-		ref,
+		attemptRef,
+		outerCommandRef,
 	}: {
 		tempId: string;
 		message: MessageType;
 		replyToMessageId?: string;
-		ref?: string;
+		attemptRef: string;
+		outerCommandRef: string;
 	}): Promise<void> {
+		const pending = this.messages.find((m) => m.messageId === tempId);
+		if (pending && pending.status !== "sent") pending.status = "awaitingAck";
+		this.#syncCache();
 		try {
-			const sent = replyToMessageId
+			const outcome = replyToMessageId
 				? await sendReplyMessage({
 						toUserId: this.profile!.profileId,
 						message,
 						replyToMessageId,
-						ref,
+						ref: attemptRef,
+						commandRef: outerCommandRef,
 					})
 				: await sendMessage({
 						toUserId: this.profile!.profileId,
 						message,
+						ref: attemptRef,
+						commandRef: outerCommandRef,
 					});
 			const msg = this.messages.find((m) => m.messageId === tempId);
-			if (msg) {
-				Object.assign(msg, sent, { status: "sent" as const });
+			if (msg && msg.status !== "sent") {
+				if (outcome.kind === "ack") msg.status = "sent";
+				else if (outcome.kind === "unknown") msg.status = "confirming";
+				else {
+					msg.status = "failed";
+					msg.lastAttemptAt = Date.now();
+				}
 			}
 			this.#syncCache();
 			void this.#conversations.ensureLoaded(this.conversationId);
 		} catch {
 			const msg = this.messages.find((m) => m.messageId === tempId);
-			if (msg) {
-				msg.status = "error";
+			if (msg && msg.status !== "sent") {
+				msg.status = "failed";
 				msg.lastAttemptAt = Date.now();
 			}
 			const latestSent = this.messages.find((m) => m.status === "sent");
@@ -451,7 +649,7 @@ export class ConversationState {
 
 	markFailedMessageHandled(messageId: string): void {
 		const message = this.messages.find((item) => item.messageId === messageId);
-		if (!message || message.status !== "error") return;
+		if (!message || message.status !== "failed") return;
 		message.status = "handled";
 		this.#syncCache();
 	}
@@ -460,64 +658,91 @@ export class ConversationState {
 		const message = this.messages.find((item) => item.messageId === messageId);
 		if (
 			!message ||
-			(message.status !== "error" && message.status !== "handled")
+			(message.status !== "failed" && message.status !== "handled")
 		)
 			return;
-		const previousAttemptAt = message.lastAttemptAt ?? message.timestamp;
+		if ((message.retryCount ?? 0) >= 1) return;
+		if (this.#retryingMessageIds.has(messageId)) return;
+		this.#retryingMessageIds.add(messageId);
 		try {
-			const latest = await getConversation({
-				conversationId: this.conversationId,
-			});
-			const duplicate = latest.messages.find(
-				(candidate) =>
-					candidate.senderId === this.ourProfileId &&
-					candidate.type === message.type &&
-					JSON.stringify(candidate.body) === JSON.stringify(message.body) &&
-					candidate.timestamp >= previousAttemptAt - 5000 &&
-					candidate.timestamp <= Date.now() + 5000,
-			);
-			if (duplicate) {
-				Object.assign(message, duplicate, { status: "sent" as const });
-				this.#syncCache();
+			const previousAttemptAt = message.lastAttemptAt ?? message.timestamp;
+			const duplicateWindowMs =
+				getDeveloperSettingsSnapshot().messageDuplicateReconcileWindowMs;
+			try {
+				const latest = await getConversation({
+					conversationId: this.conversationId,
+				});
+				const duplicate = latest.messages.find(
+					(candidate) =>
+						candidate.senderId === this.ourProfileId &&
+						sameLegacyMessage(candidate, message) &&
+						candidate.timestamp >= previousAttemptAt - duplicateWindowMs &&
+						candidate.timestamp <= Date.now() + duplicateWindowMs,
+				);
+				if (duplicate) {
+					Object.assign(message, duplicate, { status: "sent" as const });
+					this.#syncCache();
+					return;
+				}
+			} catch (error) {
+				console.warn("Failed to reconcile before retrying message");
+				showErrorToast({ label: "Failed to retry message", error });
 				return;
 			}
-		} catch (error) {
-			console.warn("Failed to reconcile before retrying message", error);
-			return;
+			if (
+				(message.status !== "failed" && message.status !== "handled") ||
+				(message.retryCount ?? 0) >= 1
+			)
+				return;
+			const {
+				status: _status,
+				lastAttemptAt: _lastAttemptAt,
+				messageId: _messageId,
+				conversationId: _conversationId,
+				senderId: _senderId,
+				timestamp: _timestamp,
+				unsent: _unsent,
+				reactions: _reactions,
+				refValue: _refValue,
+				replyToMessage,
+				attemptRef: _attemptRef,
+				outerCommandRef: _outerCommandRef,
+				retryCount: _retryCount,
+				...payload
+			} = message;
+			void [
+				_status,
+				_lastAttemptAt,
+				_messageId,
+				_conversationId,
+				_senderId,
+				_timestamp,
+				_unsent,
+				_reactions,
+				_refValue,
+				_attemptRef,
+				_outerCommandRef,
+				_retryCount,
+			];
+			const attemptRef = crypto.randomUUID();
+			const outerCommandRef = crypto.randomUUID();
+			message.status = "queued";
+			message.lastAttemptAt = Date.now();
+			message.refValue = attemptRef;
+			message.attemptRef = attemptRef;
+			message.outerCommandRef = outerCommandRef;
+			message.retryCount = 1;
+			this.#syncCache();
+			void this.#resolveMessage({
+				tempId: message.messageId,
+				message: payload as MessageType,
+				replyToMessageId: replyToMessage?.messageId,
+				attemptRef,
+				outerCommandRef,
+			});
+		} finally {
+			this.#retryingMessageIds.delete(messageId);
 		}
-		const {
-			status: _status,
-			lastAttemptAt: _lastAttemptAt,
-			messageId: _messageId,
-			conversationId: _conversationId,
-			senderId: _senderId,
-			timestamp: _timestamp,
-			unsent: _unsent,
-			reactions: _reactions,
-			refValue: _refValue,
-			replyToMessage,
-			...payload
-		} = message;
-		void [
-			_status,
-			_lastAttemptAt,
-			_messageId,
-			_conversationId,
-			_senderId,
-			_timestamp,
-			_unsent,
-			_reactions,
-			_refValue,
-		];
-		message.status = "pending";
-		message.lastAttemptAt = Date.now();
-		this.#syncCache();
-		void this.#resolveMessage({
-			tempId: message.messageId,
-			message: payload as MessageType,
-			replyToMessageId: replyToMessage?.messageId,
-			ref: message.refValue ?? undefined,
-		});
 	}
 
 	// Echoes come back in send order, so match the oldest pending; prefer a
@@ -527,20 +752,16 @@ export class ConversationState {
 	): OptimisticMessage | undefined {
 		if (incoming.refValue) {
 			const correlated = this.messages.find(
-				(candidate) =>
-					candidate.status === "pending" &&
-					candidate.refValue === incoming.refValue,
+				(candidate) => candidate.refValue === incoming.refValue,
 			);
 			if (correlated) return correlated;
 		}
-		let fallback: OptimisticMessage | undefined;
 		for (let i = this.messages.length - 1; i >= 0; i--) {
 			const candidate = this.messages[i];
-			if (candidate.status !== "pending") continue;
-			if (candidate.type === incoming.type) return candidate;
-			fallback ??= candidate;
+			if (candidate.status === "sent") continue;
+			if (sameLegacyMessage(incoming, candidate)) return candidate;
 		}
-		return fallback;
+		return undefined;
 	}
 
 	#advanceLastRead(timestamp: number | null): boolean {
@@ -559,16 +780,29 @@ export class ConversationState {
 				void _status;
 				return rest;
 			});
-		const failedMessages = this.messages
-			.filter(
-				(message) => message.status === "error" || message.status === "handled",
-			)
-			.map(({ status, lastAttemptAt, ...message }) => ({
-				localId: message.messageId,
-				message,
-				state: status === "error" ? ("failed" as const) : ("handled" as const),
-				lastAttemptAt: lastAttemptAt ?? message.timestamp,
-			}));
+		const failedMessages = this.messages.flatMap(
+			({
+				status,
+				lastAttemptAt,
+				attemptRef,
+				outerCommandRef,
+				retryCount,
+				...message
+			}) => {
+				if (status === "sent") return [];
+				return [
+					{
+						localId: message.messageId,
+						message,
+						state: status,
+						lastAttemptAt: lastAttemptAt ?? message.timestamp,
+						attemptRef,
+						outerCommandRef,
+						retryCount: retryCount ?? 0,
+					},
+				];
+			},
+		);
 		this.#conversations.setCachedConversation(this.conversationId, {
 			messages: cachedMessages,
 			failedMessages,

@@ -1,17 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchRestMock, wsRequestMock, wsSendMock } = vi.hoisted(() => ({
-	fetchRestMock: vi.fn(),
-	wsRequestMock: vi.fn(),
-	wsSendMock: vi.fn(),
-}));
+const { fetchRestMock, wsRequestMock, wsRequestOutcomeMock, wsSendMock } =
+	vi.hoisted(() => ({
+		fetchRestMock: vi.fn(),
+		wsRequestMock: vi.fn(),
+		wsRequestOutcomeMock: vi.fn(),
+		wsSendMock: vi.fn(),
+	}));
 
 vi.mock("$lib/api", async (importOriginal) => ({
 	...(await importOriginal<typeof import("$lib/api")>()),
 	fetchRest: fetchRestMock,
 }));
 vi.mock("$lib/ws.svelte", () => ({
-	ws: { request: wsRequestMock, send: wsSendMock },
+	ws: {
+		request: wsRequestMock,
+		requestOutcome: wsRequestOutcomeMock,
+		send: wsSendMock,
+	},
 }));
 
 import {
@@ -67,6 +73,7 @@ beforeEach(() => {
 	fetchRestMock.mockReset();
 	wsSendMock.mockReset();
 	wsRequestMock.mockReset();
+	wsRequestOutcomeMock.mockReset();
 });
 
 afterEach(() => {
@@ -152,24 +159,28 @@ describe("message API wrappers", () => {
 	});
 
 	it("sends direct messages through the expected request shape", async () => {
-		const message = apiMessage();
-		fetchRestMock.mockResolvedValue(response({ data: message }));
+		wsRequestOutcomeMock.mockResolvedValue({ kind: "ack", payload: null });
 
 		await expect(
 			sendMessage({
 				toUserId: 99,
 				message: { type: "Text", body: { text: "hello" } },
+				ref: "attempt-1",
+				commandRef: "command-1",
 			}),
-		).resolves.toEqual(message);
+		).resolves.toEqual({ kind: "ack", payload: null });
 
-		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/send", {
-			method: "POST",
-			body: {
+		expect(wsRequestOutcomeMock).toHaveBeenCalledWith(
+			"chat.v1.message.send",
+			{
 				type: "Text",
 				target: { type: "Direct", targetId: 99 },
 				body: { text: "hello" },
+				ref: "attempt-1",
 			},
-		});
+			"command-1",
+		);
+		expect(fetchRestMock).not.toHaveBeenCalled();
 	});
 
 	it("sends image messages by media reference only", async () => {
@@ -182,24 +193,20 @@ describe("message API wrappers", () => {
 			takenOnGrindr: false,
 			createdAt: 1_710_000_000_000,
 		};
-		const responseMessage = apiMessage({ type: "Image", body: imageBody });
-		fetchRestMock.mockResolvedValue(response({ data: responseMessage }));
+		wsRequestOutcomeMock.mockResolvedValue({ kind: "ack", payload: null });
 
 		await expect(
 			sendMessage({
 				toUserId: 99,
 				message: { type: "Image", body: imageBody },
 			}),
-		).resolves.toEqual(responseMessage);
+		).resolves.toEqual({ kind: "ack", payload: null });
 
-		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/send", {
-			method: "POST",
-			body: {
-				type: "Image",
-				target: { type: "Direct", targetId: 99 },
-				body: { mediaId: 910_001 },
-			},
-		});
+		expect(wsRequestOutcomeMock).toHaveBeenCalledWith(
+			"chat.v1.message.send",
+			expect.objectContaining({ body: { mediaId: 910_001 } }),
+			undefined,
+		);
 	});
 
 	it("sends audio messages by media reference only", async () => {
@@ -211,22 +218,18 @@ describe("message API wrappers", () => {
 			length: 12_345,
 			expiresAt: 1_710_000_900_000,
 		};
-		const responseMessage = apiMessage({ type: "Audio", body: audioBody });
-		fetchRestMock.mockResolvedValue(response({ data: responseMessage }));
+		wsRequestOutcomeMock.mockResolvedValue({ kind: "ack", payload: null });
 
 		await sendMessage({
 			toUserId: 99,
 			message: { type: "Audio", body: audioBody },
 		});
 
-		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/send", {
-			method: "POST",
-			body: {
-				type: "Audio",
-				target: { type: "Direct", targetId: 99 },
-				body: { mediaId: 910_002 },
-			},
-		});
+		expect(wsRequestOutcomeMock).toHaveBeenCalledWith(
+			"chat.v1.message.send",
+			expect.objectContaining({ body: { mediaId: 910_002 } }),
+			undefined,
+		);
 	});
 
 	it("sends expiring video over the exact WebSocket command contract", () => {
@@ -248,10 +251,7 @@ describe("message API wrappers", () => {
 		vi.spyOn(crypto, "randomUUID").mockReturnValue(
 			"00000000-0000-4000-8000-000000000003",
 		);
-		const message = apiMessage({
-			refValue: "00000000-0000-4000-8000-000000000003",
-		});
-		wsRequestMock.mockResolvedValue(message);
+		wsRequestOutcomeMock.mockResolvedValue({ kind: "ack", payload: null });
 
 		await expect(
 			sendReplyMessage({
@@ -259,9 +259,9 @@ describe("message API wrappers", () => {
 				message: { type: "Text", body: { text: "hello" } },
 				replyToMessageId: "original-message",
 			}),
-		).resolves.toEqual(message);
+		).resolves.toEqual({ kind: "ack", payload: null });
 
-		expect(wsRequestMock).toHaveBeenCalledWith(
+		expect(wsRequestOutcomeMock).toHaveBeenCalledWith(
 			"chat.v1.message.send",
 			{
 				type: "Text",
@@ -270,16 +270,16 @@ describe("message API wrappers", () => {
 				ref: "00000000-0000-4000-8000-000000000003",
 				replyToMessageId: "original-message",
 			},
-			expect.anything(),
+			undefined,
 		);
 		expect(fetchRestMock).not.toHaveBeenCalled();
 	});
 
-	it("sends reply media by reference without changing plain sends", async () => {
+	it("sends reply media by reference", async () => {
 		vi.spyOn(crypto, "randomUUID").mockReturnValue(
 			"00000000-0000-4000-8000-000000000004",
 		);
-		wsRequestMock.mockResolvedValue(apiMessage({ type: "Image" }));
+		wsRequestOutcomeMock.mockResolvedValue({ kind: "ack", payload: null });
 		const imageBody = {
 			mediaId: 910_001,
 			width: null,
@@ -296,33 +296,26 @@ describe("message API wrappers", () => {
 			replyToMessageId: "original-message",
 		});
 
-		expect(wsRequestMock).toHaveBeenCalledWith(
+		expect(wsRequestOutcomeMock).toHaveBeenCalledWith(
 			"chat.v1.message.send",
 			expect.objectContaining({ body: { mediaId: 910_001 } }),
-			expect.anything(),
+			undefined,
 		);
 	});
 
 	it("sends location coordinates unchanged", async () => {
-		const message = apiMessage({
-			type: "Location",
-			body: { lat: 53.35, lon: -6.26 },
-		});
-		fetchRestMock.mockResolvedValue(response({ data: message }));
+		wsRequestOutcomeMock.mockResolvedValue({ kind: "ack", payload: null });
 
 		await sendMessage({
 			toUserId: 99,
 			message: { type: "Location", body: { lat: 53.35, lon: -6.26 } },
 		});
 
-		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/send", {
-			method: "POST",
-			body: {
-				type: "Location",
-				target: { type: "Direct", targetId: 99 },
-				body: { lat: 53.35, lon: -6.26 },
-			},
-		});
+		expect(wsRequestOutcomeMock).toHaveBeenCalledWith(
+			"chat.v1.message.send",
+			expect.objectContaining({ body: { lat: 53.35, lon: -6.26 } }),
+			undefined,
+		);
 	});
 
 	it("posts reactions without parsing a response body", async () => {

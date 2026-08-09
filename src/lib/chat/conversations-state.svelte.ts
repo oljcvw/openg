@@ -79,6 +79,13 @@ class ConversationsState {
 	failedConversationIds = $state<string[]>([]);
 
 	readonly ourProfileId: number;
+
+	sharedAlbumsHint(conversationId: string): boolean | null {
+		return (
+			this.entries.find((entry) => entry.data.conversationId === conversationId)
+				?.data.metadata?.hasSharedAlbums ?? null
+		);
+	}
 	#activeConversationId: string | null = null;
 	#wsPromises: Promise<() => void>[] = [];
 	#messageCache = new Map<string, CachedConversation>();

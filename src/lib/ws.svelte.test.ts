@@ -232,3 +232,105 @@ describe("WsState request", () => {
 		expect(unlistenMock).toHaveBeenCalledTimes(1);
 	});
 });
+
+describe("WsState request outcome", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		invokeMock.mockReset();
+		listenMock.mockClear();
+		unlistenMock.mockReset();
+		getDeveloperSettingsSnapshotMock.mockReturnValue({
+			apiRequestTimeoutMs: 5_000,
+		});
+		vi.spyOn(crypto, "randomUUID").mockReturnValue(
+			"00000000-0000-4000-8000-000000000010",
+		);
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		vi.restoreAllMocks();
+	});
+
+	it("accepts an opaque successful response as an acknowledgement", async () => {
+		invokeMock.mockResolvedValue(undefined);
+		const outcome = ws.requestOutcome("chat.v1.message.send", {
+			ref: "attempt",
+		});
+		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledTimes(1));
+
+		listeners.get("grindr:chat_v1_message_send_response")?.({
+			payload: {
+				type: "chat.v1.message.send.response",
+				ref: "00000000-0000-4000-8000-000000000010",
+				status: 204,
+				payload: null,
+			},
+		});
+
+		await expect(outcome).resolves.toEqual({ kind: "ack", payload: null });
+	});
+
+	it("subscribes before enqueueing the command", async () => {
+		invokeMock.mockResolvedValue(undefined);
+		void ws.requestOutcome("chat.v1.message.send", { ref: "attempt" });
+		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledTimes(1));
+
+		expect(listenMock.mock.invocationCallOrder[0]).toBeLessThan(
+			invokeMock.mock.invocationCallOrder[0],
+		);
+	});
+
+	it("classifies a server rejection as definitely not sent", async () => {
+		invokeMock.mockResolvedValue(undefined);
+		const outcome = ws.requestOutcome("chat.v1.message.send", {});
+		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledTimes(1));
+
+		listeners.get("grindr:chat_v1_message_send_response")?.({
+			payload: {
+				type: "chat.v1.message.send.response",
+				ref: "00000000-0000-4000-8000-000000000010",
+				status: 422,
+				payload: {},
+			},
+		});
+
+		await expect(outcome).resolves.toMatchObject({ kind: "notSent" });
+	});
+
+	it("classifies a timeout as unknown instead of not sent", async () => {
+		invokeMock.mockResolvedValue(undefined);
+		const outcome = ws.requestOutcome("chat.v1.message.send", {});
+		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledTimes(1));
+		await vi.advanceTimersByTimeAsync(5_000);
+
+		await expect(outcome).resolves.toEqual({
+			kind: "unknown",
+			reason: "timeout",
+		});
+	});
+
+	it("classifies a disconnect after enqueue as an unknown outcome", async () => {
+		invokeMock.mockResolvedValue(undefined);
+		const outcome = ws.requestOutcome("chat.v1.message.send", {});
+		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledTimes(1));
+
+		listeners.get("ws:disconnected")?.({ payload: undefined });
+
+		await expect(outcome).resolves.toEqual({
+			kind: "unknown",
+			reason: "disconnect",
+		});
+	});
+
+	it("classifies a native bridge rejection after enqueue is attempted as ambiguous", async () => {
+		invokeMock.mockRejectedValue(new Error("bridge reply lost"));
+
+		await expect(
+			ws.requestOutcome("chat.v1.message.send", {}),
+		).resolves.toEqual({
+			kind: "unknown",
+			reason: "ambiguousResponse",
+		});
+	});
+});

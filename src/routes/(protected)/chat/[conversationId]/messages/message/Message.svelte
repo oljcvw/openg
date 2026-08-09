@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { tick } from "svelte";
+	import { onDestroy, tick } from "svelte";
 	import { expoOut } from "svelte/easing";
 	import { scale } from "svelte/transition";
 
+	import { isReceivedFromConversationPeer } from "$lib/chat/shared-media";
 	import { videoMessageSchema } from "$lib/model/messaging/messages";
 	import type { DisplayMessage } from "$lib/model/messaging/messages";
 	import AlbumContentMessage from "./AlbumContentMessage.svelte";
@@ -40,10 +41,12 @@
 		onUnshareAlbum,
 		onRetry,
 		onMarkHandled,
+		onSendAgain,
 		onSavePhrase,
 		onReply,
 		onReplySelect,
 		ourProfileId,
+		peerProfileId,
 		otherName,
 		highlighted = false,
 	}: {
@@ -53,7 +56,13 @@
 		indexInStack: number;
 		stackLength: number;
 		dayStart?: number;
-		status?: "sent" | "pending" | "error" | "handled";
+		status?:
+			| "queued"
+			| "awaitingAck"
+			| "confirming"
+			| "sent"
+			| "failed"
+			| "handled";
 		onReact?: (reactionId: number) => void;
 		onDelete?: () => void;
 		onVisible?: () => void;
@@ -61,16 +70,26 @@
 		onUnshareAlbum?: () => void;
 		onRetry?: () => void;
 		onMarkHandled?: () => void;
+		onSendAgain?: () => void;
 		onSavePhrase?: () => void;
 		onReply?: () => void;
 		onReplySelect?: () => void;
 		ourProfileId: number;
+		peerProfileId: number | null;
 		otherName?: string | null;
 		highlighted?: boolean;
 	} = $props();
 
 	const firstInStack = $derived(indexInStack === 0);
 	const lastInStack = $derived(indexInStack === stackLength - 1);
+	const receivedFromPeer = $derived(
+		isReceivedFromConversationPeer({
+			accountProfileId: ourProfileId,
+			peerProfileId,
+			senderProfileId: message.senderId,
+			isOut,
+		}),
+	);
 
 	setMessageContext(() => ({
 		firstInStack,
@@ -92,6 +111,27 @@
 	let swipeStart: { x: number; y: number } | null = $state(null);
 	let swipeOffset = $state(0);
 	let swipeLocked = $state(false);
+	let swipePointerId: number | null = null;
+	let swipeCaptureElement: HTMLElement | null = null;
+
+	function resetSwipe(releaseCapture = true): void {
+		const pointerId = swipePointerId;
+		const captureElement = swipeCaptureElement;
+		swipeStart = null;
+		swipeOffset = 0;
+		swipeLocked = false;
+		swipePointerId = null;
+		swipeCaptureElement = null;
+		if (
+			releaseCapture &&
+			pointerId !== null &&
+			captureElement?.hasPointerCapture(pointerId)
+		) {
+			captureElement.releasePointerCapture(pointerId);
+		}
+	}
+
+	onDestroy(() => resetSwipe());
 
 	function setRef(el: HTMLElement | null) {
 		messageElement = el ?? null;
@@ -235,6 +275,11 @@
 				{isOut}
 				privateMedia={message.type === "PrivateVideo" ||
 					message.body.maxViews !== null}
+				accountProfileId={ourProfileId}
+				{peerProfileId}
+				{receivedFromPeer}
+				sentAt={message.timestamp}
+				messageType={message.type}
 			/>
 		{:else if message.type === "NonExpiringVideo"}
 			{@const video = videoMessageSchema.shape.body.safeParse(message.body)}
@@ -244,6 +289,11 @@
 					conversationId={message.conversationId}
 					messageId={message.messageId}
 					{isOut}
+					accountProfileId={ourProfileId}
+					{peerProfileId}
+					{receivedFromPeer}
+					sentAt={message.timestamp}
+					messageType="NonExpiringVideo"
 				/>
 			{:else}
 				<UnsupportedMessage type="Video" />
@@ -259,11 +309,20 @@
 				message={message.body}
 				conversationId={message.conversationId}
 				messageId={message.messageId}
+				accountProfileId={ourProfileId}
+				{peerProfileId}
+				{receivedFromPeer}
+				sentAt={message.timestamp}
 			/>
 		{:else if message.type === "Location"}
 			<LocationMessage message={message.body} />
 		{:else if message.type === "Album" || message.type === "ExpiringAlbum" || message.type === "ExpiringAlbumV2"}
-			<AlbumMessage message={message.body} />
+			<AlbumMessage
+				message={message.body}
+				senderProfileId={message.senderId}
+				{peerProfileId}
+				{isOut}
+			/>
 		{:else if message.type === "AlbumContentReply" || message.type === "AlbumContentReaction"}
 			<AlbumContentMessage message={message.body} />
 		{:else if message.type === "Unsent" || message.type === "Retracted"}
@@ -302,6 +361,7 @@
 		class:ring-primary={highlighted}
 		style:transform={`translateX(${swipeOffset}px)`}
 		style:transition={swipeStart ? "none" : "transform 180ms ease-out"}
+		style:touch-action="pan-y"
 		onpointerdown={(event) => {
 			if (isOut || !onReply || event.button !== 0) return;
 			if (
@@ -310,33 +370,41 @@
 				)
 			)
 				return;
+			resetSwipe();
+			const target = event.currentTarget as HTMLElement;
+			target.setPointerCapture(event.pointerId);
+			swipeCaptureElement = target;
+			swipePointerId = event.pointerId;
 			swipeStart = { x: event.clientX, y: event.clientY };
-			swipeOffset = 0;
-			swipeLocked = false;
 		}}
 		onpointermove={(event) => {
-			if (!swipeStart || isOut || !onReply) return;
+			if (
+				!swipeStart ||
+				event.pointerId !== swipePointerId ||
+				isOut ||
+				!onReply
+			)
+				return;
 			const dx = event.clientX - swipeStart.x;
 			const dy = event.clientY - swipeStart.y;
 			if (!swipeLocked && Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
 			if (!swipeLocked && Math.abs(dy) > Math.abs(dx)) {
-				swipeStart = null;
-				swipeOffset = 0;
+				resetSwipe();
 				return;
 			}
 			swipeLocked = true;
 			swipeOffset = Math.min(72, Math.max(0, dx));
 		}}
-		onpointerup={() => {
+		onpointerup={(event) => {
+			if (event.pointerId !== swipePointerId) return;
 			if (swipeOffset >= 48) onReply?.();
-			swipeStart = null;
-			swipeOffset = 0;
-			swipeLocked = false;
+			resetSwipe();
 		}}
-		onpointercancel={() => {
-			swipeStart = null;
-			swipeOffset = 0;
-			swipeLocked = false;
+		onpointercancel={(event) => {
+			if (event.pointerId === swipePointerId) resetSwipe();
+		}}
+		onlostpointercapture={(event) => {
+			if (event.pointerId === swipePointerId) resetSwipe(false);
 		}}
 		ondblclick={(event) => {
 			const selection = window.getSelection();
@@ -374,17 +442,49 @@
 				{ "text-right": isOut },
 			]}
 		>
-			{#if status === "pending"}
+			{#if status === "queued" || status === "awaitingAck"}
 				Sending...
-			{:else if status === "error"}
+			{:else if status === "confirming"}
+				Confirming delivery...
+				{#if onSendAgain}
+					<button
+						class="ms-2 underline"
+						onclick={() => {
+							if (
+								window.confirm(
+									"The original message may already have been delivered. Send a duplicate anyway?",
+								)
+							)
+								onSendAgain();
+						}}>Send again</button
+					>
+				{/if}
+			{:else if status === "failed"}
 				<span class="text-destructive">Not sent</span>
-				<button class="ms-2 underline" onclick={onRetry}>Retry</button>
+				{#if onRetry}
+					<button class="ms-2 underline" onclick={onRetry}>Retry</button>
+				{/if}
+				{#if onSendAgain}
+					<button
+						class="ms-2 underline"
+						onclick={() => {
+							if (
+								window.confirm(
+									"The original message may already have been delivered. Send a duplicate anyway?",
+								)
+							)
+								onSendAgain();
+						}}>Send again</button
+					>
+				{/if}
 				<button class="ms-2 underline" onclick={onMarkHandled}
 					>Mark handled</button
 				>
 			{:else if status === "handled"}
 				<span class="text-muted-foreground">Not sent</span>
-				<button class="ms-2 underline" onclick={onRetry}>Retry</button>
+				{#if onRetry}
+					<button class="ms-2 underline" onclick={onRetry}>Retry</button>
+				{/if}
 			{:else}
 				{#if isRead !== null}
 					{#if isRead}

@@ -11,6 +11,7 @@
 	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
 	import { ApiError } from "$lib/api";
+	import { getAccountSessionSnapshot } from "$lib/api/account-caches";
 	import { showErrorToast } from "$lib/api/error";
 	import {
 		type AlbumContentResponse,
@@ -18,7 +19,6 @@
 		recordAlbumContentView,
 	} from "$lib/api/messaging/albums";
 	import {
-		type AlbumAccess,
 		type CachedAlbumRecord,
 		discoverSharedAlbum,
 		markAlbumUnavailable,
@@ -41,22 +41,47 @@
 	import LockedMedia from "./LockedMedia.svelte";
 	import { MessageMediaState } from "./message-media.svelte";
 
-	let { message }: { message: AlbumMessage["body"] } = $props();
+	let {
+		message,
+		senderProfileId = null,
+		peerProfileId = null,
+		isOut = true,
+	}: {
+		message: AlbumMessage["body"];
+		senderProfileId?: number | null;
+		peerProfileId?: number | null;
+		isOut?: boolean;
+	} = $props();
 
 	const media = new MessageMediaState();
 
 	const expiry = $derived(albumExpiry(message, getNow()));
 	let cachedRecord = $state<CachedAlbumRecord | null>(null);
 	let keepUnavailable = $state(getKeepUnavailableCachedAlbumsSnapshot());
+	const albumIdentity = $derived.by(() => {
+		const accountProfileId = getAccountSessionSnapshot().accountId;
+		return accountProfileId === null || message.ownerProfileId === null
+			? null
+			: {
+					accountProfileId,
+					ownerProfileId: message.ownerProfileId,
+					albumId: message.albumId,
+				};
+	});
 
 	$effect(() => {
-		const unsubscribeAlbum = subscribeCachedAlbum(
-			message.albumId,
-			(record) => (cachedRecord = record),
-		);
+		const identity = albumIdentity;
+		const unsubscribeAlbum = identity
+			? subscribeCachedAlbum(identity, (record) => (cachedRecord = record))
+			: () => {};
 		const unsubscribePreferences = subscribePreferences(() => {
 			keepUnavailable = getKeepUnavailableCachedAlbumsSnapshot();
 		});
+		const ownerValidated =
+			!isOut &&
+			peerProfileId !== null &&
+			senderProfileId === peerProfileId &&
+			message.ownerProfileId === peerProfileId;
 		observeBackgroundTask(
 			discoverSharedAlbum({
 				albumId: message.albumId,
@@ -64,6 +89,7 @@
 				expirationType: message.expirationType,
 				expiresAt: message.viewableUntil ?? message.expiresAt,
 				isViewable: message.isViewable,
+				ownerValidated,
 			}),
 			{
 				category: "background_task",
@@ -77,35 +103,26 @@
 		};
 	});
 
-	const unavailableAccess = $derived.by<AlbumAccess | null>(() => {
-		if (expiry?.expired)
-			return {
-				status: "unavailable",
-				reason: "expired",
-				detectedAt: Date.now(),
-			};
+	type UnavailableReason = "revoked_or_removed" | "expired" | "views_exhausted";
+	const unavailableReason = $derived.by<UnavailableReason | null>(() => {
+		if (expiry?.expired) return "expired";
 		if (cachedRecord?.access.status === "unavailable")
-			return cachedRecord.access;
-		if (!message.isViewable)
-			return {
-				status: "unavailable",
-				reason: "views_exhausted",
-				detectedAt: Date.now(),
-			};
+			return cachedRecord.access.reason;
+		if (!message.isViewable) return "views_exhausted";
 		return null;
 	});
 	const cachedItemCount = $derived(cachedRecord?.media.length ?? 0);
 	const canOpenCached = $derived(
-		unavailableAccess !== null && keepUnavailable && cachedItemCount > 0,
+		unavailableReason !== null && keepUnavailable && cachedItemCount > 0,
 	);
 	const canOpen = $derived(
-		unavailableAccess === null ? message.isViewable : canOpenCached,
+		unavailableReason === null ? message.isViewable : canOpenCached,
 	);
 
-	function accessLabel(access: AlbumAccess | null): string | null {
-		if (access?.status !== "unavailable") return null;
-		if (access.reason === "expired") return "Expired";
-		if (access.reason === "views_exhausted") return "View limit reached";
+	function accessLabel(reason: UnavailableReason | null): string | null {
+		if (reason === "expired") return "Expired";
+		if (reason === "views_exhausted") return "View limit reached";
+		if (reason === null) return null;
 		return "Access revoked";
 	}
 
@@ -142,11 +159,21 @@
 		| { status: "open"; album: LoadedAlbum };
 
 	let albumState = $state<AlbumState>({ status: "idle" });
-	let cachedAlbum: LoadedAlbum | null = null;
+	let retainedAlbumSnapshot: { key: string; album: LoadedAlbum } | null = null;
+	const retainedSnapshotKey = $derived(
+		albumIdentity === null
+			? "none"
+			: `${albumIdentity.accountProfileId}:${albumIdentity.ownerProfileId}:${albumIdentity.albumId}:${cachedRecord?.lastAccessedAt ?? "none"}:${unavailableReason ?? "available"}:${keepUnavailable}`,
+	);
+
+	$effect(() => {
+		void retainedSnapshotKey;
+		retainedAlbumSnapshot = null;
+	});
 
 	function openAlbum() {
 		if (!canOpen) {
-			toast.info(accessLabel(unavailableAccess) ?? "Album unavailable", {
+			toast.info(accessLabel(unavailableReason) ?? "Album unavailable", {
 				description:
 					cachedItemCount > 0
 						? "A cached copy remains on this device. Enable it in App Settings."
@@ -161,8 +188,11 @@
 			});
 			return;
 		}
-		if (cachedAlbum) {
-			albumState = { status: "open", album: cachedAlbum };
+		if (
+			unavailableReason !== null &&
+			retainedAlbumSnapshot?.key === retainedSnapshotKey
+		) {
+			albumState = { status: "open", album: retainedAlbumSnapshot.album };
 		} else {
 			albumState = { status: "loading" };
 		}
@@ -174,7 +204,8 @@
 		(async () => {
 			let response: AlbumContentResponse;
 			let retained = false;
-			if (unavailableAccess !== null && keepUnavailable && cachedRecord) {
+			const snapshotKey = retainedSnapshotKey;
+			if (unavailableReason !== null && keepUnavailable && cachedRecord) {
 				response = await resolveCachedAlbum(cachedRecord);
 				retained = true;
 			} else {
@@ -189,12 +220,26 @@
 						error.kind !== "RequestBlocked" &&
 						error.kind !== "RequestCooldown"
 					) {
-						await markAlbumUnavailable(message.albumId, "revoked_or_removed");
+						if (albumIdentity)
+							await markAlbumUnavailable(
+								albumIdentity,
+								"revoked_or_removed",
+							).catch((cacheError) =>
+								console.error("Failed to mark cached album", cacheError),
+							);
 					}
-					const cached = await readCachedAlbum(message.albumId);
+					const cached = albumIdentity
+						? await readCachedAlbum(albumIdentity).catch((cacheError) => {
+								console.error("Failed to read cached album", cacheError);
+								return null;
+							})
+						: null;
 					if (!keepUnavailable || !cached || cached.media.length === 0)
 						throw error;
-					response = await resolveCachedAlbum(cached);
+					response = await resolveCachedAlbum(cached).catch((cacheError) => {
+						console.error("Failed to resolve cached album", cacheError);
+						throw error;
+					});
 					retained = true;
 				}
 			}
@@ -203,7 +248,7 @@
 				signal: abortController.signal,
 			});
 			if (abortController.signal.aborted) return;
-			cachedAlbum = loaded;
+			if (retained) retainedAlbumSnapshot = { key: snapshotKey, album: loaded };
 			albumState = { status: "open", album: loaded };
 		})().catch((error) => {
 			if (abortController.signal.aborted) return;
@@ -300,12 +345,13 @@
 						}
 					}
 				});
-				if (message.expirationType === "ONCE" && unavailableAccess === null) {
+				if (message.expirationType === "ONCE" && unavailableReason === null) {
 					const viewed = new Set<number>();
 					const recordCurrentView = () => {
 						const index = lightbox?.pswp?.currIndex ?? 0;
 						const item = album.content[index];
-						if (!item || viewed.has(item.contentId)) return;
+						if (!item || item.url.length === 0 || viewed.has(item.contentId))
+							return;
 						viewed.add(item.contentId);
 						void recordAlbumContentView({
 							albumId: album.albumId,
@@ -328,14 +374,14 @@
 					lightbox.on("afterInit", recordCurrentView);
 					lightbox.on("change", recordCurrentView);
 				}
-				if (unavailableAccess !== null) {
+				if (unavailableReason !== null) {
 					lightbox.on("uiRegister", () => {
 						lightbox?.pswp?.ui?.registerElement({
 							name: "cached-album-status",
 							order: 8,
 							isButton: false,
 							appendTo: "wrapper",
-							html: `Cached copy · ${accessLabel(unavailableAccess)}`,
+							html: `Cached copy · ${accessLabel(unavailableReason)}`,
 						});
 					});
 				}
@@ -364,20 +410,39 @@
 		album: AlbumContentResponse,
 		options: { retained: boolean; signal: AbortSignal },
 	): Promise<LoadedAlbum> {
+		const settings = getDeveloperSettingsSnapshot();
 		if (!options.retained && message.expirationType !== "ONCE") {
 			return {
 				...album,
 				content: await preloadAlbumSlides(album.content, {
-					concurrency: getDeveloperSettingsSnapshot().albumPreloadConcurrency,
+					concurrency: settings.albumPreloadConcurrency,
+					timeoutMs: settings.albumPreloadTimeoutMs,
 					signal: options.signal,
 				}),
 			};
 		}
+		if (!options.retained && message.expirationType === "ONCE") {
+			// Preserve the server ordering and URLs for explicit viewer activation,
+			// but never speculatively fetch once-view media while preparing slides.
+			return {
+				...album,
+				content: album.content.map((item) => ({
+					...item,
+					url:
+						item.processing === true || item.rejectionId !== null
+							? ""
+							: item.url,
+					width: 1,
+					height: 1,
+				})),
+			};
+		}
 		const available = options.retained
 			? album.content.filter((item) => item.url.length > 0)
-			: album.content.slice(0, 1).filter((item) => item.url.length > 0);
+			: [];
 		const loaded = await preloadAlbumSlides(available, {
-			concurrency: getDeveloperSettingsSnapshot().albumPreloadConcurrency,
+			concurrency: settings.albumPreloadConcurrency,
+			timeoutMs: settings.albumPreloadTimeoutMs,
 			signal: options.signal,
 		});
 		const loadedById = new Map(loaded.map((item) => [item.contentId, item]));
@@ -424,11 +489,11 @@
 			</div>
 		{/if}
 		<div class={["@container absolute top-0 left-0 size-full", contentClass]}>
-			{#if unavailableAccess !== null}
+			{#if unavailableReason !== null}
 				<div
 					class="absolute top-1.5 right-1.5 z-10 rounded-full bg-black/75 px-2 py-0.5 text-xs font-medium text-white"
 				>
-					{accessLabel(unavailableAccess)}
+					{accessLabel(unavailableReason)}
 				</div>
 			{/if}
 			{#if expiry !== null}
@@ -494,7 +559,7 @@
 	}
 	:global(.pswp__album-position) {
 		position: absolute;
-		top: calc(var(--safe-area-top) + 0.75rem);
+		top: calc(var(--safe-area-top) + 3rem);
 		left: 50%;
 		z-index: 21;
 		transform: translateX(-50%);
@@ -507,9 +572,6 @@
 		font-weight: 600;
 		line-height: 1.25rem;
 		box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
-	}
-	:global(.pswp__cached-album-status + .pswp__album-position) {
-		top: calc(var(--safe-area-top) + 3rem);
 	}
 	:global(.og-album-missing) {
 		display: flex;
