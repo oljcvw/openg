@@ -309,6 +309,22 @@ describe("ConversationsState #syncLatest single-flight (P1.8)", () => {
 });
 
 describe("ConversationsState markRead rollback (P1.9)", () => {
+	it("keeps an active conversation unread until visible message reporting", async () => {
+		getConversationsMock.mockResolvedValue({
+			entries: [conversation("a:1", 1000, { unreadCount: 3 })],
+			nextPage: null,
+		});
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+
+		state.setActive("a:1");
+		expect(entryFor(state, "a:1").data.unreadCount).toBe(3);
+		expect(markConversationAsReadMock).not.toHaveBeenCalled();
+
+		emitMessageSent(incomingMessage("a:1", 2000, PEER_ID));
+		expect(entryFor(state, "a:1").data.unreadCount).toBe(4);
+	});
+
 	it("restores unread additively when mark-read fails after a concurrent increment", async () => {
 		const consoleError = vi
 			.spyOn(console, "error")

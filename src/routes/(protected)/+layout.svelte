@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { goto, replaceState } from "$app/navigation";
+	import { afterNavigate, goto, replaceState } from "$app/navigation";
 	import { page } from "$app/state";
-	import { onMount } from "svelte";
+	import { onMount, untrack } from "svelte";
 
 	import { callMethod } from "$lib/api";
 	import {
@@ -24,7 +24,25 @@
 
 	let { children }: import("./$types").LayoutProps = $props();
 	let accountGeneration = $state(getAccountSessionSnapshot().generation);
-	let navigationRuntime = $state<CurrentNavigationRuntime | null>(null);
+	let navigationRuntime: CurrentNavigationRuntime | null = null;
+	let routerReady = false;
+
+	function synchronizeNavigationRuntime(
+		runtime: CurrentNavigationRuntime,
+		route: string,
+		state: unknown,
+	): void {
+		void runtime.synchronize(route, state).catch(() => {
+			// A superseded account coordinator cannot write navigation state.
+		});
+	}
+
+	afterNavigate(() => {
+		routerReady = true;
+		const runtime = navigationRuntime;
+		if (runtime)
+			synchronizeNavigationRuntime(runtime, page.url.href, page.state);
+	});
 
 	$effect(() => {
 		const generation = accountGeneration;
@@ -37,6 +55,13 @@
 			},
 		});
 		navigationRuntime = runtime;
+		if (routerReady) {
+			const current = untrack(() => ({
+				route: page.url.href,
+				state: page.state,
+			}));
+			synchronizeNavigationRuntime(runtime, current.route, current.state);
+		}
 		const releaseSemanticBack = setSemanticRouteBackHandler(() =>
 			runtime.coordinator.handleSemanticBack(page.url.pathname, page.state),
 		);
@@ -46,16 +71,6 @@
 			runtime.release();
 			if (navigationRuntime === runtime) navigationRuntime = null;
 		};
-	});
-
-	$effect(() => {
-		const runtime = navigationRuntime;
-		const route = page.url.href;
-		const state = page.state;
-		if (!runtime) return;
-		void runtime.synchronize(route, state).catch(() => {
-			// A superseded account coordinator cannot write navigation state.
-		});
 	});
 
 	async function syncHydratedPreferences(): Promise<void> {

@@ -106,6 +106,7 @@ function conversationsStub() {
 		removeMessageFromSearch: vi.fn(),
 		updatePreview: vi.fn(),
 		markRead: markReadMock,
+		markReadLocally: vi.fn(() => vi.fn()),
 		ensureLoaded: vi.fn(),
 	};
 }
@@ -1242,6 +1243,82 @@ describe("ConversationState read receipts", () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+
+	it("does not report hydrated, reconciled, or arriving messages before visibility", async () => {
+		const initial = { ...message("initial", 1000), senderId: PEER_ID };
+		const arriving = { ...message("arriving", 2000), senderId: PEER_ID };
+		const reconciled = { ...message("reconciled", 3000), senderId: PEER_ID };
+		getConversationMock.mockResolvedValue({
+			messages: [initial],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const conversations = conversationsStub();
+		const state = create(conversations);
+		await flush();
+
+		emitMessageSent(arriving);
+		getConversationMock.mockResolvedValue({
+			messages: [reconciled, arriving, initial],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await reconcileHandlers[0]?.();
+		await flush();
+
+		vi.useFakeTimers();
+		try {
+			await vi.advanceTimersByTimeAsync(2_500);
+			expect(markConversationAsReadMock).not.toHaveBeenCalled();
+			expect(conversations.markRead).not.toHaveBeenCalled();
+			expect(conversations.markReadLocally).not.toHaveBeenCalled();
+
+			state.reportRead({
+				messageId: reconciled.messageId,
+				timestamp: reconciled.timestamp,
+			});
+			await vi.advanceTimersByTimeAsync(500);
+			expect(markConversationAsReadMock).toHaveBeenCalledExactlyOnceWith({
+				conversationId: CONVERSATION_ID,
+				messageId: reconciled.messageId,
+			});
+			expect(conversations.markReadLocally).toHaveBeenCalledExactlyOnceWith(
+				CONVERSATION_ID,
+			);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("destroys itself on account replacement and rejects late results and events", async () => {
+		activateAccountSession(77_001);
+		let resolveConversation!: (value: unknown) => void;
+		const pendingConversation = new Promise((resolve) => {
+			resolveConversation = resolve;
+		});
+		getConversationMock.mockReturnValue(pendingConversation);
+		const conversations = conversationsStub();
+		const state = create(conversations);
+		await flush();
+
+		activateAccountSession(77_002);
+		expect(state.destroyed).toBe(true);
+		emitMessageSent({ ...message("late-event", 3000), senderId: PEER_ID });
+		resolveConversation({
+			messages: [{ ...message("late-load", 2000), senderId: PEER_ID }],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await flush();
+
+		expect(state.messages).toEqual([]);
+		expect(state.profile).toBeNull();
+		expect(conversations.setCachedConversation).not.toHaveBeenCalled();
+		expect(conversations.clearActive).toHaveBeenCalledWith(CONVERSATION_ID);
 	});
 
 	it("flushes within the max-wait even under a continuous sub-debounce stream", async () => {

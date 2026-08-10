@@ -31,6 +31,25 @@ describe("ProfileItem app navigation", () => {
 		expect(navigation.openAppDetail).toHaveBeenNthCalledWith(2, "/chat/7");
 	});
 
+	it("lets a collection own row navigation without changing the avatar destination", async () => {
+		const openRow = vi.fn();
+		const view = render(ProfileItem, {
+			avatar: { link: "/profile/42", mediaHash: null },
+			link: "/chat/7",
+			onNavigate: openRow,
+			title: { value: "Someone" },
+		});
+		const links = view.getAllByRole("link");
+
+		await fireEvent.click(links[0]);
+		await fireEvent.click(links[1]);
+
+		expect(navigation.openAppDetail).toHaveBeenCalledExactlyOnceWith(
+			"/profile/42",
+		);
+		expect(openRow).toHaveBeenCalledExactlyOnceWith("/chat/7");
+	});
+
 	it("leaves a modified row click native", () => {
 		const view = render(ProfileItem, {
 			avatar: { link: "/profile/42", mediaHash: null },

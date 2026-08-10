@@ -9,8 +9,19 @@ import {
 	createCurrentAccountNavigationCoordinator,
 	isAppNavigationStateV1,
 	NavigationCoordinator,
+	type NavigationTransitionOutcome,
 	type ValidatedReceivedAlbumConversationParent,
 } from "./navigation-foundations";
+
+async function committed(
+	transition: Promise<NavigationTransitionOutcome>,
+): Promise<AppNavigationStateV1> {
+	const outcome = await transition;
+	expect(outcome.kind).toBe("committed");
+	if (outcome.kind !== "committed")
+		throw new Error("expected committed navigation transition");
+	return outcome.state;
+}
 
 function deferred<T>() {
 	let resolve!: (value: T | PromiseLike<T>) => void;
@@ -38,6 +49,18 @@ function createEffects() {
 		pop: vi.fn(),
 		replaceState: vi.fn(),
 	};
+}
+
+async function closeAfterObservedHistoryTraversal(
+	coordinator: NavigationCoordinator,
+	route: string,
+	detail: AppNavigationStateV1,
+	parent: AppNavigationStateV1,
+): Promise<BackResult> {
+	const closing = coordinator.closeDetail(route, detail);
+	await Promise.resolve();
+	await coordinator.initializeCurrentRoute(parent.safeReturnRoute, parent);
+	return await closing;
 }
 
 describe("route classification", () => {
@@ -123,10 +146,12 @@ describe("NavigationCoordinator", () => {
 					return () => `entry-${++index}`;
 				})(),
 			});
-			const root = await coordinator.activateRootRoute(rootRoute);
+			const root = await committed(coordinator.activateRootRoute(rootRoute));
 			if (transition === "replaceDetail")
 				await coordinator.openDetail("/profile/profile-before-replace");
-			const detail = await coordinator[transition]("/profile/profile-current");
+			const detail = await committed(
+				coordinator[transition]("/profile/profile-current"),
+			);
 			effects.replaceState.mockClear();
 			effects.pop.mockClear();
 
@@ -135,7 +160,12 @@ describe("NavigationCoordinator", () => {
 			).resolves.toEqual(detail);
 			expect(effects.replaceState).not.toHaveBeenCalled();
 			await expect(
-				coordinator.closeDetail("/profile/profile-current", detail),
+				closeAfterObservedHistoryTraversal(
+					coordinator,
+					"/profile/profile-current",
+					detail,
+					root,
+				),
 			).resolves.toBe("handled");
 			expect(effects.pop).toHaveBeenCalledOnce();
 			expect(coordinator.currentState).toEqual(root);
@@ -153,7 +183,9 @@ describe("NavigationCoordinator", () => {
 			})(),
 		});
 		await source.activateRootRoute("/interest/views");
-		const unproven = await source.openDetail("/profile/profile-current");
+		const unproven = await committed(
+			source.openDetail("/profile/profile-current"),
+		);
 		const reloadEffects = createEffects();
 		const reloaded = new NavigationCoordinator({
 			effects: reloadEffects,
@@ -242,16 +274,143 @@ describe("NavigationCoordinator", () => {
 				return () => `entry-${++index}`;
 			})(),
 		});
-		const root = await coordinator.switchRoot("inbox");
-		const detail = await coordinator.openDetail(
-			"/chat/private-conversation-id",
+		const root = await committed(coordinator.switchRoot("inbox"));
+		const detail = await committed(
+			coordinator.openDetail("/chat/private-conversation-id"),
 		);
 
 		await expect(
-			coordinator.closeDetail("/chat/private-conversation-id", detail),
+			closeAfterObservedHistoryTraversal(
+				coordinator,
+				"/chat/private-conversation-id",
+				detail,
+				root,
+			),
 		).resolves.toBe("handled");
 		expect(effects.pop).toHaveBeenCalledOnce();
 		expect(coordinator.currentState).toEqual(root);
+	});
+
+	it("commits a browser pop only after the expected route is observed", async () => {
+		const effects = createEffects();
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `observed-pop-${++index}`;
+			})(),
+			transitionTimeoutMs: 100,
+		});
+		const root = await committed(coordinator.activateRootRoute("/chat"));
+		const detail = await committed(
+			coordinator.openDetail("/chat/conversation-a"),
+		);
+
+		const closing = coordinator.closeDetail("/chat/conversation-a", detail);
+		await Promise.resolve();
+		expect(effects.pop).toHaveBeenCalledOnce();
+		expect(coordinator.currentState).toEqual(detail);
+
+		await coordinator.initializeCurrentRoute("/chat", root);
+		await expect(closing).resolves.toBe("handled");
+		expect(coordinator.currentState).toEqual(root);
+	});
+
+	it("times out an unobserved browser pop without corrupting current detail state", async () => {
+		const effects = createEffects();
+		const onTransitionFailure = vi.fn();
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `stalled-pop-${++index}`;
+			})(),
+			onTransitionFailure,
+			transitionTimeoutMs: 5,
+		});
+		await committed(coordinator.activateRootRoute("/chat"));
+		const detail = await committed(
+			coordinator.openDetail("/chat/conversation-a"),
+		);
+
+		await expect(
+			coordinator.closeDetail("/chat/conversation-a", detail),
+		).resolves.toBe("handled");
+
+		expect(coordinator.currentState).toEqual(detail);
+		expect(onTransitionFailure).toHaveBeenCalledWith(
+			expect.objectContaining({
+				component: "detail",
+				outcome: { kind: "failed", reason: "timeout" },
+			}),
+		);
+	});
+
+	it("accepts app-owned browser Back and Forward without weakening route binding", async () => {
+		const effects = createEffects();
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `history-entry-${++index}`;
+			})(),
+		});
+		const root = await committed(coordinator.activateRootRoute("/chat"));
+		const detail = await committed(
+			coordinator.openDetail("/chat/conversation-a"),
+		);
+		effects.goto.mockClear();
+
+		await expect(
+			coordinator.initializeCurrentRoute("/chat", root),
+		).resolves.toEqual(root);
+		expect(coordinator.currentState).toEqual(root);
+		expect(effects.goto).not.toHaveBeenCalled();
+
+		await expect(
+			coordinator.initializeCurrentRoute("/chat/conversation-a", detail),
+		).resolves.toEqual(detail);
+		expect(coordinator.currentState).toEqual(detail);
+		expect(effects.goto).not.toHaveBeenCalled();
+
+		await coordinator.initializeCurrentRoute("/chat", root);
+		await expect(
+			coordinator.initializeCurrentRoute("/chat/conversation-b", detail),
+		).resolves.toEqual(root);
+		expect(effects.goto).toHaveBeenLastCalledWith(
+			"/chat",
+			expect.objectContaining({ replaceState: true, state: root }),
+		);
+	});
+
+	it("refuses to pop when current detail state is paired with a different private route", async () => {
+		const effects = createEffects();
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `route-bound-${++index}`;
+			})(),
+		});
+		await committed(coordinator.activateRootRoute("/chat"));
+		const detail = await committed(
+			coordinator.openDetail("/chat/conversation-a"),
+		);
+		effects.goto.mockClear();
+
+		await expect(
+			coordinator.closeDetail("/chat/conversation-b", detail),
+		).resolves.toBe("handled");
+
+		expect(effects.pop).not.toHaveBeenCalled();
+		expect(effects.goto).toHaveBeenLastCalledWith(
+			"/chat",
+			expect.objectContaining({ replaceState: true }),
+		);
 	});
 
 	it.each([
@@ -292,7 +451,7 @@ describe("NavigationCoordinator", () => {
 			accountGeneration: 7,
 			createEntryId: () => "entry",
 		});
-		const inbox = await coordinator.switchRoot("inbox");
+		const inbox = await committed(coordinator.switchRoot("inbox"));
 
 		await expect(coordinator.handleSemanticBack("/chat", inbox)).resolves.toBe(
 			"handled",
@@ -391,7 +550,9 @@ describe("NavigationCoordinator", () => {
 		});
 		await coordinator.activateRootRoute("/settings");
 		await coordinator.openDetail("/settings/account");
-		const privacy = await coordinator.openDetail("/settings/account/privacy");
+		const privacy = await committed(
+			coordinator.openDetail("/settings/account/privacy"),
+		);
 		expect(privacy.safeReturnRoute).toBe("/settings/account");
 
 		await coordinator.closeDetail("/settings/account/privacy", privacy);
@@ -416,7 +577,9 @@ describe("NavigationCoordinator", () => {
 			createEntryId: () => "opaque-entry",
 		});
 		await coordinator.switchRoot("inbox");
-		const state = await coordinator.openDetail("/chat/private-conversation-id");
+		const state = await committed(
+			coordinator.openDetail("/chat/private-conversation-id"),
+		);
 
 		expect(state.accountGeneration).toBe(
 			getAccountSessionSnapshot().generation,
@@ -495,14 +658,16 @@ describe("reviewed navigation invariants", () => {
 			})(),
 		});
 
-		const views = await coordinator.activateRootRoute("/interest/views");
+		const views = await committed(
+			coordinator.activateRootRoute("/interest/views"),
+		);
 		expect(views).toMatchObject({
 			level: "root",
 			root: "interest",
 			safeReturnRoute: "/interest/views",
 			surface: "interestViews",
 		});
-		const albums = await coordinator.activateRootRoute("/albums");
+		const albums = await committed(coordinator.activateRootRoute("/albums"));
 		expect(albums).toMatchObject({
 			level: "root",
 			root: "inbox",
@@ -521,7 +686,7 @@ describe("reviewed navigation invariants", () => {
 		);
 		await expect(
 			coordinator.activateRootRoute("/chat/private-conversation-id"),
-		).rejects.toThrow("root route");
+		).resolves.toEqual({ kind: "failed", reason: "invalidState" });
 	});
 
 	it("requires explicit current proof before an album can return to Chats", async () => {
@@ -535,8 +700,8 @@ describe("reviewed navigation invariants", () => {
 			})(),
 		});
 		await coordinator.activateRootRoute("/chat");
-		const unvalidated = await coordinator.openDetail(
-			"/albums/private-album-id",
+		const unvalidated = await committed(
+			coordinator.openDetail("/albums/private-album-id"),
 		);
 		expect(unvalidated).toMatchObject({
 			parentEntryId: null,
@@ -545,13 +710,15 @@ describe("reviewed navigation invariants", () => {
 			surface: "inboxAlbums",
 		});
 
-		const chats = await coordinator.activateRootRoute("/chat");
+		const chats = await committed(coordinator.activateRootRoute("/chat"));
 		await coordinator.openDetail("/chat/private-conversation-id");
 		const proof = coordinator.createReceivedAlbumConversationParentProof();
 		expect(proof).not.toBeNull();
-		const validated = await coordinator.openDetail("/albums/private-album-id", {
-			receivedAlbumParent: proof!,
-		});
+		const validated = await committed(
+			coordinator.openDetail("/albums/private-album-id", {
+				receivedAlbumParent: proof!,
+			}),
+		);
 		expect(validated).toMatchObject({
 			parentEntryId: chats.entryId,
 			parentProof: "validatedReceivedAlbumConversation",
@@ -562,9 +729,11 @@ describe("reviewed navigation invariants", () => {
 
 		await coordinator.activateRootRoute("/chat");
 		await coordinator.openDetail("/chat/another-conversation-id");
-		const stale = await coordinator.openDetail("/albums/private-album-id", {
-			receivedAlbumParent: proof!,
-		});
+		const stale = await committed(
+			coordinator.openDetail("/albums/private-album-id", {
+				receivedAlbumParent: proof!,
+			}),
+		);
 		expect(stale.safeReturnRoute).toBe("/albums");
 		expect(stale.parentEntryId).toBeNull();
 	});
@@ -587,9 +756,11 @@ describe("reviewed navigation invariants", () => {
 			parentEntryId: "entry-1",
 		} as unknown as ValidatedReceivedAlbumConversationParent;
 
-		const album = await coordinator.openDetail("/albums/private-album-id", {
-			receivedAlbumParent: lookalike,
-		});
+		const album = await committed(
+			coordinator.openDetail("/albums/private-album-id", {
+				receivedAlbumParent: lookalike,
+			}),
+		);
 
 		expect(album).toMatchObject({
 			parentEntryId: null,
@@ -609,13 +780,15 @@ describe("reviewed navigation invariants", () => {
 				return () => `entry-${++index}`;
 			})(),
 		});
-		const chats = await coordinator.activateRootRoute("/chat");
+		const chats = await committed(coordinator.activateRootRoute("/chat"));
 		await coordinator.openDetail("/chat/private-conversation-id");
 		const proof = coordinator.createReceivedAlbumConversationParentProof();
 		expect(proof).not.toBeNull();
-		const album = await coordinator.openDetail("/albums/private-album-id", {
-			receivedAlbumParent: proof!,
-		});
+		const album = await committed(
+			coordinator.openDetail("/albums/private-album-id", {
+				receivedAlbumParent: proof!,
+			}),
+		);
 		effects.replaceState.mockClear();
 		effects.pop.mockClear();
 
@@ -623,12 +796,17 @@ describe("reviewed navigation invariants", () => {
 			coordinator.initializeCurrentRoute("/albums/private-album-id", album),
 		).resolves.toEqual(album);
 		expect(effects.replaceState).not.toHaveBeenCalled();
-		await coordinator.closeDetail("/albums/private-album-id", album);
+		await closeAfterObservedHistoryTraversal(
+			coordinator,
+			"/albums/private-album-id",
+			album,
+			chats,
+		);
 		expect(effects.pop).toHaveBeenCalledOnce();
 		expect(coordinator.currentState).toEqual(chats);
 	});
 
-	it("serializes deferred opens so only the first detail pushes", async () => {
+	it("supersedes a deferred first detail without replacing its root history", async () => {
 		const effects = createEffects();
 		const pending = deferred<void>();
 		const coordinator = new NavigationCoordinator({
@@ -648,9 +826,13 @@ describe("reviewed navigation invariants", () => {
 		const first = coordinator.openDetail("/chat/conversation-one");
 		const second = coordinator.openDetail("/profile/profile-two");
 		await Promise.resolve();
-		expect(effects.goto).toHaveBeenCalledTimes(1);
+		expect(effects.goto).toHaveBeenCalledTimes(2);
+		await expect(second).resolves.toMatchObject({
+			kind: "committed",
+			state: { detailKind: "profile" },
+		});
 		pending.resolve();
-		await Promise.all([first, second]);
+		await expect(first).resolves.toEqual({ kind: "superseded" });
 		expect(effects.goto).toHaveBeenNthCalledWith(
 			1,
 			"/chat/conversation-one",
@@ -659,12 +841,12 @@ describe("reviewed navigation invariants", () => {
 		expect(effects.goto).toHaveBeenNthCalledWith(
 			2,
 			"/profile/profile-two",
-			expect.objectContaining({ replaceState: true }),
+			expect.objectContaining({ replaceState: false }),
 		);
 		expect(coordinator.currentState?.detailKind).toBe("profile");
 	});
 
-	it("serializes root/detail overlap and concurrent Back actions", async () => {
+	it("lets a root intent supersede a never-resolving detail transition", async () => {
 		const effects = createEffects();
 		const gotoPending = deferred<void>();
 		const coordinator = new NavigationCoordinator({
@@ -683,31 +865,19 @@ describe("reviewed navigation invariants", () => {
 		const detailOpen = coordinator.openDetail("/chat/conversation-one");
 		const rootSwitch = coordinator.activateRootRoute("/interest/views");
 		await Promise.resolve();
-		expect(effects.goto).toHaveBeenCalledTimes(1);
+		expect(effects.goto).toHaveBeenCalledTimes(2);
+		await expect(rootSwitch).resolves.toMatchObject({
+			kind: "committed",
+			state: { surface: "interestViews" },
+		});
 		gotoPending.resolve();
-		await Promise.all([detailOpen, rootSwitch]);
+		await expect(detailOpen).resolves.toEqual({ kind: "superseded" });
 		expect(coordinator.currentState?.surface).toBe("interestViews");
-
-		await coordinator.activateRootRoute("/chat");
-		const detail = await coordinator.openDetail("/chat/conversation-two");
-		const popPending = deferred<void>();
-		effects.pop.mockImplementationOnce(() => popPending.promise);
-		const firstBack = coordinator.closeDetail("/chat/conversation-two", detail);
-		const secondBack = coordinator.closeDetail(
-			"/chat/conversation-two",
-			detail,
-		);
-		await Promise.resolve();
-		expect(effects.pop).toHaveBeenCalledOnce();
-		popPending.resolve();
-		await Promise.all([firstBack, secondBack]);
-		expect(effects.pop).toHaveBeenCalledOnce();
 	});
 
-	it("keeps committed state on rejection and continues queued scheduling", async () => {
+	it("returns a typed failure without rolling back a newer committed intent", async () => {
 		const effects = createEffects();
 		const rejected = deferred<void>();
-		const recoveryPending = deferred<void>();
 		const coordinator = new NavigationCoordinator({
 			effects,
 			accountGeneration: 7,
@@ -720,19 +890,210 @@ describe("reviewed navigation invariants", () => {
 		effects.goto.mockClear();
 		effects.goto
 			.mockImplementationOnce(() => rejected.promise)
-			.mockImplementationOnce(() => recoveryPending.promise);
+			.mockResolvedValueOnce(undefined);
 		const failed = coordinator.openDetail("/chat/conversation-one");
 		const recovery = coordinator.activateRootRoute("/albums");
 		await Promise.resolve();
-		expect(effects.goto).toHaveBeenCalledTimes(1);
-		rejected.reject(new Error("effect failed"));
-		await expect(failed).rejects.toThrow("effect failed");
-		await Promise.resolve();
-		expect(coordinator.currentState).toEqual(committed);
 		expect(effects.goto).toHaveBeenCalledTimes(2);
-		recoveryPending.resolve();
-		await recovery;
+		await expect(recovery).resolves.toMatchObject({
+			kind: "committed",
+			state: { surface: "inboxAlbums" },
+		});
+		rejected.reject(new Error("effect failed"));
+		await expect(failed).resolves.toEqual({ kind: "superseded" });
+		expect(coordinator.currentState).not.toEqual(committed);
 		expect(coordinator.currentState?.surface).toBe("inboxAlbums");
+	});
+
+	it("times out a stalled transition with a bounded typed failure", async () => {
+		const effects = createEffects();
+		effects.goto.mockImplementation(() => new Promise(() => {}));
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			transitionTimeoutMs: 5,
+			createEntryId: () => "timeout-entry",
+		});
+
+		await expect(coordinator.activateRootRoute("/chat")).resolves.toEqual({
+			kind: "failed",
+			reason: "timeout",
+		});
+		expect(coordinator.currentState).toBeNull();
+	});
+
+	it("commits from observed route synchronization even when goto never settles", async () => {
+		const effects = createEffects();
+		const gotoPending = deferred<void>();
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			transitionTimeoutMs: 100,
+			createEntryId: () => "observed-entry",
+		});
+		await committed(coordinator.activateRootRoute("/chat"));
+		effects.goto.mockImplementationOnce(() => gotoPending.promise);
+
+		const opening = coordinator.openDetail("/chat/conversation-current");
+		const observedState = effects.goto.mock.calls.at(-1)?.[1].state;
+		expect(observedState).toBeDefined();
+		await coordinator.initializeCurrentRoute(
+			"/chat/conversation-current",
+			observedState,
+		);
+
+		await expect(opening).resolves.toEqual({
+			kind: "committed",
+			state: observedState,
+		});
+		expect(coordinator.currentState).toEqual(observedState);
+		gotoPending.resolve();
+	});
+
+	it("does not bind a pending conversation state to a different conversation URL", async () => {
+		const effects = createEffects();
+		const firstGoto = deferred<void>();
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `entry-${++index}`;
+			})(),
+		});
+		await committed(coordinator.activateRootRoute("/chat"));
+		effects.goto
+			.mockImplementationOnce(() => firstGoto.promise)
+			.mockResolvedValueOnce(undefined);
+
+		const opening = coordinator.openDetail("/chat/conversation-a");
+		const pendingState = effects.goto.mock.calls.at(-1)?.[1].state;
+		await coordinator.initializeCurrentRoute(
+			"/chat/conversation-b",
+			pendingState,
+		);
+
+		expect(effects.goto).toHaveBeenLastCalledWith(
+			"/chat/conversation-a",
+			expect.objectContaining({ replaceState: true, state: pendingState }),
+		);
+		await expect(opening).resolves.toMatchObject({
+			kind: "committed",
+			state: pendingState,
+		});
+		firstGoto.resolve();
+	});
+
+	it("keeps the expected album owner query in the in-memory route fence", async () => {
+		const effects = createEffects();
+		const firstGoto = deferred<void>();
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `album-entry-${++index}`;
+			})(),
+		});
+		await committed(coordinator.activateRootRoute("/albums"));
+		effects.goto
+			.mockImplementationOnce(() => firstGoto.promise)
+			.mockResolvedValueOnce(undefined);
+
+		const opening = coordinator.openDetail("/albums/9?owner=owner-a");
+		const pendingState = effects.goto.mock.calls.at(-1)?.[1].state;
+		await coordinator.initializeCurrentRoute(
+			"/albums/9?owner=owner-b",
+			pendingState,
+		);
+
+		expect(effects.goto).toHaveBeenLastCalledWith(
+			"/albums/9?owner=owner-a",
+			expect.objectContaining({ replaceState: true, state: pendingState }),
+		);
+		await expect(opening).resolves.toMatchObject({ kind: "committed" });
+		firstGoto.resolve();
+	});
+
+	it("fences a superseded route that arrives after a newer detail committed", async () => {
+		const effects = createEffects();
+		const staleGoto = deferred<void>();
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `entry-${++index}`;
+			})(),
+		});
+		await committed(coordinator.activateRootRoute("/chat"));
+		effects.goto
+			.mockImplementationOnce(() => staleGoto.promise)
+			.mockResolvedValue(undefined);
+
+		const staleOpening = coordinator.openDetail("/chat/conversation-a");
+		const staleState = effects.goto.mock.calls.at(-1)?.[1].state;
+		const current = await committed(
+			coordinator.openDetail("/chat/conversation-b"),
+		);
+		await expect(staleOpening).resolves.toEqual({ kind: "superseded" });
+
+		await coordinator.initializeCurrentRoute(
+			"/chat/conversation-a",
+			staleState,
+		);
+
+		expect(effects.goto).toHaveBeenLastCalledWith(
+			"/chat/conversation-b",
+			expect.objectContaining({ replaceState: true, state: current }),
+		);
+		expect(coordinator.currentState).toEqual(current);
+		staleGoto.resolve();
+	});
+
+	it("consumes semantic Back failures without falsely delegating to task backgrounding", async () => {
+		const effects = createEffects();
+		const onTransitionFailure = vi.fn();
+		const coordinator = new NavigationCoordinator({
+			effects,
+			accountGeneration: 7,
+			onTransitionFailure,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `entry-${++index}`;
+			})(),
+		});
+		const inbox = await committed(coordinator.activateRootRoute("/chat"));
+		effects.goto.mockRejectedValueOnce(new Error("replacement failed"));
+
+		await expect(coordinator.handleSemanticBack("/chat", inbox)).resolves.toBe(
+			"handled",
+		);
+		expect(coordinator.currentState).toEqual(inbox);
+		expect(onTransitionFailure).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				component: "root",
+				outcome: { kind: "failed", reason: "navigationError" },
+				retry: expect.any(Function),
+			}),
+		);
+
+		const detail = await committed(
+			coordinator.openDetail("/chat/conversation-current"),
+		);
+		effects.pop.mockRejectedValueOnce(new Error("pop failed"));
+		await expect(
+			coordinator.closeDetail("/chat/conversation-current", detail),
+		).resolves.toBe("handled");
+		expect(coordinator.currentState).toEqual(detail);
+		expect(onTransitionFailure).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				component: "detail",
+				outcome: { kind: "failed", reason: "navigationError" },
+				retry: expect.any(Function),
+			}),
+		);
+		expect(onTransitionFailure).toHaveBeenCalledTimes(2);
 	});
 
 	it.each([

@@ -67,6 +67,12 @@ export const developerSettingsSchema = z
 			.min(1)
 			.max(1_440)
 			.default(60),
+		navigationTransitionTimeoutMs: z
+			.number()
+			.int()
+			.min(2_000)
+			.max(30_000)
+			.default(8_000),
 		browseAgeScaleMax: z
 			.number()
 			.int()

@@ -32,6 +32,8 @@
 
 	let value = $state(untrack(() => getDeveloperSettingsSnapshot()[setting]));
 	let saving = $state(false);
+	const titleId = $derived(`developer-number-${setting}-title`);
+	const descriptionId = $derived(`developer-number-${setting}-description`);
 
 	async function save(event: Event): Promise<void> {
 		const input = event.currentTarget as HTMLInputElement;
@@ -64,8 +66,10 @@
 
 <Item.Root variant="outline" class="gap-3 p-4">
 	<Item.Content class="gap-1">
-		<Item.Title>{title}</Item.Title>
-		<Item.Description class="line-clamp-none">{description}</Item.Description>
+		<Item.Title id={titleId}>{title}</Item.Title>
+		<Item.Description id={descriptionId} class="line-clamp-none">
+			{description}
+		</Item.Description>
 	</Item.Content>
 	<label class="flex w-full flex-wrap items-center gap-3">
 		<Input
@@ -74,6 +78,8 @@
 			{min}
 			{max}
 			{step}
+			aria-labelledby={titleId}
+			aria-describedby={descriptionId}
 			disabled={saving}
 			value={String(value)}
 			onchange={save}

@@ -1,118 +1,37 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { onDestroy, untrack } from "svelte";
 
 	import {
-		ConversationMediaViewerState,
-		setConversationMediaViewer,
-	} from "$lib/chat/conversation-media-viewer.svelte";
-	import { getConversations } from "$lib/chat/conversations-context.svelte";
-	import MixedMediaViewer from "$lib/components/media/MixedMediaViewer.svelte";
-	import * as Card from "$lib/components/ui/card";
-	import type { Message } from "$lib/model/messaging/messages";
-	import ChatNavBar from "./conversation-nav-bar/ConversationNavBar.svelte";
-	import {
-		ConversationState,
-		setConversationState,
-	} from "./conversation-state.svelte";
-	import MessageComposer from "./message-composer/MessageComposer.svelte";
-	import ConversationMessages from "./messages/ConversationMessages.svelte";
+		getAccountSessionSnapshot,
+		subscribeAccountGeneration,
+	} from "$lib/api/account-caches";
+	import { resolveConversationDetailOwner } from "./conversation-detail-identity";
+	import ConversationDetail from "./ConversationDetail.svelte";
 
 	let { data }: import("./$types").PageProps = $props();
 
 	if (page.params.conversationId === undefined)
 		throw new Error("conversationId is required");
 
-	const conversations = getConversations();
 	const conversationId = $derived(page.params.conversationId as string);
 	const ourProfileId = $derived(data.ourProfileId);
-
-	let conversationState = $state(
-		untrack(
-			() =>
-				new ConversationState({
-					conversationId,
-					ourProfileId: data.ourProfileId,
-					conversations,
-				}),
-		),
+	let accountSession = $state(getAccountSessionSnapshot());
+	$effect(() =>
+		subscribeAccountGeneration(() => {
+			accountSession = getAccountSessionSnapshot();
+		}),
 	);
-
-	$effect(() => {
-		const id = conversationId;
-		const profileId = ourProfileId;
-
-		const state = untrack(() => {
-			if (
-				id !== conversationState.conversationId ||
-				profileId !== conversationState.ourProfileId
-			) {
-				const next = new ConversationState({
-					conversationId: id,
-					ourProfileId: profileId,
-					conversations,
-				});
-				conversationState = next;
-				return next;
-			}
-			return conversationState;
-		});
-
-		return () => state.destroy();
-	});
-
-	setConversationState(() => conversationState);
-	let viewerPinnedState: ConversationState | null = null;
-	const mediaViewer = new ConversationMediaViewerState({
-		pin: (messageId) => {
-			viewerPinnedState = conversationState;
-			void viewerPinnedState.pinMessage(messageId, "viewer");
-		},
-		unpin: (messageId) => {
-			viewerPinnedState?.unpinMessage(messageId, "viewer");
-			viewerPinnedState = null;
-		},
-	});
-	setConversationMediaViewer(() => mediaViewer);
-	onDestroy(() => mediaViewer.clearConversation());
-
-	$effect(() => {
-		const currentConversationId = conversationId;
-		return () => {
-			if (
-				currentConversationId !== conversationId ||
-				mediaViewer.ownerCount > 0
-			)
-				mediaViewer.clearConversation();
-		};
-	});
-
-	let composerHeight = $state(0);
+	const detailOwner = $derived(
+		resolveConversationDetailOwner({
+			accountProfileId: ourProfileId,
+			accountSession,
+			conversationId,
+		}),
+	);
 </script>
 
-<ChatNavBar />
-<Card.Content class="relative flex min-h-0 flex-1 flex-col p-0">
-	<ConversationMessages {composerHeight} />
-	<MessageComposer
-		onSend={(message: Message) => conversationState.send(message)}
-		disabled={conversationState.loading || conversationState.error !== null}
-		accountProfileId={conversationState.ourProfileId}
-		{conversationId}
-		accountSession={conversationState.accountSession}
-		replyTarget={conversationState.replyTarget}
-		otherName={conversationState.profile?.name}
-		onCancelReply={() => conversationState.clearReplyTarget()}
-		bind:height={composerHeight}
-	/>
-</Card.Content>
-{#if mediaViewer.ready}
-	<MixedMediaViewer
-		items={mediaViewer.items}
-		startIndex={mediaViewer.startIndex}
-		opener={mediaViewer.opener}
-		preload={mediaViewer.preload}
-		statusLabel={mediaViewer.statusLabel}
-		onItemActivate={mediaViewer.onItemActivate}
-		onClose={() => mediaViewer.close()}
-	/>
+{#if detailOwner}
+	{#key detailOwner.key}
+		<ConversationDetail identity={detailOwner.identity} />
+	{/key}
 {/if}

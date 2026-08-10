@@ -1,8 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { gotoMock } = vi.hoisted(() => ({ gotoMock: vi.fn() }));
+const { gotoMock, reportClientDiagnosticMock, toastErrorMock } = vi.hoisted(
+	() => ({
+		gotoMock: vi.fn(),
+		reportClientDiagnosticMock: vi.fn(),
+		toastErrorMock: vi.fn(),
+	}),
+);
 
 vi.mock("$app/navigation", () => ({ goto: gotoMock }));
+vi.mock("svelte-sonner", () => ({ toast: { error: toastErrorMock } }));
+vi.mock("$lib/platform/client-diagnostics", () => ({
+	reportClientDiagnostic: reportClientDiagnosticMock,
+}));
 
 import {
 	activateAccountSession,
@@ -22,8 +32,27 @@ import type {
 	AppNavigationStateV1,
 	DetailNavigationOptions,
 	NavigationEffects,
+	NavigationTransitionOutcome,
 	RootSurface,
 } from "$lib/navigation/navigation-foundations";
+
+async function committed(
+	transition: Promise<NavigationTransitionOutcome>,
+): Promise<AppNavigationStateV1> {
+	const outcome = await transition;
+	expect(outcome.kind).toBe("committed");
+	if (outcome.kind !== "committed")
+		throw new Error("expected committed navigation transition");
+	return outcome.state;
+}
+
+function deferred<T>() {
+	let resolve!: (value: T | PromiseLike<T>) => void;
+	const promise = new Promise<T>((resolvePromise) => {
+		resolve = resolvePromise;
+	});
+	return { promise, resolve };
+}
 
 interface NavigationActionApi {
 	activateAppRoot: (root: RootSurface) => Promise<void>;
@@ -32,18 +61,21 @@ interface NavigationActionApi {
 	interceptAppNavigationClick: (
 		event: MouseEvent,
 		navigate: () => void | Promise<unknown>,
-	) => void;
+	) => Promise<void>;
 	openAppDetail: (
 		route: string,
 		options?: DetailNavigationOptions,
-	) => Promise<AppNavigationStateV1 | null>;
+	) => Promise<NavigationTransitionOutcome | null>;
+	openInboxConversationDetail: (
+		route: string,
+	) => Promise<NavigationTransitionOutcome | null>;
 	openReceivedAlbumDetail: (
 		route: string,
-	) => Promise<AppNavigationStateV1 | null>;
+	) => Promise<NavigationTransitionOutcome | null>;
 	replaceAppDetail: (
 		route: string,
 		options?: DetailNavigationOptions,
-	) => Promise<AppNavigationStateV1 | null>;
+	) => Promise<NavigationTransitionOutcome | null>;
 	registerRootActivationRefresh: (
 		route: string,
 		refresh: () => void | Promise<void>,
@@ -225,10 +257,16 @@ describe("current account navigation runtime", () => {
 			"private-",
 		);
 
-		await runtime.coordinator.activateRootRoute("/chat");
-		const detail = await runtime.coordinator.openDetail("/chat/private-id");
+		const chat = await committed(
+			runtime.coordinator.activateRootRoute("/chat"),
+		);
+		const detail = await committed(
+			runtime.coordinator.openDetail("/chat/private-id"),
+		);
 		await runtime.synchronize("/chat/private-id", detail);
-		await runtime.coordinator.closeDetail("/chat/private-id", detail);
+		const closing = runtime.coordinator.closeDetail("/chat/private-id", detail);
+		await runtime.synchronize("/chat", chat);
+		await closing;
 		expect(effects.pop).toHaveBeenCalledOnce();
 		runtime.release();
 	});
@@ -237,6 +275,8 @@ describe("current account navigation runtime", () => {
 describe("canonical application navigation actions", () => {
 	afterEach(() => {
 		gotoMock.mockReset();
+		reportClientDiagnosticMock.mockReset();
+		toastErrorMock.mockReset();
 	});
 
 	it("fails closed to replacement roots, siblings, details, and semantic parents without a coordinator", async () => {
@@ -259,14 +299,88 @@ describe("canonical application navigation actions", () => {
 		]);
 	});
 
-	it("intercepts only an ordinary primary link activation", () => {
+	it("contains and presents a rejected fallback detail Back", async () => {
+		const actions = navigationActions();
+		gotoMock.mockRejectedValueOnce(new Error("private fallback failure"));
+
+		await expect(
+			actions.closeAppDetail("/chat/private-conversation-id", null),
+		).resolves.toBeUndefined();
+
+		expect(reportClientDiagnosticMock).toHaveBeenCalledExactlyOnceWith({
+			category: "navigation",
+			component: "detail",
+			code: "detail_transition_failed",
+			level: "warning",
+		});
+		expect(toastErrorMock).toHaveBeenCalledOnce();
+		expect(
+			JSON.stringify([
+				reportClientDiagnosticMock.mock.calls,
+				toastErrorMock.mock.calls,
+			]),
+		).not.toContain("private-");
+	});
+
+	it("contains and presents rejected absent-runtime navigation actions", async () => {
+		const actions = navigationActions();
+		const attempts: Array<{
+			component: "root" | "detail";
+			run: () => Promise<unknown>;
+		}> = [
+			{ component: "root", run: () => actions.activateAppRoot("interest") },
+			{
+				component: "root",
+				run: () => actions.activateAppRootRoute("/interest/views"),
+			},
+			{
+				component: "detail",
+				run: () => actions.openAppDetail("/chat/private-open"),
+			},
+			{
+				component: "detail",
+				run: () => actions.replaceAppDetail("/chat/private-replace"),
+			},
+			{
+				component: "detail",
+				run: () => actions.openInboxConversationDetail("/chat/private-inbox"),
+			},
+			{
+				component: "detail",
+				run: () => actions.openReceivedAlbumDetail("/albums/private-album"),
+			},
+		];
+
+		for (const [index, attempt] of attempts.entries()) {
+			gotoMock.mockRejectedValueOnce(
+				new Error(`private fallback failure ${index}`),
+			);
+			await expect(attempt.run()).resolves.not.toThrow();
+			expect(reportClientDiagnosticMock).toHaveBeenNthCalledWith(index + 1, {
+				category: "navigation",
+				component: attempt.component,
+				code: `${attempt.component}_transition_failed`,
+				level: "warning",
+			});
+		}
+
+		expect(toastErrorMock).toHaveBeenCalledTimes(attempts.length);
+		expect(
+			JSON.stringify([
+				reportClientDiagnosticMock.mock.calls,
+				toastErrorMock.mock.calls,
+			]),
+		).not.toContain("private fallback failure");
+	});
+
+	it("intercepts only an ordinary primary link activation", async () => {
 		const actions = navigationActions();
 		expect(actions.interceptAppNavigationClick).toBeTypeOf("function");
 		const navigate = vi.fn();
 		const link = document.createElement("a");
 		link.href = "/chat";
 		const preventOrdinary = vi.fn();
-		actions.interceptAppNavigationClick(
+		await actions.interceptAppNavigationClick(
 			{
 				altKey: false,
 				button: 0,
@@ -283,7 +397,7 @@ describe("canonical application navigation actions", () => {
 		expect(navigate).toHaveBeenCalledOnce();
 
 		const preventModified = vi.fn();
-		actions.interceptAppNavigationClick(
+		await actions.interceptAppNavigationClick(
 			{
 				altKey: false,
 				button: 0,
@@ -298,6 +412,209 @@ describe("canonical application navigation actions", () => {
 		);
 		expect(preventModified).not.toHaveBeenCalled();
 		expect(navigate).toHaveBeenCalledOnce();
+	});
+
+	it("owns a rejected intercepted navigation so it cannot escape globally", async () => {
+		const actions = navigationActions();
+		const link = document.createElement("a");
+		link.href = "/chat/conversation";
+		const preventDefault = vi.fn();
+		const event = {
+			altKey: false,
+			button: 0,
+			ctrlKey: false,
+			currentTarget: link,
+			defaultPrevented: false,
+			metaKey: false,
+			preventDefault,
+			shiftKey: false,
+		} as unknown as MouseEvent;
+
+		await expect(
+			actions.interceptAppNavigationClick(event, () =>
+				Promise.reject(new Error("private navigation detail")),
+			),
+		).resolves.toBeUndefined();
+		expect(preventDefault).toHaveBeenCalledOnce();
+	});
+
+	it("waits for initial root ownership before opening a detail", async () => {
+		const actions = navigationActions();
+		const session = activateAccountSession(41_999);
+		const initialization = deferred<void>();
+		const effects = {
+			goto: vi.fn<NavigationEffects["goto"]>(async () => {}),
+			pop: vi.fn(),
+			replaceState: vi.fn(() => initialization.promise),
+		};
+		const runtime = installCurrentNavigationCoordinator({
+			accountGeneration: session.generation,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `initial-${++index}`;
+			})(),
+			effects,
+		});
+
+		const synchronizing = runtime.synchronize("/right-now", {});
+		const opening = actions.openAppDetail("/profile/profile-a");
+		await Promise.resolve();
+		expect(effects.goto).not.toHaveBeenCalled();
+
+		initialization.resolve();
+		await synchronizing;
+		await expect(opening).resolves.toMatchObject({
+			kind: "committed",
+			state: {
+				root: "rightNow",
+				safeReturnRoute: "/right-now",
+			},
+		});
+		expect(effects.goto).toHaveBeenCalledWith(
+			"/profile/profile-a",
+			expect.objectContaining({ replaceState: false }),
+		);
+		runtime.release();
+	});
+
+	it("waits for the current account runtime before opening a detail", async () => {
+		const actions = navigationActions();
+		const firstSession = activateAccountSession(42_010);
+		const firstEffects = {
+			goto: vi.fn<NavigationEffects["goto"]>(async () => {}),
+			pop: vi.fn(),
+			replaceState: vi.fn(),
+		};
+		const first = installCurrentNavigationCoordinator({
+			accountGeneration: firstSession.generation,
+			createEntryId: () => "account-a",
+			effects: firstEffects,
+		});
+		await first.synchronize("/chat", {});
+
+		const secondSession = activateAccountSession(42_011);
+		const opening = actions.openAppDetail("/chat/account-b-conversation");
+		await Promise.resolve();
+		expect(firstEffects.goto).not.toHaveBeenCalled();
+
+		const secondEffects = {
+			goto: vi.fn<NavigationEffects["goto"]>(async () => {}),
+			pop: vi.fn(),
+			replaceState: vi.fn(),
+		};
+		const second = installCurrentNavigationCoordinator({
+			accountGeneration: secondSession.generation,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `account-b-${++index}`;
+			})(),
+			effects: secondEffects,
+		});
+		await second.synchronize("/chat", {});
+
+		await expect(opening).resolves.toMatchObject({
+			kind: "committed",
+			state: { accountGeneration: secondSession.generation, root: "inbox" },
+		});
+		expect(firstEffects.goto).not.toHaveBeenCalled();
+		expect(secondEffects.goto).toHaveBeenCalledExactlyOnceWith(
+			"/chat/account-b-conversation",
+			expect.objectContaining({ replaceState: false }),
+		);
+		first.release();
+		second.release();
+	});
+
+	it("presents a bounded retryable error for a failed detail transition", async () => {
+		const actions = navigationActions();
+		const session = activateAccountSession(42_000);
+		const effects = {
+			goto: vi.fn<NavigationEffects["goto"]>(async () => {}),
+			pop: vi.fn(),
+			replaceState: vi.fn(),
+		};
+		const runtime = installCurrentNavigationCoordinator({
+			accountGeneration: session.generation,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `failure-${++index}`;
+			})(),
+			effects,
+		});
+		await runtime.coordinator.activateRootRoute("/chat");
+		effects.goto.mockRejectedValueOnce(new Error("private route failure"));
+
+		await expect(
+			actions.openAppDetail("/chat/private-conversation-id"),
+		).resolves.toEqual({ kind: "failed", reason: "navigationError" });
+		expect(reportClientDiagnosticMock).toHaveBeenCalledWith({
+			category: "navigation",
+			component: "detail",
+			code: "detail_transition_failed",
+			level: "warning",
+		});
+		expect(toastErrorMock).toHaveBeenCalledOnce();
+		const [, toastOptions] = toastErrorMock.mock.calls[0] ?? [];
+		expect(toastOptions).toEqual(
+			expect.objectContaining({
+				action: expect.objectContaining({ onClick: expect.any(Function) }),
+			}),
+		);
+		expect(JSON.stringify(reportClientDiagnosticMock.mock.calls)).not.toContain(
+			"private-",
+		);
+		runtime.release();
+	});
+
+	it("presents a bounded retryable error while consuming a failed detail Back", async () => {
+		const actions = navigationActions();
+		const session = activateAccountSession(42_000);
+		const effects = {
+			goto: vi.fn<NavigationEffects["goto"]>(async () => {}),
+			pop: vi.fn(),
+			replaceState: vi.fn(),
+		};
+		const runtime = installCurrentNavigationCoordinator({
+			accountGeneration: session.generation,
+			createEntryId: (() => {
+				let index = 0;
+				return () => `back-failure-${++index}`;
+			})(),
+			effects,
+		});
+		await runtime.coordinator.activateRootRoute("/chat");
+		const detail = await committed(
+			runtime.coordinator.openDetail("/chat/private-conversation-id"),
+		);
+		effects.pop.mockRejectedValueOnce(new Error("private pop failure"));
+		reportClientDiagnosticMock.mockClear();
+		toastErrorMock.mockClear();
+
+		await expect(
+			actions.closeAppDetail("/chat/private-conversation-id", detail),
+		).resolves.toBeUndefined();
+
+		expect(runtime.coordinator.currentState).toEqual(detail);
+		expect(reportClientDiagnosticMock).toHaveBeenCalledExactlyOnceWith({
+			category: "navigation",
+			component: "detail",
+			code: "detail_transition_failed",
+			level: "warning",
+		});
+		expect(toastErrorMock).toHaveBeenCalledOnce();
+		const [, toastOptions] = toastErrorMock.mock.calls[0] ?? [];
+		expect(toastOptions).toEqual(
+			expect.objectContaining({
+				action: expect.objectContaining({ onClick: expect.any(Function) }),
+			}),
+		);
+		expect(
+			JSON.stringify([
+				reportClientDiagnosticMock.mock.calls,
+				toastErrorMock.mock.calls,
+			]),
+		).not.toContain("private-");
+		runtime.release();
 	});
 
 	it("pushes the first chat or profile and replaces the serial sibling detail", async () => {
@@ -410,8 +727,11 @@ describe("canonical application navigation actions", () => {
 			"/albums/received-album?owner=profile-a",
 		);
 		expect(received).toMatchObject({
-			parentProof: "validatedReceivedAlbumConversation",
-			safeReturnRoute: "/chat",
+			kind: "committed",
+			state: {
+				parentProof: "validatedReceivedAlbumConversation",
+				safeReturnRoute: "/chat",
+			},
 		});
 
 		await runtime.coordinator.activateRootRoute("/");
@@ -419,8 +739,11 @@ describe("canonical application navigation actions", () => {
 			"/albums/unowned-album?owner=profile-b",
 		);
 		expect(unowned).toMatchObject({
-			parentEntryId: null,
-			safeReturnRoute: "/albums",
+			kind: "committed",
+			state: {
+				parentEntryId: null,
+				safeReturnRoute: "/albums",
+			},
 		});
 		runtime.release();
 	});

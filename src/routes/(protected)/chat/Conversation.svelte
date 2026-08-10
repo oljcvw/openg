@@ -17,6 +17,7 @@
 	import * as ContextMenu from "$lib/components/ui/context-menu";
 	import * as Item from "$lib/components/ui/item";
 	import { previewLabel } from "$lib/model/messaging/messages";
+	import { openInboxConversationDetail } from "$lib/navigation/app-navigation";
 	import type { Conversation } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
 	import { conversationRowPresentation } from "./conversation-row-presentation";
@@ -96,6 +97,7 @@
 		}}
 		onlineUntil={conversation.data.onlineUntil ?? participant.onlineUntil}
 		link="/chat/{conversationId}"
+		onNavigate={openInboxConversationDetail}
 		actionsPlacement="title"
 		compact
 		selected={isSelected}

@@ -200,7 +200,9 @@
 							const route = self
 								? `/albums/${album.albumId}`
 								: `/albums/${album.albumId}?owner=${profileId}`;
-							interceptAppNavigationClick(event, () => openAppDetail(route));
+							void interceptAppNavigationClick(event, () =>
+								openAppDetail(route),
+							);
 						}}
 						class="flex w-24 shrink-0 flex-col gap-1"
 					>

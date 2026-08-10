@@ -6,10 +6,12 @@
 		state: conversation,
 		scrollToMessageId = null,
 		onScrolled = () => {},
+		readReportingEnabled = true,
 	}: {
 		state: unknown;
 		scrollToMessageId?: string | null;
 		onScrolled?: (result: boolean) => void;
+		readReportingEnabled?: boolean;
 	} = $props();
 
 	setConversationState(() => conversation as never);
@@ -42,5 +44,10 @@
 	use:mockViewport
 	style="height: 800px; width: 420px; overflow: auto"
 >
-	<MessagesList {container} bind:seenTimestamp bind:this={messagesList} />
+	<MessagesList
+		{container}
+		{readReportingEnabled}
+		bind:seenTimestamp
+		bind:this={messagesList}
+	/>
 </div>

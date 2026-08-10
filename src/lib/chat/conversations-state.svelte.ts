@@ -244,7 +244,7 @@ class ConversationsState {
 		}
 
 		if (entry) {
-			if (!isActive && isIncoming) {
+			if (isIncoming) {
 				entry.data.unreadCount += 1;
 			}
 			if (!isActive) {
@@ -475,7 +475,6 @@ class ConversationsState {
 
 	setActive(conversationId: string): void {
 		this.#activeConversationId = conversationId;
-		void this.markRead(conversationId);
 	}
 
 	clearActive(conversationId: string): void {
@@ -535,23 +534,30 @@ class ConversationsState {
 	}
 
 	async markRead(conversationId: string) {
-		const entry = this.#find(conversationId);
-		if (entry) {
-			const clearedCount = entry.data.unreadCount;
-			if (clearedCount > 0) {
-				entry.data.unreadCount = 0;
-				try {
-					await markConversationAsRead({ conversationId });
-				} catch (error) {
-					console.error(error);
-					showErrorToast({
-						label: "Failed to mark conversation as read",
-						error,
-					});
-					entry.data.unreadCount += clearedCount;
-				}
-			}
+		const revert = this.markReadLocally(conversationId);
+		try {
+			await markConversationAsRead({ conversationId });
+		} catch (error) {
+			console.error(error);
+			showErrorToast({
+				label: "Failed to mark conversation as read",
+				error,
+			});
+			revert();
 		}
+	}
+
+	markReadLocally(conversationId: string): () => void {
+		const entry = this.#find(conversationId);
+		const clearedCount = entry?.data.unreadCount ?? 0;
+		if (entry && clearedCount > 0) entry.data.unreadCount = 0;
+		let reverted = false;
+		return () => {
+			if (reverted || clearedCount === 0) return;
+			reverted = true;
+			const current = this.#find(conversationId);
+			if (current) current.data.unreadCount += clearedCount;
+		};
 	}
 
 	async #requestWithRollback<T>({

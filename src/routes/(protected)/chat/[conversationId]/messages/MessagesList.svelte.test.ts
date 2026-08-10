@@ -5,7 +5,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { getRuntimeOwnershipSnapshot } from "$lib/dev/runtime-ownership";
 import Harness from "./MessagesList.test-harness.svelte";
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.unstubAllGlobals();
+});
 
 function message(index: number) {
 	return {
@@ -95,5 +98,67 @@ describe("MessagesList virtualization", () => {
 			expect(locateMessage).toHaveBeenCalledWith("message-2500"),
 		);
 		await waitFor(() => expect(onScrolled).toHaveBeenCalledWith(true));
+	});
+
+	it("defers a visible incoming read receipt until transcript restoration completes", async () => {
+		type ObserverCallback = ConstructorParameters<
+			typeof IntersectionObserver
+		>[0];
+		const callbacks: ObserverCallback[] = [];
+		vi.stubGlobal(
+			"IntersectionObserver",
+			class {
+				constructor(callback: ObserverCallback) {
+					callbacks.push(callback);
+				}
+				disconnect = vi.fn();
+				observe = vi.fn();
+				unobserve = vi.fn();
+				takeRecords = vi.fn(() => []);
+				root = null;
+				rootMargin = "0px";
+				thresholds = [0];
+			},
+		);
+		const reportRead = vi.fn();
+		const incoming = { ...message(1), senderId: 2 };
+		const state = {
+			messages: [incoming],
+			ourProfileId: 1,
+			profile: { profileId: 2, name: "Peer" },
+			lastReadTimestamp: null,
+			pageKey: null,
+			loadingMore: false,
+			loadingNewer: false,
+			newerSegmentId: null,
+			locateMessage: () => Promise.resolve(null),
+			loadMore: () => Promise.resolve("end" as const),
+			loadNewer: () => Promise.resolve("end" as const),
+			reportRead,
+		};
+
+		const view = render(Harness, {
+			state,
+			readReportingEnabled: false,
+		});
+		await waitFor(() => expect(callbacks.length).toBeGreaterThan(0));
+		for (const callback of callbacks) {
+			callback(
+				[{ isIntersecting: true } as IntersectionObserverEntry],
+				{} as IntersectionObserver,
+			);
+		}
+		await tick();
+		expect(reportRead).not.toHaveBeenCalled();
+
+		await view.rerender({ state, readReportingEnabled: true });
+		await waitFor(() => expect(reportRead).toHaveBeenCalledOnce());
+		expect(reportRead).toHaveBeenCalledWith(
+			expect.objectContaining({
+				conversationId: incoming.conversationId,
+				messageId: incoming.messageId,
+				senderId: incoming.senderId,
+			}),
+		);
 	});
 });

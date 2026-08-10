@@ -25,6 +25,7 @@
 		class: className,
 		onToggleSelected,
 		onLongPress,
+		onNavigate,
 	}: {
 		avatar: {
 			mediaHash: string | null;
@@ -47,10 +48,12 @@
 		class?: import("svelte/elements").ClassValue;
 		onToggleSelected?: () => void;
 		onLongPress?: () => void;
+		onNavigate?: (route: string) => void | Promise<unknown>;
 	} = $props();
 
 	const longPress = $derived(onLongPress ? longPressHandlers(onLongPress) : {});
 	const linkTabindex = $derived(onToggleSelected ? -1 : undefined);
+	const navigateRow = $derived(onNavigate ?? openAppDetail);
 </script>
 
 {#snippet avatarNode()}
@@ -126,7 +129,7 @@
 			href={link}
 			aria-current={ariaCurrent}
 			onclick={(event) =>
-				interceptAppNavigationClick(event, () => openAppDetail(link))}
+				interceptAppNavigationClick(event, () => navigateRow(link))}
 			class={[
 				"content gap-0.5 rounded-r-2xl outline-none focus-visible:z-3 focus-visible:ring-[3px] focus-visible:ring-primary/70 @max-row:hidden!",
 				compact ? "py-3 ps-1 pe-3" : "p-4 ps-2",
@@ -139,7 +142,7 @@
 			href={link}
 			aria-current={ariaCurrent}
 			onclick={(event) =>
-				interceptAppNavigationClick(event, () => openAppDetail(link))}
+				interceptAppNavigationClick(event, () => navigateRow(link))}
 			class="min-w-24 rounded-2xl outline-none focus-visible:z-3 focus-visible:ring-[3px] focus-visible:ring-primary/70 @row:hidden"
 			tabindex={linkTabindex}
 		>
@@ -150,7 +153,7 @@
 			href={link}
 			aria-current={ariaCurrent}
 			onclick={(event) =>
-				interceptAppNavigationClick(event, () => openAppDetail(link))}
+				interceptAppNavigationClick(event, () => navigateRow(link))}
 			class="content gap-2.5 overflow-clip rounded-2xl pe-4 outline-none focus-visible:z-3 focus-visible:ring-[3px] focus-visible:ring-primary/70"
 			tabindex={linkTabindex}
 		>

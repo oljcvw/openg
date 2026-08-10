@@ -49,6 +49,7 @@
 		peerProfileId,
 		otherName,
 		highlighted = false,
+		visibilityEnabled = true,
 	}: {
 		message: DisplayMessage;
 		isOut: boolean;
@@ -78,6 +79,7 @@
 		peerProfileId: number | null;
 		otherName?: string | null;
 		highlighted?: boolean;
+		visibilityEnabled?: boolean;
 	} = $props();
 
 	const firstInStack = $derived(indexInStack === 0);
@@ -200,21 +202,31 @@
 		return message.type;
 	}
 
+	let readObserver: IntersectionObserver | null = null;
+	let readVisible = $state(false);
+	let readReported = $state(false);
+
+	$effect(() => {
+		if (!onVisible || !visibilityEnabled || !readVisible || readReported)
+			return;
+		readReported = true;
+		onVisible();
+		readObserver?.disconnect();
+	});
+
 	function observeRead(node: HTMLElement) {
 		if (!onVisible) return {};
-		const observer = new IntersectionObserver(
+		readObserver = new IntersectionObserver(
 			(entries) => {
-				if (entries[0]?.isIntersecting) {
-					onVisible();
-					observer.disconnect();
-				}
+				readVisible = entries[0]?.isIntersecting ?? false;
 			},
 			{ threshold: 0 },
 		);
-		observer.observe(node);
+		readObserver.observe(node);
 		return {
 			destroy() {
-				observer.disconnect();
+				readObserver?.disconnect();
+				readObserver = null;
 			},
 		};
 	}

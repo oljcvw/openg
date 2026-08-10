@@ -5,6 +5,7 @@ import {
 	type AccountSessionSnapshot,
 	getAccountSessionSnapshot,
 	isAccountSessionCurrent,
+	subscribeAccountGeneration,
 } from "$lib/api/account-caches";
 import { showErrorToast } from "$lib/api/error";
 import { markConversationAsRead } from "$lib/api/messaging/conversations";
@@ -191,6 +192,7 @@ export class ConversationState {
 	#readDeadline: number | null = null;
 	#unsubscribeReconcile: () => void;
 	#unsubscribePreferences: () => void;
+	#unsubscribeAccountGeneration: () => void = () => {};
 	#retryingMessageIds = new Set<string>();
 	#removedMessageIds = new Set<string>();
 	#messageWindow = new ActiveMessageWindow<OptimisticMessage>({
@@ -230,7 +232,7 @@ export class ConversationState {
 
 		this.#wsPromises.push(
 			ws.on("chat.v1.message_sent", chatV1MessageSentEventSchema, (event) => {
-				if (this.#destroyed) return;
+				if (!this.#isCurrentOwner()) return;
 				const incoming = event.payload;
 				if (incoming.conversationId !== this.conversationId) return;
 
@@ -269,18 +271,12 @@ export class ConversationState {
 				this.#messageWindow.upsertNewest(msg);
 				this.#syncMessagesFromWindow();
 				this.#syncCache();
-				if (msg.senderId !== this.ourProfileId) {
-					void this.reportRead({
-						messageId: msg.messageId,
-						timestamp: msg.timestamp,
-					});
-				}
 			}),
 			ws.on(
 				"chat.v1.conversation_read",
 				chatV1ConversationReadEventSchema,
 				(event) => {
-					if (this.#destroyed) return;
+					if (!this.#isCurrentOwner()) return;
 					if (event.payload.conversationId !== this.conversationId) return;
 					if (event.payload.profileId === this.ourProfileId) return;
 					if (this.#advanceLastRead(event.payload.timestamp)) this.#syncCache();
@@ -290,12 +286,17 @@ export class ConversationState {
 				"chat.v1.conversation.delete",
 				chatV1ConversationDeleteEventSchema,
 				(event) => {
-					if (this.#destroyed) return;
+					if (!this.#isCurrentOwner()) return;
 					if (!event.payload.conversationIds.includes(this.conversationId))
 						return;
 					void this.#reconcileMessages();
 				},
 			),
+		);
+		this.#unsubscribeAccountGeneration = subscribeAccountGeneration(
+			(generation) => {
+				if (generation !== this.accountSession.generation) this.destroy();
+			},
 		);
 	}
 
@@ -304,6 +305,9 @@ export class ConversationState {
 	#destroyed = false;
 	get destroyed(): boolean {
 		return this.#destroyed;
+	}
+	#isCurrentOwner(): boolean {
+		return !this.#destroyed && isAccountSessionCurrent(this.accountSession);
 	}
 	destroy(): void {
 		if (this.#destroyed) return;
@@ -315,18 +319,19 @@ export class ConversationState {
 		this.#wsPromises = [];
 		this.#unsubscribeReconcile();
 		this.#unsubscribePreferences();
+		this.#unsubscribeAccountGeneration();
 		if (this.#readTimer !== null) clearTimeout(this.#readTimer);
 		if (this.#readQueue.length > 0) void this.#flushReadQueue();
 	}
 
 	async #reconcileMessages(): Promise<void> {
-		if (this.loading || this.#destroyed || this.refreshing) return;
+		if (this.loading || !this.#isCurrentOwner() || this.refreshing) return;
 		this.refreshing = true;
 		try {
 			const result = await getConversation({
 				conversationId: this.conversationId,
 			});
-			if (this.#destroyed) return;
+			if (!this.#isCurrentOwner()) return;
 
 			this.profile = result.profile;
 
@@ -446,16 +451,8 @@ export class ConversationState {
 			this.#restoreReplyTargetFromMemory();
 			this.#updatePreview(this.messages.at(0));
 			this.#syncCache();
-
-			for (const m of fresh) {
-				if (m.senderId === this.ourProfileId) continue;
-				void this.reportRead({
-					messageId: m.messageId,
-					timestamp: m.timestamp,
-				});
-			}
 		} catch (error) {
-			if (this.#destroyed) return;
+			if (!this.#isCurrentOwner()) return;
 			console.error("Failed to reconcile messages", error);
 			if (error instanceof ApiError && error.response?.status === 403) {
 				this.error = error;
@@ -475,7 +472,7 @@ export class ConversationState {
 	}
 
 	retry(): void {
-		if (this.#destroyed) return;
+		if (!this.#isCurrentOwner()) return;
 		void this.#initialLoad();
 	}
 
@@ -524,7 +521,6 @@ export class ConversationState {
 			this.pageKey = cached.pageKey;
 			this.lastReadTimestamp = cached.lastReadTimestamp;
 			this.loading = false;
-			void this.#conversations.markRead(this.conversationId);
 			void this.#reconcileMessages();
 			return;
 		}
@@ -536,7 +532,6 @@ export class ConversationState {
 			});
 			if (this.#destroyed || !isAccountSessionCurrent(this.accountSession))
 				return;
-			void this.#conversations.markRead(this.conversationId);
 			const confirmed = removeDuplicateMessages(
 				result.messages.map((m) => ({
 					...m,
@@ -557,7 +552,7 @@ export class ConversationState {
 			this.#advanceLastRead(result.lastReadTimestamp);
 			this.#syncCache();
 		} catch (err) {
-			if (this.#destroyed) return;
+			if (!this.#isCurrentOwner()) return;
 			this.error = err instanceof Error ? err : new Error(String(err));
 		} finally {
 			this.loading = false;
@@ -565,6 +560,7 @@ export class ConversationState {
 	}
 
 	async loadMore(): Promise<"loaded" | "end" | "busy" | "error"> {
+		if (!this.#isCurrentOwner()) return "error";
 		if (this.loadingMore) return "busy";
 		if (this.pageKey === null) return "end";
 		this.loadingMore = true;
@@ -574,7 +570,7 @@ export class ConversationState {
 				conversationId: this.conversationId,
 				pageKey: cursor,
 			});
-			if (this.#destroyed) return "error";
+			if (!this.#isCurrentOwner()) return "error";
 			this.#messageWindow.addOlderPage({
 				cursor,
 				nextCursor: result.pageKey,
@@ -589,7 +585,7 @@ export class ConversationState {
 			this.#syncCache();
 			return "loaded";
 		} catch (error) {
-			if (this.#destroyed) return "error";
+			if (!this.#isCurrentOwner()) return "error";
 			console.error(error);
 			if (error instanceof ApiError && error.response?.status === 403) {
 				this.error = error;
@@ -810,6 +806,7 @@ export class ConversationState {
 		attemptRef: string;
 		outerCommandRef: string;
 	}): Promise<void> {
+		if (!this.#isCurrentOwner()) return;
 		const pending = this.messages.find((m) => m.messageId === tempId);
 		if (pending && pending.status !== "sent") pending.status = "awaitingAck";
 		this.#syncCache();
@@ -828,6 +825,7 @@ export class ConversationState {
 						ref: attemptRef,
 						commandRef: outerCommandRef,
 					});
+			if (!this.#isCurrentOwner()) return;
 			const msg = this.messages.find((m) => m.messageId === tempId);
 			if (msg && msg.status !== "sent") {
 				if (outcome.kind === "ack") {
@@ -843,6 +841,7 @@ export class ConversationState {
 			this.#syncCache();
 			void this.#conversations.ensureLoaded(this.conversationId);
 		} catch {
+			if (!this.#isCurrentOwner()) return;
 			const msg = this.messages.find((m) => m.messageId === tempId);
 			if (msg && msg.status !== "sent") {
 				msg.status = "failed";
@@ -862,6 +861,7 @@ export class ConversationState {
 	}
 
 	async retryFailedMessage(messageId: string): Promise<void> {
+		if (!this.#isCurrentOwner()) return;
 		const message = this.messages.find((item) => item.messageId === messageId);
 		if (
 			!message ||
@@ -879,6 +879,7 @@ export class ConversationState {
 				const latest = await getConversation({
 					conversationId: this.conversationId,
 				});
+				if (!this.#isCurrentOwner()) return;
 				const duplicate = latest.messages.find(
 					(candidate) =>
 						candidate.senderId === this.ourProfileId &&
@@ -983,7 +984,7 @@ export class ConversationState {
 	}
 
 	#syncCache(): void {
-		if (!this.profile) return;
+		if (!this.profile || !this.#isCurrentOwner()) return;
 		const cachedMessages: ApiResponseMessage[] = this.messages
 			.filter((m) => m.status === "sent")
 			.map(({ status: _status, ...rest }) => {
@@ -1085,13 +1086,14 @@ export class ConversationState {
 	}
 
 	async #restoreKnownSegment(segmentId: string): Promise<boolean> {
+		if (!this.#isCurrentOwner()) return false;
 		const metadata = this.#messageWindow.getSegmentMetadata(segmentId);
 		if (!metadata) return false;
 		const expectedIds = new Set(metadata.messageIds);
 		const cached = await this.#conversations.getCachedConversation(
 			this.conversationId,
 		);
-		if (this.#destroyed) return false;
+		if (!this.#isCurrentOwner()) return false;
 		if (cached) {
 			const cachedPage = cached.messages.filter((message) =>
 				expectedIds.has(message.messageId),
@@ -1119,7 +1121,7 @@ export class ConversationState {
 			conversationId: this.conversationId,
 			...(metadata.cursor === null ? {} : { pageKey: metadata.cursor }),
 		});
-		if (this.#destroyed) return false;
+		if (!this.#isCurrentOwner()) return false;
 		const restored = this.#messageWindow.restoreSegment(
 			segmentId,
 			result.messages.map((message) => ({
@@ -1214,6 +1216,7 @@ export class ConversationState {
 		messageId: string;
 		timestamp: number;
 	}): void {
+		if (!this.#isCurrentOwner()) return;
 		if (this.lastReadTimestamp !== null && timestamp <= this.lastReadTimestamp)
 			return;
 		this.#readQueue.push({ messageId, timestamp });
@@ -1239,6 +1242,9 @@ export class ConversationState {
 		const highest = queue[queue.length - 1];
 		const { revealMessageRead } = await getPreferences();
 		if (!isAccountSessionCurrent(this.accountSession)) return;
+		const revertLocalRead = this.#conversations.markReadLocally(
+			this.conversationId,
+		);
 		if (revealMessageRead) {
 			try {
 				await markConversationAsRead({
@@ -1246,6 +1252,7 @@ export class ConversationState {
 					messageId: highest.messageId,
 				});
 			} catch (error) {
+				revertLocalRead();
 				console.error(error);
 				showErrorToast({
 					label: "Failed to mark conversation as read",

@@ -136,6 +136,20 @@ export interface AppNavigationStateV1 extends RouteClassification {
 	parentProof?: "validatedReceivedAlbumConversation";
 }
 
+export type NavigationTransitionOutcome =
+	| { kind: "committed"; state: AppNavigationStateV1 }
+	| { kind: "superseded" }
+	| {
+			kind: "failed";
+			reason: "timeout" | "navigationError" | "invalidState";
+	  };
+
+export interface NavigationTransitionFailure {
+	component: "root" | "detail";
+	outcome: Extract<NavigationTransitionOutcome, { kind: "failed" }>;
+	retry: () => void | Promise<unknown>;
+}
+
 declare const receivedAlbumConversationParentBrand: unique symbol;
 
 export interface ValidatedReceivedAlbumConversationParent {
@@ -219,6 +233,16 @@ function pathnameOf(route: string): string {
 	}
 }
 
+function routeKeyOf(route: string): string {
+	try {
+		const url = new URL(route, "https://open-grind.invalid");
+		url.searchParams.sort();
+		return `${pathnameOf(url.pathname)}${url.search}`;
+	} catch {
+		return "/";
+	}
+}
+
 function settingsSafeParent(pathname: string): SafeReturnRoute {
 	if (pathname.startsWith("/settings/account/")) return "/settings/account";
 	if (pathname.startsWith("/settings/app/")) return "/settings/app";
@@ -294,6 +318,8 @@ export interface NavigationCoordinatorOptions {
 	effects: NavigationEffects;
 	accountGeneration: number;
 	createEntryId?: () => string;
+	onTransitionFailure?: (failure: NavigationTransitionFailure) => void;
+	transitionTimeoutMs?: number | (() => number);
 }
 
 export type CurrentAccountNavigationCoordinatorOptions = Omit<
@@ -478,21 +504,43 @@ function defaultEntryId(): string {
 	return crypto.randomUUID();
 }
 
+interface PendingNavigationTransition {
+	epoch: number;
+	expectedRouteKey: string;
+	state: AppNavigationStateV1;
+	parent: AppNavigationStateV1 | null;
+	commit: () => void;
+	resolveCommitted: () => void;
+	committed: boolean;
+}
+
+const DEFAULT_NAVIGATION_TRANSITION_TIMEOUT_MS = 8_000;
+
 export class NavigationCoordinator {
 	readonly #effects: NavigationEffects;
 	readonly #accountGeneration: number;
 	readonly #createEntryId: () => string;
+	readonly #onTransitionFailure:
+		| ((failure: NavigationTransitionFailure) => void)
+		| undefined;
 	#currentState: AppNavigationStateV1 | null = null;
 	#lastRootRoute: Record<RootSurface, SafeReturnRoute> = {
 		...DEFAULT_ROOT_ROUTE,
 	};
 	#predecessors = new Map<string, AppNavigationStateV1>();
-	#transitionTail: Promise<void> = Promise.resolve();
+	#detailRouteKeys = new Map<string, string>();
+	#transitionEpoch = 0;
+	#activeTransition: { epoch: number; supersede: () => void } | null = null;
+	#pendingTransition: PendingNavigationTransition | null = null;
+	#currentRouteKey: string | null = null;
+	readonly #transitionTimeoutMs: () => number;
 
 	constructor({
 		effects,
 		accountGeneration,
 		createEntryId = defaultEntryId,
+		onTransitionFailure,
+		transitionTimeoutMs = DEFAULT_NAVIGATION_TRANSITION_TIMEOUT_MS,
 	}: NavigationCoordinatorOptions) {
 		if (!Number.isSafeInteger(accountGeneration) || accountGeneration < 0)
 			throw new TypeError(
@@ -501,6 +549,11 @@ export class NavigationCoordinator {
 		this.#effects = effects;
 		this.#accountGeneration = accountGeneration;
 		this.#createEntryId = createEntryId;
+		this.#onTransitionFailure = onTransitionFailure;
+		this.#transitionTimeoutMs =
+			typeof transitionTimeoutMs === "function"
+				? transitionTimeoutMs
+				: () => transitionTimeoutMs;
 	}
 
 	get currentState(): AppNavigationStateV1 | null {
@@ -511,7 +564,7 @@ export class NavigationCoordinator {
 		route: string,
 		pageState: unknown,
 	): Promise<AppNavigationStateV1> {
-		return this.#enqueue(() => this.#initializeCurrentRoute(route, pageState));
+		return this.#initializeCurrentRoute(route, pageState);
 	}
 
 	async #initializeCurrentRoute(
@@ -519,65 +572,107 @@ export class NavigationCoordinator {
 		pageState: unknown,
 	): Promise<AppNavigationStateV1> {
 		const classification = classifyRoute(route);
-		if (this.#canSynchronizeCurrentRoute(classification, pageState)) {
+		const routeKey = routeKeyOf(route);
+		const pending = this.#pendingTransition;
+		if (
+			pending &&
+			pending.expectedRouteKey === routeKey &&
+			isAppNavigationStateV1(pageState) &&
+			sameAppNavigationState(pageState, pending.state) &&
+			pageState.level === classification.level &&
+			pageState.detailKind === classification.detailKind
+		) {
+			this.#commitPending(pending);
+			return pending.state;
+		}
+		if (this.#canSynchronizeCurrentRoute(routeKey, classification, pageState)) {
 			this.#currentState = pageState;
 			this.#rememberRootRoute(pageState);
 			return pageState;
 		}
+		if (this.#canTraverseHistory(routeKey, classification, pageState)) {
+			this.#supersedeActiveTransition();
+			this.#currentState = pageState;
+			this.#currentRouteKey = routeKey;
+			this.#rememberRootRoute(pageState);
+			return pageState;
+		}
 
+		if (
+			isAppNavigationStateV1(pageState) &&
+			pageState.accountGeneration === this.#accountGeneration &&
+			(pending || this.#currentState)
+		) {
+			return this.#restoreLatestRouteAfterStaleArrival();
+		}
+
+		this.#supersedeActiveTransition();
 		const state = this.#createState(classification, null);
 		await this.#effects.replaceState("", state);
 		this.#predecessors.clear();
+		this.#detailRouteKeys.clear();
 		this.#currentState = state;
+		this.#currentRouteKey = routeKey;
+		if (state.level === "detail")
+			this.#detailRouteKeys.set(state.entryId, routeKey);
 		this.#rememberRootRoute(classification);
 		return state;
 	}
 
-	switchRoot(root: RootSurface): Promise<AppNavigationStateV1> {
-		return this.#enqueue(() => this.#switchRoot(root));
+	switchRoot(root: RootSurface): Promise<NavigationTransitionOutcome> {
+		return this.#switchRoot(root);
 	}
 
-	activateRootRoute(route: string): Promise<AppNavigationStateV1> {
-		return this.#enqueue(() => this.#activateRootRoute(route));
+	activateRootRoute(route: string): Promise<NavigationTransitionOutcome> {
+		return this.#activateRootRoute(route);
 	}
 
-	activateCurrentRoot(root?: RootSurface): Promise<AppNavigationStateV1> {
-		return this.#enqueue(() => {
-			const selectedRoot = root ?? this.#currentState?.root ?? "browse";
-			const route =
-				this.#currentState?.root === selectedRoot &&
-				ROOT_ROUTES[this.#currentState.safeReturnRoute]
-					? this.#currentState.safeReturnRoute
-					: this.#lastRootRoute[selectedRoot];
-			return this.#activateRootRoute(route);
-		});
+	activateCurrentRoot(
+		root?: RootSurface,
+	): Promise<NavigationTransitionOutcome> {
+		const selectedRoot = root ?? this.#candidateState()?.root ?? "browse";
+		const candidate = this.#candidateState();
+		const route =
+			candidate?.root === selectedRoot && ROOT_ROUTES[candidate.safeReturnRoute]
+				? candidate.safeReturnRoute
+				: this.#lastRootRoute[selectedRoot];
+		return this.#activateRootRoute(route);
 	}
 
-	#enqueue<T>(transition: () => Promise<T>): Promise<T> {
-		const result = this.#transitionTail.then(transition);
-		this.#transitionTail = result.then(
-			() => undefined,
-			() => undefined,
-		);
-		return result;
+	#candidateState(): AppNavigationStateV1 | null {
+		return this.#pendingTransition?.state ?? this.#currentState;
 	}
 
-	async #switchRoot(root: RootSurface): Promise<AppNavigationStateV1> {
+	async #switchRoot(root: RootSurface): Promise<NavigationTransitionOutcome> {
 		return this.#activateRootRoute(this.#lastRootRoute[root]);
 	}
 
-	async #activateRootRoute(route: string): Promise<AppNavigationStateV1> {
+	async #activateRootRoute(
+		route: string,
+	): Promise<NavigationTransitionOutcome> {
 		const pathname = pathnameOf(route);
 		const classification = ROOT_ROUTES[pathname];
-		if (!classification)
-			throw new TypeError("activateRootRoute requires a root route");
+		if (!classification) return { kind: "failed", reason: "invalidState" };
 		const canonicalRoute = classification.safeReturnRoute;
-		const state = this.#createState(classification, null);
-		await this.#effects.goto(canonicalRoute, { replaceState: true, state });
-		this.#predecessors.clear();
-		this.#currentState = state;
-		this.#rememberRootRoute(classification);
-		return state;
+		let state: AppNavigationStateV1;
+		try {
+			state = this.#createState(classification, null);
+		} catch {
+			return { kind: "failed", reason: "invalidState" };
+		}
+		return this.#runTransition({
+			route: canonicalRoute,
+			state,
+			parent: null,
+			effect: () =>
+				this.#effects.goto(canonicalRoute, { replaceState: true, state }),
+			commit: () => {
+				this.#predecessors.clear();
+				this.#detailRouteKeys.clear();
+				this.#currentState = state;
+				this.#rememberRootRoute(classification);
+			},
+		});
 	}
 
 	createReceivedAlbumConversationParentProof(): ValidatedReceivedAlbumConversationParent | null {
@@ -615,91 +710,123 @@ export class NavigationCoordinator {
 	openDetail(
 		route: string,
 		options: DetailNavigationOptions = {},
-	): Promise<AppNavigationStateV1> {
-		return this.#enqueue(() => this.#openDetail(route, options));
+	): Promise<NavigationTransitionOutcome> {
+		return this.#openDetail(route, options);
 	}
 
 	async #openDetail(
 		route: string,
 		options: DetailNavigationOptions,
-	): Promise<AppNavigationStateV1> {
+	): Promise<NavigationTransitionOutcome> {
 		const classification = classifyRoute(route);
 		if (classification.level !== "detail")
-			throw new TypeError("openDetail requires a detail route");
+			return { kind: "failed", reason: "invalidState" };
 
-		const current = this.#currentState;
+		const current = this.#candidateState();
+		const committedCurrent = this.#currentState;
 		const parent =
 			current?.level === "root"
 				? current
 				: current?.level === "detail"
-					? (this.#predecessors.get(current.entryId) ?? null)
+					? this.#parentForState(current)
 					: null;
 		const semanticParent = this.#resolveSemanticParent(
 			classification,
 			parent,
 			options,
 		);
-		const state = this.#createState(
-			semanticParent.classification,
-			semanticParent.parent,
-			semanticParent.parentProof,
-		);
-		await this.#effects.goto(route, {
-			...options.navigation,
-			replaceState: current?.level !== "root",
+		let state: AppNavigationStateV1;
+		try {
+			state = this.#createState(
+				semanticParent.classification,
+				semanticParent.parent,
+				semanticParent.parentProof,
+			);
+		} catch {
+			return { kind: "failed", reason: "invalidState" };
+		}
+		return this.#runTransition({
+			route,
 			state,
+			parent: semanticParent.parent,
+			effect: () =>
+				this.#effects.goto(route, {
+					...options.navigation,
+					replaceState: committedCurrent?.level !== "root",
+					state,
+				}),
+			commit: () => {
+				if (current?.level === "root") {
+					this.#predecessors.clear();
+					this.#detailRouteKeys.clear();
+				} else if (current?.level === "detail") {
+					this.#predecessors.delete(current.entryId);
+					this.#detailRouteKeys.delete(current.entryId);
+				}
+				if (semanticParent.parent)
+					this.#predecessors.set(state.entryId, semanticParent.parent);
+				this.#currentState = state;
+			},
 		});
-		if (current?.level === "detail") this.#predecessors.delete(current.entryId);
-		if (semanticParent.parent)
-			this.#predecessors.set(state.entryId, semanticParent.parent);
-		this.#currentState = state;
-		return state;
 	}
 
 	replaceDetail(
 		route: string,
 		options: DetailNavigationOptions = {},
-	): Promise<AppNavigationStateV1> {
-		return this.#enqueue(() => this.#replaceDetail(route, options));
+	): Promise<NavigationTransitionOutcome> {
+		return this.#replaceDetail(route, options);
 	}
 
 	async #replaceDetail(
 		route: string,
 		options: DetailNavigationOptions,
-	): Promise<AppNavigationStateV1> {
+	): Promise<NavigationTransitionOutcome> {
 		const classification = classifyRoute(route);
 		if (classification.level !== "detail")
-			throw new TypeError("replaceDetail requires a detail route");
+			return { kind: "failed", reason: "invalidState" };
 
-		const current = this.#currentState;
+		const current = this.#candidateState();
 		const predecessor =
-			current?.level === "detail"
-				? (this.#predecessors.get(current.entryId) ?? null)
-				: null;
+			current?.level === "detail" ? this.#parentForState(current) : null;
 		const semanticParent = this.#resolveSemanticParent(
 			classification,
 			predecessor,
 			options,
 		);
-		const state = this.#createState(
-			semanticParent.classification,
-			semanticParent.parent,
-			semanticParent.parentProof,
-		);
-		await this.#effects.goto(route, {
-			...options.navigation,
-			replaceState: true,
+		let state: AppNavigationStateV1;
+		try {
+			state = this.#createState(
+				semanticParent.classification,
+				semanticParent.parent,
+				semanticParent.parentProof,
+			);
+		} catch {
+			return { kind: "failed", reason: "invalidState" };
+		}
+		return this.#runTransition({
+			route,
 			state,
+			parent: semanticParent.parent,
+			effect: () =>
+				this.#effects.goto(route, {
+					...options.navigation,
+					replaceState: true,
+					state,
+				}),
+			commit: () => {
+				if (current?.level === "detail") {
+					this.#predecessors.delete(current.entryId);
+					this.#detailRouteKeys.delete(current.entryId);
+				}
+				if (semanticParent.parent)
+					this.#predecessors.set(state.entryId, semanticParent.parent);
+				this.#currentState = state;
+			},
 		});
-		if (current?.level === "detail") this.#predecessors.delete(current.entryId);
-		if (semanticParent.parent)
-			this.#predecessors.set(state.entryId, semanticParent.parent);
-		this.#currentState = state;
-		return state;
 	}
 
 	closeDetail(route: string, pageState: unknown): Promise<BackResult> {
-		return this.#enqueue(() => this.#closeDetail(route, pageState));
+		return this.#closeDetail(route, pageState);
 	}
 
 	async #closeDetail(route: string, pageState: unknown): Promise<BackResult> {
@@ -707,19 +834,32 @@ export class NavigationCoordinator {
 			const detail = pageState;
 			const parent = this.#predecessors.get(detail.entryId);
 			if (parent) {
-				await this.#effects.pop();
-				this.#predecessors.delete(detail.entryId);
-				this.#currentState = parent;
+				const outcome = await this.#runTransition({
+					route: parent.safeReturnRoute,
+					state: parent,
+					parent: null,
+					commitOnEffect: false,
+					effect: () => this.#effects.pop(),
+					commit: () => {
+						this.#currentState = parent;
+					},
+				});
+				this.#presentTransitionFailure(outcome, "detail", () =>
+					this.#closeDetail(route, pageState),
+				);
 				return "handled";
 			}
 		}
 
-		await this.#replaceSafeParent(route);
+		const outcome = await this.#replaceSafeParent(route);
+		this.#presentTransitionFailure(outcome, "detail", () =>
+			this.#closeDetail(route, pageState),
+		);
 		return "handled";
 	}
 
 	handleSemanticBack(route: string, pageState: unknown): Promise<BackResult> {
-		return this.#enqueue(() => this.#handleSemanticBack(route, pageState));
+		return this.#handleSemanticBack(route, pageState);
 	}
 
 	async #handleSemanticBack(
@@ -730,8 +870,173 @@ export class NavigationCoordinator {
 		if (classification.level === "detail")
 			return this.#closeDetail(route, pageState);
 		if (classification.root === "browse") return "unhandled";
-		await this.#switchRoot("browse");
+		const outcome = await this.#switchRoot("browse");
+		this.#presentTransitionFailure(outcome, "root", () =>
+			this.#handleSemanticBack(route, pageState),
+		);
 		return "handled";
+	}
+
+	#presentTransitionFailure(
+		outcome: NavigationTransitionOutcome,
+		component: "root" | "detail",
+		retry: () => void | Promise<unknown>,
+	): void {
+		if (outcome.kind !== "failed") return;
+		try {
+			this.#onTransitionFailure?.({ component, outcome, retry });
+		} catch {
+			// Failure presentation must not release an owned Back gesture to Android.
+		}
+	}
+
+	#parentForState(state: AppNavigationStateV1): AppNavigationStateV1 | null {
+		const pending = this.#pendingTransition;
+		if (pending && sameAppNavigationState(pending.state, state))
+			return pending.parent;
+		return this.#predecessors.get(state.entryId) ?? null;
+	}
+
+	#supersedeActiveTransition(): void {
+		this.#transitionEpoch += 1;
+		this.#activeTransition?.supersede();
+		this.#activeTransition = null;
+		this.#pendingTransition = null;
+	}
+
+	#commitPending(pending: PendingNavigationTransition): void {
+		if (pending.committed) return;
+		pending.committed = true;
+		pending.commit();
+		this.#currentRouteKey = pending.expectedRouteKey;
+		if (pending.state.level === "detail")
+			this.#detailRouteKeys.set(
+				pending.state.entryId,
+				pending.expectedRouteKey,
+			);
+		pending.resolveCommitted();
+	}
+
+	async #restoreLatestRouteAfterStaleArrival(): Promise<AppNavigationStateV1> {
+		const pending = this.#pendingTransition;
+		if (pending) {
+			try {
+				await this.#effects.goto(pending.expectedRouteKey, {
+					replaceState: true,
+					state: pending.state,
+				});
+				if (
+					this.#pendingTransition === pending &&
+					pending.epoch === this.#transitionEpoch
+				)
+					this.#commitPending(pending);
+			} catch {
+				// Keep the last coherent state. A newer user intent can supersede this
+				// correction even while the stale navigation effect remains alive.
+			}
+			return this.#currentState ?? pending.state;
+		}
+
+		const current = this.#currentState;
+		const currentRouteKey = this.#currentRouteKey;
+		if (!current || !currentRouteKey)
+			throw new TypeError("navigation state is unavailable");
+		try {
+			await this.#effects.goto(currentRouteKey, {
+				replaceState: true,
+				state: current,
+			});
+		} catch {
+			// The coordinator still preserves the coherent latest state. The route
+			// layer may retry correction or accept another explicit user intent.
+		}
+		return current;
+	}
+
+	async #runTransition({
+		route,
+		state,
+		parent,
+		commitOnEffect = true,
+		effect,
+		commit,
+	}: {
+		route: string;
+		state: AppNavigationStateV1;
+		parent: AppNavigationStateV1 | null;
+		commitOnEffect?: boolean;
+		effect: () => void | Promise<void>;
+		commit: () => void;
+	}): Promise<NavigationTransitionOutcome> {
+		this.#activeTransition?.supersede();
+		const epoch = ++this.#transitionEpoch;
+		let supersede!: () => void;
+		const superseded = new Promise<"superseded">((resolve) => {
+			supersede = () => resolve("superseded");
+		});
+		this.#activeTransition = { epoch, supersede };
+		let resolveCommitted!: () => void;
+		const routeCommitted = new Promise<"committed">((resolve) => {
+			resolveCommitted = () => resolve("committed");
+		});
+		const pending: PendingNavigationTransition = {
+			epoch,
+			expectedRouteKey: routeKeyOf(route),
+			state,
+			parent,
+			commit,
+			resolveCommitted,
+			committed: false,
+		};
+		this.#pendingTransition = pending;
+
+		let effectPromise: Promise<"completed" | "failed">;
+		try {
+			effectPromise = Promise.resolve(effect()).then(
+				() => "completed" as const,
+				() => "failed" as const,
+			);
+		} catch {
+			effectPromise = Promise.resolve("failed");
+		}
+
+		const configuredTimeout = this.#transitionTimeoutMs();
+		const timeoutMs =
+			Number.isFinite(configuredTimeout) && configuredTimeout > 0
+				? configuredTimeout
+				: DEFAULT_NAVIGATION_TRANSITION_TIMEOUT_MS;
+		let timeoutId: ReturnType<typeof setTimeout> | null = null;
+		const timedOut = new Promise<"timeout">((resolve) => {
+			timeoutId = setTimeout(() => resolve("timeout"), timeoutMs);
+		});
+		const effectSignal = commitOnEffect
+			? effectPromise
+			: effectPromise.then((result) =>
+					result === "failed"
+						? result
+						: new Promise<never>(() => {
+								// Browser history traversal commits through route synchronization.
+							}),
+				);
+		const result = await Promise.race([
+			effectSignal,
+			routeCommitted,
+			superseded,
+			timedOut,
+		]);
+		if (timeoutId !== null) clearTimeout(timeoutId);
+
+		if (result === "superseded" || epoch !== this.#transitionEpoch)
+			return { kind: "superseded" };
+		if (this.#activeTransition?.epoch === epoch) this.#activeTransition = null;
+		if (this.#pendingTransition?.epoch === epoch)
+			this.#pendingTransition = null;
+		if (result === "timeout") return { kind: "failed", reason: "timeout" };
+		if (result === "failed")
+			return { kind: "failed", reason: "navigationError" };
+
+		if (result === "completed") this.#commitPending(pending);
+		return { kind: "committed", state };
 	}
 
 	#resolveSemanticParent(
@@ -797,6 +1102,7 @@ export class NavigationCoordinator {
 	}
 
 	#canSynchronizeCurrentRoute(
+		routeKey: string,
 		classification: RouteClassification,
 		pageState: unknown,
 	): pageState is AppNavigationStateV1 {
@@ -804,6 +1110,7 @@ export class NavigationCoordinator {
 			!isAppNavigationStateV1(pageState) ||
 			pageState.accountGeneration !== this.#accountGeneration ||
 			!this.#currentState ||
+			this.#currentRouteKey !== routeKey ||
 			!sameAppNavigationState(pageState, this.#currentState) ||
 			pageState.level !== classification.level ||
 			pageState.detailKind !== classification.detailKind
@@ -829,6 +1136,49 @@ export class NavigationCoordinator {
 		);
 	}
 
+	#canTraverseHistory(
+		routeKey: string,
+		classification: RouteClassification,
+		pageState: unknown,
+	): pageState is AppNavigationStateV1 {
+		if (
+			!isAppNavigationStateV1(pageState) ||
+			pageState.accountGeneration !== this.#accountGeneration ||
+			!this.#currentState ||
+			pageState.level !== classification.level ||
+			pageState.detailKind !== classification.detailKind
+		)
+			return false;
+
+		if (pageState.level === "root") {
+			if (
+				routeKey !== pageState.safeReturnRoute ||
+				pageState.root !== classification.root ||
+				pageState.surface !== classification.surface ||
+				pageState.safeReturnRoute !== classification.safeReturnRoute ||
+				this.#currentState.level !== "detail"
+			)
+				return false;
+			const parent = this.#predecessors.get(this.#currentState.entryId);
+			return Boolean(parent && sameAppNavigationState(pageState, parent));
+		}
+
+		if (
+			this.#detailRouteKeys.get(pageState.entryId) !== routeKey ||
+			this.#currentState.level !== "root"
+		)
+			return false;
+		const parent = this.#predecessors.get(pageState.entryId);
+		return Boolean(
+			parent &&
+			sameAppNavigationState(parent, this.#currentState) &&
+			pageState.parentEntryId === parent.entryId &&
+			pageState.root === parent.root &&
+			pageState.surface === parent.surface &&
+			pageState.safeReturnRoute === parent.safeReturnRoute,
+		);
+	}
+
 	#canPopDetail(
 		route: string,
 		pageState: unknown,
@@ -844,7 +1194,8 @@ export class NavigationCoordinator {
 		const routeClassification = classifyRoute(route);
 		if (
 			routeClassification.level !== "detail" ||
-			routeClassification.detailKind !== pageState.detailKind
+			routeClassification.detailKind !== pageState.detailKind ||
+			this.#detailRouteKeys.get(pageState.entryId) !== routeKeyOf(route)
 		)
 			return false;
 		const parent = this.#predecessors.get(pageState.entryId);
@@ -859,17 +1210,28 @@ export class NavigationCoordinator {
 		);
 	}
 
-	async #replaceSafeParent(route: string): Promise<void> {
+	async #replaceSafeParent(
+		route: string,
+	): Promise<NavigationTransitionOutcome> {
 		const classification = classifyRoute(route);
 		const safeRoute =
 			classification.level === "detail"
 				? classification.safeReturnRoute
 				: DEFAULT_ROOT_ROUTE.browse;
 		const state = this.#createState(classifyRoute(safeRoute), null);
-		await this.#effects.goto(safeRoute, { replaceState: true, state });
-		this.#predecessors.clear();
-		this.#currentState = state;
-		this.#rememberRootRoute(classifyRoute(safeRoute));
+		return this.#runTransition({
+			route: safeRoute,
+			state,
+			parent: null,
+			effect: () =>
+				this.#effects.goto(safeRoute, { replaceState: true, state }),
+			commit: () => {
+				this.#predecessors.clear();
+				this.#detailRouteKeys.clear();
+				this.#currentState = state;
+				this.#rememberRootRoute(classifyRoute(safeRoute));
+			},
+		});
 	}
 
 	#rememberRootRoute(classification: RouteClassification): void {

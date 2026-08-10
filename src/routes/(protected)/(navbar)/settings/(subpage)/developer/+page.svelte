@@ -236,6 +236,15 @@
 	unit="minutes"
 />
 <DeveloperNumberSetting
+	setting="navigationTransitionTimeoutMs"
+	title="Navigation transition timeout"
+	description="Maximum time to wait for a screen change before the app makes navigation responsive again."
+	min={2000}
+	max={30000}
+	step={1000}
+	unit="milliseconds"
+/>
+<DeveloperNumberSetting
 	setting="messageDuplicateReconcileWindowMs"
 	title="Message duplicate reconciliation window"
 	description="Time window used only to reconcile older cached sends that lack an exact delivery reference."

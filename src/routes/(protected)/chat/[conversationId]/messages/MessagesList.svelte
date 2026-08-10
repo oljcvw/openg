@@ -32,9 +32,11 @@
 	let {
 		container,
 		seenTimestamp = $bindable(),
+		readReportingEnabled = true,
 	}: {
 		container: HTMLElement | null;
 		seenTimestamp: number;
+		readReportingEnabled?: boolean;
 	} = $props();
 
 	const conversationState = $derived(getConversationState()());
@@ -59,23 +61,28 @@
 		{
 			align = "center",
 			behavior = "auto",
+			isCurrent = () => true,
 			offsetPx = null,
 		}: {
 			align?: "start" | "center" | "end" | "auto";
 			behavior?: ScrollBehavior;
+			isCurrent?: () => boolean;
 			offsetPx?: number | null;
 		} = {},
 	): Promise<boolean> {
+		if (!isCurrent()) return false;
 		const state = conversationState;
 		const conversationId = state.conversationId;
 		const located = await state.locateMessage(messageId);
 		if (
 			located === null ||
+			!isCurrent() ||
 			conversationState !== state ||
 			conversationState.conversationId !== conversationId
 		)
 			return false;
 		await tick();
+		if (!isCurrent()) return false;
 		const chronologicalIndex = chronologicalMessages.findIndex(
 			(message) => message.messageId === messageId,
 		);
@@ -83,6 +90,7 @@
 		$virtualizer.scrollToIndex(chronologicalIndex, { align, behavior });
 		if (offsetPx !== null) {
 			await tick();
+			if (!isCurrent()) return false;
 			const row = [
 				...(container?.querySelectorAll<HTMLElement>("[data-message-id]") ??
 					[]),
@@ -267,6 +275,7 @@
 					peerProfileId={conversationState.profile?.profileId ?? null}
 					otherName={conversationState.profile?.name}
 					highlighted={highlightedMessageId === message.messageId}
+					visibilityEnabled={readReportingEnabled}
 					onRetry={(message.status === "failed" ||
 						message.status === "handled") &&
 					(message.retryCount ?? 0) < 1

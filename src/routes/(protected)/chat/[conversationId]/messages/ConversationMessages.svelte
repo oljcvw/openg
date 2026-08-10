@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick, untrack } from "svelte";
+	import { onDestroy, tick, untrack } from "svelte";
 
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import {
@@ -8,11 +8,21 @@
 		navigationMemory,
 		resolveConversationScrollRestoration,
 	} from "$lib/navigation/navigation-memory";
+	import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 	import { getConversationState } from "../conversation-state.svelte";
 	import ConversationError from "./ConversationError.svelte";
 	import MessagesList from "./MessagesList.svelte";
 	import MessagesListSkeleton from "./MessagesListSkeleton.svelte";
 	import ScrollToBottomButton from "./ScrollToBottomButton.svelte";
+	import {
+		addTranscriptRestorationCancellationListeners,
+		canCaptureTranscriptViewport,
+		isTranscriptRestorationCurrent,
+		nextTranscriptSeenTimestamp,
+		restoreMeasuredTranscript,
+		transcriptRestorationCancellationState,
+		type TranscriptRestoreTarget,
+	} from "./transcript-restoration";
 
 	let {
 		composerHeight,
@@ -31,6 +41,7 @@
 					options?: {
 						align?: "start" | "center" | "end" | "auto";
 						behavior?: ScrollBehavior;
+						isCurrent?: () => boolean;
 						offsetPx?: number | null;
 					},
 				) => Promise<boolean>;
@@ -47,14 +58,19 @@
 	});
 
 	function markReadMessagesEffect(): void {
-		if (!atFloor) return;
 		const latest = conversationState.messages.reduce(
 			(max, m) => Math.max(max, m.timestamp),
 			0,
 		);
+		const next = nextTranscriptSeenTimestamp({
+			atFloor,
+			latestTimestamp: latest,
+			restorationComplete: scrollDone,
+			seenTimestamp,
+		});
 		untrack(() => {
-			if (latest > seenTimestamp) {
-				seenTimestamp = latest;
+			if (next > seenTimestamp) {
+				seenTimestamp = next;
 			}
 		});
 	}
@@ -78,6 +94,8 @@
 			scrollingToRestTimer = setTimeout(endScrollingToRest, 1500);
 		}
 		refreshControl?.scrollToRest(behavior);
+		if (behavior === "instant" && container)
+			container.scrollTop = container.scrollHeight;
 		if (floorDistance() <= 1) endScrollingToRest();
 	}
 
@@ -105,7 +123,8 @@
 	}
 
 	function captureTranscriptAnchor(state: typeof conversationState): void {
-		if (!container) return;
+		if (!container || !canCaptureTranscriptViewport(scrollDone, restoring))
+			return;
 		const anchor = captureScrollAnchor(
 			container,
 			Date.now(),
@@ -137,15 +156,28 @@
 	function addInputEventsEffect() {
 		const el = container;
 		if (!el) return;
-		el.addEventListener("wheel", endScrollingToRest, { passive: true });
-		el.addEventListener("touchstart", endScrollingToRest, { passive: true });
-		return () => {
-			el.removeEventListener("wheel", endScrollingToRest);
-			el.removeEventListener("touchstart", endScrollingToRest);
+		const cancelProgrammaticScroll = () => {
+			restoreGeneration += 1;
+			restoring = false;
+			const cancellation =
+				transcriptRestorationCancellationState(floorDistance());
+			atFloor = cancellation.atFloor;
+			scrollDone = cancellation.restorationComplete;
+			endScrollingToRest();
 		};
+		return addTranscriptRestorationCancellationListeners(
+			el,
+			cancelProgrammaticScroll,
+		);
 	}
 
-	let scrollDone = false;
+	let scrollDone = $state(false);
+	let restoring = $state(false);
+	let restoreGeneration = 0;
+	onDestroy(() => {
+		restoreGeneration += 1;
+		endScrollingToRest();
+	});
 	let lastFirstId = "";
 
 	$effect(() => {
@@ -155,7 +187,9 @@
 	function onConversationChangeEffect(): void {
 		void conversationState.conversationId;
 		untrack(() => {
+			restoreGeneration += 1;
 			scrollDone = false;
+			restoring = false;
 			lastFirstId = "";
 			atFloor = true;
 			seenTimestamp = 0;
@@ -168,54 +202,111 @@
 	});
 
 	function onConversationLoadedEffect(): void {
-		if (!conversationState.loading && !scrollDone && container) {
-			scrollDone = true;
+		if (!conversationState.loading && !scrollDone && !restoring && container) {
+			restoring = true;
 			const state = conversationState;
 			const detailSession = navigationMemory.getDetailSession(
 				state.conversationId,
 				state.accountSession,
 			);
 			const anchor = detailSession.scrollAnchor;
-			if (!anchor) {
-				void scrollToRest("instant");
-				return;
-			}
 			const el = container;
+			const generation = ++restoreGeneration;
+			const isCurrentRestoration = (candidate: number) =>
+				isTranscriptRestorationCurrent({
+					accountSession: state.accountSession,
+					candidateGeneration: candidate,
+					ownsContainer: container === el,
+					ownsConversationState: conversationState === state,
+					restoreGeneration,
+				});
+			const target: TranscriptRestoreTarget =
+				anchor && anchor.distanceFromEndPx > FLOOR_SLOP_PX && anchor.itemKey
+					? {
+							kind: "anchor",
+							messageId: anchor.itemKey,
+							offsetPx: anchor.offsetPx,
+							distanceFromEndPx: anchor.distanceFromEndPx,
+						}
+					: { kind: "floor" };
 			void (async () => {
-				if (anchor.distanceFromEndPx > FLOOR_SLOP_PX && anchor.itemKey) {
-					await messagesList?.scrollToMessage(anchor.itemKey, {
-						align: "start",
-						behavior: "auto",
-						offsetPx: anchor.offsetPx,
-					});
-				}
-				await tick();
-				const containerRect = el.getBoundingClientRect();
-				const offsets = new Map<string, number>();
-				for (const item of el.querySelectorAll<HTMLElement>(
-					"[data-message-id]",
-				)) {
-					const key = item.dataset.messageId;
-					if (key)
-						offsets.set(
-							key,
-							el.scrollTop +
-								item.getBoundingClientRect().top -
-								containerRect.top,
+				const outcome = await restoreMeasuredTranscript({
+					target,
+					generation,
+					isCurrent: isCurrentRestoration,
+					scrollToAnchor: async (messageId, offsetPx, isCurrent) => {
+						const found =
+							(await messagesList?.scrollToMessage(messageId, {
+								align: "start",
+								behavior: "auto",
+								isCurrent,
+								offsetPx,
+							})) ?? false;
+						if (!found || !anchor || !isCurrent()) return false;
+						await tick();
+						if (!isCurrent()) return false;
+						const containerRect = el.getBoundingClientRect();
+						const offsets = new Map<string, number>();
+						for (const item of el.querySelectorAll<HTMLElement>(
+							"[data-message-id]",
+						)) {
+							const key = item.dataset.messageId;
+							if (key)
+								offsets.set(
+									key,
+									el.scrollTop +
+										item.getBoundingClientRect().top -
+										containerRect.top,
+								);
+						}
+						const restored = resolveConversationScrollRestoration(
+							anchor,
+							offsets,
+							{
+								scrollHeight: el.scrollHeight,
+								clientHeight: el.clientHeight,
+								floorSlopPx: FLOOR_SLOP_PX,
+							},
+							detailSession.scrollNeighborhood,
 						);
-				}
-				const restored = resolveConversationScrollRestoration(
-					anchor,
-					offsets,
-					{
-						scrollHeight: el.scrollHeight,
-						clientHeight: el.clientHeight,
-						floorSlopPx: FLOOR_SLOP_PX,
+						if (!isCurrent()) return false;
+						el.scrollTop = restored.scrollTop;
+						return true;
 					},
-					detailSession.scrollNeighborhood,
-				);
-				el.scrollTop = restored.scrollTop;
+					scrollToFloor: () => {
+						refreshControl?.scrollToRest("instant");
+						el.scrollTop = el.scrollHeight;
+					},
+					measure: (messageId) => {
+						const row = messageId
+							? [...el.querySelectorAll<HTMLElement>("[data-message-id]")].find(
+									(candidate) => candidate.dataset.messageId === messageId,
+								)
+							: null;
+						return {
+							floorDistancePx: floorDistance(),
+							anchorOffsetPx: row
+								? row.getBoundingClientRect().top -
+									el.getBoundingClientRect().top
+								: null,
+						};
+					},
+					waitFrame: () =>
+						new Promise<void>((resolve) =>
+							requestAnimationFrame(() => resolve()),
+						),
+				});
+				if (!isCurrentRestoration(generation)) return;
+				restoring = false;
+				scrollDone = outcome !== "superseded";
 				atFloor = floorDistance() <= FLOOR_SLOP_PX;
+				if (outcome === "failed")
+					reportClientDiagnostic({
+						category: "background_task",
+						component: "conversation",
+						code: "transcript_restore_failed",
+						level: "warning",
+					});
 			})();
 		}
 	}
@@ -262,6 +353,8 @@
 	style:padding-bottom="var(--chat-ime-offset, 0px)"
 >
 	<div
+		aria-label="Conversation messages"
+		role="region"
 		class="flex min-h-0 max-w-full flex-1 flex-col gap-1 overflow-auto overscroll-contain p-2 pt-20 pb-[calc(var(--composer-height)+--spacing(1.5))] *:first:mt-auto"
 		bind:this={container}
 		style:overflow-anchor="none"
@@ -275,7 +368,12 @@
 		{:else if conversationState.error}
 			<ConversationError />
 		{:else}
-			<MessagesList {container} bind:seenTimestamp bind:this={messagesList} />
+			<MessagesList
+				{container}
+				readReportingEnabled={scrollDone}
+				bind:seenTimestamp
+				bind:this={messagesList}
+			/>
 		{/if}
 	</div>
 	{#if !conversationState.loading && !conversationState.error}

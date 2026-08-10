@@ -128,3 +128,84 @@ test("rendered Right Now DOM stays bounded", async ({ page }) => {
 	expect(mountedPosts).toBeGreaterThan(0);
 	expect(mountedPosts).toBeLessThan(30);
 });
+
+test("serial Inbox conversations replace one detail and Back returns to Inbox", async ({
+	page,
+}) => {
+	const conversationA = "/chat/100001:123456000";
+	const conversationB = "/chat/100006:123456000";
+	const pageErrors: Error[] = [];
+	page.on("pageerror", (error) => pageErrors.push(error));
+
+	await page.setViewportSize({ width: 900, height: 800 });
+	await openDemo(page, "/chat");
+	const rowA = page.locator(`a[href="${conversationA}"]:visible`).first();
+	const rowB = page.locator(`a[href="${conversationB}"]:visible`).first();
+	await expect(rowA).toBeVisible({ timeout: 30_000 });
+	await expect(rowB).toBeVisible({ timeout: 30_000 });
+
+	await rowA.click();
+	await rowB.click();
+	await expect(page).toHaveURL(new RegExp(`${conversationB}$`));
+	await expect(rowB).toHaveAttribute("aria-current", "page");
+	await expect(rowA).not.toHaveAttribute("aria-current", "page");
+	await expect(
+		page.getByRole("button", { name: "Back to conversations" }),
+	).toHaveCount(1);
+	await expect(page.getByRole("textbox")).toHaveCount(1);
+
+	const transcript = page.getByRole("region", {
+		name: "Conversation messages",
+	});
+	await expect(transcript).toBeVisible();
+	await page.evaluate(
+		() =>
+			new Promise<void>((resolve) =>
+				requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+			),
+	);
+	expect(
+		await transcript.evaluate(
+			(element) =>
+				element.scrollHeight - element.clientHeight - element.scrollTop,
+		),
+	).toBeLessThanOrEqual(16);
+	await expect(
+		page.getByText("Something went wrong", { exact: true }),
+	).toHaveCount(0);
+	expect(pageErrors).toHaveLength(0);
+
+	await page.getByRole("button", { name: "Back to conversations" }).click();
+	await expect(page).toHaveURL(/\/chat$/);
+	await expect(
+		page.getByRole("button", { name: "Back to conversations" }),
+	).toHaveCount(0);
+	await expect(page.getByRole("textbox")).toHaveCount(0);
+	await expect(
+		page.getByText("Select a conversation to start chatting", { exact: true }),
+	).toBeVisible();
+});
+
+test("browser Back and Forward traverse an app-owned conversation detail", async ({
+	page,
+}) => {
+	const conversation = "/chat/100001:123456000";
+	await page.setViewportSize({ width: 900, height: 800 });
+	await openDemo(page, "/chat");
+	const row = page.locator(`a[href="${conversation}"]:visible`).first();
+	await expect(row).toBeVisible({ timeout: 30_000 });
+
+	await row.click();
+	await expect(page).toHaveURL(new RegExp(`${conversation}$`));
+	await page.goBack();
+	await expect(page).toHaveURL(/\/chat$/);
+	await expect(
+		page.getByRole("button", { name: "Back to conversations" }),
+	).toHaveCount(0);
+
+	await page.goForward();
+	await expect(page).toHaveURL(new RegExp(`${conversation}$`));
+	await expect(
+		page.getByRole("button", { name: "Back to conversations" }),
+	).toHaveCount(1);
+});

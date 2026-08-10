@@ -46,6 +46,7 @@ describe("preference migration", () => {
 			albumShareDiscoveryConcurrency: 3,
 			conversationSearchConcurrency: 3,
 			conversationSearchDebounceMs: 250,
+			navigationTransitionTimeoutMs: 8_000,
 			cacheManifestTouchIntervalMinutes: 60,
 			browseAgeScaleMax: 102,
 			browseAgeScaleMin: 18,
@@ -111,6 +112,16 @@ describe("preference migration", () => {
 		expect(
 			developerSettingsSchema.safeParse({ conversationSearchDebounceMs: 49 })
 				.success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({
+				navigationTransitionTimeoutMs: 1_999,
+			}).success,
+		).toBe(false);
+		expect(
+			developerSettingsSchema.safeParse({
+				navigationTransitionTimeoutMs: 30_001,
+			}).success,
 		).toBe(false);
 		expect(
 			developerSettingsSchema.safeParse({

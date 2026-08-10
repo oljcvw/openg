@@ -1,9 +1,10 @@
 import { goto } from "$app/navigation";
+import { toast } from "svelte-sonner";
 
 import { getAccountSessionSnapshot } from "$lib/api/account-caches";
+import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
 import { runtimeOwnership } from "$lib/dev/runtime-ownership";
 import {
-	type AppNavigationStateV1,
 	type BackHandler,
 	BackLayerManager,
 	type BackLayerSelection,
@@ -11,9 +12,11 @@ import {
 	type DetailNavigationOptions,
 	NavigationCoordinator,
 	type NavigationCoordinatorOptions,
+	type NavigationTransitionOutcome,
 	type RootSurface,
 	type SafeReturnRoute,
 } from "$lib/navigation/navigation-foundations";
+import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 
 export const backLayerManager = new BackLayerManager();
 
@@ -53,6 +56,30 @@ type RootRefresh = () => void | Promise<void>;
 const rootRefreshCallbacks = new Map<SafeReturnRoute, RootRefresh>();
 const rootActionFlights = new Map<RootSurface, Promise<void>>();
 
+function presentNavigationFailure(
+	outcome: NavigationTransitionOutcome,
+	component: "root" | "detail",
+	retry: () => void | Promise<unknown>,
+): void {
+	if (outcome.kind !== "failed") return;
+	reportClientDiagnostic({
+		category: "navigation",
+		component,
+		code:
+			outcome.reason === "timeout"
+				? `${component}_transition_timeout`
+				: `${component}_transition_failed`,
+		level: "warning",
+	});
+	toast.error("Couldn't change screens", {
+		description: "Your current screen was kept. Try again.",
+		action: {
+			label: "Retry",
+			onClick: () => void retry(),
+		},
+	});
+}
+
 export interface CurrentNavigationRuntime {
 	coordinator: NavigationCoordinator;
 	release: () => void;
@@ -60,11 +87,64 @@ export interface CurrentNavigationRuntime {
 }
 
 interface InternalNavigationRuntime extends CurrentNavigationRuntime {
+	accountGeneration: number;
 	deactivate: () => void;
+	inactive: Promise<void>;
+	ready: Promise<boolean>;
 }
+
+type ReadyNavigationRuntime =
+	| { kind: "absent" }
+	| { kind: "failed" }
+	| { kind: "ready"; coordinator: NavigationCoordinator };
 
 export function getCurrentNavigationCoordinator(): NavigationCoordinator | null {
 	return currentNavigationRuntime?.coordinator ?? null;
+}
+
+async function getReadyNavigationRuntime(): Promise<ReadyNavigationRuntime> {
+	while (true) {
+		const runtime = currentNavigationRuntime;
+		if (!runtime) return { kind: "absent" };
+		const configuredTimeout =
+			getDeveloperSettingsSnapshot().navigationTransitionTimeoutMs;
+		const timeoutMs =
+			Number.isFinite(configuredTimeout) && configuredTimeout > 0
+				? configuredTimeout
+				: 8_000;
+		if (runtime.accountGeneration !== getAccountSessionSnapshot().generation) {
+			let staleTimeoutId: ReturnType<typeof setTimeout> | null = null;
+			const staleResult = await Promise.race([
+				runtime.inactive.then<"inactive">(() => "inactive"),
+				new Promise<"timeout">((resolve) => {
+					staleTimeoutId = setTimeout(() => resolve("timeout"), timeoutMs);
+				}),
+			]);
+			if (staleTimeoutId !== null) clearTimeout(staleTimeoutId);
+			if (currentNavigationRuntime !== runtime || staleResult === "inactive")
+				continue;
+			return { kind: "failed" };
+		}
+		if (runtime.coordinator.currentState)
+			return { kind: "ready", coordinator: runtime.coordinator };
+
+		let timeoutId: ReturnType<typeof setTimeout> | null = null;
+		const result = await Promise.race([
+			runtime.ready.then<"ready" | "inactive">((ready) =>
+				ready ? "ready" : "inactive",
+			),
+			new Promise<"timeout">((resolve) => {
+				timeoutId = setTimeout(() => resolve("timeout"), timeoutMs);
+			}),
+		]);
+		if (timeoutId !== null) clearTimeout(timeoutId);
+
+		if (currentNavigationRuntime !== runtime) continue;
+		if (result === "ready")
+			return { kind: "ready", coordinator: runtime.coordinator };
+		if (result === "timeout") return { kind: "failed" };
+		return { kind: "absent" };
+	}
 }
 
 function pathnameOf(route: string): string {
@@ -90,6 +170,24 @@ function requireDetailRoute(route: string): void {
 
 async function safeReplacement(route: string): Promise<void> {
 	await goto(route, { replaceState: true });
+}
+
+async function replaceWithoutNavigationRuntime(
+	route: string,
+	component: "root" | "detail",
+	retry: () => void | Promise<unknown>,
+): Promise<NavigationTransitionOutcome | null> {
+	try {
+		await safeReplacement(route);
+		return null;
+	} catch {
+		const outcome = {
+			kind: "failed",
+			reason: "navigationError",
+		} as const;
+		presentNavigationFailure(outcome, component, retry);
+		return outcome;
+	}
 }
 
 async function activateCurrentRootBase(
@@ -124,17 +222,31 @@ export function activateAppRoot(root: RootSurface): Promise<void> {
 	const existing = rootActionFlights.get(root);
 	if (existing) return existing;
 	const operation = (async () => {
-		const coordinator = getCurrentNavigationCoordinator();
-		if (!coordinator) {
-			await safeReplacement(DEFAULT_ROOT_ROUTE[root]);
+		const navigation = await getReadyNavigationRuntime();
+		if (navigation.kind === "absent") {
+			await replaceWithoutNavigationRuntime(
+				DEFAULT_ROOT_ROUTE[root],
+				"root",
+				() => activateAppRoot(root),
+			);
 			return;
 		}
+		if (navigation.kind === "failed") {
+			presentNavigationFailure(
+				{ kind: "failed", reason: "timeout" },
+				"root",
+				() => activateAppRoot(root),
+			);
+			return;
+		}
+		const { coordinator } = navigation;
 		const current = coordinator.currentState;
 		if (current?.root === root && current.level === "root") {
 			await activateCurrentRootBase(root, current.safeReturnRoute);
 			return;
 		}
-		await coordinator.activateCurrentRoot(root);
+		const outcome = await coordinator.activateCurrentRoot(root);
+		presentNavigationFailure(outcome, "root", () => activateAppRoot(root));
 	})().finally(() => {
 		if (rootActionFlights.get(root) === operation)
 			rootActionFlights.delete(root);
@@ -145,34 +257,78 @@ export function activateAppRoot(root: RootSurface): Promise<void> {
 
 export async function activateAppRootRoute(route: string): Promise<void> {
 	const rootRoute = requireRootRoute(route);
-	const coordinator = getCurrentNavigationCoordinator();
-	if (coordinator) {
-		await coordinator.activateRootRoute(rootRoute);
+	const navigation = await getReadyNavigationRuntime();
+	if (navigation.kind === "ready") {
+		const { coordinator } = navigation;
+		const outcome = await coordinator.activateRootRoute(rootRoute);
+		presentNavigationFailure(outcome, "root", () =>
+			activateAppRootRoute(rootRoute),
+		);
 		return;
 	}
-	await safeReplacement(rootRoute);
+	if (navigation.kind === "failed") {
+		presentNavigationFailure(
+			{ kind: "failed", reason: "timeout" },
+			"root",
+			() => activateAppRootRoute(rootRoute),
+		);
+		return;
+	}
+	await replaceWithoutNavigationRuntime(rootRoute, "root", () =>
+		activateAppRootRoute(rootRoute),
+	);
 }
 
 export async function openAppDetail(
 	route: string,
 	options: DetailNavigationOptions = {},
-): Promise<AppNavigationStateV1 | null> {
+): Promise<NavigationTransitionOutcome | null> {
 	requireDetailRoute(route);
-	const coordinator = getCurrentNavigationCoordinator();
-	if (coordinator) return coordinator.openDetail(route, options);
-	await safeReplacement(route);
-	return null;
+	const navigation = await getReadyNavigationRuntime();
+	if (navigation.kind === "ready") {
+		const { coordinator } = navigation;
+		const outcome = await coordinator.openDetail(route, options);
+		presentNavigationFailure(outcome, "detail", () =>
+			openAppDetail(route, options),
+		);
+		return outcome;
+	}
+	if (navigation.kind === "failed") {
+		const outcome = { kind: "failed", reason: "timeout" } as const;
+		presentNavigationFailure(outcome, "detail", () =>
+			openAppDetail(route, options),
+		);
+		return outcome;
+	}
+	return replaceWithoutNavigationRuntime(route, "detail", () =>
+		openAppDetail(route, options),
+	);
 }
 
 export async function replaceAppDetail(
 	route: string,
 	options: DetailNavigationOptions = {},
-): Promise<AppNavigationStateV1 | null> {
+): Promise<NavigationTransitionOutcome | null> {
 	requireDetailRoute(route);
-	const coordinator = getCurrentNavigationCoordinator();
-	if (coordinator) return coordinator.replaceDetail(route, options);
-	await safeReplacement(route);
-	return null;
+	const navigation = await getReadyNavigationRuntime();
+	if (navigation.kind === "ready") {
+		const { coordinator } = navigation;
+		const outcome = await coordinator.replaceDetail(route, options);
+		presentNavigationFailure(outcome, "detail", () =>
+			replaceAppDetail(route, options),
+		);
+		return outcome;
+	}
+	if (navigation.kind === "failed") {
+		const outcome = { kind: "failed", reason: "timeout" } as const;
+		presentNavigationFailure(outcome, "detail", () =>
+			replaceAppDetail(route, options),
+		);
+		return outcome;
+	}
+	return replaceWithoutNavigationRuntime(route, "detail", () =>
+		replaceAppDetail(route, options),
+	);
 }
 
 export async function closeAppDetail(
@@ -180,64 +336,110 @@ export async function closeAppDetail(
 	pageState: unknown,
 ): Promise<void> {
 	requireDetailRoute(route);
-	const coordinator = getCurrentNavigationCoordinator();
-	if (coordinator) {
+	const navigation = await getReadyNavigationRuntime();
+	if (navigation.kind === "ready") {
+		const { coordinator } = navigation;
 		await coordinator.closeDetail(route, pageState);
 		return;
 	}
-	await safeReplacement(classifyRoute(route).safeReturnRoute);
+	if (navigation.kind === "failed") {
+		presentNavigationFailure(
+			{ kind: "failed", reason: "timeout" },
+			"detail",
+			() => closeAppDetail(route, pageState),
+		);
+		return;
+	}
+	await replaceWithoutNavigationRuntime(
+		classifyRoute(route).safeReturnRoute,
+		"detail",
+		() => closeAppDetail(route, pageState),
+	);
 }
 
 export async function openInboxConversationDetail(
 	route: string,
-): Promise<AppNavigationStateV1 | null> {
+): Promise<NavigationTransitionOutcome | null> {
 	const classification = classifyRoute(route);
 	if (
 		classification.level !== "detail" ||
 		classification.detailKind !== "conversation"
 	)
 		throw new TypeError("Inbox conversation action requires a conversation");
-	const coordinator = getCurrentNavigationCoordinator();
-	if (!coordinator) {
-		await safeReplacement(route);
-		return null;
+	const navigation = await getReadyNavigationRuntime();
+	if (navigation.kind === "absent") {
+		return replaceWithoutNavigationRuntime(route, "detail", () =>
+			openInboxConversationDetail(route),
+		);
 	}
+	if (navigation.kind === "failed") {
+		const outcome = { kind: "failed", reason: "timeout" } as const;
+		presentNavigationFailure(outcome, "detail", () =>
+			openInboxConversationDetail(route),
+		);
+		return outcome;
+	}
+	const { coordinator } = navigation;
 	const current = coordinator.currentState;
 	if (
 		current?.root !== "inbox" ||
 		current.surface !== "inboxChats" ||
 		current.safeReturnRoute !== "/chat"
-	)
-		await coordinator.activateRootRoute("/chat");
-	return coordinator.openDetail(route);
+	) {
+		const outcome = await coordinator.activateRootRoute("/chat");
+		if (outcome.kind !== "committed") {
+			presentNavigationFailure(outcome, "root", () =>
+				openInboxConversationDetail(route),
+			);
+			return outcome;
+		}
+	}
+	const outcome = await coordinator.openDetail(route);
+	presentNavigationFailure(outcome, "detail", () =>
+		openInboxConversationDetail(route),
+	);
+	return outcome;
 }
 
 export async function openReceivedAlbumDetail(
 	route: string,
-): Promise<AppNavigationStateV1 | null> {
+): Promise<NavigationTransitionOutcome | null> {
 	const classification = classifyRoute(route);
 	if (
 		classification.level !== "detail" ||
 		classification.detailKind !== "album"
 	)
 		throw new TypeError("received album action requires an album detail");
-	const coordinator = getCurrentNavigationCoordinator();
-	if (!coordinator) {
-		await safeReplacement(route);
-		return null;
+	const navigation = await getReadyNavigationRuntime();
+	if (navigation.kind === "absent") {
+		return replaceWithoutNavigationRuntime(route, "detail", () =>
+			openReceivedAlbumDetail(route),
+		);
 	}
+	if (navigation.kind === "failed") {
+		const outcome = { kind: "failed", reason: "timeout" } as const;
+		presentNavigationFailure(outcome, "detail", () =>
+			openReceivedAlbumDetail(route),
+		);
+		return outcome;
+	}
+	const { coordinator } = navigation;
 	const receivedAlbumParent =
 		coordinator.createReceivedAlbumConversationParentProof();
-	return coordinator.openDetail(
+	const outcome = await coordinator.openDetail(
 		route,
 		receivedAlbumParent ? { receivedAlbumParent } : {},
 	);
+	presentNavigationFailure(outcome, "detail", () =>
+		openReceivedAlbumDetail(route),
+	);
+	return outcome;
 }
 
-export function interceptAppNavigationClick(
+export async function interceptAppNavigationClick(
 	event: MouseEvent,
 	navigate: () => void | Promise<unknown>,
-): void {
+): Promise<void> {
 	if (
 		event.defaultPrevented ||
 		event.button !== 0 ||
@@ -254,7 +456,12 @@ export function interceptAppNavigationClick(
 	)
 		return;
 	event.preventDefault();
-	void navigate();
+	try {
+		await navigate();
+	} catch {
+		// The navigation owner presents bounded failures. An intercepted link must
+		// never turn an expected transition rejection into a global app error.
+	}
 }
 
 export function installCurrentNavigationCoordinator({
@@ -265,6 +472,20 @@ export function installCurrentNavigationCoordinator({
 	currentNavigationRuntime?.deactivate();
 	const releaseOwnership = runtimeOwnership.acquire("navigation-runtime");
 	let active = true;
+	let resolveReady!: (ready: boolean) => void;
+	let resolveInactive!: () => void;
+	let readySettled = false;
+	const ready = new Promise<boolean>((resolve) => {
+		resolveReady = resolve;
+	});
+	const inactive = new Promise<void>((resolve) => {
+		resolveInactive = resolve;
+	});
+	const settleReady = (value: boolean) => {
+		if (readySettled) return;
+		readySettled = true;
+		resolveReady(value);
+	};
 	const assertCurrent = () => {
 		if (
 			!active ||
@@ -276,6 +497,10 @@ export function installCurrentNavigationCoordinator({
 	const coordinator = new NavigationCoordinator({
 		accountGeneration,
 		createEntryId,
+		onTransitionFailure: ({ component, outcome, retry }) =>
+			presentNavigationFailure(outcome, component, retry),
+		transitionTimeoutMs: () =>
+			getDeveloperSettingsSnapshot().navigationTransitionTimeoutMs,
 		effects: {
 			goto: (route, options) => {
 				assertCurrent();
@@ -294,6 +519,8 @@ export function installCurrentNavigationCoordinator({
 	const deactivate = () => {
 		if (!active) return;
 		active = false;
+		settleReady(false);
+		resolveInactive();
 		releaseOwnership();
 	};
 	const release = () => {
@@ -301,12 +528,16 @@ export function installCurrentNavigationCoordinator({
 		if (currentNavigationRuntime === runtime) currentNavigationRuntime = null;
 	};
 	const runtime: InternalNavigationRuntime = {
+		accountGeneration,
 		coordinator,
 		deactivate,
+		inactive,
+		ready,
 		release,
 		async synchronize(route, pageState) {
 			assertCurrent();
 			await coordinator.initializeCurrentRoute(route, pageState);
+			settleReady(true);
 		},
 	};
 	currentNavigationRuntime = runtime;
