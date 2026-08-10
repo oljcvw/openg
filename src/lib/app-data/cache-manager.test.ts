@@ -1,3 +1,4 @@
+import { encode } from "@msgpack/msgpack";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -46,12 +47,39 @@ import {
 } from "$lib/api/account-caches";
 import {
 	clearCacheManagerMemory,
+	listCacheEntries,
+	readCacheEntry,
 	removeAccountCache,
 	removeGenericAccountCache,
 	setCacheLimitMb,
 	subscribeCacheUsage,
 	writeCacheEntry,
 } from "$lib/app-data/cache-manager";
+
+function installProfileManifest(lastAccessedAt: number): void {
+	existsAppDataFileMock.mockResolvedValue(true);
+	readAppDataFileMock.mockImplementation((path: string) =>
+		Promise.resolve(
+			encode(
+				path === "cache-manifest.data"
+					? {
+							version: 1,
+							entries: {
+								'[7001,"profile","42"]': {
+									accountId: 7001,
+									kind: "profile",
+									key: "42",
+									path: "profile-42.data",
+									sizeBytes: 16,
+									lastAccessedAt,
+								},
+							},
+						}
+					: { value: "profile-42" },
+			),
+		),
+	);
+}
 
 function deferred() {
 	let resolve!: () => void;
@@ -154,5 +182,59 @@ describe("cache usage subscription", () => {
 		await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(error));
 		expect(listener).not.toHaveBeenCalled();
 		unsubscribe();
+	});
+});
+
+describe("cache manifest write amplification", () => {
+	it("does not rewrite a clean manifest while listing cache entries", async () => {
+		installProfileManifest(1_000);
+
+		await expect(
+			listCacheEntries(7001, "profile", (value) => value),
+		).resolves.toEqual([{ value: "profile-42" }]);
+		expect(writeAppDataFileAtomicMock).not.toHaveBeenCalled();
+	});
+
+	it("does not rewrite the manifest for a recently touched cache hit", async () => {
+		installProfileManifest(2_000);
+		const now = vi.spyOn(Date, "now").mockReturnValue(2_000);
+
+		await expect(
+			readCacheEntry(7001, "profile", "42", (value) => value),
+		).resolves.toEqual({ value: "profile-42" });
+		expect(writeAppDataFileAtomicMock).not.toHaveBeenCalled();
+		now.mockRestore();
+	});
+
+	it("persists one coarse LRU touch instead of every repeated hit", async () => {
+		installProfileManifest(1_000);
+		const now = vi.spyOn(Date, "now").mockReturnValue(3_601_000);
+
+		await readCacheEntry(7001, "profile", "42", (value) => value);
+		await readCacheEntry(7001, "profile", "42", (value) => value);
+
+		expect(writeAppDataFileAtomicMock).toHaveBeenCalledOnce();
+		now.mockRestore();
+	});
+
+	it("keeps valid cache data when only the access-time touch fails", async () => {
+		installProfileManifest(1_000);
+		const now = vi.spyOn(Date, "now").mockReturnValue(3_601_000);
+		const touchFailure = new Error("manifest touch unavailable");
+		const error = vi.spyOn(console, "error").mockImplementation(() => {});
+		writeAppDataFileAtomicMock.mockRejectedValueOnce(touchFailure);
+
+		await expect(
+			readCacheEntry(7001, "profile", "42", (value) => value),
+		).resolves.toEqual({ value: "profile-42" });
+		expect(removeAppDataFileMock).not.toHaveBeenCalled();
+		expect(writeAppDataFileAtomicMock).toHaveBeenCalledOnce();
+		expect(error).toHaveBeenCalledWith(
+			"Cache manifest access-time update failed",
+			touchFailure,
+		);
+
+		error.mockRestore();
+		now.mockRestore();
 	});
 });

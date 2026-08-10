@@ -61,6 +61,12 @@ export const developerSettingsSchema = z
 			.min(50)
 			.max(2_000)
 			.default(250),
+		cacheManifestTouchIntervalMinutes: z
+			.number()
+			.int()
+			.min(1)
+			.max(1_440)
+			.default(60),
 		browseAgeScaleMax: z
 			.number()
 			.int()

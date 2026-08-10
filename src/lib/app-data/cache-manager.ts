@@ -5,6 +5,7 @@ import {
 	getAccountSessionSnapshot,
 	isAccountSessionCurrent,
 } from "$lib/api/account-caches";
+import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
 import {
 	existsAppDataFile,
 	readAppDataFile,
@@ -55,6 +56,7 @@ export type CacheUsage = { limitBytes: number; usedBytes: number };
 
 const MANIFEST_PATH = "cache-manifest.data";
 const DEFAULT_LIMIT_MB = 100;
+const MANIFEST_TOUCH_INTERVAL_FALLBACK_MS = 60 * 60 * 1_000;
 
 let manifest: CacheManifest | null = null;
 let queue: Promise<unknown> = Promise.resolve();
@@ -69,6 +71,14 @@ export function parseCacheManifest(value: unknown): CacheManifest {
 
 function entryId(accountId: number, kind: CacheKind, key: string): string {
 	return JSON.stringify([accountId, kind, key]);
+}
+
+function manifestTouchIntervalMs(): number {
+	const configured =
+		getDeveloperSettingsSnapshot().cacheManifestTouchIntervalMinutes;
+	return Number.isFinite(configured) && configured > 0
+		? configured * 60_000
+		: MANIFEST_TOUCH_INTERVAL_FALLBACK_MS;
 }
 
 function hashKey(key: string): string {
@@ -135,6 +145,7 @@ async function persistManifest(value: CacheManifest): Promise<void> {
 async function evictToLimit(value: CacheManifest): Promise<void> {
 	let used = usageOf(value).usedBytes;
 	const limit = limitMb * 1024 * 1024;
+	if (used <= limit) return;
 	for (const [id, entry] of Object.entries(value.entries).toSorted(
 		([, left], [, right]) => left.lastAccessedAt - right.lastAccessedAt,
 	)) {
@@ -162,12 +173,9 @@ export async function readCacheEntry<T>(
 		const id = entryId(accountId, kind, key);
 		const entry = value.entries[id];
 		if (!entry) return null;
+		let parsed: T;
 		try {
-			const parsed = parse(decode(await readAppDataFile(entry.path)));
-			if (!isAccountSessionCurrent(session)) return null;
-			entry.lastAccessedAt = Date.now();
-			await persistManifest(value);
-			return parsed;
+			parsed = parse(decode(await readAppDataFile(entry.path)));
 		} catch (error) {
 			console.error("Cache entry hydration failed", error);
 			await removeAppDataFile(entry.path);
@@ -175,6 +183,19 @@ export async function readCacheEntry<T>(
 			await persistManifest(value);
 			return null;
 		}
+		if (!isAccountSessionCurrent(session)) return null;
+		const accessedAt = Date.now();
+		if (accessedAt - entry.lastAccessedAt >= manifestTouchIntervalMs()) {
+			const previousAccessedAt = entry.lastAccessedAt;
+			entry.lastAccessedAt = accessedAt;
+			try {
+				await persistManifest(value);
+			} catch (error) {
+				entry.lastAccessedAt = previousAccessedAt;
+				console.error("Cache manifest access-time update failed", error);
+			}
+		}
+		return parsed;
 	});
 }
 
@@ -189,6 +210,7 @@ export async function listCacheEntries<T>(
 		if (!isAccountSessionCurrent(session)) return [];
 		const value = await loadManifest();
 		const results: T[] = [];
+		let manifestChanged = false;
 		for (const [id, entry] of Object.entries(value.entries)) {
 			if (entry.accountId !== accountId || entry.kind !== kind) continue;
 			try {
@@ -197,9 +219,10 @@ export async function listCacheEntries<T>(
 				console.error("Cache entry hydration failed", error);
 				await removeAppDataFile(entry.path);
 				delete value.entries[id];
+				manifestChanged = true;
 			}
 		}
-		await persistManifest(value);
+		if (manifestChanged) await persistManifest(value);
 		return isAccountSessionCurrent(session) ? results : [];
 	});
 }
@@ -229,6 +252,7 @@ export async function listCacheEntryPage<T>(
 			.toSorted((left, right) => left.entry.key.localeCompare(right.entry.key))
 			.slice(0, Math.min(60, Math.max(1, Math.trunc(pageSize))));
 		const items: Array<{ key: string; value: T }> = [];
+		let manifestChanged = false;
 		for (const { id, entry } of entries) {
 			try {
 				items.push({
@@ -239,9 +263,10 @@ export async function listCacheEntryPage<T>(
 				console.error("Cache entry hydration failed", error);
 				await removeAppDataFile(entry.path);
 				delete value.entries[id];
+				manifestChanged = true;
 			}
 		}
-		await persistManifest(value);
+		if (manifestChanged) await persistManifest(value);
 		if (!isAccountSessionCurrent(session))
 			return { items: [], nextCursor: null };
 		return {

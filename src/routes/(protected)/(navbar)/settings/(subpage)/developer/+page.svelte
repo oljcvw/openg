@@ -228,6 +228,14 @@
 	unit="milliseconds"
 />
 <DeveloperNumberSetting
+	setting="cacheManifestTouchIntervalMinutes"
+	title="Cache manifest touch interval"
+	description="Minimum interval before a cache hit persists another whole-manifest access-time update. Higher values reduce storage writes but make eviction recency coarser after restart."
+	min={1}
+	max={1440}
+	unit="minutes"
+/>
+<DeveloperNumberSetting
 	setting="messageDuplicateReconcileWindowMs"
 	title="Message duplicate reconciliation window"
 	description="Time window used only to reconcile older cached sends that lack an exact delivery reference."
