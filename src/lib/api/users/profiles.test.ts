@@ -3,7 +3,12 @@ import z from "zod";
 
 const { fetchRestMock } = vi.hoisted(() => ({
 	fetchRestMock:
-		vi.fn<(path: string, options?: { method?: string }) => unknown>(),
+		vi.fn<
+			(
+				path: string,
+				options?: { method?: string; body?: unknown },
+			) => unknown
+		>(),
 }));
 
 vi.mock("$lib/api/transport", async (importOriginal) => ({
@@ -23,6 +28,7 @@ import {
 	clearProfileCaches,
 	deleteProfilePhotos,
 	getProfile,
+	getProfiles,
 	patchOwnProfile,
 	ProfileUnavailableError,
 	type ProfileUpdate,
@@ -190,6 +196,96 @@ describe("cache TTL", () => {
 		clock += 1;
 		await getProfile(PROFILE_ID);
 		expect(countRequests("/v7/profiles/")).toBe(2);
+	});
+});
+
+describe("getProfiles batching", () => {
+	function respondWithRequestedProfiles() {
+		fetchRestMock.mockImplementation(
+			(_path: string, options?: { body?: unknown }) => {
+				const targetProfileIds = (
+					options?.body as { targetProfileIds: number[] }
+				).targetProfileIds;
+				return Promise.resolve(
+					ok({
+						profiles: targetProfileIds.map((profileId) => ({
+							profileId,
+							showDistance: false,
+							medias: [],
+						})),
+					}),
+				);
+			},
+		);
+	}
+
+	it.each([31, 60, 150])(
+		"caps every /v3/profiles request for %i IDs at the official client batch size",
+		async (count) => {
+			respondWithRequestedProfiles();
+			const profileIds = Array.from(
+				{ length: count },
+				(_, index) => index + 1,
+			);
+
+			const resolved = await getProfiles(profileIds);
+
+			expect(resolved.map((profile) => profile.profileId)).toEqual(
+				profileIds,
+			);
+			expect(
+				fetchRestMock.mock.calls.map(
+					([, options]) =>
+						(options?.body as { targetProfileIds: number[] })
+							.targetProfileIds.length,
+				),
+			).toEqual(
+				Array.from({ length: Math.ceil(count / 30) }, (_, index) =>
+					Math.min(30, count - index * 30),
+				),
+			);
+		},
+	);
+
+	it("deduplicates IDs and restores caller order across server responses", async () => {
+		fetchRestMock.mockImplementation(
+			(_path: string, options?: { body?: unknown }) => {
+				const targetProfileIds = (
+					options?.body as { targetProfileIds: number[] }
+				).targetProfileIds;
+				return Promise.resolve(
+					ok({
+						profiles: targetProfileIds
+							.toReversed()
+							.map((profileId) => ({
+								profileId,
+								showDistance: false,
+								medias: [],
+							})),
+					}),
+				);
+			},
+		);
+
+		const resolved = await getProfiles([3, 1, 3, 2]);
+
+		expect(resolved.map((profile) => profile.profileId)).toEqual([3, 1, 2]);
+		expect(fetchRestMock).toHaveBeenCalledOnce();
+		expect(fetchRestMock.mock.calls[0]?.[1]?.body).toEqual({
+			targetProfileIds: [3, 1, 2],
+		});
+	});
+
+	it("omits profiles absent from a partial batch response", async () => {
+		fetchRestMock.mockResolvedValueOnce(
+			ok({
+				profiles: [{ profileId: 2, showDistance: false, medias: [] }],
+			}),
+		);
+
+		const resolved = await getProfiles([1, 2, 3]);
+
+		expect(resolved.map((profile) => profile.profileId)).toEqual([2]);
 	});
 });
 

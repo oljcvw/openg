@@ -148,14 +148,39 @@ const getProfilesResponseSchema = z.object({
 	profiles: z.array(profileShortWithRightNowSchema),
 });
 
+const OFFICIAL_PROFILE_BATCH_SIZE = 30;
+
 export async function getProfiles(
 	profileIds: number[],
 ): Promise<z.infer<typeof getProfilesResponseSchema>["profiles"]> {
 	if (profileIds.length === 0) return [];
-	return await fetchRest("/v3/profiles", {
-		method: "POST",
-		body: { targetProfileIds: profileIds },
-	}).then((res) => res.jsonParsed(getProfilesResponseSchema).profiles);
+	const requestedProfileIds = [...new Set(profileIds)];
+	const profilesById = new Map<
+		number,
+		z.infer<typeof getProfilesResponseSchema>["profiles"][number]
+	>();
+
+	for (
+		let index = 0;
+		index < requestedProfileIds.length;
+		index += OFFICIAL_PROFILE_BATCH_SIZE
+	) {
+		const targetProfileIds = requestedProfileIds.slice(
+			index,
+			index + OFFICIAL_PROFILE_BATCH_SIZE,
+		);
+		const resolved = await fetchRest("/v3/profiles", {
+			method: "POST",
+			body: { targetProfileIds },
+		}).then((res) => res.jsonParsed(getProfilesResponseSchema).profiles);
+		for (const profile of resolved)
+			profilesById.set(profile.profileId, profile);
+	}
+
+	return requestedProfileIds.flatMap((profileId) => {
+		const profile = profilesById.get(profileId);
+		return profile ? [profile] : [];
+	});
 }
 
 export function clearProfileCaches() {
