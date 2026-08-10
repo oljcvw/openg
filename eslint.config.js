@@ -14,7 +14,7 @@ const progress = {
 	rules: {
 		file: {
 			create(context) {
-				if (process.env.ESLINT_PROGRESS)
+				if (process.env.ESLINT_PROGRESS !== "0")
 					process.stderr.write(
 						`  lint ${path.relative(context.cwd, context.filename)}\n`,
 					);
@@ -32,6 +32,7 @@ export default defineConfig(
 			".codex/",
 			"graphify-out/",
 			".idea/",
+			".local/",
 			".local-review/",
 			".svelte-kit/",
 			"src-tauri/",
