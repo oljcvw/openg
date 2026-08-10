@@ -1,8 +1,0 @@
-# NaCl project configuration.
-project:
-  id: "cef5aa39-6f19-4840-ae42-ce7ea6cda6ee"
-  name: "Open Grind"
-
-# Configure graph infrastructure only after project creation.
-graph:
-  mode: "local"
