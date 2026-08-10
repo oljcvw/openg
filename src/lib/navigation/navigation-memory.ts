@@ -6,6 +6,7 @@ import {
 import type { ApiResponseMessage } from "$lib/model/messaging/messages";
 
 export const NAVIGATION_MEMORY_DRAFT_CAPACITY = 20;
+export const NAVIGATION_MEMORY_CONVERSATION_CAPACITY = 20;
 
 export type NavigationMemorySurface =
 	| "browse"
@@ -151,7 +152,7 @@ export class NavigationMemory {
 		if (!isAccountSessionCurrent(session)) return { ...EMPTY_DETAIL_SESSION };
 
 		const draft = this.#touchDraft(conversationId);
-		const scrollAnchor = this.#conversationAnchors.get(conversationId);
+		const scrollAnchor = this.#touchConversationScrollAnchor(conversationId);
 		return {
 			scrollAnchor: scrollAnchor ? copyAnchor(scrollAnchor) : null,
 			scrollNeighborhood: copyNeighborhood(
@@ -199,6 +200,7 @@ export class NavigationMemory {
 		neighborhood?: ScrollNeighborhood | null,
 	): boolean {
 		if (!isAccountSessionCurrent(session)) return false;
+		this.#conversationAnchors.delete(conversationId);
 		this.#conversationAnchors.set(conversationId, copyAnchor(anchor));
 		if (neighborhood)
 			this.#conversationNeighborhoods.set(
@@ -206,6 +208,14 @@ export class NavigationMemory {
 				copyNeighborhood(neighborhood)!,
 			);
 		else this.#conversationNeighborhoods.delete(conversationId);
+		while (
+			this.#conversationAnchors.size > NAVIGATION_MEMORY_CONVERSATION_CAPACITY
+		) {
+			const leastRecent = this.#conversationAnchors.keys().next().value;
+			if (leastRecent === undefined) break;
+			this.#conversationAnchors.delete(leastRecent);
+			this.#conversationNeighborhoods.delete(leastRecent);
+		}
 		return true;
 	}
 
@@ -225,6 +235,16 @@ export class NavigationMemory {
 		this.#drafts.delete(conversationId);
 		this.#drafts.set(conversationId, draft);
 		return draft;
+	}
+
+	#touchConversationScrollAnchor(
+		conversationId: string,
+	): ConversationScrollAnchor | undefined {
+		const anchor = this.#conversationAnchors.get(conversationId);
+		if (!anchor) return undefined;
+		this.#conversationAnchors.delete(conversationId);
+		this.#conversationAnchors.set(conversationId, anchor);
+		return anchor;
 	}
 }
 

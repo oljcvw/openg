@@ -6,6 +6,7 @@ import {
 	invalidateAccountSession,
 } from "$lib/api/account-caches";
 import {
+	NAVIGATION_MEMORY_CONVERSATION_CAPACITY,
 	NAVIGATION_MEMORY_DRAFT_CAPACITY,
 	NavigationMemory,
 	navigationMemory,
@@ -142,6 +143,51 @@ describe("NavigationMemory", () => {
 		expect(memory.getDetailSession("conversation-3", session).draftText).toBe(
 			"",
 		);
+	});
+
+	it("bounds conversation scroll sessions and preserves recently read anchors", () => {
+		const session = activateAccountSession(607);
+		const memory = new NavigationMemory();
+		for (
+			let index = 1;
+			index <= NAVIGATION_MEMORY_CONVERSATION_CAPACITY;
+			index += 1
+		) {
+			memory.setConversationScrollAnchor(
+				`conversation-${index}`,
+				{
+					...anchor(`message-${index}`, index),
+					distanceFromEndPx: index * 10,
+				},
+				session,
+				{
+					anchorIndex: 0,
+					orderedItemKeys: [`message-${index}`],
+				},
+			);
+		}
+		expect(
+			memory.getDetailSession("conversation-1", session).scrollAnchor,
+		).not.toBeNull();
+
+		memory.setConversationScrollAnchor(
+			"conversation-21",
+			{
+				...anchor("message-21", 21),
+				distanceFromEndPx: 210,
+			},
+			session,
+		);
+
+		expect(
+			memory.getDetailSession("conversation-1", session).scrollAnchor,
+		).not.toBeNull();
+		expect(
+			memory.getDetailSession("conversation-2", session).scrollAnchor,
+		).toBeNull();
+		expect(
+			memory.getDetailSession("conversation-21", session).scrollAnchor,
+		).not.toBeNull();
 	});
 
 	it("clears a transferred draft but retains it when ownership was not transferred", () => {
