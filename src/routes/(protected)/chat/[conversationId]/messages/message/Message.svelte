@@ -5,7 +5,10 @@
 
 	import { isReceivedFromConversationPeer } from "$lib/chat/shared-media";
 	import { videoMessageSchema } from "$lib/model/messaging/messages";
-	import type { DisplayMessage } from "$lib/model/messaging/messages";
+	import type {
+		ApiResponseMessage,
+		DisplayMessage,
+	} from "$lib/model/messaging/messages";
 	import AlbumContentMessage from "./AlbumContentMessage.svelte";
 	import AlbumMessage from "./AlbumMessage.svelte";
 	import AudioMessage from "./AudioMessage.svelte";
@@ -50,6 +53,7 @@
 		otherName,
 		highlighted = false,
 		visibilityEnabled = true,
+		conversationMessages = [],
 	}: {
 		message: DisplayMessage;
 		isOut: boolean;
@@ -80,6 +84,7 @@
 		otherName?: string | null;
 		highlighted?: boolean;
 		visibilityEnabled?: boolean;
+		conversationMessages?: ApiResponseMessage[];
 	} = $props();
 
 	const firstInStack = $derived(indexInStack === 0);
@@ -272,7 +277,15 @@
 		{#if message.type === "Text"}
 			<TextMessage message={message.body} />
 		{:else if message.type === "Image"}
-			<ImageMessage message={message.body} messageId={message.messageId} />
+			<ImageMessage
+				message={message.body}
+				messageId={message.messageId}
+				{conversationMessages}
+				accountProfileId={ourProfileId}
+				conversationId={message.conversationId}
+				{peerProfileId}
+				{receivedFromPeer}
+			/>
 		{:else if message.type === "Audio"}
 			<AudioMessage
 				message={message.body}
@@ -292,6 +305,7 @@
 				{receivedFromPeer}
 				sentAt={message.timestamp}
 				messageType={message.type}
+				{conversationMessages}
 			/>
 		{:else if message.type === "NonExpiringVideo"}
 			{@const video = videoMessageSchema.shape.body.safeParse(message.body)}
@@ -306,6 +320,7 @@
 					{receivedFromPeer}
 					sentAt={message.timestamp}
 					messageType="NonExpiringVideo"
+					{conversationMessages}
 				/>
 			{:else}
 				<UnsupportedMessage type="Video" />
@@ -370,6 +385,7 @@
 		tabindex="0"
 		aria-label="Message"
 		data-message-id={message.messageId}
+		data-message-type={message.type}
 		class:ring-2={highlighted}
 		class:ring-primary={highlighted}
 		style:transform={`translateX(${swipeOffset}px)`}

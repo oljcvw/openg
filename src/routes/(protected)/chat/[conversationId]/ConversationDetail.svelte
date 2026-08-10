@@ -85,7 +85,10 @@
 		opener={mediaViewer.opener}
 		preload={mediaViewer.preload}
 		statusLabel={mediaViewer.statusLabel}
+		diagnostics={mediaViewer.diagnostics}
 		onItemActivate={mediaViewer.onItemActivate}
+		onOpening={() => mediaViewer.markOpening()}
+		onOpened={() => mediaViewer.markOpened()}
 		onClose={() => mediaViewer.close()}
 	/>
 {/if}

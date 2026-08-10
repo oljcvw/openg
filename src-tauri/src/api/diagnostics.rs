@@ -97,6 +97,99 @@ pub struct ClientDiagnostic {
 	level: ClientDiagnosticLevel,
 }
 
+macro_rules! viewer_diagnostic_enum {
+	($name:ident { $($variant:ident => $value:literal),+ $(,)? }) => {
+		#[derive(Clone, Copy, Debug, Deserialize)]
+		#[serde(rename_all = "snake_case")]
+		pub enum $name { $($variant),+ }
+
+		impl $name {
+			fn as_str(self) -> &'static str {
+				match self { $(Self::$variant => $value),+ }
+			}
+		}
+	};
+}
+
+viewer_diagnostic_enum!(ViewerEvent {
+	OpenRequested => "open_requested",
+	Resolving => "resolving",
+	Resolved => "resolved",
+	Opened => "opened",
+	ItemLoaded => "item_loaded",
+	ItemFailed => "item_failed",
+	Cancelled => "cancelled",
+	Closed => "closed",
+	Destroyed => "destroyed",
+});
+viewer_diagnostic_enum!(ViewerSurface {
+	Chat => "chat",
+	Album => "album",
+	Profile => "profile",
+	ReceivedAlbums => "received_albums",
+});
+viewer_diagnostic_enum!(ViewerMediaKind {
+	Image => "image",
+	Video => "video",
+	Mixed => "mixed",
+	None => "none",
+});
+viewer_diagnostic_enum!(ViewerCacheSource {
+	Memory => "memory",
+	Local => "local",
+	Network => "network",
+	None => "none",
+});
+viewer_diagnostic_enum!(ViewerAccess {
+	Persistent => "persistent",
+	RetainedLimited => "retained_limited",
+	Limited => "limited",
+	None => "none",
+});
+viewer_diagnostic_enum!(ViewerCountBucket {
+	One => "one",
+	Few => "few",
+	Many => "many",
+	None => "none",
+});
+viewer_diagnostic_enum!(ViewerPositionBucket {
+	First => "first",
+	Middle => "middle",
+	Last => "last",
+	None => "none",
+});
+viewer_diagnostic_enum!(ViewerLatencyBucket {
+	Instant => "instant",
+	Fast => "fast",
+	Slow => "slow",
+	VerySlow => "very_slow",
+	None => "none",
+});
+viewer_diagnostic_enum!(ViewerFailure {
+	None => "none",
+	Cancelled => "cancelled",
+	Decode => "decode",
+	Network => "network",
+	CacheMiss => "cache_miss",
+	Unavailable => "unavailable",
+	StaleGeneration => "stale_generation",
+	Unknown => "unknown",
+});
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ViewerDiagnostic {
+	event: ViewerEvent,
+	surface: ViewerSurface,
+	media_kind: ViewerMediaKind,
+	cache_source: ViewerCacheSource,
+	access: ViewerAccess,
+	count_bucket: ViewerCountBucket,
+	position_bucket: ViewerPositionBucket,
+	latency_bucket: ViewerLatencyBucket,
+	failure: ViewerFailure,
+}
+
 #[derive(Eq, Hash, PartialEq)]
 struct MediaOriginKey {
 	origin: String,
@@ -215,6 +308,25 @@ pub fn report_client_diagnostic(diagnostic: ClientDiagnostic) {
 	}
 }
 
+/// Logs viewer lifecycle using a closed taxonomy. The command accepts no URLs,
+/// identifiers, free-form labels, message content, or coordinates.
+#[tauri::command]
+pub fn report_viewer_diagnostic(diagnostic: ViewerDiagnostic) {
+	tracing::info!(
+		target: "open_grind_lib::api::diagnostics",
+		event = diagnostic.event.as_str(),
+		surface = diagnostic.surface.as_str(),
+		media_kind = diagnostic.media_kind.as_str(),
+		cache_source = diagnostic.cache_source.as_str(),
+		access = diagnostic.access.as_str(),
+		count_bucket = diagnostic.count_bucket.as_str(),
+		position_bucket = diagnostic.position_bucket.as_str(),
+		latency_bucket = diagnostic.latency_bucket.as_str(),
+		failure = diagnostic.failure.as_str(),
+		"[media-viewer] lifecycle"
+	);
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -265,6 +377,22 @@ mod tests {
 		] {
 			assert_eq!(sanitized_label(value), None, "{value}");
 		}
+	}
+
+	#[test]
+	fn viewer_diagnostics_reject_free_form_values() {
+		let value = serde_json::json!({
+			"event": "item_loaded",
+			"surface": "chat/123",
+			"mediaKind": "image",
+			"cacheSource": "local",
+			"access": "persistent",
+			"countBucket": "one",
+			"positionBucket": "first",
+			"latencyBucket": "fast",
+			"failure": "none"
+		});
+		assert!(serde_json::from_value::<ViewerDiagnostic>(value).is_err());
 	}
 
 	#[test]

@@ -162,6 +162,29 @@ export async function uploadAlbumMedia({
 	if (demoEnabled) {
 		return demoUploadAlbumMedia(albumId, bytes, contentType);
 	}
+	return await uploadAlbumMediaBytes({ albumId, contentType, bytes });
+}
+
+/** Uploads already-authorized bytes, including encrypted saved-set restores. */
+export async function uploadAlbumMediaBytes({
+	albumId,
+	contentType,
+	bytes,
+}: {
+	albumId: number;
+	contentType: string;
+	bytes: Uint8Array;
+}): Promise<AlbumMediaUploadResponse> {
+	if (
+		contentType !== "image/jpeg" &&
+		contentType !== "image/png" &&
+		contentType !== "video/mp4" &&
+		contentType !== "video/webm"
+	)
+		throw new Error("Unsupported or unknown album media type");
+	if (bytes.length === 0) throw new Error("Selected media is empty");
+	if (demoEnabled)
+		return demoUploadAlbumMedia(albumId, new Uint8Array(bytes), contentType);
 	const response = await invoke("upload_album_media", {
 		albumId,
 		contentType,
@@ -203,6 +226,18 @@ export async function unshareAlbum({
 const sharedAlbumsResponseSchema = z.object({
 	albums: z.array(sharedAlbumSchema),
 });
+
+/**
+ * All albums shared with the current account. The endpoint order is the only
+ * reliable newest-first authority; callers must not reconstruct chronology
+ * from ids, URLs, or request completion order.
+ */
+export async function getReceivedAlbums() {
+	const { albums } = await fetchRest("/v2/albums/shares").then((res) =>
+		res.jsonParsed(sharedAlbumsResponseSchema),
+	);
+	return albums;
+}
 
 /** Albums the given profile has shared with us. */
 export async function getAlbumsSharedByProfile(profileId: number) {

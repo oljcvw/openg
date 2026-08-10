@@ -14,7 +14,14 @@
 		readReportingEnabled?: boolean;
 	} = $props();
 
-	setConversationState(() => conversation as never);
+	const conversationStateValue = $derived({
+		...(conversation as Record<string, unknown>),
+		voiceNotes: (conversation as { voiceNotes?: unknown }).voiceNotes ?? {
+			active: false,
+			selectedKey: null,
+		},
+	});
+	setConversationState(() => conversationStateValue as never);
 
 	let seenTimestamp = $state(0);
 	let container: HTMLDivElement | null = $state(null);

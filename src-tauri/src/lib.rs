@@ -151,6 +151,15 @@ pub fn run() {
 			api::album_cache::album_cache_stats,
 			api::album_cache::album_cache_trim,
 			api::album_cache::album_cache_clear,
+			api::album_presets::album_preset_import,
+			api::album_presets::album_preset_import_remote,
+			api::album_presets::album_preset_list,
+			api::album_presets::album_preset_read_item,
+			api::album_presets::album_preset_delete,
+			api::album_presets::album_preset_stats,
+			api::album_presets::album_preset_clear,
+			api::album_presets::album_activation_journal_save,
+			api::album_presets::album_activation_journal_read,
 			api::direct_media_cache::direct_media_cache_upsert,
 			api::direct_media_cache::direct_media_cache_upsert_batch,
 			api::direct_media_cache::direct_media_cache_set_scope,
@@ -205,6 +214,7 @@ pub fn run() {
             api::ws::ws_send,
             api::diagnostics::report_media_origin,
 			api::diagnostics::report_client_diagnostic,
+			api::diagnostics::report_viewer_diagnostic,
         ])
         .setup(|app| {
             let user_agent = format!(

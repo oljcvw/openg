@@ -14,8 +14,10 @@
 
 	let {
 		id,
+		grouped = false,
 	}: {
 		id: number;
+		grouped?: boolean;
 	} = $props();
 
 	const myProfile = $derived(getMyProfile());
@@ -31,7 +33,11 @@
 					openAppDetail(`/profile/${id}`),
 				)}
 			{...props}
-			class={["rounded-full", props.class, "flex-nowrap!"]}
+			class={[
+				grouped ? "rounded-none" : "rounded-full",
+				props.class,
+				"flex-nowrap!",
+			]}
 		>
 			<Item.Media class="translate-y-none size-14 rounded-full bg-neutral-700">
 				{#await myProfilePhotos then photos}

@@ -93,4 +93,18 @@ describe("ProfileItem app navigation", () => {
 		expect(links[1].getAttribute("aria-current")).toBe("page");
 		expect(links[2].getAttribute("aria-current")).toBe("page");
 	});
+
+	it("exposes the requested Inbox density without clipping the row", () => {
+		const view = render(ProfileItem, {
+			avatar: { mediaHash: null },
+			density: "compact",
+			link: "/chat/7",
+			title: { value: "Someone" },
+		});
+
+		const row = view.container.querySelector<HTMLElement>("[data-slot='item']");
+		expect(row?.dataset.density).toBe("compact");
+		expect(row?.style.minBlockSize).toBe("5rem");
+		expect(row?.style.blockSize).toBe("");
+	});
 });

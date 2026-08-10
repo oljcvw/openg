@@ -32,6 +32,16 @@ export type GridColumns = z.infer<typeof gridColumnsSchema>;
 export const contrastModeSchema = z.enum(["standard", "high"]);
 export type ContrastMode = z.infer<typeof contrastModeSchema>;
 
+export const inboxLayoutModeSchema = z.enum(["adaptive", "stacked"]);
+export type InboxLayoutMode = z.infer<typeof inboxLayoutModeSchema>;
+
+export const inboxRowDensitySchema = z.enum([
+	"compact",
+	"comfortable",
+	"roomy",
+]);
+export type InboxRowDensity = z.infer<typeof inboxRowDensitySchema>;
+
 export const videoCallQualityPresetSchema = z.enum(["auto", "high", "low"]);
 export type VideoCallQualityPreset = z.infer<
 	typeof videoCallQualityPresetSchema
@@ -176,6 +186,8 @@ const preferencesSchema = z
 		geohash: geohashSchema.nullable().default(null),
 		gridSearchFilters: gridSearchFiltersSchema.optional(),
 		gridColumns: gridColumnsSchema.default("auto"),
+		inboxLayoutMode: inboxLayoutModeSchema.default("adaptive"),
+		inboxRowDensity: inboxRowDensitySchema.default("comfortable"),
 		keepBottomNavigationBehindKeyboard: z.boolean().default(true),
 		keepUnavailableCachedAlbums: z.boolean().default(true),
 		retainSharedChatMedia: z.boolean().default(true),
@@ -307,6 +319,14 @@ export function getLocationActivitySnapshot(): LocationActivity {
 
 export function getGridColumnsSnapshot(): GridColumns {
 	return preferencesSnapshot.gridColumns;
+}
+
+export function getInboxLayoutModeSnapshot(): InboxLayoutMode {
+	return preferencesSnapshot.inboxLayoutMode;
+}
+
+export function getInboxRowDensitySnapshot(): InboxRowDensity {
+	return preferencesSnapshot.inboxRowDensity;
 }
 
 export function getKeepUnavailableCachedAlbumsSnapshot(): boolean {

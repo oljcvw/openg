@@ -13,6 +13,7 @@
 	import AccountSettingsLink from "./AccountSettingsLink.svelte";
 	import AppSettingsLink from "./AppSettingsLink.svelte";
 	import DeveloperSettingsLink from "./DeveloperSettingsLink.svelte";
+	import ManageAlbumsLink from "./ManageAlbumsLink.svelte";
 	import ProfileLink from "./ProfileLink.svelte";
 	import SignOutButton from "./SignOutButton.svelte";
 	import Socials from "./Socials.svelte";
@@ -67,8 +68,12 @@
 	>
 		<div class="flex w-full p-4 pb-nav-clear">
 			<div class="m-auto flex w-full max-w-120 flex-col gap-3 pb-16">
-				<ProfileLink id={data.ourProfileId} />
-				<span role="separator"></span>
+				<div class="overflow-hidden rounded-2xl border bg-card shadow-sm">
+					<ProfileLink id={data.ourProfileId} grouped />
+					<div class="mx-4 border-t" role="separator"></div>
+					<ManageAlbumsLink />
+				</div>
+				<span class="h-1" role="separator"></span>
 				<AccountSettingsLink />
 				<AppSettingsLink />
 				<DeveloperSettingsLink />

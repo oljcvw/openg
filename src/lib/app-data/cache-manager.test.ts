@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
 	clearAlbumMediaCacheMock,
+	clearAlbumPresetsMock,
 	clearDirectMediaCacheMock,
 	clearShortVideoCacheMock,
 	existsAppDataFileMock,
@@ -11,12 +12,17 @@ const {
 	writeAppDataFileAtomicMock,
 } = vi.hoisted(() => ({
 	clearAlbumMediaCacheMock: vi.fn(),
+	clearAlbumPresetsMock: vi.fn(),
 	clearDirectMediaCacheMock: vi.fn(),
 	clearShortVideoCacheMock: vi.fn(),
 	existsAppDataFileMock: vi.fn(),
 	readAppDataFileMock: vi.fn(),
 	removeAppDataFileMock: vi.fn(),
 	writeAppDataFileAtomicMock: vi.fn(),
+}));
+
+vi.mock("$lib/albums/album-preset-store", () => ({
+	clearAlbumPresets: clearAlbumPresetsMock,
 }));
 
 vi.mock("./album-media-cache", () => ({
@@ -96,6 +102,7 @@ beforeEach(() => {
 	removeAppDataFileMock.mockReset().mockResolvedValue(undefined);
 	writeAppDataFileAtomicMock.mockReset().mockResolvedValue(undefined);
 	clearAlbumMediaCacheMock.mockReset().mockResolvedValue(undefined);
+	clearAlbumPresetsMock.mockReset().mockResolvedValue(undefined);
 	clearDirectMediaCacheMock.mockReset().mockResolvedValue(undefined);
 	clearShortVideoCacheMock.mockReset().mockResolvedValue(undefined);
 	activateAccountSession(7001);
@@ -104,6 +111,7 @@ beforeEach(() => {
 describe("account-scoped native cache clearing", () => {
 	it("targets only the requested account in every native media cache", async () => {
 		await removeAccountCache(7001);
+		expect(clearAlbumPresetsMock).toHaveBeenCalledWith(7001);
 		expect(clearAlbumMediaCacheMock).toHaveBeenCalledWith(7001);
 		expect(clearDirectMediaCacheMock).toHaveBeenCalledWith(7001);
 		expect(clearShortVideoCacheMock).toHaveBeenCalledWith(7001);
@@ -121,6 +129,7 @@ describe("account-scoped native cache clearing", () => {
 	it("can clear only generic data after native account teardown", async () => {
 		await removeGenericAccountCache(7001);
 		expect(clearAlbumMediaCacheMock).not.toHaveBeenCalled();
+		expect(clearAlbumPresetsMock).not.toHaveBeenCalled();
 		expect(clearDirectMediaCacheMock).not.toHaveBeenCalled();
 		expect(clearShortVideoCacheMock).not.toHaveBeenCalled();
 	});

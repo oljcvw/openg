@@ -1,12 +1,31 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ConversationMediaViewerState } from "$lib/chat/conversation-media-viewer.svelte";
+import { backLayerManager } from "$lib/navigation/app-navigation";
+
+const reportViewerDiagnosticMock = vi.hoisted(() => vi.fn());
+vi.mock("$lib/platform/client-diagnostics", () => ({
+	reportViewerDiagnostic: reportViewerDiagnosticMock,
+}));
 
 describe("ConversationMediaViewerState", () => {
+	let viewer: ConversationMediaViewerState | null = null;
+
+	beforeEach(() => {
+		expect(backLayerManager.size).toBe(0);
+		reportViewerDiagnosticMock.mockReset();
+	});
+
+	afterEach(() => {
+		viewer?.close();
+		viewer = null;
+		expect(backLayerManager.size).toBe(0);
+	});
+
 	it("keeps one owner while replacing sessions and pins only the open message", () => {
 		const pin = vi.fn();
 		const unpin = vi.fn();
-		const viewer = new ConversationMediaViewerState({ pin, unpin });
+		viewer = new ConversationMediaViewerState({ pin, unpin });
 
 		viewer.open({
 			items: [{ id: "one", kind: "image", url: "https://example.test/1" }],
@@ -35,7 +54,7 @@ describe("ConversationMediaViewerState", () => {
 	it("owns and pins an explicit authorization session before resolving media", async () => {
 		const pin = vi.fn();
 		const unpin = vi.fn();
-		const viewer = new ConversationMediaViewerState({ pin, unpin });
+		viewer = new ConversationMediaViewerState({ pin, unpin });
 		let resolveSession!: (session: {
 			items: Array<{ id: string; kind: "image"; url: string }>;
 			startId: string;
@@ -72,8 +91,44 @@ describe("ConversationMediaViewerState", () => {
 		expect(resolver.mock.calls[0]?.[0].aborted).toBe(true);
 	});
 
+	it("owns Back while resolving and cancels without releasing the route", async () => {
+		const pin = vi.fn();
+		const unpin = vi.fn();
+		viewer = new ConversationMediaViewerState({ pin, unpin });
+		const resolverSignals: AbortSignal[] = [];
+		const opening = viewer.openExplicit({
+			messageId: "album-message",
+			opener: null,
+			resolve: (signal) => {
+				resolverSignals.push(signal);
+				return new Promise((_, reject) => {
+					signal.addEventListener(
+						"abort",
+						() => reject(new DOMException("Aborted", "AbortError")),
+						{ once: true },
+					);
+				});
+			},
+		});
+
+		expect(viewer.phase).toBe("resolving");
+		expect(viewer.ownerCount).toBe(1);
+		expect(backLayerManager.size).toBe(1);
+		await expect(backLayerManager.handleBack()).resolves.toBe("handled");
+		await expect(opening).resolves.toBe(false);
+
+		expect(resolverSignals[0]?.aborted).toBe(true);
+		expect(viewer.phase).toBe("closed");
+		expect(viewer.ownerCount).toBe(0);
+		expect(unpin).toHaveBeenCalledOnce();
+		expect(backLayerManager.size).toBe(0);
+		expect(
+			reportViewerDiagnosticMock.mock.calls.map(([value]) => value.event),
+		).toEqual(expect.arrayContaining(["resolving", "cancelled"]));
+	});
+
 	it("retains an authorization resolver across virtual row replacement", () => {
-		const viewer = new ConversationMediaViewerState();
+		viewer = new ConversationMediaViewerState();
 		const create = vi.fn(() => ({ token: "resolver" }));
 
 		const first = viewer.retainResolver("media-identity", create);
@@ -81,5 +136,31 @@ describe("ConversationMediaViewerState", () => {
 
 		expect(second).toBe(first);
 		expect(create).toHaveBeenCalledOnce();
+	});
+
+	it("appends deck pages while preserving the selected stable media key", () => {
+		viewer = new ConversationMediaViewerState();
+		viewer.open({
+			items: [
+				{ id: "middle", kind: "image", url: "media://middle" },
+				{ id: "newer", kind: "image", url: "media://newer" },
+			],
+			startId: "middle",
+			messageId: "middle",
+			opener: null,
+		});
+
+		viewer.updateItems([
+			{ id: "older", kind: "image", url: "media://older" },
+			{ id: "middle", kind: "image", url: "media://middle" },
+			{ id: "newer", kind: "image", url: "media://newer" },
+		]);
+
+		expect(viewer.items.map((item) => item.id)).toEqual([
+			"older",
+			"middle",
+			"newer",
+		]);
+		expect(viewer.startIndex).toBe(1);
 	});
 });

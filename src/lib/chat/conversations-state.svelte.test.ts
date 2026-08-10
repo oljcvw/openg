@@ -385,6 +385,36 @@ describe("ConversationsState epoch guards (P1.7)", () => {
 		expect(state.nextPage).toBeNull();
 	});
 
+	it("keeps loaded rows and exposes a retryable load-more failure", async () => {
+		getConversationsMock.mockResolvedValueOnce({
+			entries: [conversation("a:1", 1_000)],
+			nextPage: 2,
+		});
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+		getConversationsMock.mockRejectedValueOnce(new Error("page failed"));
+
+		await state.loadMore();
+
+		expect(state.entries.map((entry) => entry.data.conversationId)).toEqual([
+			"a:1",
+		]);
+		expect(state.loadMoreError).toBeInstanceOf(Error);
+		expect(state.nextPage).toBe(2);
+
+		getConversationsMock.mockResolvedValueOnce({
+			entries: [conversation("b:2", 500)],
+			nextPage: null,
+		});
+		await state.retryLoadMore();
+
+		expect(state.loadMoreError).toBeNull();
+		expect(state.entries.map((entry) => entry.data.conversationId)).toEqual([
+			"a:1",
+			"b:2",
+		]);
+	});
+
 	it("keeps the initial load's result when a reconcile races it and then fails", async () => {
 		const consoleError = vi
 			.spyOn(console, "error")

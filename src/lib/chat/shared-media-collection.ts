@@ -1,8 +1,10 @@
 import {
 	classifyReceivedSharedMedia,
+	galleryPlayableUrl,
 	type SharedMediaContext,
 	type SharedMediaEntry,
 } from "$lib/chat/shared-media";
+import type { ConversationMediaViewerItem } from "$lib/chat/conversation-media-viewer.svelte";
 import type { ApiResponseMessage } from "$lib/model/messaging/messages";
 
 const HISTORY_PAGE_SIZE = 60;
@@ -15,6 +17,10 @@ export type SharedMediaHistoryPage = {
 export type ConversationMediaPage = {
 	messages: ApiResponseMessage[];
 	nextPageKey: string | null;
+};
+
+export type ConversationMediaDeckItem = ConversationMediaViewerItem & {
+	entry: SharedMediaEntry;
 };
 
 function newestFirst(left: SharedMediaEntry, right: SharedMediaEntry): number {
@@ -95,6 +101,56 @@ export function mergeSharedMediaSources({
 			byMessage.set(durable.messageId, durable);
 	}
 	return [...byMessage.values()].toSorted(newestFirst);
+}
+
+/**
+ * Produces the ordinary received-media viewer order. Albums, audio, outgoing
+ * media and unretained consumptive items never survive classification.
+ */
+export function conversationMediaDeckItems({
+	context,
+	active,
+	cached,
+	retained,
+	resolvedUrls,
+}: {
+	context: SharedMediaContext;
+	active: readonly ApiResponseMessage[];
+	cached: readonly ApiResponseMessage[];
+	retained: readonly SharedMediaEntry[];
+	resolvedUrls: Readonly<Record<string, string | null | undefined>>;
+}): ConversationMediaDeckItem[] {
+	const messageById = new Map(
+		[...cached, ...active].map(
+			(message) => [message.messageId, message] as const,
+		),
+	);
+	return mergeSharedMediaSources({ context, active, cached, retained })
+		.toReversed()
+		.flatMap((entry) => {
+			const url = galleryPlayableUrl(
+				entry,
+				resolvedUrls[entry.messageId] ?? null,
+			);
+			if (url === null) return [];
+			const message = messageById.get(entry.messageId);
+			const dimensions =
+				message?.type === "Image" || message?.type === "ExpiringImage"
+					? {
+							width: message.body.width ?? undefined,
+							height: message.body.height ?? undefined,
+						}
+					: {};
+			return [
+				{
+					id: entry.messageId,
+					kind: entry.kind,
+					url,
+					...dimensions,
+					entry,
+				},
+			];
+		});
 }
 
 export class SharedMediaCollection {

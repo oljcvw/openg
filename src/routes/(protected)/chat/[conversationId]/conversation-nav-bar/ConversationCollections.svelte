@@ -27,6 +27,7 @@
 		DotsThreeVerticalIcon,
 		FolderOpenIcon,
 		ImagesIcon,
+		MicrophoneIcon,
 		VideoCameraIcon,
 	} from "phosphor-svelte";
 	import { onDestroy, onMount, tick, untrack } from "svelte";
@@ -225,6 +226,7 @@
 	const viewerItems = $derived(
 		sharedMedia
 			.filter((entry) => entry.messageId in resolvedMediaUrls)
+			.toReversed()
 			.map((entry) => ({
 				id: entry.messageId,
 				kind: entry.kind,
@@ -238,6 +240,17 @@
 						: "Media unavailable",
 			})),
 	);
+
+	$effect(() => {
+		const items = viewerItems;
+		const activeId = mediaViewer.activeMessageId;
+		if (
+			activeId !== null &&
+			items.some((item) => item.id === activeId) &&
+			mediaViewer.ready
+		)
+			untrack(() => mediaViewer.updateItems(items));
+	});
 	const mediaError = $derived(conversationMediaError ?? retainedMediaError);
 
 	function collectionScope(
@@ -830,7 +843,11 @@
 	</Button>
 {/if}
 
-<DropdownMenu.Root>
+<DropdownMenu.Root
+	onOpenChange={(open) => {
+		if (open) void conversationState.scanVoiceNotes();
+	}}
+>
 	<DropdownMenu.Trigger>
 		{#snippet child({ props })}
 			<Button
@@ -857,6 +874,17 @@
 		<DropdownMenu.Item onSelect={() => (mediaOpen = true)}>
 			<ImagesIcon class="size-5" />
 			Shared media
+		</DropdownMenu.Item>
+		<DropdownMenu.Item
+			disabled={conversationState.voiceNotes.keys.length === 0}
+			onSelect={() => conversationState.voiceNotes.enter()}
+		>
+			<MicrophoneIcon class="size-5" />
+			{conversationState.voiceNotes.status === "checking"
+				? "Voice notes · Checking…"
+				: conversationState.voiceNotes.status === "unavailable"
+					? "Voice notes · Unavailable"
+					: "Voice notes"}
 		</DropdownMenu.Item>
 	</DropdownMenu.Content>
 </DropdownMenu.Root>

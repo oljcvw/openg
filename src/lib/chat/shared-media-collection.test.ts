@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+	conversationMediaDeckItems,
 	mergeSharedMediaSources,
 	SharedMediaCollection,
 } from "$lib/chat/shared-media-collection";
@@ -166,5 +167,40 @@ describe("received shared-media collection", () => {
 		expect(collection.historyPage(16).entries).toHaveLength(40);
 		expect(collection.historyPage(17).entries).toHaveLength(0);
 		expect(collection.historyPage(0).entries[0].messageId).toBe("message-0999");
+	});
+
+	it("builds the viewer deck oldest-to-newest and excludes uncached limited media", () => {
+		const limited = {
+			...message("message-2", 200),
+			type: "ExpiringImage" as const,
+			body: {
+				mediaId: 2,
+				url: "https://images.example/limited.jpg",
+				width: 20,
+				height: 10,
+				viewsRemaining: 1,
+			},
+		};
+		const items = conversationMediaDeckItems({
+			context,
+			active: [message("message-3", 300), limited, message("message-1", 100)],
+			cached: [],
+			retained: [],
+			resolvedUrls: {},
+		});
+
+		expect(items.map((item) => item.id)).toEqual(["message-1", "message-3"]);
+		expect(items[0]).toMatchObject({ width: 10, height: 10 });
+
+		const retainedLimited = conversationMediaDeckItems({
+			context,
+			active: [limited],
+			cached: [],
+			retained: [],
+			resolvedUrls: { "message-2": "direct-media://retained" },
+		});
+		expect(retainedLimited).toMatchObject([
+			{ id: "message-2", url: "direct-media://retained" },
+		]);
 	});
 });

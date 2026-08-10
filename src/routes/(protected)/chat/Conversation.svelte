@@ -18,6 +18,7 @@
 	import * as Item from "$lib/components/ui/item";
 	import { previewLabel } from "$lib/model/messaging/messages";
 	import { openInboxConversationDetail } from "$lib/navigation/app-navigation";
+	import type { InboxRowDensity } from "$lib/app-data/preferences.svelte";
 	import type { Conversation } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
 	import { conversationRowPresentation } from "./conversation-row-presentation";
@@ -27,11 +28,13 @@
 		selection = null,
 		onEnterSelection,
 		onRequestDelete,
+		rowDensity = "comfortable",
 	}: {
 		conversation: Conversation;
 		selection?: SelectionSet<string> | null;
 		onEnterSelection?: () => void;
 		onRequestDelete?: () => void;
+		rowDensity?: InboxRowDensity;
 	} = $props();
 
 	const conversations = getConversations();
@@ -79,13 +82,15 @@
 {#snippet row()}
 	<ProfileItem
 		{active}
+		density={rowDensity}
 		ariaCurrent={presentation.ariaCurrent}
 		class={[
 			presentation.tone === "active" &&
-				"border-2 border-l-8 border-primary bg-primary/15 in-data-[contrast=high]:border-4 in-data-[contrast=high]:border-l-8 in-data-[contrast=high]:bg-primary/20",
+				"border border-l-3 border-border border-l-primary bg-muted/65 shadow-sm in-data-[contrast=high]:border-2 in-data-[contrast=high]:border-l-4 in-data-[contrast=high]:border-l-primary",
 			presentation.tone === "unread" &&
-				"border-l-4 border-primary/45 bg-primary/[0.06] in-data-[contrast=high]:border-2 in-data-[contrast=high]:border-l-4 in-data-[contrast=high]:border-primary in-data-[contrast=high]:bg-primary/10",
+				"in-data-[contrast=high]:border-2 in-data-[contrast=high]:border-foreground/60",
 		]}
+		titleClass={presentation.tone === "unread" ? "font-bold" : undefined}
 		avatar={{
 			mediaHash: participant.primaryMediaHash ?? null,
 			link: `/profile/${participant.profileId}`,

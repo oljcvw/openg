@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { PlayIcon, VideoIcon } from "phosphor-svelte";
+	import { ArrowsOutIcon, PlayIcon, VideoIcon } from "phosphor-svelte";
 	import { tick } from "svelte";
 
 	import { getSingleMessage } from "$lib/api/messaging/messages";
 	import { getCachedShortVideo } from "$lib/app-data/short-video-cache";
+	import { getConversationMediaViewer } from "$lib/chat/conversation-media-viewer.svelte";
+	import { conversationMediaDeckItems } from "$lib/chat/shared-media-collection";
 	import {
+		type ApiResponseMessage,
 		type VideoMessage,
 		videoMessageSchema,
 	} from "$lib/model/messaging/messages";
@@ -31,6 +34,7 @@
 		receivedFromPeer,
 		sentAt,
 		messageType,
+		conversationMessages = [],
 	}: {
 		message: VideoMessage["body"];
 		conversationId: string;
@@ -42,9 +46,11 @@
 		receivedFromPeer: boolean;
 		sentAt: number;
 		messageType: SharedMediaMessageType;
+		conversationMessages?: ApiResponseMessage[];
 	} = $props();
 
 	const media = new MessageMediaState();
+	const viewer = getConversationMediaViewer()();
 	let video: HTMLVideoElement | null = $state(null);
 	let activated = $state(false);
 	let source: string | null = $state(null);
@@ -76,6 +82,36 @@
 	const directSource = $derived.by(() =>
 		directSourceState.forEntry(directEntry),
 	);
+
+	function openFullscreen(opener: HTMLButtonElement): void {
+		if (!receivedFromPeer || peerProfileId === null || consumptive) return;
+		const items = conversationMediaDeckItems({
+			context: {
+				accountProfileId,
+				conversationId,
+				peerProfileId,
+			},
+			active: conversationMessages,
+			cached: [],
+			retained: [],
+			resolvedUrls: {},
+		}).map(({ id, kind, url, width, height, poster, unavailableLabel }) => ({
+			id,
+			kind,
+			url,
+			width,
+			height,
+			poster,
+			unavailableLabel,
+		}));
+		if (!items.some((item) => item.id === messageId)) return;
+		viewer.open({
+			items,
+			startId: messageId,
+			messageId,
+			opener,
+		});
+	}
 	$effect(() => {
 		if (source === null && !consumptive && message.url === null) {
 			unavailable = true;
@@ -207,6 +243,16 @@
 		{ "ms-3": !media.clone },
 	]}
 >
+	{#if receivedFromPeer && !consumptive && message.url !== null}
+		<button
+			type="button"
+			class="absolute top-2 right-2 z-10 flex size-12 items-center justify-center rounded-full bg-black/65 text-white outline-none focus-visible:ring-3 focus-visible:ring-white/80"
+			aria-label="Open video full screen"
+			onclick={(event) => openFullscreen(event.currentTarget)}
+		>
+			<ArrowsOutIcon class="size-5" />
+		</button>
+	{/if}
 	{#if unavailable}
 		<div
 			class="flex size-full flex-col items-center justify-center gap-2 p-4 text-center text-muted-foreground"

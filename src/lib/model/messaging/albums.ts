@@ -108,6 +108,8 @@ export const sharedAlbumSchema = z.object({
 });
 
 export type SharedAlbum = z.infer<typeof sharedAlbumSchema>;
+/** A service-ordered row returned by the global received-albums collection. */
+export type ReceivedAlbumBrief = SharedAlbum;
 
 export const albumSharesSchema = z.object({
 	// Tolerated as absent: the spec marks nothing on this body as required.

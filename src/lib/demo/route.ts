@@ -12,6 +12,7 @@ import {
 	demoDeleteConversation,
 	demoDrawerMedia,
 	demoMyAlbums,
+	demoReceivedAlbums,
 	demoRenameAlbum,
 	demoReorderAlbumContent,
 	demoSentMessage,
@@ -220,6 +221,9 @@ export function demoRoute(
 		segments.length === 4
 	) {
 		return ok(demoAlbumsSharedByProfile(Number(segments[3])));
+	}
+	if (method === "GET" && rawPath === "/v2/albums/shares") {
+		return ok(demoReceivedAlbums());
 	}
 	if (method === "GET" && segments[0] === "v2" && segments[1] === "albums") {
 		return ok(demoAlbumContent(Number(segments[2])));

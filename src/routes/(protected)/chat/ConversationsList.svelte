@@ -8,6 +8,8 @@
 	import { getAccountSessionSnapshot } from "$lib/api/account-caches";
 	import {
 		getDeveloperSettingsSnapshot,
+		getInboxRowDensitySnapshot,
+		type InboxRowDensity,
 		subscribePreferences,
 	} from "$lib/app-data/preferences.svelte";
 	import {
@@ -39,10 +41,11 @@
 	import { SelectionSet } from "$lib/util/selection.svelte";
 	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
 	import {
-		CONVERSATION_LIST_OVERSCAN,
-		CONVERSATION_ROW_ESTIMATE_PX,
 		conversationListVirtualizerOptions,
+		fallbackConversationVirtualRows,
+		inboxRowEstimatePx,
 		resolveConversationRestoreTarget,
+		shouldLoadMoreConversations,
 	} from "./conversation-list-window";
 	import Conversation from "./Conversation.svelte";
 	import ConversationsSelectionBar from "./ConversationsSelectionBar.svelte";
@@ -110,6 +113,10 @@
 		getDeveloperSettingsSnapshot().conversationSearchDebounceMs,
 	);
 	let conversationFilter: ConversationFilter = $state("all");
+	let rowDensity: InboxRowDensity = $state(getInboxRowDensitySnapshot());
+	let scrollOffset = $state(0);
+	let autoRequestedPage: number | null = null;
+	const rowEstimate = $derived(inboxRowEstimatePx(rowDensity));
 	const normalizedSearchQuery = $derived(
 		normalizeConversationSearchQuery(searchQuery),
 	);
@@ -139,15 +146,26 @@
 		filteredEntries.map((entry) => entry.data.conversationId),
 	);
 	const virtualizer = createVirtualizer<HTMLElement, HTMLElement>(
-		conversationListVirtualizerOptions([], () => container),
+		conversationListVirtualizerOptions(
+			[],
+			() => container,
+			undefined,
+			getInboxRowDensitySnapshot(),
+		),
 	);
 	$effect(() => {
 		const ids = filteredConversationIds;
 		const scrollElement = container;
 		untrack(() => {
 			get(virtualizer).setOptions(
-				conversationListVirtualizerOptions(ids, () => scrollElement),
+				conversationListVirtualizerOptions(
+					ids,
+					() => scrollElement,
+					undefined,
+					rowDensity,
+				),
 			);
+			get(virtualizer).measure();
 		});
 	});
 	const renderedVirtualRows = $derived.by(() => {
@@ -157,23 +175,39 @@
 		// The scroll element and cached Inbox data can become available in the
 		// same frame on a direct route load. Keep the list usable during that
 		// hand-off; measuring these seed rows wakes the real virtual range.
-		return filteredConversationIds
-			.slice(0, CONVERSATION_LIST_OVERSCAN + 2)
-			.map((conversationId, index) => ({
-				index,
-				key: conversationId,
-				lane: 0,
-				start: index * CONVERSATION_ROW_ESTIMATE_PX,
-				end: (index + 1) * CONVERSATION_ROW_ESTIMATE_PX,
-				size: CONVERSATION_ROW_ESTIMATE_PX,
-			}));
+		return fallbackConversationVirtualRows({
+			conversationIds: filteredConversationIds,
+			scrollOffset,
+			viewportHeight: container?.clientHeight ?? 800,
+			rowEstimate,
+		});
 	});
 	const virtualContentHeight = $derived(
 		Math.max(
 			$virtualizer.getTotalSize(),
-			filteredConversationIds.length * CONVERSATION_ROW_ESTIMATE_PX,
+			filteredConversationIds.length * rowEstimate,
 		),
 	);
+
+	$effect(() => {
+		const rows = renderedVirtualRows;
+		const nextPage = conversations.nextPage;
+		const canLoad =
+			nextPage !== null &&
+			normalizedSearchQuery === "" &&
+			conversationFilter === "all" &&
+			!conversations.loadingMore &&
+			conversations.loadMoreError === null &&
+			autoRequestedPage !== nextPage;
+		if (
+			canLoad &&
+			shouldLoadMoreConversations(rows, filteredConversationIds.length)
+		) {
+			autoRequestedPage = nextPage;
+			untrack(() => void conversations.loadMore());
+		}
+		if (nextPage === null) autoRequestedPage = null;
+	});
 
 	let restoredPosition: ReturnType<
 		typeof navigationMemory.getSurfaceScrollPosition
@@ -235,6 +269,7 @@
 		subscribePreferences(() => {
 			searchDebounceMs =
 				getDeveloperSettingsSnapshot().conversationSearchDebounceMs;
+			rowDensity = getInboxRowDensitySnapshot();
 		}),
 	);
 
@@ -351,7 +386,7 @@
 				if (es[0].isIntersecting)
 					conversations.loadMore().catch((error) => console.error(error));
 			},
-			{ rootMargin: "400px" },
+			{ root: container, rootMargin: "400px" },
 		);
 		observer.observe(node);
 		return {
@@ -388,7 +423,9 @@
 			className,
 		]}
 		onscroll={() => {
-			if (!container || !captureGate.canCapture) return;
+			if (!container) return;
+			scrollOffset = container.scrollTop;
+			if (!captureGate.canCapture) return;
 			const anchor = captureScrollAnchor(container);
 			navigationMemory.setSurfaceAnchor(
 				"inboxChats",
@@ -441,7 +478,10 @@
 		{/if}
 		{#await conversations.initial}
 			{#each Array(8)}
-				<Skeleton class="h-24.5 w-full shrink-0" />
+				<Skeleton
+					class="w-full shrink-0"
+					style={`min-block-size: ${rowEstimate}px`}
+				/>
 			{/each}
 		{:then}
 			<div class="min-h-overscrollable shrink-0 pb-nav-clear">
@@ -463,6 +503,7 @@
 								>
 									<Conversation
 										{conversation}
+										{rowDensity}
 										selection={selecting ? selection : null}
 										onEnterSelection={mobile.current
 											? () => enterSelection(conversationId)
@@ -495,11 +536,25 @@
 				{/if}
 				{#if conversations.loadingMore}
 					{#each Array(6)}
-						<Skeleton class="h-24.5 w-full shrink-0" />
+						<Skeleton
+							class="w-full shrink-0"
+							style={`min-block-size: ${rowEstimate}px`}
+						/>
 					{/each}
 				{/if}
+				{#if conversations.loadMoreError !== null}
+					<div class="flex min-h-28 items-center justify-center px-3">
+						<ApiErrorDisplay
+							error={conversations.loadMoreError}
+							onRetry={() => {
+								autoRequestedPage = conversations.nextPage;
+								void conversations.retryLoadMore();
+							}}
+						/>
+					</div>
+				{/if}
 				{#if conversations.nextPage !== null && normalizedSearchQuery === ""}
-					<div class="h-0" use:observeSentinel></div>
+					<div class="h-px" use:observeSentinel></div>
 				{/if}
 			</div>
 		{:catch error}

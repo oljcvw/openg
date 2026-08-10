@@ -1,5 +1,6 @@
 pub mod account;
 pub mod album_cache;
+pub mod album_presets;
 pub mod auth;
 pub mod diagnostics;
 pub mod direct_media_cache;

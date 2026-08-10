@@ -1,6 +1,7 @@
 import { decode, encode } from "@msgpack/msgpack";
 import z from "zod";
 
+import { clearAlbumPresets } from "$lib/albums/album-preset-store";
 import {
 	getAccountSessionSnapshot,
 	isAccountSessionCurrent,
@@ -328,6 +329,7 @@ export async function removeCacheEntry(
 
 export async function removeAccountCache(accountId: number): Promise<void> {
 	const results = await Promise.allSettled([
+		clearAlbumPresets(accountId),
 		clearAlbumMediaCache(accountId),
 		clearDirectMediaCache(accountId),
 		clearShortVideoCache(accountId),
@@ -355,6 +357,8 @@ export async function removeGenericAccountCache(
 }
 
 export async function clearAllCachedData(): Promise<void> {
+	// Saved album sets are durable user data, not cache, and intentionally do
+	// not participate in the generic "clear cached data" action.
 	await clearAlbumMediaCache();
 	await clearDirectMediaCache();
 	await clearShortVideoCache();

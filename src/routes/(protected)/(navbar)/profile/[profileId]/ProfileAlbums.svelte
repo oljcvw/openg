@@ -3,9 +3,7 @@
 	import PlusIcon from "phosphor-svelte/lib/PlusIcon";
 	import { onDestroy } from "svelte";
 
-	import { ApiError } from "$lib/api";
-	import { showErrorToast } from "$lib/api/error";
-	import { createAlbum, getMyAlbums } from "$lib/api/messaging/albums";
+	import { getMyAlbums } from "$lib/api/messaging/albums";
 	import { type AlbumAccess } from "$lib/app-data/album-cache";
 	import {
 		loadSharedAlbumCollection,
@@ -137,22 +135,11 @@
 
 	let creating = $state(false);
 
-	async function create() {
+	async function openAlbumManagement() {
 		if (creating) return;
 		creating = true;
 		try {
-			const { albumId } = await createAlbum({ albumName: null });
-			await openAppDetail(`/albums/${albumId}`);
-		} catch (err) {
-			console.error(err);
-			const status = err instanceof ApiError ? err.response?.status : null;
-			showErrorToast({
-				label:
-					status === 402
-						? "You've reached your album limit"
-						: "Failed to create album",
-				error: err,
-			});
+			await openAppDetail("/settings/albums");
 		} finally {
 			creating = false;
 		}
@@ -168,10 +155,10 @@
 					variant="ghost"
 					size="sm"
 					disabled={creating}
-					onclick={() => void create()}
+					onclick={() => void openAlbumManagement()}
 				>
 					<PlusIcon weight="bold" />
-					New album
+					Manage albums
 				</Button>
 			{/if}
 		</div>
@@ -194,11 +181,11 @@
 				{#each albums.slice(albumPage * 60, (albumPage + 1) * 60) as album (album.albumId)}
 					<a
 						href={self
-							? `/albums/${album.albumId}`
+							? `/settings/albums/${album.albumId}`
 							: `/albums/${album.albumId}?owner=${profileId}`}
 						onclick={(event) => {
 							const route = self
-								? `/albums/${album.albumId}`
+								? `/settings/albums/${album.albumId}`
 								: `/albums/${album.albumId}?owner=${profileId}`;
 							void interceptAppNavigationClick(event, () =>
 								openAppDetail(route),

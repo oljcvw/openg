@@ -9,11 +9,7 @@ import {
 } from "$lib/api/account-caches";
 import { showErrorToast } from "$lib/api/error";
 import { markConversationAsRead } from "$lib/api/messaging/conversations";
-import {
-	reactToMessage,
-	sendMessage,
-	sendReplyMessage,
-} from "$lib/api/messaging/messages";
+import { reactToMessage } from "$lib/api/messaging/messages";
 import {
 	getDeveloperSettingsSnapshot,
 	getPreferences,
@@ -21,6 +17,8 @@ import {
 	subscribePreferences,
 } from "$lib/app-data/preferences.svelte";
 import { ActiveMessageWindow } from "$lib/chat/active-message-window";
+import { getDirectMessageSession } from "$lib/chat/direct-message-session";
+import { VoiceNoteNavigatorState } from "$lib/chat/voice-note-navigator.svelte";
 import {
 	applyMessageRetractions,
 	previewFromMessage,
@@ -180,6 +178,7 @@ export class ConversationState {
 	error: Error | null = $state(null);
 	lastReadTimestamp: number | null = $state(null);
 	replyTarget: ApiResponseMessage | null = $state(null);
+	readonly voiceNotes = new VoiceNoteNavigatorState();
 
 	readonly conversationId: string;
 	readonly ourProfileId: number;
@@ -194,6 +193,7 @@ export class ConversationState {
 	#unsubscribePreferences: () => void;
 	#unsubscribeAccountGeneration: () => void = () => {};
 	#retryingMessageIds = new Set<string>();
+	#voiceScan: Promise<void> | null = null;
 	#removedMessageIds = new Set<string>();
 	#messageWindow = new ActiveMessageWindow<OptimisticMessage>({
 		maxFetchedPages: 8,
@@ -322,6 +322,38 @@ export class ConversationState {
 		this.#unsubscribeAccountGeneration();
 		if (this.#readTimer !== null) clearTimeout(this.#readTimer);
 		if (this.#readQueue.length > 0) void this.#flushReadQueue();
+		this.voiceNotes.exit();
+	}
+
+	async scanVoiceNotes(): Promise<void> {
+		if (this.voiceNotes.scanComplete) return;
+		if (this.#voiceScan !== null) return this.#voiceScan;
+		this.voiceNotes.beginScan();
+		this.voiceNotes.merge(this.messages);
+		this.#voiceScan = (async () => {
+			const seenCursors = new Set<string>();
+			while (this.pageKey !== null && this.#isCurrentOwner()) {
+				const cursor = this.pageKey;
+				if (seenCursors.has(cursor)) break;
+				seenCursors.add(cursor);
+				const outcome = await this.loadMore();
+				this.voiceNotes.merge(this.messages);
+				if (outcome === "error") {
+					this.voiceNotes.failScan();
+					return;
+				}
+				if (outcome === "end") break;
+				if (outcome === "busy") {
+					// Another history consumer owns this cursor. It has not been
+					// exhausted, so allow the scan to retry it after that flight settles.
+					seenCursors.delete(cursor);
+					await new Promise<void>((resolve) => setTimeout(resolve, 50));
+					continue;
+				}
+			}
+			if (this.#isCurrentOwner()) this.voiceNotes.completeScan();
+		})().finally(() => (this.#voiceScan = null));
+		return this.#voiceScan;
 	}
 
 	async #reconcileMessages(): Promise<void> {
@@ -649,7 +681,10 @@ export class ConversationState {
 		}
 	}
 
-	pinMessage(messageId: string, reason: "selected" | "viewer"): boolean {
+	pinMessage(
+		messageId: string,
+		reason: "selected" | "viewer" | "voice-note",
+	): boolean {
 		const message = this.#messageWindow.getMessage(messageId);
 		if (!message) return false;
 		this.#messageWindow.pin(message, reason);
@@ -657,7 +692,10 @@ export class ConversationState {
 		return true;
 	}
 
-	unpinMessage(messageId: string, reason: "selected" | "viewer"): void {
+	unpinMessage(
+		messageId: string,
+		reason: "selected" | "viewer" | "voice-note",
+	): void {
 		this.#messageWindow.unpin(messageId, reason);
 		this.#syncMessagesFromWindow();
 	}
@@ -811,20 +849,16 @@ export class ConversationState {
 		if (pending && pending.status !== "sent") pending.status = "awaitingAck";
 		this.#syncCache();
 		try {
-			const outcome = replyToMessageId
-				? await sendReplyMessage({
-						toUserId: this.profile!.profileId,
-						message,
-						replyToMessageId,
-						ref: attemptRef,
-						commandRef: outerCommandRef,
-					})
-				: await sendMessage({
-						toUserId: this.profile!.profileId,
-						message,
-						ref: attemptRef,
-						commandRef: outerCommandRef,
-					});
+			const outcome = await getDirectMessageSession({
+				accountProfileId: this.ourProfileId,
+				conversationId: this.conversationId,
+				toUserId: this.profile!.profileId,
+			}).send({
+				message,
+				attemptRef,
+				commandRef: outerCommandRef,
+				...(replyToMessageId ? { replyToMessageId } : {}),
+			});
 			if (!this.#isCurrentOwner()) return;
 			const msg = this.messages.find((m) => m.messageId === tempId);
 			if (msg && msg.status !== "sent") {
@@ -1077,6 +1111,7 @@ export class ConversationState {
 
 	#syncMessagesFromWindow(): void {
 		this.messages = removeDuplicateMessages(this.#messageWindow.messages);
+		this.voiceNotes.merge(this.messages);
 		// Svelte wraps assigned records in deep reactive proxies. Adopt those
 		// proxies so later in-place status/reaction updates remain canonical in
 		// the segmented window instead of being replaced by stale raw objects.

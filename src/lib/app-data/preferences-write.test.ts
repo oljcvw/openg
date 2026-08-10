@@ -71,6 +71,28 @@ describe("developer preference writes", () => {
 		expect(writeAppDataFileAtomicMock).toHaveBeenCalledTimes(2);
 	});
 
+	it("persists Inbox appearance preferences without dropping other state", async () => {
+		const {
+			getInboxLayoutModeSnapshot,
+			getInboxRowDensitySnapshot,
+			setPreferences,
+		} = await import("./preferences.svelte");
+
+		await setPreferences({
+			inboxLayoutMode: "stacked",
+			inboxRowDensity: "roomy",
+		});
+
+		expect(getInboxLayoutModeSnapshot()).toBe("stacked");
+		expect(getInboxRowDensitySnapshot()).toBe("roomy");
+		const persisted = decode(writeAppDataFileAtomicMock.mock.calls[0][1]);
+		expect(persisted).toMatchObject({
+			inboxLayoutMode: "stacked",
+			inboxRowDensity: "roomy",
+			contrastMode: "standard",
+		});
+	});
+
 	it("updates the age scale and clamps the persisted Browse selection atomically", async () => {
 		const {
 			getDeveloperSettingsSnapshot,

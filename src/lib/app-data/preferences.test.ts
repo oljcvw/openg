@@ -5,6 +5,8 @@ import {
 	DEFAULT_DEVELOPER_SETTINGS,
 	developerSettingsSchema,
 	gridColumnsSchema,
+	inboxLayoutModeSchema,
+	inboxRowDensitySchema,
 	parsePreferences,
 	videoCallQualityPresetSchema,
 } from "$lib/app-data/preferences.svelte";
@@ -23,6 +25,8 @@ describe("preference migration", () => {
 			contrastMode: "standard",
 			developerSettings: DEFAULT_DEVELOPER_SETTINGS,
 			gridColumns: "auto",
+			inboxLayoutMode: "adaptive",
+			inboxRowDensity: "comfortable",
 			keepBottomNavigationBehindKeyboard: true,
 			keepUnavailableCachedAlbums: true,
 			pendingProfileLocation: null,
@@ -33,6 +37,17 @@ describe("preference migration", () => {
 			stayAwake: false,
 			units: "imperial",
 		});
+	});
+
+	it("accepts only supported Inbox layout and row density modes", () => {
+		for (const mode of ["adaptive", "stacked"]) {
+			expect(inboxLayoutModeSchema.parse(mode)).toBe(mode);
+		}
+		for (const density of ["compact", "comfortable", "roomy"]) {
+			expect(inboxRowDensitySchema.parse(density)).toBe(density);
+		}
+		expect(inboxLayoutModeSchema.safeParse("split").success).toBe(false);
+		expect(inboxRowDensitySchema.safeParse("tiny").success).toBe(false);
 	});
 
 	it("validates developer tuning boundaries", () => {

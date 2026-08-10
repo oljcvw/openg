@@ -18,6 +18,35 @@ export type BackgroundTaskDiagnostic = {
 	level?: DiagnosticLevel;
 };
 
+export type ViewerDiagnostic = {
+	event:
+		| "open_requested"
+		| "resolving"
+		| "resolved"
+		| "opened"
+		| "item_loaded"
+		| "item_failed"
+		| "cancelled"
+		| "closed"
+		| "destroyed";
+	surface: "chat" | "album" | "profile" | "received_albums";
+	mediaKind: "image" | "video" | "mixed" | "none";
+	cacheSource: "memory" | "local" | "network" | "none";
+	access: "persistent" | "retained_limited" | "limited" | "none";
+	countBucket: "one" | "few" | "many" | "none";
+	positionBucket: "first" | "middle" | "last" | "none";
+	latencyBucket: "instant" | "fast" | "slow" | "very_slow" | "none";
+	failure:
+		| "none"
+		| "cancelled"
+		| "decode"
+		| "network"
+		| "cache_miss"
+		| "unavailable"
+		| "stale_generation"
+		| "unknown";
+};
+
 const recentUserErrors = new Map<string, number>();
 
 function diagnosticCode(error: unknown): string {
@@ -40,6 +69,13 @@ export function reportClientDiagnostic(diagnostic: ClientDiagnostic): void {
 	if (!isTauri() || !getDeveloperSettingsSnapshot().logErrorsToLogcat) return;
 	void invoke("report_client_diagnostic", { diagnostic }).catch(() => {
 		// Diagnostics must never interfere with application behavior.
+	});
+}
+
+export function reportViewerDiagnostic(diagnostic: ViewerDiagnostic): void {
+	if (!isTauri() || !getDeveloperSettingsSnapshot().logErrorsToLogcat) return;
+	void invoke("report_viewer_diagnostic", { diagnostic }).catch(() => {
+		// Diagnostics must never interfere with viewer behavior.
 	});
 }
 

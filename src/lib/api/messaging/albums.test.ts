@@ -25,6 +25,7 @@ import {
 	getAlbumShares,
 	getAlbumsSharedByProfile,
 	getMyAlbums,
+	getReceivedAlbums,
 	recordAlbumContentView,
 	renameAlbum,
 	reorderAlbumContent,
@@ -165,6 +166,35 @@ describe("getAlbumsSharedByProfile", () => {
 		fetchRestMock.mockResolvedValue(response({ albums: [album] }));
 
 		await expect(getAlbumsSharedByProfile(42)).resolves.toEqual([album]);
+	});
+});
+
+describe("getReceivedAlbums", () => {
+	it("preserves the service's newest-first order from the global shares endpoint", async () => {
+		const received = [
+			{
+				albumId: 9,
+				hasUnseenContent: true,
+				albumName: "Newest",
+				profileId: 42,
+				albumViewable: true,
+				expiresAt: null,
+				expirationType: "INDEFINITE",
+			},
+			{
+				albumId: 4,
+				hasUnseenContent: false,
+				albumName: "Older",
+				profileId: 77,
+				albumViewable: true,
+				expiresAt: null,
+				expirationType: "INDEFINITE",
+			},
+		];
+		fetchRestMock.mockResolvedValue(response({ albums: received }));
+
+		await expect(getReceivedAlbums()).resolves.toEqual(received);
+		expect(fetchRestMock).toHaveBeenCalledWith("/v2/albums/shares");
 	});
 });
 

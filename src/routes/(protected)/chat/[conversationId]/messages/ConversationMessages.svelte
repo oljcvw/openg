@@ -2,6 +2,7 @@
 	import { onDestroy, tick, untrack } from "svelte";
 
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
+	import { backLayerManager } from "$lib/navigation/app-navigation";
 	import {
 		captureScrollAnchor,
 		captureScrollNeighborhood,
@@ -23,6 +24,7 @@
 		transcriptRestorationCancellationState,
 		type TranscriptRestoreTarget,
 	} from "./transcript-restoration";
+	import VoiceNoteNavigator from "./VoiceNoteNavigator.svelte";
 
 	let {
 		composerHeight,
@@ -45,6 +47,7 @@
 						offsetPx?: number | null;
 					},
 				) => Promise<boolean>;
+				scrollToVoiceNote: (messageId: string) => Promise<boolean>;
 		  }
 		| undefined = $state();
 
@@ -345,11 +348,63 @@
 			el.scrollTop = el.scrollHeight;
 		});
 	}
+
+	let pinnedVoiceNote: string | null = null;
+	$effect(() => {
+		if (!conversationState.voiceNotes.active) return;
+		const releaseBackLayer = backLayerManager.register({
+			priority: "localMode",
+			handler: () => {
+				conversationState.voiceNotes.exit();
+				return "handled";
+			},
+		});
+		const onKeydown = (event: KeyboardEvent) => {
+			if (event.key !== "Escape") return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			conversationState.voiceNotes.exit();
+		};
+		window.addEventListener("keydown", onKeydown, true);
+		return () => {
+			releaseBackLayer();
+			window.removeEventListener("keydown", onKeydown, true);
+		};
+	});
+
+	$effect(() => {
+		const active = conversationState.voiceNotes.active;
+		const selected = conversationState.voiceNotes.selectedKey;
+		const list = messagesList;
+		untrack(() => {
+			if (
+				pinnedVoiceNote !== null &&
+				(!active || pinnedVoiceNote !== selected)
+			) {
+				conversationState.unpinMessage(pinnedVoiceNote, "voice-note");
+				pinnedVoiceNote = null;
+			}
+			if (!active || selected === null || !list) return;
+			if (pinnedVoiceNote !== selected) {
+				conversationState.pinMessage(selected, "voice-note");
+				pinnedVoiceNote = selected;
+			}
+			void list.scrollToVoiceNote(selected);
+		});
+	});
+
+	onDestroy(() => {
+		if (pinnedVoiceNote !== null)
+			conversationState.unpinMessage(pinnedVoiceNote, "voice-note");
+	});
 </script>
 
 <div
 	class="relative flex min-h-0 max-w-full flex-1 flex-col"
 	style:--composer-height="{composerHeight}px"
+	style:--chat-composer-overlay-height={conversationState.voiceNotes.active
+		? "3.5rem"
+		: "0px"}
 	style:padding-bottom="var(--chat-ime-offset, 0px)"
 >
 	<div
@@ -360,6 +415,17 @@
 		style:overflow-anchor="none"
 		onscroll={onContainerScroll}
 		onscrollend={onContainerScrollEnd}
+		onpointerdown={(event) => {
+			if (!conversationState.voiceNotes.active) return;
+			const target = event.target as HTMLElement;
+			if (
+				target.closest(
+					"[data-voice-note-interactive], [data-message-type='Audio']",
+				)
+			)
+				return;
+			conversationState.voiceNotes.exit();
+		}}
 	>
 		{#if conversationState.loading}
 			{#key conversationState.conversationId}
@@ -386,6 +452,14 @@
 			position="bottom"
 			onrefresh={() => void conversationState.refresh()}
 		/>
+		{#if conversationState.voiceNotes.active}
+			<VoiceNoteNavigator
+				state={conversationState.voiceNotes}
+				onOlder={() => conversationState.voiceNotes.selectOlder()}
+				onNewer={() => conversationState.voiceNotes.selectNewer()}
+				onExit={() => conversationState.voiceNotes.exit()}
+			/>
+		{/if}
 		{#if !atFloor}
 			<ScrollToBottomButton
 				{seenTimestamp}

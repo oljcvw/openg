@@ -77,6 +77,7 @@ class ConversationsState {
 	entries = $state<Conversation[]>([]);
 	nextPage = $state<number | null>(null);
 	loadingMore = $state(false);
+	loadMoreError: unknown | null = $state(null);
 	refreshing = $state(false);
 	inboxLastViewedAt = $state(0);
 	initial: Promise<void> = $state(Promise.resolve());
@@ -421,23 +422,27 @@ class ConversationsState {
 		if (this.#destroyed) return;
 		this.entries = [];
 		this.nextPage = null;
+		this.loadMoreError = null;
 		this.initial = this.#trackFetch(this.#load(1));
 	}
 
 	async loadMore(): Promise<void> {
 		if (this.loadingMore || this.nextPage === null) return;
 		this.loadingMore = true;
+		this.loadMoreError = null;
 		try {
 			await this.#trackFetch(this.#load(this.nextPage));
 		} catch (error) {
 			console.error(error);
-			showErrorToast({
-				label: "Failed to load more conversations",
-				error,
-			});
+			this.loadMoreError = error;
 		} finally {
 			this.loadingMore = false;
 		}
+	}
+
+	async retryLoadMore(): Promise<void> {
+		this.loadMoreError = null;
+		await this.loadMore();
 	}
 
 	async ensureLoaded(conversationId: string): Promise<void> {

@@ -2,6 +2,7 @@
 	import CacheSetting from "./CacheSetting.svelte";
 	import ContrastSetting from "./ContrastSetting.svelte";
 	import GridColumnsSetting from "./GridColumnsSetting.svelte";
+	import InboxAppearanceSetting from "./InboxAppearanceSetting.svelte";
 	import KeepUnavailableCachedAlbumsSetting from "./KeepUnavailableCachedAlbumsSetting.svelte";
 	import KeyboardNavigationSetting from "./KeyboardNavigationSetting.svelte";
 	import NotificationsLink from "./NotificationsLink.svelte";
@@ -18,6 +19,7 @@
 <UnitsSetting />
 <ContrastSetting />
 <GridColumnsSetting />
+<InboxAppearanceSetting />
 <StayAwakeSetting />
 <h2>Storage</h2>
 <CacheSetting />

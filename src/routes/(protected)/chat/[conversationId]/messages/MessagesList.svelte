@@ -105,6 +105,25 @@
 		return true;
 	}
 
+	export async function scrollToVoiceNote(messageId: string): Promise<boolean> {
+		const found = await scrollToMessage(messageId, { align: "center" });
+		if (!found || !container) return false;
+		await tick();
+		const row = [
+			...container.querySelectorAll<HTMLElement>("[data-message-id]"),
+		].find((candidate) => candidate.dataset.messageId === messageId);
+		if (!row) return false;
+		const viewport = container.getBoundingClientRect();
+		const bounds = row.getBoundingClientRect();
+		const topBand = viewport.top + viewport.height * 0.25;
+		const bottomBand = viewport.top + viewport.height * 0.82;
+		if (bounds.top <= topBand || bounds.bottom >= bottomBand) {
+			const targetBottom = viewport.top + viewport.height * 0.78;
+			container.scrollTop += bounds.bottom - targetBottom;
+		}
+		return true;
+	}
+
 	async function revealReplyTarget(messageId: string) {
 		if (replySearchInFlight) return;
 		replySearchInFlight = true;
@@ -266,6 +285,7 @@
 			>
 				<Message
 					{message}
+					conversationMessages={conversationState.messages}
 					{isOut}
 					indexInStack={message.indexInStack}
 					stackLength={message.stackLength}
@@ -274,7 +294,9 @@
 					ourProfileId={conversationState.ourProfileId}
 					peerProfileId={conversationState.profile?.profileId ?? null}
 					otherName={conversationState.profile?.name}
-					highlighted={highlightedMessageId === message.messageId}
+					highlighted={highlightedMessageId === message.messageId ||
+						(conversationState.voiceNotes.active &&
+							conversationState.voiceNotes.selectedKey === message.messageId)}
 					visibilityEnabled={readReportingEnabled}
 					onRetry={(message.status === "failed" ||
 						message.status === "handled") &&

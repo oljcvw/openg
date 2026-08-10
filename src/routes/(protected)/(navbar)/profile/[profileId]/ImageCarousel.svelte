@@ -33,7 +33,7 @@
 					gallery,
 					children: ".item",
 					pswpModule: () => import("photoswipe"),
-					mainClass: `pswp--buttons-visible`,
+					mainClass: "pswp--profile-carousel pswp--buttons-visible",
 					imageClickAction: "close",
 					tapAction: "close",
 					doubleTapAction: false,
@@ -187,16 +187,16 @@
 		display: none;
 	}
 	:global {
-		.pswp .pswp__button {
+		.pswp--profile-carousel .pswp__button {
 			display: none;
 		}
-		.pswp .pswp__created-at-label {
+		.pswp--profile-carousel .pswp__created-at-label {
 			text-shadow: 1px 1px 3px var(--pswp-icon-color-secondary);
 			@apply absolute bottom-0 left-1/2 flex w-full -translate-x-1/2 items-center justify-center bg-linear-to-t from-background/60 pt-4 font-medium text-white/90;
 			height: calc(4rem + var(--safe-area-bottom));
 			padding-bottom: calc(0.5rem + var(--safe-area-bottom));
 		}
-		.pswp .pswp__top-bar {
+		.pswp--profile-carousel .pswp__top-bar {
 			margin-top: var(--safe-area-top);
 		}
 	}

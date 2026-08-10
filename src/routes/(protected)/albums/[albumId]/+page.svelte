@@ -80,11 +80,12 @@
 		closeAppDetail,
 		interceptAppNavigationClick,
 		openAppDetail,
+		replaceAppDetail,
 	} from "$lib/navigation/app-navigation";
 	import { pickMultipleMedia } from "$lib/platform/media-picker";
 	import AlbumShares from "./AlbumShares.svelte";
 
-	let { data }: import("./$types").PageProps = $props();
+	let { data }: { data: { ourProfileId: number } } = $props();
 
 	const albumId = $derived(Number(page.params.albumId));
 	const expectedOwnerProfileId = $derived.by(() => {
@@ -235,6 +236,11 @@
 
 	$effect(() => {
 		void load(albumId, expectedOwnerProfileId);
+	});
+
+	$effect(() => {
+		if (isMine && page.url.pathname.startsWith("/albums/"))
+			void replaceAppDetail(`/settings/albums/${albumId}`);
 	});
 
 	async function submitRename() {

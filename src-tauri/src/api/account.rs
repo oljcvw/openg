@@ -152,13 +152,19 @@ async fn purge_account_state(
 			)
 			.await
 			.is_ok();
+			let presets = super::album_presets::album_preset_clear(
+				app.clone(),
+				Some(account_id.clone()),
+			)
+			.await
+			.is_ok();
 			let short = super::media_capture::short_video_cache_clear(
 				app.clone(),
 				Some(account_id),
 			)
 			.await
 			.is_ok();
-			album && direct && short
+			album && direct && presets && short
 		}
 		_ => false,
 	};

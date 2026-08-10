@@ -20,6 +20,7 @@ import {
 	registerGlobalErrorReporting,
 	reportClientDiagnostic,
 } from "./client-diagnostics";
+import * as clientDiagnostics from "./client-diagnostics";
 
 describe("client diagnostics logcat preference", () => {
 	beforeEach(() => {
@@ -93,6 +94,51 @@ describe("client diagnostics logcat preference", () => {
 
 		expect(invokeMock).toHaveBeenCalledWith("report_client_diagnostic", {
 			diagnostic,
+		});
+	});
+
+	it("reports viewer lifecycle with only closed privacy-safe fields", () => {
+		settings.logErrorsToLogcat = true;
+		const reportViewerDiagnostic = (
+			clientDiagnostics as typeof clientDiagnostics & {
+				reportViewerDiagnostic: (diagnostic: {
+					event: "item_failed";
+					surface: "chat";
+					mediaKind: "image";
+					cacheSource: "local";
+					access: "persistent";
+					countBucket: "few";
+					positionBucket: "middle";
+					latencyBucket: "slow";
+					failure: "decode";
+				}) => void;
+			}
+		).reportViewerDiagnostic;
+
+		reportViewerDiagnostic({
+			event: "item_failed",
+			surface: "chat",
+			mediaKind: "image",
+			cacheSource: "local",
+			access: "persistent",
+			countBucket: "few",
+			positionBucket: "middle",
+			latencyBucket: "slow",
+			failure: "decode",
+		});
+
+		expect(invokeMock).toHaveBeenCalledWith("report_viewer_diagnostic", {
+			diagnostic: {
+				event: "item_failed",
+				surface: "chat",
+				mediaKind: "image",
+				cacheSource: "local",
+				access: "persistent",
+				countBucket: "few",
+				positionBucket: "middle",
+				latencyBucket: "slow",
+				failure: "decode",
+			},
 		});
 	});
 

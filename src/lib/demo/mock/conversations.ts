@@ -22,6 +22,8 @@ registerAccountCache(resetDemoObjectUrls);
 type DemoMessage = { fromMe: boolean; reactions?: number } & (
 	| { kind?: "text"; text: string }
 	| { kind: "image" }
+	| { kind: "video" }
+	| { kind: "audio" }
 	| { kind: "expiringImage"; expired?: boolean }
 	| {
 			kind: "album";
@@ -61,12 +63,14 @@ const demoConversationSeeds: DemoConversation[] = [
 		lastActivityAgo: 4,
 		messages: [
 			{ fromMe: false, text: "Hey! Lorem ipsum dolor sit amet." },
+			{ fromMe: false, kind: "audio" },
 			{
 				fromMe: true,
 				text: "Hello — consectetur adipiscing elit.",
 				reactions: 1,
 			},
 			{ fromMe: false, text: "Sed do eiusmod tempor incididunt?" },
+			{ fromMe: true, kind: "audio" },
 			{ fromMe: false, kind: "album", albumId: 5001, unseen: true },
 			{
 				fromMe: true,
@@ -107,6 +111,7 @@ const demoConversationSeeds: DemoConversation[] = [
 			{ fromMe: true, kind: "expiringImage" },
 			{ fromMe: false, kind: "expiringImage", expired: true },
 			{ fromMe: false, text: "Did you catch it? 🔥" },
+			{ fromMe: false, kind: "video" },
 			{ fromMe: false, kind: "image", reactions: 1 },
 		],
 	},
@@ -232,6 +237,20 @@ function buildMessage(
 	}));
 	const base = { messageId, conversationId, senderId, timestamp, reactions };
 	switch (message.kind) {
+		case "audio":
+			return {
+				type: "Audio",
+				body: {
+					mediaId: 920_000 + conv.withId + index,
+					mediaHash: null,
+					url: null,
+					contentType: "audio/mp4",
+					length: 12_000,
+					expiresAt: null,
+				},
+				...base,
+				unsent: false,
+			};
 		case "image":
 			return {
 				type: "Image",
@@ -243,6 +262,21 @@ function buildMessage(
 					imageHash: hashFromSeed(`msg-${conv.withId}-${index}`),
 					takenOnGrindr: false,
 					createdAt: timestamp,
+				},
+				...base,
+				unsent: false,
+			};
+		case "video":
+			return {
+				type: "Video",
+				body: {
+					mediaId: 930_000 + conv.withId + index,
+					url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+					contentType: "video/mp4",
+					length: 5_000,
+					maxViews: null,
+					looping: false,
+					viewsRemaining: undefined,
 				},
 				...base,
 				unsent: false,
@@ -460,11 +494,12 @@ function generateAlbumContent(albumId: number) {
 export function demoAlbumContent(albumId: number) {
 	// Prefer the mutable store so edits made in demo mode are visible here.
 	const owned = demoAlbumStore().find((album) => album.albumId === albumId);
+	const sharedOwner = albumId >= 10_000_000 ? Math.floor(albumId / 100) : null;
 	return {
 		albumId,
 		hasUnseenContent: false,
 		albumName: owned?.albumName ?? null,
-		profileId: demoMeProfileId,
+		profileId: owned?.profileId ?? sharedOwner ?? demoMeProfileId,
 		albumViewable: true,
 		sharedCount: owned?.sharedCount ?? 1,
 		createdAt: localDateTime(NOW - 3 * DAY),
@@ -476,7 +511,7 @@ export function demoAlbumContent(albumId: number) {
 export function demoAlbumsSharedByProfile(profileId: number) {
 	return {
 		albums: [0, 1].map((index) => {
-			const albumId = 8001 + index;
+			const albumId = profileId * 100 + index;
 			const thumb = picsum(`album-${albumId}-0`, 300, 400);
 			return {
 				albumId,
@@ -495,6 +530,14 @@ export function demoAlbumsSharedByProfile(profileId: number) {
 				contentCount: { imageCount: 3 + index, videoCount: index },
 			};
 		}),
+	};
+}
+
+export function demoReceivedAlbums() {
+	return {
+		albums: [100001, 100006, 100009].flatMap(
+			(profileId) => demoAlbumsSharedByProfile(profileId).albums,
+		),
 	};
 }
 

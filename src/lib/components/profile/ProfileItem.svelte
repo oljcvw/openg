@@ -23,9 +23,11 @@
 		actionsPlacement = "side",
 		compact = false,
 		class: className,
+		titleClass,
 		onToggleSelected,
 		onLongPress,
 		onNavigate,
+		density = "comfortable",
 	}: {
 		avatar: {
 			mediaHash: string | null;
@@ -46,24 +48,36 @@
 		actionsPlacement?: "side" | "title";
 		compact?: boolean;
 		class?: import("svelte/elements").ClassValue;
+		titleClass?: import("svelte/elements").ClassValue;
 		onToggleSelected?: () => void;
 		onLongPress?: () => void;
 		onNavigate?: (route: string) => void | Promise<unknown>;
+		density?: "compact" | "comfortable" | "roomy";
 	} = $props();
 
 	const longPress = $derived(onLongPress ? longPressHandlers(onLongPress) : {});
 	const linkTabindex = $derived(onToggleSelected ? -1 : undefined);
 	const navigateRow = $derived(onNavigate ?? openAppDetail);
+	const minimumBlockSize = $derived(
+		density === "compact" ? "5rem" : density === "roomy" ? "8rem" : "6.5rem",
+	);
+	const avatarSize = $derived(
+		density === "compact"
+			? "size-14"
+			: density === "roomy"
+				? "size-24"
+				: "size-20",
+	);
 </script>
 
 {#snippet avatarNode()}
 	<Item.Media
 		class={["relative translate-y-0! rounded-2xl", compact ? "p-1.5" : "p-2"]}
 	>
-		<Avatar.Root class="size-20 after:rounded-xl">
+		<Avatar.Root class={[avatarSize, "after:rounded-xl"]}>
 			<UserAvatar
 				mediaHash={avatar.mediaHash}
-				class="size-20 rounded-xl bg-neutral-700 *:rounded-xl"
+				class={[avatarSize, "rounded-xl bg-neutral-700 *:rounded-xl"]}
 			/>
 		</Avatar.Root>
 		{@render avatar.overlay?.()}
@@ -74,6 +88,7 @@
 		class={[
 			"flex w-auto min-w-0 items-center gap-1 truncate",
 			className,
+			titleClass,
 			{
 				"text-muted-foreground": !title.value,
 			},
@@ -103,6 +118,8 @@
 {/snippet}
 <Item.Root
 	variant={active ? "muted" : "outline"}
+	data-density={density}
+	style={`min-block-size: ${minimumBlockSize}`}
 	class={[
 		"@container relative flex min-w-24 flex-nowrap items-stretch gap-0 p-0",
 		{

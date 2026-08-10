@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 
 import {
 	conversationListVirtualizerOptions,
+	fallbackConversationVirtualRows,
+	inboxRowEstimatePx,
 	resolveConversationRestoreTarget,
+	resolveInboxLayoutKind,
+	shouldLoadMoreConversations,
 } from "./conversation-list-window";
 
 const ids = (count: number) =>
@@ -70,5 +74,41 @@ describe("conversation list window", () => {
 				neighborhood,
 			),
 		).toEqual({ index: 699, itemKey: "conversation-701" });
+	});
+
+	it("uses density-specific row estimates", () => {
+		expect(inboxRowEstimatePx("compact")).toBe(80);
+		expect(inboxRowEstimatePx("comfortable")).toBe(104);
+		expect(inboxRowEstimatePx("roomy")).toBe(128);
+	});
+
+	it("falls back around the current deep scroll offset instead of the first rows", () => {
+		const conversationIds = ids(1_000);
+		const rows = fallbackConversationVirtualRows({
+			conversationIds,
+			scrollOffset: 90_000,
+			viewportHeight: 800,
+			rowEstimate: 104,
+		});
+
+		expect(rows.length).toBeGreaterThan(0);
+		expect(rows.length).toBeLessThan(50);
+		expect(rows[0]?.index).toBeGreaterThan(800);
+		expect(rows.some((row) => row.key === "conversation-0")).toBe(false);
+	});
+
+	it("requests more data only when the rendered window approaches the end", () => {
+		expect(
+			shouldLoadMoreConversations([{ index: 990 }, { index: 999 }], 1_000),
+		).toBe(true);
+		expect(
+			shouldLoadMoreConversations([{ index: 400 }, { index: 420 }], 1_000),
+		).toBe(false);
+	});
+
+	it("uses split layout only for adaptive mode above the breakpoint", () => {
+		expect(resolveInboxLayoutKind("adaptive", false)).toBe("split");
+		expect(resolveInboxLayoutKind("adaptive", true)).toBe("stacked");
+		expect(resolveInboxLayoutKind("stacked", false)).toBe("stacked");
 	});
 });

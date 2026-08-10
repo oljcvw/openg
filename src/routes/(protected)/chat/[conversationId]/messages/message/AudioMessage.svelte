@@ -102,6 +102,7 @@
 
 <div
 	bind:this={media.el}
+	data-voice-note-interactive
 	class={[
 		"flex w-64 max-w-[80vw] items-center gap-2 rounded-xl bg-card p-2",
 		media.cornerClass,

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { TapType } from "$lib/model/interest/taps";
-	import OpenConversationButton from "./OpenConversationButton.svelte";
+	import ProfileMessageComposer from "./ProfileMessageComposer.svelte";
 	import TapProfileButton from "./TapProfileButton.svelte";
 
 	let {
@@ -41,7 +41,7 @@
 		<nav
 			class="flex flex-row items-center gap-2 rounded-full bg-muted p-2 shadow-xl backdrop-blur-lg"
 		>
-			<OpenConversationButton {profileId} {ourProfileId} />
+			<ProfileMessageComposer {profileId} {ourProfileId} />
 			<TapProfileButton {profileId} {tapType} {onTap} />
 		</nav>
 	</div>

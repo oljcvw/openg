@@ -2,7 +2,8 @@ export type MessagePinReason =
 	| "optimistic"
 	| "reply-target"
 	| "selected"
-	| "viewer";
+	| "viewer"
+	| "voice-note";
 
 export type MessageSegmentMetadata = {
 	segmentId: string;
