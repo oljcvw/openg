@@ -17,6 +17,14 @@ const nativePlugin = vi.hoisted(() => ({
 	listener: null as (() => void) | null,
 }));
 
+function deferred<T>() {
+	let resolve!: (value: T | PromiseLike<T>) => void;
+	const promise = new Promise<T>((resolvePromise) => {
+		resolve = resolvePromise;
+	});
+	return { promise, resolve };
+}
+
 vi.mock("@tauri-apps/api/core", () => ({
 	addPluginListener: vi.fn(
 		(_plugin: string, _event: string, listener: () => void) => {
@@ -120,6 +128,23 @@ describe("Android native Back bridge", () => {
 		await handleAndroidBackEvent();
 		await handleAndroidBackEvent();
 		expect(order).toEqual(["viewer", "drawer", "route"]);
+		releaseSemanticBack();
+	});
+
+	it("single-flights concurrent native Back events", async () => {
+		const handled = deferred<"handled">();
+		const semanticBack = vi.fn(() => handled.promise);
+		const releaseSemanticBack = setSemanticRouteBackHandler(semanticBack);
+
+		const first = handleAndroidBackEvent();
+		const second = handleAndroidBackEvent();
+		await Promise.resolve();
+		expect(semanticBack).toHaveBeenCalledOnce();
+
+		handled.resolve("handled");
+		await Promise.all([first, second]);
+		await handleAndroidBackEvent();
+		expect(semanticBack).toHaveBeenCalledTimes(2);
 		releaseSemanticBack();
 	});
 });

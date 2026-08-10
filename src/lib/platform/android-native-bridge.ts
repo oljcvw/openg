@@ -45,10 +45,19 @@ export function isSoftKeyboardVisible(): boolean | undefined {
 	return window.__AndroidInsets?.imeVisible?.();
 }
 
-export async function handleAndroidBackEvent(): Promise<void> {
-	const outcome = await dispatchApplicationBack();
-	if (!outcome.selected && outcome.result === "unhandled")
-		window.__AndroidBack?.moveTaskToBack();
+let androidBackFlight: Promise<void> | null = null;
+
+export function handleAndroidBackEvent(): Promise<void> {
+	if (androidBackFlight) return androidBackFlight;
+	const operation = (async () => {
+		const outcome = await dispatchApplicationBack();
+		if (!outcome.selected && outcome.result === "unhandled")
+			window.__AndroidBack?.moveTaskToBack();
+	})().finally(() => {
+		if (androidBackFlight === operation) androidBackFlight = null;
+	});
+	androidBackFlight = operation;
+	return operation;
 }
 
 export function applyBackGestureHandler() {
