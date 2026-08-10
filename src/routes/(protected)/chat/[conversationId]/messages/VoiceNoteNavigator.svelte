@@ -15,13 +15,15 @@
 		onNewer: () => void;
 		onExit: () => void;
 	} = $props();
+
+	const overlayBottom =
+		"calc(var(--chat-ime-offset, 0px) + var(--composer-height) + 0.75rem)";
 </script>
 
 <div
 	data-voice-note-interactive
 	class="absolute right-3 z-3 flex items-center gap-1 rounded-full border bg-background/90 p-1 shadow-md backdrop-blur-xl"
-	style:bottom="calc(var(--chat-ime-offset, 0px) + var(--composer-height) +
-	0.75rem)"
+	style:bottom={overlayBottom}
 	role="toolbar"
 	aria-label="Voice note navigation"
 >

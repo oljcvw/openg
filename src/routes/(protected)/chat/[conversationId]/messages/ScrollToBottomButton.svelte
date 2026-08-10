@@ -24,12 +24,14 @@
 				m.timestamp > seenTimestamp,
 		).length,
 	);
+
+	const overlayBottom =
+		"calc(var(--chat-ime-offset, 0px) + var(--composer-height) + var(--chat-composer-overlay-height, 0px) + 0.75rem)";
 </script>
 
 <div
 	class="absolute right-3 z-2"
-	style:bottom="calc(var(--chat-ime-offset, 0px) + var(--composer-height) +
-	var(--chat-composer-overlay-height, 0px) + 0.75rem)"
+	style:bottom={overlayBottom}
 	transition:fly={{ y: 48, opacity: 0, duration: 200, easing: sineOut }}
 >
 	<Button
