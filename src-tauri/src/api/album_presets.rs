@@ -687,6 +687,15 @@ fn required_storage_bytes(
 		.checked_add(STORAGE_HEADROOM_BYTES)
 }
 
+fn checked_available_bytes(
+	available_blocks: impl TryInto<u64>,
+	fragment_size: impl TryInto<u64>,
+) -> Option<u64> {
+	let available_blocks = available_blocks.try_into().ok()?;
+	let fragment_size = fragment_size.try_into().ok()?;
+	available_blocks.checked_mul(fragment_size)
+}
+
 fn has_sufficient_space(available: u64, required: u64) -> bool {
 	available >= required
 }
@@ -719,8 +728,7 @@ fn available_space(path: &Path) -> Result<u64, AppError> {
 	}
 	// SAFETY: a zero return from `statvfs` guarantees the output was initialized.
 	let stats = unsafe { stats.assume_init() };
-	u64::from(stats.f_bavail)
-		.checked_mul(stats.f_frsize)
+	checked_available_bytes(stats.f_bavail, stats.f_frsize)
 		.ok_or_else(|| preset_error("saved-set available storage overflow"))
 }
 
@@ -858,5 +866,17 @@ mod tests {
 		assert!(required > (256 * 1024 + 1 + 512) as u64);
 		assert!(has_sufficient_space(required, required));
 		assert!(!has_sufficient_space(required - 1, required));
+	}
+
+	#[test]
+	fn available_storage_math_supports_unix_abi_widths() {
+		assert_eq!(checked_available_bytes(7_u32, 4096_u32), Some(28_672));
+		assert_eq!(checked_available_bytes(7_u32, 4096_u64), Some(28_672));
+		assert_eq!(checked_available_bytes(7_u64, 4096_u64), Some(28_672));
+	}
+
+	#[test]
+	fn available_storage_math_rejects_overflow() {
+		assert_eq!(checked_available_bytes(u64::MAX, 2_u32), None);
 	}
 }
