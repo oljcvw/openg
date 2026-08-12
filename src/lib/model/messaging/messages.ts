@@ -1,5 +1,6 @@
 import z from "zod";
 
+import { locationPointSchema } from "$lib/model/location";
 import {
 	mediaHashPrivateSchema,
 	mediaHashPublicSchema,
@@ -16,23 +17,51 @@ const messageBaseSchema = z.object({
 	body: z.unknown(),
 });
 
-export const apiResponseMessageOverlaySchema = z.object({
+const apiResponseMessageMetadataSchema = z.object({
 	messageId: z.string(),
 	conversationId: z.string(),
 	senderId: z.int().nonnegative(),
 	timestamp: unixTimestampMsSchema,
 	unsent: z.boolean(),
+	refValue: z.string().nullable().optional(),
 	reactions: z.array(
 		z.object({
 			profileId: z.int().nonnegative(),
 			reactionType: z.int().nonnegative(),
 		}),
 	),
-	// replyToMessage: z.unknown().nullable(),
 	// dynamic: z.boolean(),
 	// chat1Type: z.string(),
 	// replyPreview: z.unknown().nullable(),
 });
+
+const oneLevelApiResponseMessageSchema: z.ZodType = z.lazy(() =>
+	z.unknown().transform((value, ctx) => {
+		const parsed = strictOneLevelApiResponseMessageSchema.safeParse(value);
+		if (parsed.success) return parsed.data;
+		const metadata = apiResponseMessageMetadataSchema.safeParse(value);
+		if (!metadata.success) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Invalid reply message metadata",
+			});
+			return z.NEVER;
+		}
+		return {
+			...metadata.data,
+			type: "Unknown" as const,
+			body: { sourceType: safeSourceType(value) },
+		};
+	}),
+);
+
+export const apiResponseMessageOverlaySchema =
+	apiResponseMessageMetadataSchema.safeExtend({
+		replyToMessage: z
+			.lazy(() => oneLevelApiResponseMessageSchema)
+			.nullable()
+			.optional(),
+	});
 
 export const albumMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Album"),
@@ -104,7 +133,7 @@ export const audioMessageSchema = messageBaseSchema.safeExtend({
 	body: z.object({
 		mediaId: z.int().nonnegative(),
 		mediaHash: mediaHashPrivateSchema.nullable(),
-		url: mediaUrlSchema,
+		url: mediaUrlSchema.nullable(),
 		contentType: z.string().nullable(),
 		length: z.int().nonnegative().nullable(),
 		expiresAt: unixTimestampMsSchema.nullable(),
@@ -120,8 +149,8 @@ export const videoMessageSchema = messageBaseSchema.safeExtend({
 		url: mediaUrlSchema.nullable(),
 		fileCacheKey: z.string().optional(),
 		contentType: z.string().nullable(),
-		length: z.int().nonnegative(),
-		maxViews: z.int().nonnegative().nullable(),
+		length: z.int().nonnegative().nullable(),
+		maxViews: z.union([z.literal(1), z.literal(2)]).nullable(),
 		looping: z.boolean().nullable(),
 		viewsRemaining: z.int().nonnegative().optional(),
 	}),
@@ -138,10 +167,16 @@ export type NonExpiringVideoMessage = z.infer<
 	typeof nonExpiringVideoMessageSchema
 >;
 
+export const gaymojiAssetIdSchema = z
+	.string()
+	.min(5)
+	.max(128)
+	.regex(/^[A-Za-z0-9._-]+\.png$/);
+
 export const gaymojiMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Gaymoji"),
 	body: z.object({
-		imageHash: z.string(),
+		imageHash: gaymojiAssetIdSchema,
 	}),
 });
 
@@ -160,7 +195,7 @@ export const giphyMessageSchema = messageBaseSchema.safeExtend({
 		id: z.string(),
 		urlPath: mediaUrlSchema,
 		stillPath: mediaUrlSchema,
-		previewPath: z.string(),
+		previewPath: mediaUrlSchema,
 		width: z.int().nonnegative(),
 		height: z.int().nonnegative(),
 		imageHash: z.string(),
@@ -203,10 +238,7 @@ export type ExpiringImageMessage = z.infer<typeof expiringImageMessageSchema>;
 
 export const locationMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("Location"),
-	body: z.object({
-		lat: z.number(),
-		lon: z.number(),
-	}),
+	body: locationPointSchema,
 });
 
 export type LocationMessage = z.infer<typeof locationMessageSchema>;
@@ -231,7 +263,7 @@ export type ProfileLinkMessage = z.infer<typeof profileLinkMessageSchema>;
 export const profilePhotoReplyMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("ProfilePhotoReply"),
 	body: z.object({
-		imageHash: z.string(),
+		imageHash: mediaHashPublicSchema,
 		photoContentReply: z.string(),
 	}),
 });
@@ -267,7 +299,10 @@ export type UnknownMessage = z.infer<typeof unknownMessageSchema>;
 
 export const videoCallMessageSchema = messageBaseSchema.safeExtend({
 	type: z.literal("VideoCall"),
-	body: z.unknown(),
+	body: z.object({
+		result: z.string().nullable(),
+		videoCallDuration: z.int().nonnegative().nullable(),
+	}),
 });
 
 export type VideoCallMessage = z.infer<typeof videoCallMessageSchema>;
@@ -296,6 +331,19 @@ export const messageSchema = z.discriminatedUnion("type", [
 	videoMessageSchema,
 ]);
 
+const oneLevelUnsentMessageSchema = z.intersection(
+	messageBaseSchema.safeExtend({
+		type: z.string().transform((): "Unsent" => "Unsent"),
+		unsent: z.literal(true),
+		body: z.null(),
+	}),
+	apiResponseMessageMetadataSchema,
+);
+
+const strictOneLevelApiResponseMessageSchema = z
+	.intersection(messageSchema, apiResponseMessageMetadataSchema)
+	.or(oneLevelUnsentMessageSchema);
+
 export const unsentMessageSchema = z.intersection(
 	messageBaseSchema.safeExtend({
 		type: z.string().transform((): "Unsent" => "Unsent"),
@@ -307,12 +355,121 @@ export const unsentMessageSchema = z.intersection(
 
 export type UnsentMessage = z.infer<typeof unsentMessageSchema>;
 
-export const apiResponseMessageSchema = z
+const strictApiResponseMessageSchema = z
 	.intersection(messageSchema, apiResponseMessageOverlaySchema)
 	.or(unsentMessageSchema);
 
+type StrictApiResponseMessage = z.infer<typeof strictApiResponseMessageSchema>;
+export type ReplyMessage = z.infer<
+	typeof strictOneLevelApiResponseMessageSchema
+>;
+export type ApiResponseMessage = StrictApiResponseMessage extends infer Variant
+	? Variant extends StrictApiResponseMessage
+		? Omit<Variant, "replyToMessage"> & {
+				replyToMessage?: ReplyMessage | null;
+			}
+		: never
+	: never;
+
+function safeSourceType(value: unknown): string {
+	if (
+		typeof value === "object" &&
+		value !== null &&
+		"type" in value &&
+		typeof value.type === "string" &&
+		/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(value.type)
+	) {
+		return value.type;
+	}
+	return "Unknown";
+}
+
+export const apiResponseMessageSchema: z.ZodType<ApiResponseMessage> = z
+	.unknown()
+	.transform((value, ctx): ApiResponseMessage => {
+		const parsed = strictApiResponseMessageSchema.safeParse(value);
+		if (parsed.success) return parsed.data as ApiResponseMessage;
+		const overlay = apiResponseMessageOverlaySchema.safeParse(value);
+		if (!overlay.success) {
+			ctx.addIssue({ code: "custom", message: "Invalid message metadata" });
+			return z.NEVER;
+		}
+		return {
+			...overlay.data,
+			type: "Unknown" as const,
+			body: { sourceType: safeSourceType(value) },
+		} as ApiResponseMessage;
+	});
+
 export type Message = z.infer<typeof messageSchema>;
-export type ApiResponseMessage = z.infer<typeof apiResponseMessageSchema>;
+
+export type RetractedDisplayMessage<
+	T extends ApiResponseMessage = ApiResponseMessage,
+> = T extends ApiResponseMessage
+	? Omit<T, "body" | "type" | "unsent"> & {
+			type: "Retracted";
+			body: null;
+			unsent: true;
+		}
+	: never;
+
+export type DisplayMessage = ApiResponseMessage | RetractedDisplayMessage;
+
+const REPLYABLE_MESSAGE_TYPES = new Set([
+	"Audio",
+	"Gaymoji",
+	"Giphy",
+	"Image",
+	"Location",
+	"NonExpiringVideo",
+	"PrivateVideo",
+	"Text",
+	"Video",
+]);
+
+export function canReplyToMessage(
+	message: DisplayMessage,
+): message is ApiResponseMessage {
+	return !message.unsent && REPLYABLE_MESSAGE_TYPES.has(message.type);
+}
+
+function asRetractedMessage<T extends ApiResponseMessage>(
+	message: T,
+): RetractedDisplayMessage<T> {
+	return { ...message, type: "Retracted", body: null, unsent: true };
+}
+
+export function applyMessageRetractions<T extends ApiResponseMessage>(
+	messages: readonly T[],
+	showRetractedMessages: boolean,
+): (T | RetractedDisplayMessage<T>)[] {
+	const targetIds = new Set(
+		messages.flatMap((message) =>
+			message.type === "Retract" ? [message.body.targetMessageId] : [],
+		),
+	);
+	const loadedIds = new Set(messages.map((message) => message.messageId));
+	const visible: (T | RetractedDisplayMessage<T>)[] = [];
+	const standaloneTargets = new Set<string>();
+	for (const message of messages) {
+		if (message.type === "Retract") {
+			if (
+				!loadedIds.has(message.body.targetMessageId) &&
+				!standaloneTargets.has(message.body.targetMessageId)
+			) {
+				standaloneTargets.add(message.body.targetMessageId);
+				visible.push(asRetractedMessage(message));
+			}
+			continue;
+		}
+		if (targetIds.has(message.messageId) && !showRetractedMessages) {
+			visible.push(asRetractedMessage(message));
+		} else {
+			visible.push(message);
+		}
+	}
+	return visible;
+}
 
 export type MessagePreview = {
 	type: string;
@@ -322,10 +479,17 @@ export type MessagePreview = {
 };
 
 export function previewFromMessage(
-	message: ApiResponseMessage | undefined,
+	message: DisplayMessage | undefined,
 ): MessagePreview {
 	if (!message) return { type: "", text: null, albumId: null, imageHash: null };
 	switch (message.type) {
+		case "Retracted":
+			return {
+				type: "Retracted",
+				text: null,
+				albumId: null,
+				imageHash: null,
+			};
 		case "Unsent":
 			return {
 				type: "Unsent",
@@ -372,5 +536,21 @@ export function previewLabel(preview: MessagePreview | null): string | null {
 	if (preview.text !== null) return preview.text;
 	if (preview.albumId !== null) return "Album";
 	if (preview.imageHash !== null || preview.type === "Image") return "Photo";
-	return null;
+	if (preview.type === "Location") return "Location";
+	const labels: Record<string, string> = {
+		Audio: "Voice message",
+		Gaymoji: "Gaymoji",
+		Generative: "Generated content",
+		Giphy: "GIF",
+		NonExpiringVideo: "Video",
+		PrivateVideo: "Private video",
+		ProfileLink: "Profile shared",
+		ProfilePhotoReply: "Photo reply",
+		Retract: "Message removed",
+		Retracted: "Message removed",
+		Unsent: "Message unsent",
+		Video: "Video",
+		VideoCall: "Video call",
+	};
+	return labels[preview.type] ?? null;
 }

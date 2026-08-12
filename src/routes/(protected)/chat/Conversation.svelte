@@ -5,6 +5,7 @@
 		BellSimpleSlashIcon,
 		PushPinIcon,
 		PushPinSlashIcon,
+		StarIcon,
 		TrashIcon,
 	} from "phosphor-svelte";
 
@@ -16,19 +17,24 @@
 	import * as ContextMenu from "$lib/components/ui/context-menu";
 	import * as Item from "$lib/components/ui/item";
 	import { previewLabel } from "$lib/model/messaging/messages";
+	import { openInboxConversationDetail } from "$lib/navigation/app-navigation";
+	import type { InboxRowDensity } from "$lib/app-data/preferences.svelte";
 	import type { Conversation } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
+	import { conversationRowPresentation } from "./conversation-row-presentation";
 
 	let {
 		conversation,
 		selection = null,
 		onEnterSelection,
 		onRequestDelete,
+		rowDensity = "comfortable",
 	}: {
 		conversation: Conversation;
 		selection?: SelectionSet<string> | null;
 		onEnterSelection?: () => void;
 		onRequestDelete?: () => void;
+		rowDensity?: InboxRowDensity;
 	} = $props();
 
 	const conversations = getConversations();
@@ -40,6 +46,10 @@
 
 	const active = $derived(page.params.conversationId === conversationId);
 	const isSelected = $derived(selection?.has(conversationId) ?? false);
+	const hasUnread = $derived(conversation.data.unreadCount > 0);
+	const presentation = $derived(
+		conversationRowPresentation({ active, unread: hasUnread }),
+	);
 
 	let contextMenuUsed = $state(false);
 
@@ -72,6 +82,15 @@
 {#snippet row()}
 	<ProfileItem
 		{active}
+		density={rowDensity}
+		ariaCurrent={presentation.ariaCurrent}
+		class={[
+			presentation.tone === "active" &&
+				"border border-l-3 border-border border-l-primary bg-muted/65 shadow-sm in-data-[contrast=high]:border-2 in-data-[contrast=high]:border-l-4 in-data-[contrast=high]:border-l-primary",
+			presentation.tone === "unread" &&
+				"in-data-[contrast=high]:border-2 in-data-[contrast=high]:border-foreground/60",
+		]}
+		titleClass={presentation.tone === "unread" ? "font-bold" : undefined}
 		avatar={{
 			mediaHash: participant?.primaryMediaHash ?? null,
 			link: participant ? `/profile/${participant.profileId}` : undefined,
@@ -83,17 +102,15 @@
 		}}
 		onlineUntil={conversation.data.onlineUntil ?? participant?.onlineUntil}
 		link="/chat/{conversationId}"
+		onNavigate={openInboxConversationDetail}
+		actionsPlacement="title"
+		compact
 		selected={isSelected}
 		onToggleSelected={selection ? toggleSelected : undefined}
 		onLongPress={onEnterSelection}
 	>
 		{#snippet description()}
-			<Item.Description
-				class={{
-					"font-medium text-white":
-						conversation.data.unreadCount > 0 && !conversation.data.muted,
-				}}
-			>
+			<Item.Description class={{ "font-semibold text-foreground": hasUnread }}>
 				{#if previewText !== null}
 					{previewText}
 				{:else}
@@ -102,10 +119,20 @@
 			</Item.Description>
 		{/snippet}
 		{#snippet actions()}
-			<Item.Actions class="flex min-w-0 flex-col items-end gap-1">
+			<Item.Actions class="flex min-w-0 shrink-0 items-center gap-1">
 				<span
 					class="flex max-w-full items-center gap-1 font-medium text-muted-foreground"
 				>
+					{#if conversation.data.favorite}
+						<span title="Favorite">
+							<span class="sr-only">Favorite</span>
+							<StarIcon
+								aria-hidden="true"
+								weight="fill"
+								class="size-4 shrink-0 text-primary"
+							/>
+						</span>
+					{/if}
 					{#if conversation.data.pinned}
 						<PushPinIcon weight="fill" class="size-4 shrink-0" />
 					{/if}
@@ -115,12 +142,16 @@
 						/>
 					</span>
 				</span>
-				{#if conversation.data.unreadCount > 0}
+				{#if hasUnread}
 					<Badge
 						variant={conversation.data.muted ? "secondary" : "default"}
-						class="px-[5.5px] @max-row:hidden"
+						class="shrink-0 px-1.5 in-data-[contrast=high]:ring-2 in-data-[contrast=high]:ring-primary-foreground @max-row:hidden"
 					>
-						{conversation.data.unreadCount}
+						<span aria-hidden="true">{conversation.data.unreadCount}</span>
+						<span class="sr-only">
+							{conversation.data.unreadCount} unread
+							{conversation.data.unreadCount === 1 ? "message" : "messages"}
+						</span>
 					</Badge>
 				{/if}
 			</Item.Actions>

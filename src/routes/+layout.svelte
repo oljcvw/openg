@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { isTauri } from "@tauri-apps/api/core";
+	import { platform } from "@tauri-apps/plugin-os";
 	import "@fontsource-variable/ibm-plex-sans/wght.css";
 	import "@fontsource-variable/ibm-plex-sans/wght-italic.css";
 
@@ -8,14 +10,37 @@
 	import { onMount } from "svelte";
 	import { Toaster } from "svelte-sonner";
 
-	import { hydratePreferences } from "$lib/app-data/preferences.svelte";
+	import { registerApiHealthListener } from "$lib/api/api-health-state.svelte";
+	import {
+		getContrastModeSnapshot,
+		getStayAwakeSnapshot,
+		hydratePreferences,
+	} from "$lib/app-data/preferences.svelte";
 	import {
 		applyAndroidInsets,
 		applyBackGestureHandler,
 		registerAndroidBackButtonListener,
 	} from "$lib/platform/android-native-bridge";
 	import { blockZoom } from "$lib/platform/block-zoom";
-	import { isAndroidPlatform } from "$lib/platform/os";
+	import { registerGlobalErrorReporting } from "$lib/platform/client-diagnostics";
+	import { applyLogcatSetting } from "$lib/platform/logcat-settings";
+	import { registerMediaOriginLogging } from "$lib/platform/media-origin-logging";
+	import {
+		applyStayAwake,
+		registerStayAwakeVisibilityListener,
+	} from "$lib/platform/stay-awake";
+	import { applyContrastMode } from "$lib/theme/contrast";
+
+	$effect(() => {
+		applyContrastMode(getContrastModeSnapshot());
+	});
+
+	$effect(() => {
+		const stayAwake = getStayAwakeSnapshot();
+		void applyStayAwake(stayAwake).catch((error) => {
+			console.error("Failed to apply Stay Awake preference", error);
+		});
+	});
 
 	onMount(() => {
 		if (env.PUBLIC_TEST_INSETS) {
@@ -26,34 +51,51 @@
 				bottom() {
 					return 64;
 				},
+				imeBottom() {
+					return 0;
+				},
 				left() {
 					return 0;
 				},
 				right() {
 					return 0;
 				},
+				setImeLayoutMode() {},
 			};
 		}
 		applyAndroidInsets();
 		applyBackGestureHandler();
 		const releaseZoomBlock = blockZoom();
-		if (isAndroidPlatform()) {
+		if (isTauri() && platform() === "android") {
 			void registerAndroidBackButtonListener().catch((error) => {
 				console.error("Failed to register back button listener", error);
 			});
 		}
-		void hydratePreferences().catch((error) => {
-			console.error("Failed to hydrate preferences", error);
-		});
-		return releaseZoomBlock;
+		void hydratePreferences()
+			.then(() => applyLogcatSetting())
+			.catch((error) => {
+				console.error("Failed to hydrate preferences", error);
+			});
+		const releaseStayAwake = registerStayAwakeVisibilityListener();
+		const releaseApiHealth = registerApiHealthListener();
+		const releaseErrorReporting = registerGlobalErrorReporting();
+		const releaseMediaOriginLogging = isTauri()
+			? registerMediaOriginLogging()
+			: () => {};
+		return () => {
+			releaseMediaOriginLogging();
+			releaseErrorReporting();
+			releaseApiHealth();
+			releaseStayAwake();
+			releaseZoomBlock();
+		};
 	});
 
 	import { env } from "$env/dynamic/public";
 
 	import favicon from "$lib/assets/favicon.png";
 	import AccountStatusAlert from "$lib/components/feedback/AccountStatusAlert.svelte";
-	import CopyErrorConfirmAlert from "$lib/components/feedback/CopyErrorConfirmAlert.svelte";
-	import RequestBlockedAlert from "$lib/components/feedback/RequestBlockedAlert.svelte";
+	import ApiMitigationBanner from "$lib/components/feedback/ApiMitigationBanner.svelte";
 	import SessionErrorAlert from "$lib/components/feedback/SessionErrorAlert.svelte";
 
 	let {
@@ -96,19 +138,18 @@
 	]}
 	style="height: var(--safe-area-bottom)"
 ></div>
-<IconContext values={{ "aria-hidden": true }}>
-	<Toaster
-		position="bottom-center"
-		offset={toastOffset}
-		mobileOffset={toastOffset}
-		toastOptions={{
-			class: "toast",
-		}}
-		expand
-	/>
+<Toaster
+	position="bottom-center"
+	offset={toastOffset}
+	mobileOffset={toastOffset}
+	toastOptions={{
+		class: "toast",
+	}}
+	expand
+/>
+<ApiMitigationBanner />
+<IconContext values={{}}>
 	{@render children?.()}
-	<RequestBlockedAlert />
-	<SessionErrorAlert />
-	<AccountStatusAlert />
-	<CopyErrorConfirmAlert />
 </IconContext>
+<SessionErrorAlert />
+<AccountStatusAlert />

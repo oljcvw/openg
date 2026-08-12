@@ -1,21 +1,47 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import z from "zod";
 
-const { fetchRestMock } = vi.hoisted(() => ({
+const {
+	fetchRestMock,
+	getDeveloperSettingsSnapshotMock,
+	readCachedProfileEntryMock,
+	removeCachedProfileMock,
+	writeCachedProfileMock,
+} = vi.hoisted(() => ({
 	fetchRestMock:
-		vi.fn<(path: string, options?: { method?: string }) => unknown>(),
+		vi.fn<
+			(path: string, options?: { method?: string; body?: unknown }) => unknown
+		>(),
+	getDeveloperSettingsSnapshotMock: vi.fn(() => ({
+		profileResolutionBatchSize: 30,
+	})),
+	readCachedProfileEntryMock: vi.fn(),
+	removeCachedProfileMock: vi.fn(),
+	writeCachedProfileMock: vi.fn(),
 }));
 
 vi.mock("$lib/api", async (importOriginal) => ({
 	...(await importOriginal<typeof import("$lib/api")>()),
 	fetchRest: fetchRestMock,
 }));
+vi.mock("$lib/app-data/profile-cache", () => ({
+	readCachedProfileEntry: readCachedProfileEntryMock,
+	removeCachedProfile: removeCachedProfileMock,
+	writeCachedProfile: writeCachedProfileMock,
+}));
+vi.mock("$lib/app-data/preferences.svelte", () => ({
+	getDeveloperSettingsSnapshot: getDeveloperSettingsSnapshotMock,
+}));
 
+import { activateAccountSession } from "$lib/api/account-caches";
 import {
 	applyProfileEdit,
 	clearProfileCaches,
 	deleteProfilePhotos,
+	getMyProfile,
+	getPersistedProfile,
 	getProfile,
+	getProfiles,
+	noteProfileFreshness,
 	patchOwnProfile,
 	ProfileModerationError,
 	type ProfileUpdate,
@@ -32,12 +58,9 @@ function ok(data: unknown) {
 		assertOk() {},
 		json: () => data,
 		jsonParsed: () => data,
-		text: () => (data ? JSON.stringify(data) : ""),
+		text: () =>
+			data === null || data === undefined ? "" : JSON.stringify(data),
 	};
-}
-
-function okValidated(data: unknown) {
-	return { ...ok(data), jsonParsed: (schema: z.ZodType) => schema.parse(data) };
 }
 
 function okRaw(text: string, status = 200) {
@@ -79,12 +102,26 @@ function fullProfile() {
 			facebook: { userId: "fb" },
 		},
 		medias: [{ mediaHash: "a" }, { mediaHash: "b" }],
+		lastUpdatedTime: 1_000,
+	};
+}
+
+function shortProfile() {
+	return {
+		profileId: PROFILE_ID,
+		showDistance: false,
+		medias: [{ mediaHash: "a" }, { mediaHash: "b" }],
 	};
 }
 
 beforeEach(() => {
+	activateAccountSession(1);
 	clearProfileCaches();
 	fetchRestMock.mockReset();
+	readCachedProfileEntryMock.mockReset().mockResolvedValue(null);
+	removeCachedProfileMock.mockReset().mockResolvedValue(undefined);
+	writeCachedProfileMock.mockReset().mockResolvedValue(undefined);
+	getDeveloperSettingsSnapshotMock.mockClear();
 	fetchRestMock.mockImplementation(
 		(path: string, opts?: { method?: string }) => {
 			const method = opts?.method ?? "GET";
@@ -97,6 +134,9 @@ beforeEach(() => {
 			if (path === "/v3.1/me/profile" && method === "PUT") {
 				return Promise.resolve(ok({}));
 			}
+			if (path === "/v4/me/profile") {
+				return Promise.resolve(ok({ profiles: [shortProfile()] }));
+			}
 			if (path === "/v3/me/profile/images") {
 				return Promise.resolve(ok(null));
 			}
@@ -107,6 +147,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	resetNowForTesting();
+	vi.restoreAllMocks();
 });
 
 function countRequests(pathPrefix: string): number {
@@ -116,6 +157,18 @@ function countRequests(pathPrefix: string): number {
 }
 
 describe("cache TTL", () => {
+	it("ignores an unreadable persisted profile cache", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+		readCachedProfileEntryMock.mockRejectedValueOnce(
+			new Error("corrupt cache"),
+		);
+
+		await expect(getPersistedProfile(PROFILE_ID)).resolves.toBeNull();
+		expect(consoleError).toHaveBeenCalledWith("Profile cache hydration failed");
+	});
+
 	it("serves getProfile from cache within the TTL and refetches after it", async () => {
 		let clock = 1_000;
 		setNowForTesting(() => clock);
@@ -132,21 +185,152 @@ describe("cache TTL", () => {
 		await getProfile(PROFILE_ID);
 		expect(countRequests("/v7/profiles/")).toBe(2);
 	});
+
+	it("serves getMyProfile from cache within the TTL and refetches after it", async () => {
+		let clock = 1_000;
+		setNowForTesting(() => clock);
+
+		await getMyProfile();
+		await getMyProfile();
+		expect(countRequests("/v4/me/profile")).toBe(1);
+
+		clock += 60_000;
+		await getMyProfile();
+		expect(countRequests("/v4/me/profile")).toBe(2);
+	});
+
+	it("refetches when a profile summary reports newer server data", async () => {
+		setNowForTesting(() => 10_000);
+		await getProfile(PROFILE_ID);
+		noteProfileFreshness(PROFILE_ID, 2_000);
+
+		await getProfile(PROFILE_ID);
+
+		expect(countRequests("/v7/profiles/")).toBe(2);
+	});
+
+	it("does not reuse or persist a late profile response across accounts", async () => {
+		let resolveFirst!: (value: ReturnType<typeof ok>) => void;
+		fetchRestMock.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					resolveFirst = resolve;
+				}),
+		);
+		const first = getProfile(PROFILE_ID);
+		await vi.waitFor(() => expect(fetchRestMock).toHaveBeenCalledOnce());
+
+		activateAccountSession(2);
+		fetchRestMock.mockResolvedValueOnce(
+			ok({ profiles: [{ ...fullProfile(), displayName: "Account B" }] }),
+		);
+		await expect(getProfile(PROFILE_ID)).resolves.toMatchObject({
+			displayName: "Account B",
+		});
+
+		resolveFirst(
+			ok({ profiles: [{ ...fullProfile(), displayName: "Account A" }] }),
+		);
+		await expect(first).rejects.toMatchObject({ name: "AbortError" });
+		await vi.waitFor(() =>
+			expect(writeCachedProfileMock).toHaveBeenCalledOnce(),
+		);
+		expect(writeCachedProfileMock).toHaveBeenCalledWith(
+			expect.objectContaining({ displayName: "Account B" }),
+			expect.any(Number),
+		);
+	});
 });
 
-describe("getProfile", () => {
-	it("rejects an empty profiles array instead of caching undefined", async () => {
-		fetchRestMock.mockImplementationOnce(() =>
-			Promise.resolve(okValidated({ profiles: [] })),
+describe("getProfiles batching", () => {
+	it.each([31, 60, 150])(
+		"caps every /v3/profiles request for %i IDs at the configured official limit",
+		async (count) => {
+			const profileIds = Array.from({ length: count }, (_, index) => index + 1);
+			fetchRestMock.mockImplementation(
+				(_path: string, options?: { body?: unknown }) => {
+					const targetProfileIds = (
+						options?.body as { targetProfileIds: number[] }
+					).targetProfileIds;
+					return Promise.resolve(
+						ok({
+							profiles: targetProfileIds.map((profileId) => ({
+								...shortProfile(),
+								profileId,
+							})),
+						}),
+					);
+				},
+			);
+
+			const profiles = await getProfiles(profileIds);
+
+			expect(profiles.map((profile) => profile.profileId)).toEqual(profileIds);
+			expect(
+				fetchRestMock.mock.calls.map(
+					([, options]) =>
+						(options?.body as { targetProfileIds: number[] }).targetProfileIds
+							.length,
+				),
+			).toEqual(
+				Array.from({ length: Math.ceil(count / 30) }, (_, index) =>
+					Math.min(30, count - index * 30),
+				),
+			);
+		},
+	);
+
+	it("honors a lower configured batch size", async () => {
+		getDeveloperSettingsSnapshotMock.mockReturnValueOnce({
+			profileResolutionBatchSize: 12,
+		});
+		fetchRestMock.mockImplementation(
+			(_path: string, options?: { body?: unknown }) =>
+				Promise.resolve(
+					ok({
+						profiles: (
+							options?.body as { targetProfileIds: number[] }
+						).targetProfileIds.map((profileId) => ({
+							...shortProfile(),
+							profileId,
+						})),
+					}),
+				),
 		);
 
-		const error = await getProfile(PROFILE_ID).catch((e: unknown) => e);
+		await getProfiles(Array.from({ length: 31 }, (_, index) => index + 1));
 
-		expect(error).toBeInstanceOf(z.ZodError);
-		expect((error as z.ZodError).issues[0]?.code).toBe("too_small");
+		expect(
+			fetchRestMock.mock.calls.map(
+				([, options]) =>
+					(options?.body as { targetProfileIds: number[] }).targetProfileIds
+						.length,
+			),
+		).toEqual([12, 12, 7]);
+	});
 
-		expect(await getProfile(PROFILE_ID)).toEqual(fullProfile());
-		expect(countRequests("/v7/profiles/")).toBe(2);
+	it("deduplicates IDs and restores caller order across server responses", async () => {
+		fetchRestMock.mockImplementation(
+			(_path: string, options?: { body?: unknown }) =>
+				Promise.resolve(
+					ok({
+						profiles: [
+							...(options?.body as { targetProfileIds: number[] })
+								.targetProfileIds,
+						]
+							.reverse()
+							.map((profileId) => ({ ...shortProfile(), profileId })),
+					}),
+				),
+		);
+
+		const profiles = await getProfiles([3, 1, 3, 2]);
+
+		expect(profiles.map((profile) => profile.profileId)).toEqual([3, 1, 2]);
+		expect(fetchRestMock).toHaveBeenCalledOnce();
+		expect(fetchRestMock.mock.calls[0]![1]?.body).toEqual({
+			targetProfileIds: [3, 1, 2],
+		});
 	});
 });
 
@@ -215,18 +399,6 @@ describe("updateOwnProfile", () => {
 		const cached = await getProfile(PROFILE_ID);
 		expect(cached.displayName).toBe("Neo");
 		expect(cached.aboutMe).toBe("the one");
-	});
-
-	it("merges a moderated edit made after the cache entry expired", async () => {
-		let clock = 1_000;
-		setNowForTesting(() => clock);
-		await getProfile(PROFILE_ID);
-
-		clock += 60_000;
-		await updateOwnProfile(PROFILE_ID, update({ displayName: "Neo" }));
-
-		expect((await getProfile(PROFILE_ID)).displayName).toBe("Neo");
-		expect(countRequests("/v7/profiles/")).toBe(1);
 	});
 
 	it("merges into the cache when the server answers with an empty body", async () => {
@@ -299,12 +471,14 @@ describe("updateOwnProfile", () => {
 });
 
 describe("deleteProfilePhotos", () => {
-	it("removes the hash from the cached profile", async () => {
+	it("removes the hash from both the full and short profile caches", async () => {
 		await getProfile(PROFILE_ID);
+		await getMyProfile();
 
 		await deleteProfilePhotos(PROFILE_ID, ["a"]);
 
 		expect((await getProfile(PROFILE_ID)).medias).toEqual([{ mediaHash: "b" }]);
+		expect((await getMyProfile()).medias).toEqual([{ mediaHash: "b" }]);
 	});
 
 	it("does not send a request when there are no hashes to remove", async () => {

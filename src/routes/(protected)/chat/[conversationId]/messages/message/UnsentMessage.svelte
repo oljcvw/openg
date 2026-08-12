@@ -2,6 +2,8 @@
 	import { getMessageContext, getMessageMetaContext } from "./context";
 	import MessageTail from "./MessageTail.svelte";
 
+	let { label = "Message unsent" }: { label?: string } = $props();
+
 	const { lastInStack, isOut } = $derived(getMessageContext()());
 	const { clone, setRef, adornments } = $derived(getMessageMetaContext()());
 
@@ -27,6 +29,6 @@
 	{#if lastInStack}
 		<MessageTail {isOut} class="fill-muted" />
 	{/if}
-	<span class="whitespace-pre-wrap">Message unsent</span>
+	<span class="whitespace-pre-wrap">{label}</span>
 	{@render adornments?.()}
 </div>

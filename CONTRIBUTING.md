@@ -111,7 +111,9 @@ process.stdout.write("Grindr3 " + (await req.json().then((t) => t.sessionId)));
 
 Before opening a pull request, run the same checks CI runs:
 
-- `bun run lint` — ESLint. Formatting is separate: `bun run format` (Prettier).
+- `bun run lint` — ESLint. It reports each file as it starts by default; set
+  `ESLINT_PROGRESS=0` for quiet output. Formatting is separate: `bun run format`
+  (Prettier).
 - `bun run check` — `svelte-check` type checking.
 - `bun run test` — frontend unit tests (Vitest) and Rust backend tests (`cargo test`) together. Individually: `bun run test:unit` and `bun run test:rust`.
 

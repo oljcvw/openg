@@ -1,17 +1,38 @@
 import z from "zod";
 
 import { fetchRest } from "$lib/api";
+import {
+	type AccountSessionSnapshot,
+	getAccountSessionSnapshot,
+	isAccountSessionCurrent,
+	registerAccountCache,
+} from "$lib/api/account-caches";
 import { ApiError } from "$lib/api/api-error";
 import { getBlockedUsers } from "$lib/api/browse/blocks";
-import { FetchCache } from "$lib/api/cache";
+import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
+import {
+	readCachedProfileEntry,
+	removeCachedProfile,
+	writeCachedProfile,
+} from "$lib/app-data/profile-cache";
+import {
+	clearProfileMemoryCache,
+	deleteProfileMemoryRecord,
+	getProfileMemoryRecord,
+	mergeProfileMemoryRecord,
+} from "$lib/app-data/profile-memory-cache";
 import { mediaHashPublicSchema } from "$lib/model/media";
 import { rightNowAttributionStatusSchema } from "$lib/model/right-now";
 import {
+	genderSchema,
 	type Profile,
 	profileRightNowSchema,
 	profileSchema,
 	profileShortSchema,
+	pronounSchema,
 } from "$lib/model/users/profiles";
+import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
+import { now } from "$lib/util/clock";
 
 function isProbablyUnavailable(profile: Profile) {
 	const nullFields = [
@@ -89,63 +110,224 @@ const profileResponseSchema = z.object({
 	profiles: z.array(profileSchema).length(1),
 });
 
+function getFullProfileRecord(
+	profileId: number,
+): { profile: Profile; updatedAt: number } | null {
+	return (
+		(getProfileMemoryRecord(profileId)?.full as {
+			profile: Profile;
+			updatedAt: number;
+		}) ?? null
+	);
+}
+
+function setFullProfileRecord(
+	profileId: number,
+	record: { profile: Profile; updatedAt: number },
+): void {
+	mergeProfileMemoryRecord(profileId, { full: record }, record.updatedAt);
+}
+
+const profilesInFlight = new Map<string, Promise<Profile>>();
+
+function profileCacheIsFresh(
+	profileId: number,
+	cached: { profile: Profile; updatedAt: number },
+): boolean {
+	if (now() - cached.updatedAt >= 1000 * 60) return false;
+	const hint = getProfileMemoryRecord(profileId)?.freshnessHint;
+	if (hint === undefined) return true;
+	return (
+		cached.profile.lastUpdatedTime !== null &&
+		cached.profile.lastUpdatedTime >= hint
+	);
+}
+
+export function noteProfileFreshness(
+	profileId: number,
+	lastUpdatedTime: number | null,
+): void {
+	if (lastUpdatedTime === null) return;
+	const current = getProfileMemoryRecord(profileId)?.freshnessHint ?? 0;
+	if (lastUpdatedTime > current) {
+		mergeProfileMemoryRecord(profileId, { freshnessHint: lastUpdatedTime });
+	}
+}
+
+export async function getProfile(profileId: number): Promise<Profile> {
+	const session = getAccountSessionSnapshot();
+	const cached = getFullProfileRecord(profileId);
+	if (cached && profileCacheIsFresh(profileId, cached)) {
+		return cached.profile;
+	}
+	const requestKey = profileRequestKey(profileId, session);
+	let request = profilesInFlight.get(requestKey);
+	if (!request) {
+		request = fetchProfile(profileId, session).finally(() => {
+			profilesInFlight.delete(requestKey);
+		});
+		profilesInFlight.set(requestKey, request);
+	}
+	return request;
+}
+
+export async function getPersistedProfile(
+	profileId: number,
+): Promise<Profile | null> {
+	const session = getAccountSessionSnapshot();
+	const cached = getFullProfileRecord(profileId);
+	if (cached) return structuredClone(cached.profile);
+	const persisted = await readCachedProfileEntry(profileId, now()).catch(() => {
+		console.error("Profile cache hydration failed");
+		reportClientDiagnostic({
+			category: "cache_recovery",
+			component: "profile",
+			code: "bypassed_unreadable_cache",
+			level: "warning",
+		});
+		return null;
+	});
+	assertAccountSessionCurrent(session);
+	if (!persisted) return null;
+	setFullProfileRecord(profileId, persisted);
+	return structuredClone(persisted.profile);
+}
+
+export async function refreshProfile(profileId: number): Promise<Profile> {
+	const session = getAccountSessionSnapshot();
+	const requestKey = profileRequestKey(profileId, session);
+	let request = profilesInFlight.get(requestKey);
+	if (!request) {
+		request = fetchProfile(profileId, session).finally(() => {
+			profilesInFlight.delete(requestKey);
+		});
+		profilesInFlight.set(requestKey, request);
+	}
+	return await request;
+}
+
 const MAGIC_PROFILE_UNAVAILABLE_DISPLAY_NAME = "3";
 const MAGIC_PROFILE_BLOCK_DISPLAY_NAME = "4";
 
-async function fetchProfile(profileId: number): Promise<Profile> {
-	const [profile] = (
+async function fetchProfile(
+	profileId: number,
+	session: AccountSessionSnapshot,
+): Promise<Profile> {
+	const profile = (
 		await fetchRest(`/v7/profiles/${profileId}`, {
 			method: "GET",
 		}).then((res) => res.jsonParsed(profileResponseSchema))
-	).profiles;
+	).profiles[0];
+	assertAccountSessionCurrent(session);
 	if (!profile) throw new ProfileUnavailableError();
 	if (isProbablyUnavailable(profile)) {
 		if (profile.displayName === MAGIC_PROFILE_BLOCK_DISPLAY_NAME) {
 			const blockedByUs = await getBlockedUsers().then((blocking) =>
 				blocking.some((blocked) => blocked.profileId === profileId),
 			);
+			assertAccountSessionCurrent(session);
 			throw new BlockedProfileError({ blockedByUs });
 		} else if (profile.displayName === MAGIC_PROFILE_UNAVAILABLE_DISPLAY_NAME) {
 			throw new ProfileUnavailableError();
 		}
 	}
+	setFullProfileRecord(profileId, { profile, updatedAt: now() });
+	void writeCachedProfile(profile, now()).catch((error: unknown) => {
+		console.error("Profile cache persistence failed", error);
+	});
 	return profile;
 }
 
-const profiles = new FetchCache(fetchProfile, { ttlMs: 60_000 });
-
-export function getProfile(profileId: number): Promise<Profile> {
-	return profiles.fetch(profileId);
-}
-
-const profileShortWithRightNowSchema = z.object({
+const profileSummarySchema = z.object({
 	...profileShortSchema.shape,
 	...profileRightNowSchema.shape,
 	rightNowStatus: rightNowAttributionStatusSchema.nullish().catch("NONE"),
 });
 
 const getProfilesResponseSchema = z.object({
-	profiles: z.array(profileShortWithRightNowSchema),
+	profiles: z.array(profileSummarySchema),
 });
+const MY_PROFILE_CACHE_KEY = "me";
+
+export type ProfileSummary = z.infer<typeof profileSummarySchema>;
 
 export async function getProfiles(
 	profileIds: number[],
-): Promise<z.infer<typeof getProfilesResponseSchema>["profiles"]> {
+): Promise<ProfileSummary[]> {
 	if (profileIds.length === 0) return [];
-	return await fetchRest("/v3/profiles", {
-		method: "POST",
-		body: {
-			targetProfileIds: profileIds,
-		},
-	}).then((res) => res.jsonParsed(getProfilesResponseSchema).profiles);
+	const session = getAccountSessionSnapshot();
+	const batchSize = Math.min(
+		30,
+		Math.max(1, getDeveloperSettingsSnapshot().profileResolutionBatchSize),
+	);
+	const requestedProfileIds = [...new Set(profileIds)];
+	const profilesById = new Map<
+		number,
+		z.infer<typeof getProfilesResponseSchema>["profiles"][number]
+	>();
+	for (let index = 0; index < requestedProfileIds.length; index += batchSize) {
+		const batch = requestedProfileIds.slice(index, index + batchSize);
+		const resolved = await fetchRest("/v3/profiles", {
+			method: "POST",
+			body: { targetProfileIds: batch },
+		}).then((res) => res.jsonParsed(getProfilesResponseSchema).profiles);
+		for (const profile of resolved)
+			profilesById.set(profile.profileId, profile);
+		assertAccountSessionCurrent(session);
+	}
+	const profiles = requestedProfileIds.flatMap((profileId) => {
+		const profile = profilesById.get(profileId);
+		return profile ? [profile] : [];
+	});
+	for (const profile of profiles) {
+		noteProfileFreshness(profile.profileId, profile.lastUpdatedTime);
+	}
+	return profiles;
+}
+
+export async function getMyProfile() {
+	const session = getAccountSessionSnapshot();
+	const cached = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY)?.me as
+		z.infer<typeof getProfilesResponseSchema>["profiles"][0] | undefined;
+	if (cached) return cached;
+	const profile = await fetchRest("/v4/me/profile").then(
+		(res) => res.jsonParsed(getProfilesResponseSchema).profiles[0],
+	);
+	assertAccountSessionCurrent(session);
+	if (!profile) throw new ProfileUnavailableError();
+	mergeProfileMemoryRecord(MY_PROFILE_CACHE_KEY, { me: profile });
+	return profile;
 }
 
 export function clearProfileCaches() {
-	profiles.clear();
+	clearProfileMemoryCache();
+	profilesInFlight.clear();
+}
+
+registerAccountCache(clearProfileCaches);
+
+function profileRequestKey(
+	profileId: number,
+	session: AccountSessionSnapshot,
+): string {
+	return `${session.generation}:${profileId}`;
+}
+
+function assertAccountSessionCurrent(session: AccountSessionSnapshot): void {
+	if (!isAccountSessionCurrent(session)) {
+		throw new DOMException("Account session changed", "AbortError");
+	}
 }
 
 export function invalidateProfile(profileId: number) {
-	profiles.delete(profileId);
+	deleteProfileMemoryRecord(profileId);
+	const own = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY)?.me as
+		z.infer<typeof getProfilesResponseSchema>["profiles"][0] | undefined;
+	if (own?.profileId === profileId)
+		deleteProfileMemoryRecord(MY_PROFILE_CACHE_KEY);
+	void removeCachedProfile(profileId).catch((error: unknown) => {
+		console.error("Profile cache invalidation failed", error);
+	});
 }
 
 export type ProfileEdit = Partial<
@@ -197,9 +379,29 @@ export function mergeProfileEditIntoCaches(
 	cacheProfileId: number,
 	patch: Partial<Profile>,
 ) {
-	profiles.update(cacheProfileId, (profile) =>
-		applyProfileEdit(profile, patch),
-	);
+	const cached = getFullProfileRecord(cacheProfileId);
+	if (cached) {
+		const profile = applyProfileEdit(cached.profile, patch);
+		setFullProfileRecord(cacheProfileId, {
+			profile,
+			updatedAt: now(),
+		});
+		void writeCachedProfile(profile, now()).catch((error: unknown) => {
+			console.error("Profile cache persistence failed", error);
+		});
+	}
+	const ownRecord = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY);
+	const ownProfile = ownRecord?.me as
+		z.infer<typeof getProfilesResponseSchema>["profiles"][0] | undefined;
+	if (ownProfile?.profileId === cacheProfileId) {
+		const next: Record<string, unknown> = { ...ownProfile };
+		for (const key of Object.keys(patch)) {
+			if (key in next) next[key] = patch[key as keyof Profile];
+		}
+		mergeProfileMemoryRecord(MY_PROFILE_CACHE_KEY, {
+			me: next,
+		});
+	}
 }
 
 export async function patchOwnProfile(
@@ -311,10 +513,42 @@ export async function deleteProfilePhotos(
 	});
 	res.assertOk();
 	const removed = new Set(mediaHashes);
-	profiles.update(cacheProfileId, (profile) => ({
-		...profile,
-		medias: profile.medias.filter((m) => !removed.has(m.mediaHash)),
-	}));
+	const cached = getFullProfileRecord(cacheProfileId);
+	if (cached) {
+		setFullProfileRecord(cacheProfileId, {
+			profile: {
+				...cached.profile,
+				medias: cached.profile.medias.filter((m) => !removed.has(m.mediaHash)),
+			},
+			updatedAt: now(),
+		});
+	}
+	const ownProfile = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY)?.me as
+		z.infer<typeof getProfilesResponseSchema>["profiles"][0] | undefined;
+	if (ownProfile?.profileId === cacheProfileId) {
+		mergeProfileMemoryRecord(MY_PROFILE_CACHE_KEY, {
+			me: {
+				...ownProfile,
+				medias: ownProfile.medias.filter((m) => !removed.has(m.mediaHash)),
+			},
+		});
+	}
+}
+
+const gendersResponseSchema = z.array(genderSchema);
+
+export async function getGenders() {
+	return await fetchRest("/public/v2/genders").then((res) =>
+		res.jsonParsed(gendersResponseSchema),
+	);
+}
+
+const pronounsResponseSchema = z.array(pronounSchema);
+
+export async function getPronouns() {
+	return await fetchRest("/v1/pronouns").then((res) =>
+		res.jsonParsed(pronounsResponseSchema),
+	);
 }
 
 export async function getProfileUploadedPhotos() {

@@ -2,7 +2,9 @@ use serde::Serialize;
 
 use crate::error::AppError;
 use crate::state::AppState;
-use crate::storage::{AuthStorage, DeviceStorage, SigningKeyStorage};
+use crate::storage::{
+	account_storage_lock, AuthStorage, DeviceStorage, SigningKeyStorage,
+};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -103,11 +105,7 @@ pub async fn google_sign_in(
 pub async fn refresh_token(
 	state: tauri::State<'_, AppState>,
 ) -> Result<LoginResult, AppError> {
-	let client = state.client()?;
-	let result = client
-		.refresh_token()
-		.await
-		.map_err(|e| AppError::from_client_error(e, client))?;
+	let result = state.client()?.refresh_token().await?;
 	Ok(LoginResult::from(result))
 }
 
@@ -116,15 +114,15 @@ pub async fn logout(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
 	let client = state.client()?;
 
 	client.logout().await;
+	let _storage_guard = account_storage_lock().lock().await;
 	AuthStorage::delete_session();
 	SigningKeyStorage::delete();
 
-	let new_device = grindr::DeviceInfo::generate();
+	let new_device = super::identity::generate_aligned_device();
 	if let Err(e) = DeviceStorage::save(&new_device) {
 		tracing::error!(
 			"[auth] could not persist rotated device info on sign out: {e}"
 		);
-		DeviceStorage::delete();
 	}
 	client.rotate_device(new_device).await?;
 

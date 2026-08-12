@@ -1,6 +1,17 @@
+pub mod account;
+pub mod album_cache;
+pub mod album_presets;
 pub mod auth;
-pub mod client;
+pub mod diagnostics;
+pub mod direct_media_cache;
+mod encrypted_media_store;
 pub mod google_oauth;
+pub mod identity;
+pub mod media_capture;
 pub mod media_upload;
+pub mod notifications;
 pub mod rest;
+pub mod runtime;
+pub mod video_call;
+pub mod voice_recorder;
 pub mod ws;

@@ -1,57 +1,56 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
-	accountEpoch,
-	clearAccountCaches,
-	isAccountEpochCurrent,
+	activateAccountSession,
+	getAccountSessionSnapshot,
+	invalidateAccountSession,
+	isAccountSessionCurrent,
 	registerAccountCache,
-} from "./account-caches";
+	subscribeAccountGeneration,
+} from "$lib/api/account-caches";
 
-describe("account cache epoch", () => {
-	it("invalidates an epoch captured before a clear", () => {
-		const captured = accountEpoch();
-		expect(isAccountEpochCurrent(captured)).toBe(true);
-		clearAccountCaches();
-		expect(isAccountEpochCurrent(captured)).toBe(false);
+describe("account session generation", () => {
+	it("invalidates prior work before activating another account", () => {
+		const reset = vi.fn();
+		registerAccountCache(reset);
+		const first = activateAccountSession(101);
+		reset.mockClear();
+
+		const second = activateAccountSession(202);
+
+		expect(isAccountSessionCurrent(first)).toBe(false);
+		expect(isAccountSessionCurrent(second)).toBe(true);
+		expect(getAccountSessionSnapshot().accountId).toBe(202);
+		expect(reset).toHaveBeenCalledOnce();
 	});
 
-	it("keeps an epoch captured after the clear valid", () => {
-		clearAccountCaches();
-		const captured = accountEpoch();
-		expect(isAccountEpochCurrent(captured)).toBe(true);
+	it("returns the account being invalidated for ordered deletion", () => {
+		activateAccountSession(303);
+
+		const previous = invalidateAccountSession();
+
+		expect(previous.accountId).toBe(303);
+		expect(isAccountSessionCurrent(previous)).toBe(false);
+		expect(getAccountSessionSnapshot().accountId).toBeNull();
 	});
 
-	it("drops a write from a request that was in flight across a sign-out", async () => {
-		let cache: string | null = null;
-		registerAccountCache({
-			reset: () => {
-				cache = null;
-			},
+	it("notifies generation subscribers without exposing account identifiers", () => {
+		const observed: number[] = [];
+		const release = subscribeAccountGeneration((generation) => {
+			observed.push(generation);
 		});
+		const initialGeneration = getAccountSessionSnapshot().generation;
 
-		const load = async (value: string) => {
-			const epoch = accountEpoch();
-			await Promise.resolve();
-			if (isAccountEpochCurrent(epoch)) cache = value;
-		};
+		activateAccountSession(987_654_321);
+		invalidateAccountSession();
+		release();
+		activateAccountSession(123_456_789);
 
-		const inFlight = load("previous account");
-		clearAccountCaches();
-		await inFlight;
-
-		expect(cache).toBeNull();
-	});
-
-	it("still caches when no clear intervenes", async () => {
-		let cache: string | null = null;
-		const load = async (value: string) => {
-			const epoch = accountEpoch();
-			await Promise.resolve();
-			if (isAccountEpochCurrent(epoch)) cache = value;
-		};
-
-		await load("same account");
-
-		expect(cache).toBe("same account");
+		expect(observed).toEqual([
+			initialGeneration,
+			initialGeneration + 1,
+			initialGeneration + 2,
+		]);
+		expect(JSON.stringify(observed)).not.toContain("987654321");
 	});
 });

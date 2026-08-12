@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-
 	import * as Command from "$lib/components/ui/command";
+	import { activateAppRootRoute } from "$lib/navigation/app-navigation";
 	import { commandCenterClose } from "../command-center-state.svelte";
 
 	let {
@@ -16,7 +15,7 @@
 <Command.Item
 	value="/{value}"
 	onSelect={() => {
-		void goto(link);
+		void activateAppRootRoute(link);
 		commandCenterClose();
 	}}
 >

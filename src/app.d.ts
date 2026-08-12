@@ -13,13 +13,18 @@ declare global {
 		__AndroidInsets?: {
 			top(): number;
 			bottom(): number;
+			imeBottom?(): number;
 			left(): number;
 			right(): number;
 			imeVisible?(): boolean;
+			setImeLayoutMode?(mode: "resize" | "overlay-chat-navigation"): void;
 		};
 		__AndroidOnBackGesture?: () => boolean;
 		__AndroidBack?: {
 			moveTaskToBack(): void;
+		};
+		__AndroidScreen?: {
+			setStayAwake(enabled: boolean): void;
 		};
 	}
 }

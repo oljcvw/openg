@@ -1,6 +1,6 @@
 import { addPluginListener } from "@tauri-apps/api/core";
 
-import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+import { dispatchApplicationBack } from "$lib/navigation/app-navigation";
 
 function readEnvInset(prop: string): number {
 	const el = document.createElement("div");
@@ -21,33 +21,54 @@ export function applyAndroidInsets() {
 		else value = "0px";
 		document.documentElement.style.setProperty(`--safe-area-${side}`, value);
 	}
+	const imeBottom = window.__AndroidInsets?.imeBottom?.() ?? 0;
+	document.documentElement.style.setProperty(
+		"--ime-bottom",
+		`${Math.max(0, imeBottom)}px`,
+	);
 
 	window.__reapplyInsets = applyAndroidInsets;
+}
+
+export function setChatImeOverlayEnabled(enabled: boolean): void {
+	const mode = enabled ? "overlay-chat-navigation" : "resize";
+	window.__AndroidInsets?.setImeLayoutMode?.(mode);
+	document.documentElement.toggleAttribute("data-chat-ime-overlay", enabled);
+	document.documentElement.style.setProperty(
+		"--chat-ime-offset",
+		enabled ? "var(--ime-bottom)" : "0px",
+	);
+	applyAndroidInsets();
 }
 
 export function isSoftKeyboardVisible(): boolean | undefined {
 	return window.__AndroidInsets?.imeVisible?.();
 }
 
-function runBackGestureHandlers(): boolean {
-	for (const handler of [...backGestureEventHandlers].reverse()) {
-		if (handler() !== true) return true;
-	}
-	return false;
+let androidBackFlight: Promise<void> | null = null;
+
+export function handleAndroidBackEvent(): Promise<void> {
+	if (androidBackFlight) return androidBackFlight;
+	const operation = (async () => {
+		const outcome = await dispatchApplicationBack();
+		if (!outcome.selected && outcome.result === "unhandled")
+			window.__AndroidBack?.moveTaskToBack();
+	})().finally(() => {
+		if (androidBackFlight === operation) androidBackFlight = null;
+	});
+	androidBackFlight = operation;
+	return operation;
 }
 
 export function applyBackGestureHandler() {
-	window.__AndroidOnBackGesture = () => !runBackGestureHandlers();
+	window.__AndroidOnBackGesture = () => {
+		void handleAndroidBackEvent();
+		return false;
+	};
 }
 
 export async function registerAndroidBackButtonListener() {
-	await addPluginListener(
-		"app",
-		"back-button",
-		({ canGoBack }: { canGoBack: boolean }) => {
-			if (runBackGestureHandlers()) return;
-			if (window.navigation?.canGoBack ?? canGoBack) history.back();
-			else window.__AndroidBack?.moveTaskToBack();
-		},
-	);
+	await addPluginListener("app", "back-button", () => {
+		void handleAndroidBackEvent();
+	});
 }

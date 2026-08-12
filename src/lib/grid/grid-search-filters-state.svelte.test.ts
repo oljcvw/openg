@@ -1,57 +1,49 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { defaultFilters } from "$lib/components/filters/filters";
+
 const { getPreferencesMock, setPreferencesMock } = vi.hoisted(() => ({
 	getPreferencesMock: vi.fn(),
-	setPreferencesMock: vi.fn(() => Promise.resolve()),
+	setPreferencesMock: vi.fn(),
 }));
 
+vi.mock("$lib/api/error", () => ({ showErrorToast: vi.fn() }));
 vi.mock("$lib/app-data/preferences.svelte", () => ({
+	getBrowseAgeScaleSnapshot: () => ({ min: 25, max: 55 }),
 	getPreferences: getPreferencesMock,
 	setPreferences: setPreferencesMock,
 }));
 
-import { defaultFilters } from "$lib/components/filters/filters";
-import { GridSearchFiltersState } from "$lib/grid/grid-search-filters-state.svelte";
-
-async function loadedState(onRefresh = vi.fn()) {
-	const state = new GridSearchFiltersState({ onRefresh });
-	await state.ready;
-	return { state, onRefresh };
-}
+import { GridSearchFiltersState } from "./grid-search-filters-state.svelte";
 
 beforeEach(() => {
-	getPreferencesMock.mockReset();
-	setPreferencesMock.mockClear();
-	getPreferencesMock.mockResolvedValue({
-		gridSearchFilters: { ...defaultFilters, genders: [1, 2] },
+	getPreferencesMock.mockReset().mockResolvedValue({
+		gridSearchFilters: { ...defaultFilters },
 	});
+	setPreferencesMock.mockReset().mockResolvedValue(undefined);
 });
 
-describe("set", () => {
-	it("ignores a patch that changes nothing", async () => {
-		const { state, onRefresh } = await loadedState();
+describe("GridSearchFiltersState age scale", () => {
+	it("normalizes loaded and newly applied ages to the configured scale", async () => {
+		const onRefresh = vi.fn();
+		const state = new GridSearchFiltersState({ onRefresh });
+		await state.ready;
 
-		state.set({ genders: [1, 2] });
+		expect(state.value?.age).toEqual([25, 55]);
+		state.set({ age: [18, 102] });
 
+		expect(state.value).toMatchObject({ age: [25, 55], ageEnabled: false });
 		expect(onRefresh).not.toHaveBeenCalled();
-		expect(setPreferencesMock).not.toHaveBeenCalled();
 	});
 
-	it("applies a patch that changes a nested list", async () => {
-		const { state, onRefresh } = await loadedState();
+	it("refreshes when an in-scale selection changes", async () => {
+		const onRefresh = vi.fn();
+		const state = new GridSearchFiltersState({ onRefresh });
+		await state.ready;
 
-		state.set({ genders: [2, 1] });
+		state.set({ age: [30, 45], ageEnabled: true });
 
-		expect(state.value?.genders).toEqual([2, 1]);
-		expect(onRefresh).toHaveBeenCalledOnce();
-		expect(setPreferencesMock).toHaveBeenCalledOnce();
-	});
-
-	it("applies a patch that changes a scalar", async () => {
-		const { state, onRefresh } = await loadedState();
-
-		state.set({ isFavorite: !defaultFilters.isFavorite });
-
+		expect(state.value).toMatchObject({ age: [30, 45], ageEnabled: true });
 		expect(onRefresh).toHaveBeenCalledOnce();
 	});
 });

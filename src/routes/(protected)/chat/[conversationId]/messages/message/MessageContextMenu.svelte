@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 	import {
+		ArrowBendUpLeftIcon,
 		ArrowUUpLeftIcon,
 		CopyIcon,
 		FlagIcon,
+		FolderSimpleMinusIcon,
+		QuotesIcon,
 		TrashIcon,
 	} from "phosphor-svelte";
 	import { toast } from "svelte-sonner";
@@ -19,12 +22,18 @@
 		reactionAvailable,
 		onDelete,
 		onUnsend,
+		onUnshareAlbum,
+		onSavePhrase,
+		onReply,
 		...props
 	}: ComponentProps<typeof ContextMenu> & {
 		textContent?: string;
 		reactionAvailable?: boolean;
 		onDelete?: () => void;
 		onUnsend?: () => void;
+		onUnshareAlbum?: () => void;
+		onSavePhrase?: () => void;
+		onReply?: () => void;
 	} = $props();
 </script>
 
@@ -51,6 +60,17 @@
 			</span>
 		{/if}
 		<div class="buttons w-45">
+			{#if onReply}
+				<Button
+					variant="ghost"
+					onclick={() => {
+						onReply();
+						props.onClose();
+					}}
+				>
+					<ArrowBendUpLeftIcon /> Reply
+				</Button>
+			{/if}
 			{#if textContent !== undefined}
 				<Button
 					variant="ghost"
@@ -64,6 +84,17 @@
 					}}
 				>
 					<CopyIcon /> Copy message
+				</Button>
+			{/if}
+			{#if onSavePhrase}
+				<Button
+					variant="ghost"
+					onclick={() => {
+						onSavePhrase();
+						props.onClose();
+					}}
+				>
+					<QuotesIcon /> Add to Saved Phrases
 				</Button>
 			{/if}
 			<Button
@@ -86,6 +117,18 @@
 				>
 					<ArrowUUpLeftIcon />
 					Unsend message
+				</Button>
+			{/if}
+			{#if onUnshareAlbum}
+				<Button
+					variant="ghost"
+					onclick={() => {
+						onUnshareAlbum();
+						props.onClose();
+					}}
+				>
+					<FolderSimpleMinusIcon />
+					Unshare album
 				</Button>
 			{/if}
 			<Button

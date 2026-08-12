@@ -11,7 +11,7 @@
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"moduleResolution": "bundler",
-		"types": ["@types/leaflet"]
+		"types": ["@types/leaflet", "node"]
 	},
 	"include": [
 		".svelte-kit/ambient.d.ts",

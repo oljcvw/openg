@@ -1,9 +1,11 @@
 import { showErrorToast } from "$lib/api/error";
 import {
+	getBrowseAgeScaleSnapshot,
 	getPreferences,
 	setPreferences,
 } from "$lib/app-data/preferences.svelte";
 import {
+	clampAgeRange,
 	defaultFilters,
 	type GridSearchFilters,
 } from "$lib/components/filters/filters";
@@ -21,7 +23,9 @@ export class GridSearchFiltersState {
 
 	set(gridSearchFilters: Partial<GridSearchFilters>) {
 		const oldValue = this.value;
-		const newValue = Object.assign({}, oldValue, gridSearchFilters);
+		const newValue = this.#normalize(
+			Object.assign({}, oldValue ?? defaultFilters, gridSearchFilters),
+		);
 		if (!deepEqual(oldValue, newValue)) {
 			this.value = newValue;
 			void this.#save();
@@ -30,18 +34,22 @@ export class GridSearchFiltersState {
 	}
 
 	resetFilters() {
-		this.value = { ...defaultFilters };
+		this.value = this.#normalize(defaultFilters);
 		void this.#save();
 	}
 
 	reset() {
-		this.value = { ...defaultFilters };
+		this.value = this.#normalize(defaultFilters);
+	}
+
+	sync(gridSearchFilters: GridSearchFilters) {
+		this.value = this.#normalize(gridSearchFilters);
 	}
 
 	async #load() {
 		try {
 			const { gridSearchFilters } = await getPreferences();
-			this.value = gridSearchFilters ?? defaultFilters;
+			this.value = this.#normalize(gridSearchFilters ?? defaultFilters);
 		} catch (error) {
 			console.error(error);
 			showErrorToast({
@@ -49,6 +57,13 @@ export class GridSearchFiltersState {
 				error,
 			});
 		}
+	}
+
+	#normalize(gridSearchFilters: GridSearchFilters): GridSearchFilters {
+		return {
+			...gridSearchFilters,
+			age: clampAgeRange(gridSearchFilters.age, getBrowseAgeScaleSnapshot()),
+		};
 	}
 
 	async #save() {

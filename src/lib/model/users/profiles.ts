@@ -1,5 +1,8 @@
 import z from "zod";
 
+export { genderSchema } from "$lib/model/users/genders";
+export { pronounSchema } from "$lib/model/users/pronouns";
+
 import { tapTypeSchema } from "$lib/model/interest/taps";
 import { viewSourceEnumSchema } from "$lib/model/interest/view-source";
 import { mediaHashPublicSchema } from "$lib/model/media";

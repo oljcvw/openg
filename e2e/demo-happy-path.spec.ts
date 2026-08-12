@@ -16,10 +16,10 @@ test("grid tile opens a profile, which opens a conversation that accepts a messa
 	const tile = page.locator('a[href^="/profile/"]').first();
 	await tile.waitFor({ timeout: 60_000 });
 	await tile.click();
-	await expect(page).toHaveURL(/\/profile\/\d+$/);
+	await expect(page).toHaveURL(/\/profile\/\d+(?:\?.*)?$/);
 
 	await page
-		.getByRole("link", { name: "Write a message..." })
+		.getByRole("link", { name: "Open full conversation" })
 		.click({ timeout: 60_000 });
 	await expect(page).toHaveURL(/\/chat\/\d+:\d+$/);
 

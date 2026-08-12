@@ -1,3 +1,5 @@
+import { registerAccountCache } from "$lib/api/account-caches";
+import { ObjectUrlRegistry } from "$lib/demo/object-url-registry";
 import {
 	type ApiResponseMessage,
 	previewFromMessage,
@@ -8,9 +10,20 @@ import { DAY, demoMeProfileId, HOUR, MINUTE, NOW } from "../config";
 import { hashFromSeed } from "./avatars";
 import { lastOnlineOf, onlineUntilOf, photosOf, profileSeed } from "./profiles";
 
+const demoObjectUrls = new ObjectUrlRegistry();
+
+export function resetDemoObjectUrls(): void {
+	demoObjectUrls.clear();
+	uploadedDrawerMedia.splice(0);
+}
+
+registerAccountCache(resetDemoObjectUrls);
+
 type DemoMessage = { fromMe: boolean; reactions?: number } & (
 	| { kind?: "text"; text: string }
 	| { kind: "image" }
+	| { kind: "video" }
+	| { kind: "audio" }
 	| { kind: "expiringImage"; expired?: boolean }
 	| {
 			kind: "album";
@@ -19,6 +32,13 @@ type DemoMessage = { fromMe: boolean; reactions?: number } & (
 			locked?: boolean;
 			unseen?: boolean;
 			coverUrl?: null;
+	  }
+	| {
+			kind: "albumContent";
+			albumId: number;
+			reply?: string;
+			locked?: boolean;
+			expired?: boolean;
 	  }
 	| { kind: "unsent" }
 );
@@ -43,13 +63,32 @@ const demoConversationSeeds: DemoConversation[] = [
 		lastActivityAgo: 4,
 		messages: [
 			{ fromMe: false, text: "Hey! Lorem ipsum dolor sit amet." },
+			{ fromMe: false, kind: "audio" },
 			{
 				fromMe: true,
 				text: "Hello — consectetur adipiscing elit.",
 				reactions: 1,
 			},
 			{ fromMe: false, text: "Sed do eiusmod tempor incididunt?" },
+			{ fromMe: true, kind: "audio" },
 			{ fromMe: false, kind: "album", albumId: 5001, unseen: true },
+			{
+				fromMe: true,
+				kind: "albumContent",
+				albumId: 5001,
+				reply: "this one's great",
+			},
+			{ fromMe: false, kind: "albumContent", albumId: 5001 },
+			{
+				fromMe: false,
+				kind: "albumContent",
+				albumId: 5001,
+				reply: "can't see it anymore",
+				expired: true,
+			},
+			{ fromMe: false, kind: "albumContent", albumId: 5001, locked: true },
+			// Kept last so this conversation's preview stays an Album, which
+			// demo.test.ts asserts.
 			{
 				fromMe: false,
 				kind: "album",
@@ -72,6 +111,7 @@ const demoConversationSeeds: DemoConversation[] = [
 			{ fromMe: true, kind: "expiringImage" },
 			{ fromMe: false, kind: "expiringImage", expired: true },
 			{ fromMe: false, text: "Did you catch it? 🔥" },
+			{ fromMe: false, kind: "video" },
 			{ fromMe: false, kind: "image", reactions: 1 },
 		],
 	},
@@ -197,6 +237,20 @@ function buildMessage(
 	}));
 	const base = { messageId, conversationId, senderId, timestamp, reactions };
 	switch (message.kind) {
+		case "audio":
+			return {
+				type: "Audio",
+				body: {
+					mediaId: 920_000 + conv.withId + index,
+					mediaHash: null,
+					url: null,
+					contentType: "audio/mp4",
+					length: 12_000,
+					expiresAt: null,
+				},
+				...base,
+				unsent: false,
+			};
 		case "image":
 			return {
 				type: "Image",
@@ -208,6 +262,21 @@ function buildMessage(
 					imageHash: hashFromSeed(`msg-${conv.withId}-${index}`),
 					takenOnGrindr: false,
 					createdAt: timestamp,
+				},
+				...base,
+				unsent: false,
+			};
+		case "video":
+			return {
+				type: "Video",
+				body: {
+					mediaId: 930_000 + conv.withId + index,
+					url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+					contentType: "video/mp4",
+					length: 5_000,
+					maxViews: null,
+					looping: false,
+					viewsRemaining: undefined,
 				},
 				...base,
 				unsent: false,
@@ -229,9 +298,12 @@ function buildMessage(
 			const albumBody = {
 				albumId: message.albumId,
 				hasUnseenContent: message.unseen ?? false,
-				expiresAt: message.expiring ? timestamp + DAY : null,
+				// Mirrors the API: expiresAt belongs to the signed media URL and is
+				// short-lived on every album, expiring or not. The share's own
+				// deadline is viewableUntil.
+				expiresAt: NOW + 30 * MINUTE,
 				expirationType: (message.expiring
-					? "ONCE"
+					? "ONE_DAY"
 					: "INDEFINITE") satisfies AlbumExpirationType,
 				coverUrl:
 					message.coverUrl === null
@@ -260,6 +332,36 @@ function buildMessage(
 					unsent: false,
 				};
 			return { type: "Album", body: albumBody, ...base, unsent: false };
+		}
+		case "albumContent": {
+			const contentBody = {
+				albumId: message.albumId,
+				ownerProfileId: message.fromMe ? conv.withId : demoMeProfileId,
+				albumContentId: message.albumId * 100,
+				previewUrl: message.locked
+					? null
+					: picsum(`album-${message.albumId}-0`, 300, 400),
+				expiresAt: message.expired ? timestamp - HOUR : null,
+				viewable: !message.locked,
+			};
+			if (message.reply === undefined) {
+				return {
+					type: "AlbumContentReaction",
+					body: contentBody,
+					...base,
+					unsent: false,
+				};
+			}
+			return {
+				type: "AlbumContentReply",
+				body: {
+					...contentBody,
+					albumContentReply: message.reply,
+					contentType: "image/jpeg",
+				},
+				...base,
+				unsent: false,
+			};
 		}
 		case "unsent":
 			return { type: "Unsent", body: null, ...base, unsent: true };
@@ -372,9 +474,9 @@ export function demoSingleMessage(conversationId: string, messageId: string) {
 	return { message: message ?? null };
 }
 
-export function demoAlbumContent(albumId: number) {
+function generateAlbumContent(albumId: number) {
 	const count = 3 + (albumId % 3);
-	const content = Array.from({ length: count }, (_, i) => {
+	return Array.from({ length: count }, (_, i) => {
 		const thumb = picsum(`album-${albumId}-${i}`, 300, 400);
 		return {
 			contentId: albumId * 100 + i,
@@ -387,17 +489,227 @@ export function demoAlbumContent(albumId: number) {
 			rejectionId: null,
 		};
 	});
+}
+
+export function demoAlbumContent(albumId: number) {
+	// Prefer the mutable store so edits made in demo mode are visible here.
+	const owned = demoAlbumStore().find((album) => album.albumId === albumId);
+	const sharedOwner = albumId >= 10_000_000 ? Math.floor(albumId / 100) : null;
 	return {
 		albumId,
 		hasUnseenContent: false,
-		albumName: null,
-		profileId: demoMeProfileId,
+		albumName: owned?.albumName ?? null,
+		profileId: owned?.profileId ?? sharedOwner ?? demoMeProfileId,
 		albumViewable: true,
-		sharedCount: 1,
+		sharedCount: owned?.sharedCount ?? 1,
 		createdAt: localDateTime(NOW - 3 * DAY),
 		updatedAt: localDateTime(NOW - DAY),
-		content,
+		content: owned?.content ?? generateAlbumContent(albumId),
 	};
+}
+
+export function demoAlbumsSharedByProfile(profileId: number) {
+	return {
+		albums: [0, 1].map((index) => {
+			const albumId = profileId * 100 + index;
+			const thumb = picsum(`album-${albumId}-0`, 300, 400);
+			return {
+				albumId,
+				hasUnseenContent: index === 0,
+				albumName: index === 0 ? "Shared with you" : null,
+				profileId,
+				albumViewable: true,
+				expiresAt: null,
+				expirationType: "INDEFINITE",
+				content: {
+					contentId: albumId * 100,
+					contentType: "image/jpeg",
+					coverUrl: thumb,
+					statusId: 1,
+				},
+				contentCount: { imageCount: 3 + index, videoCount: index },
+			};
+		}),
+	};
+}
+
+export function demoReceivedAlbums() {
+	return {
+		albums: [100001, 100006, 100009].flatMap(
+			(profileId) => demoAlbumsSharedByProfile(profileId).albums,
+		),
+	};
+}
+
+export function demoAlbumLimits() {
+	return {
+		subscriptionType: "FreeAlbums",
+		maxAlbums: 10,
+		maxContentItemsPerAlbum: 30,
+		maxShares: 100,
+		maxViewableAlbums: 10,
+		maxViewableVideos: 10,
+		maxContentSizeInBytes: 125_829_120,
+		maxContentSizeHumanReadable: "120.00 MB",
+		maxVideoLength: 60,
+		minVideoLength: 1,
+		maxShareableAlbums: 10,
+		maxVideosPerAlbum: 10,
+	};
+}
+
+const DEMO_ALBUM_NAMES = ["Gym", "Beach trip", null];
+const DEMO_FIRST_ALBUM_ID = 9001;
+
+function buildDemoAlbum(
+	albumId: number,
+	albumName: string | null,
+	sharedCount: number,
+	content = generateAlbumContent(albumId),
+) {
+	return {
+		albumId,
+		albumName,
+		profileId: demoMeProfileId,
+		version: 1,
+		content,
+		isShareable: true,
+		sharedCount,
+		createdAt: localDateTime(NOW - 3 * DAY),
+		updatedAt: localDateTime(NOW - DAY),
+	};
+}
+
+let demoAlbums: ReturnType<typeof buildDemoAlbum>[] | null = null;
+let demoNextAlbumId = DEMO_FIRST_ALBUM_ID + DEMO_ALBUM_NAMES.length;
+
+function demoAlbumStore() {
+	demoAlbums ??= DEMO_ALBUM_NAMES.map((albumName, index) =>
+		buildDemoAlbum(DEMO_FIRST_ALBUM_ID + index, albumName, index),
+	);
+	return demoAlbums;
+}
+
+const demoAlbumShares = new Map<number, number[]>();
+
+function albumShareStore(albumId: number): number[] {
+	let shares = demoAlbumShares.get(albumId);
+	if (shares === undefined) {
+		// Seed from the demo conversations so the list is not empty to start.
+		shares = [100005, 100006];
+		demoAlbumShares.set(albumId, shares);
+	}
+	return shares;
+}
+
+export function demoAlbumSharesFor(albumId: number) {
+	return { profileIds: albumShareStore(albumId) };
+}
+
+export function demoUnshareAlbum(albumId: number, body: unknown) {
+	const profiles = (body as { profiles?: { profileId?: number }[] } | null)
+		?.profiles;
+	if (!profiles) return;
+	const removed = new Set(profiles.map((p) => p.profileId));
+	demoAlbumShares.set(
+		albumId,
+		albumShareStore(albumId).filter((id) => !removed.has(id)),
+	);
+}
+
+export function demoShareAlbum(albumId: number, body: unknown) {
+	const profiles = (body as { profiles?: { profileId?: number }[] } | null)
+		?.profiles;
+	if (!profiles) return;
+	const shares = new Set(albumShareStore(albumId));
+	for (const profile of profiles) {
+		if (profile.profileId !== undefined) shares.add(profile.profileId);
+	}
+	demoAlbumShares.set(albumId, [...shares]);
+}
+
+function albumNameFromBody(body: unknown): string | null {
+	return (body as { albumName?: string | null } | null)?.albumName ?? null;
+}
+
+export function demoMyAlbums() {
+	return { albums: demoAlbumStore() };
+}
+
+export function demoCreateAlbum(body: unknown) {
+	const albumName = albumNameFromBody(body);
+	const album = buildDemoAlbum(demoNextAlbumId++, albumName, 0, []);
+	demoAlbumStore().push(album);
+	return { albumId: album.albumId, albumName };
+}
+
+export function demoRenameAlbum(albumId: number, body: unknown) {
+	const albumName = albumNameFromBody(body);
+	const album = demoAlbumStore().find((item) => item.albumId === albumId);
+	if (album) album.albumName = albumName;
+	return { albumId, albumName };
+}
+
+export function demoDeleteAlbum(albumId: number) {
+	const albums = demoAlbumStore();
+	const index = albums.findIndex((item) => item.albumId === albumId);
+	if (index !== -1) {
+		for (const item of albums[index]!.content) {
+			demoObjectUrls.release(item.url);
+			demoObjectUrls.release(item.coverUrl);
+			demoObjectUrls.release(item.thumbUrl);
+		}
+		albums.splice(index, 1);
+	}
+}
+
+export function demoReorderAlbumContent(albumId: number, body: unknown) {
+	const contentIds = (body as { contentIds?: number[] } | null)?.contentIds;
+	const album = demoAlbumStore().find((item) => item.albumId === albumId);
+	if (!album || !contentIds) return;
+	album.content = contentIds
+		.map((id) => album.content.find((item) => item.contentId === id))
+		.filter((item) => item !== undefined);
+}
+
+export function demoDeleteAlbumContent(albumId: number, contentId: number) {
+	const album = demoAlbumStore().find((item) => item.albumId === albumId);
+	if (!album) return;
+	const removed = album.content.find((item) => item.contentId === contentId);
+	if (removed) {
+		demoObjectUrls.release(removed.url);
+		demoObjectUrls.release(removed.coverUrl);
+		demoObjectUrls.release(removed.thumbUrl);
+	}
+	album.content = album.content.filter((item) => item.contentId !== contentId);
+}
+
+let demoAlbumContentId = 990_000;
+
+export function demoUploadAlbumMedia(
+	albumId: number,
+	bytes: Uint8Array<ArrayBuffer>,
+	contentType: string,
+) {
+	const contentId = demoAlbumContentId++;
+	const contentUrl = demoObjectUrls.add(
+		URL.createObjectURL(new Blob([bytes], { type: contentType })),
+	);
+	const album = demoAlbumStore().find((item) => item.albumId === albumId);
+	if (album) {
+		album.content.push({
+			contentId,
+			contentType,
+			coverUrl: contentUrl,
+			statusId: 1,
+			thumbUrl: contentUrl,
+			url: contentUrl,
+			processing: false,
+			rejectionId: null,
+		});
+		album.updatedAt = localDateTime(Date.now());
+	} else demoObjectUrls.release(contentUrl);
+	return { contentId, contentUrl };
 }
 
 let demoSentCounter = 0;
@@ -421,17 +733,34 @@ export function demoSentMessage(body: unknown): ApiResponseMessage {
 	if (sent.type === "Image" && sent.body && typeof sent.body === "object") {
 		const { mediaId } = sent.body as { mediaId: number };
 		const item = demoDrawerMedia().find((media) => media.id === mediaId);
+		const messageUrl = item?.blob
+			? demoObjectUrls.add(URL.createObjectURL(item.blob))
+			: (item?.url ?? DEMO_IMAGE_URL);
+		if (item?.blob) {
+			demoObjectUrls.release(item.url);
+			const index = uploadedDrawerMedia.findIndex(
+				(media) => media.id === mediaId,
+			);
+			if (index !== -1) uploadedDrawerMedia.splice(index, 1);
+		}
 		return {
 			type: "Image",
 			body: {
 				mediaId,
 				width: null,
 				height: null,
-				url: item?.url ?? DEMO_IMAGE_URL,
+				url: messageUrl,
 				imageHash: hashFromSeed(`drawer-${mediaId}`),
 				takenOnGrindr: item?.takenOnGrindr ?? false,
 				createdAt: item?.createdTs ?? timestamp,
 			},
+			...overlay,
+		};
+	}
+	if (sent.type === "Location" && sent.body && typeof sent.body === "object") {
+		return {
+			type: "Location",
+			body: sent.body as { lat: number; lon: number },
 			...overlay,
 		};
 	}
@@ -452,6 +781,7 @@ type DemoDrawerMedia = {
 	createdTs: number;
 	used: boolean;
 	takenOnGrindr: boolean;
+	blob: Blob | null;
 };
 
 let uploadedDrawerMediaId = 920_000;
@@ -461,13 +791,15 @@ export function demoUploadChatMedia(
 	bytes: Uint8Array<ArrayBuffer>,
 	contentType: string,
 ): { mediaId: number; url: string; mediaHash: string } {
+	const blob = new Blob([bytes], { type: contentType });
 	const item: DemoDrawerMedia = {
 		id: uploadedDrawerMediaId++,
-		url: URL.createObjectURL(new Blob([bytes], { type: contentType })),
+		url: demoObjectUrls.add(URL.createObjectURL(blob)),
 		contentType,
 		createdTs: Date.now(),
 		used: false,
 		takenOnGrindr: false,
+		blob,
 	};
 	uploadedDrawerMedia.unshift(item);
 	return {
@@ -487,6 +819,7 @@ export function demoDrawerMedia(): DemoDrawerMedia[] {
 			createdTs: NOW - (index + 1) * HOUR,
 			used: index % 3 === 0,
 			takenOnGrindr: false,
+			blob: null,
 		})),
 	];
 }

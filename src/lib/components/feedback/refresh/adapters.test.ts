@@ -106,7 +106,16 @@ describe("attachTouchPull", () => {
 	function setup({
 		boundary = 0,
 		position = "top",
-	}: { boundary?: number; position?: "top" | "bottom" } = {}) {
+		canStart,
+		primaryAxisRatio,
+		requireBoundaryAtStart = false,
+	}: {
+		boundary?: number;
+		position?: "top" | "bottom";
+		canStart?: (target: EventTarget | null) => boolean;
+		primaryAxisRatio?: number;
+		requireBoundaryAtStart?: boolean;
+	} = {}) {
 		const { model, onTrigger } = makeModel();
 		const root = document.createElement("div");
 		const leaf = document.createElement("span");
@@ -117,6 +126,9 @@ describe("attachTouchPull", () => {
 			scrollRoot: () => root,
 			boundaryDistance: () => boundary,
 			position,
+			canStart,
+			primaryAxisRatio,
+			requireBoundaryAtStart,
 		});
 		return { model, onTrigger, root, leaf, detach };
 	}
@@ -174,6 +186,45 @@ describe("attachTouchPull", () => {
 		const { model, leaf, detach } = setup({ boundary: 50 });
 		leaf.dispatchEvent(touchEvent("touchstart", { y: 100 }));
 		leaf.dispatchEvent(touchEvent("touchmove", { y: 200 }));
+		expect(model.phase).toBe("idle");
+		detach();
+	});
+
+	it("never engages later when dismissal requires starting at the boundary", () => {
+		const { model } = makeModel();
+		const root = document.createElement("div");
+		const leaf = document.createElement("span");
+		root.appendChild(leaf);
+		document.body.appendChild(root);
+		let boundary = 40;
+		const detach = attachTouchPull(model, {
+			listenTarget: root,
+			scrollRoot: () => root,
+			boundaryDistance: () => boundary,
+			position: "top",
+			requireBoundaryAtStart: true,
+		});
+		leaf.dispatchEvent(touchEvent("touchstart", { y: 100 }));
+		boundary = 0;
+		leaf.dispatchEvent(touchEvent("touchmove", { y: 220 }));
+		expect(model.phase).toBe("idle");
+		detach();
+	});
+
+	it("refuses gestures that begin on excluded controls", () => {
+		const { model, leaf, detach } = setup({
+			canStart: (target) => target !== leaf,
+		});
+		leaf.dispatchEvent(touchEvent("touchstart", { y: 100 }));
+		leaf.dispatchEvent(touchEvent("touchmove", { y: 240 }));
+		expect(model.phase).toBe("idle");
+		detach();
+	});
+
+	it("can require stronger vertical dominance for dismissal", () => {
+		const { model, leaf, detach } = setup({ primaryAxisRatio: 1.25 });
+		leaf.dispatchEvent(touchEvent("touchstart", { x: 100, y: 100 }));
+		leaf.dispatchEvent(touchEvent("touchmove", { x: 140, y: 145 }));
 		expect(model.phase).toBe("idle");
 		detach();
 	});

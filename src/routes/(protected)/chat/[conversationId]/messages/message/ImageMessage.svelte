@@ -1,150 +1,127 @@
 <script lang="ts">
-	import "photoswipe/style.css";
-	import type PhotoSwipeLightbox from "photoswipe/lightbox";
-
-	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
-	import type { ImageMessage } from "$lib/model/messaging/messages";
+	import { listDirectMediaHistory } from "$lib/app-data/direct-media-cache";
+	import { toSharedMediaEntry } from "$lib/app-data/direct-media-retention";
+	import { getConversationMediaViewer } from "$lib/chat/conversation-media-viewer.svelte";
+	import { conversationMediaDeckItems } from "$lib/chat/shared-media-collection";
+	import type {
+		ApiResponseMessage,
+		ImageMessage,
+	} from "$lib/model/messaging/messages";
 	import { MessageMediaState } from "./message-media.svelte";
 
 	let {
 		message,
+		messageId,
+		conversationMessages = [],
+		accountProfileId = 0,
+		conversationId = "",
+		peerProfileId = null,
+		receivedFromPeer = false,
 	}: {
 		message: ImageMessage["body"];
+		messageId: string;
+		conversationMessages?: ApiResponseMessage[];
+		accountProfileId?: number;
+		conversationId?: string;
+		peerProfileId?: number | null;
+		receivedFromPeer?: boolean;
 	} = $props();
 
 	const media = new MessageMediaState();
+	const viewer = getConversationMediaViewer()();
 
-	$effect(() => {
-		const gallery = media.el;
-		if (!gallery) return;
-		let lightbox: PhotoSwipeLightbox | undefined;
-		import("photoswipe/lightbox")
-			.then(({ default: PhotoSwipeLightbox }) => {
-				lightbox = new PhotoSwipeLightbox({
-					gallery,
-					children: "a",
-					pswpModule: () => import("photoswipe"),
-					mainClass: "pswp--buttons-visible",
-					showAnimationDuration: 500,
-					hideAnimationDuration: 500,
-				});
-				lightbox.addFilter("itemData", (itemData) => {
-					const img = itemData.element?.querySelector("img");
-					if (img?.naturalWidth) {
-						itemData.width = img.naturalWidth;
-						itemData.height = img.naturalHeight;
-					}
-					return itemData;
-				});
+	function buildDeck(retained: ReturnType<typeof toSharedMediaEntry>[] = []) {
+		if (!receivedFromPeer || peerProfileId === null) return [];
+		const resolvedUrls = Object.fromEntries(
+			retained.flatMap((entry) =>
+				entry.cacheAvailability === "cached" && entry.remoteUrl !== null
+					? [[entry.messageId, entry.remoteUrl] as const]
+					: [],
+			),
+		);
+		return conversationMediaDeckItems({
+			context: {
+				accountProfileId,
+				conversationId,
+				peerProfileId,
+			},
+			active: conversationMessages,
+			cached: [],
+			retained,
+			resolvedUrls,
+		}).map(({ id, kind, url, width, height, poster, unavailableLabel }) => ({
+			id,
+			kind,
+			url,
+			width,
+			height,
+			poster,
+			unavailableLabel,
+		}));
+	}
 
-				const onBackGesture = () => {
-					lightbox?.pswp?.close();
-					return false;
-				};
-				lightbox.on("beforeOpen", () => {
-					backGestureEventHandlers.add(onBackGesture);
-				});
-				lightbox.on("close", () => {
-					backGestureEventHandlers.delete(onBackGesture);
-				});
+	function openImage(opener: HTMLButtonElement): void {
+		const receivedDeck = buildDeck();
+		viewer.open({
+			items:
+				receivedDeck.length > 0
+					? receivedDeck
+					: [
+							{
+								id: messageId,
+								kind: "image",
+								url: message.url,
+								width: message.width ?? undefined,
+								height: message.height ?? undefined,
+							},
+						],
+			startId: messageId,
+			messageId,
+			opener,
+		});
+		if (receivedDeck.length > 0) void extendDeckFromLocalHistory();
+	}
 
-				// Radius is scaled by the zoom-wrap transform, so pre-divide it by that scale
-				// img placeholder does a second scale off a 250px box
-				const PLACEHOLDER_BASE_WIDTH = 250;
-
-				function setThumbRadii() {
-					const slide = lightbox?.pswp?.currSlide;
-					const thumb = slide?.data.element?.querySelector("img");
-					if (!slide || !(thumb instanceof HTMLImageElement)) return;
-
-					const thumbWidth = thumb.getBoundingClientRect().width;
-					const displayedWidth = slide.width * slide.zoomLevels.initial;
-					if (thumbWidth === 0 || displayedWidth === 0) return;
-
-					const style = getComputedStyle(thumb);
-					const corners = [
-						style.borderTopLeftRadius,
-						style.borderTopRightRadius,
-						style.borderBottomRightRadius,
-						style.borderBottomLeftRadius,
-					].map(parseFloat);
-
-					const scaled = (factor: number) =>
-						corners.map((corner) => `${corner * factor}px`).join(" ");
-
-					const root = document.documentElement.style;
-					root.setProperty(
-						"--pswp-thumb-radius",
-						scaled(displayedWidth / thumbWidth),
-					);
-					root.setProperty(
-						"--pswp-placeholder-radius",
-						scaled(PLACEHOLDER_BASE_WIDTH / thumbWidth),
-					);
-				}
-
-				function clearThumbRadii() {
-					document.documentElement.style.removeProperty("--pswp-thumb-radius");
-					document.documentElement.style.removeProperty(
-						"--pswp-placeholder-radius",
-					);
-				}
-
-				function hideThumbs() {
-					gallery?.querySelectorAll(".item").forEach((item) => {
-						if (item instanceof HTMLElement) {
-							item.style.visibility = "hidden";
-						}
-					});
-				}
-
-				lightbox.on("openingAnimationStart", () => {
-					setThumbRadii();
-					lightbox?.pswp?.element?.classList.add("pswp--radius-opening");
-					hideThumbs();
-				});
-				lightbox.on("openingAnimationEnd", () => {
-					lightbox?.pswp?.element?.classList.remove("pswp--radius-opening");
-					clearThumbRadii();
-				});
-
-				lightbox.on("closingAnimationStart", () => {
-					setThumbRadii();
-					lightbox?.pswp?.element?.classList.add("pswp--radius-closing");
-					hideThumbs();
-				});
-				lightbox.on("closingAnimationEnd", clearThumbRadii);
-
-				lightbox.on("destroy", () => {
-					gallery?.querySelectorAll(".item").forEach((item) => {
-						if (item instanceof HTMLElement) {
-							item.style.visibility = "visible";
-						}
-					});
-				});
-
-				lightbox.init();
-			})
-			.catch((error) => console.error(error));
-		return () => lightbox?.destroy();
-	});
+	async function extendDeckFromLocalHistory(): Promise<void> {
+		if (peerProfileId === null) return;
+		let cursor: string | null = null;
+		const retained: ReturnType<typeof toSharedMediaEntry>[] = [];
+		const seen = new Set<string>();
+		for (let page = 0; page < 4; page += 1) {
+			const response = await listDirectMediaHistory({
+				accountProfileId,
+				conversationId,
+				peerProfileId,
+				cursor,
+				pageSize: 60,
+			});
+			for (const entry of response.items)
+				retained.push(toSharedMediaEntry(entry));
+			if (viewer.activeMessageId !== messageId) return;
+			const next = buildDeck(retained);
+			if (next.length > 0) viewer.updateItems(next);
+			if (response.nextCursor === null || seen.has(response.nextCursor)) return;
+			seen.add(response.nextCursor);
+			cursor = response.nextCursor;
+		}
+	}
 </script>
 
 <div
 	class={["relative", { "ms-3 w-2/5 max-w-60 min-w-35": !media.clone }]}
 	bind:this={media.el}
 >
-	<a
-		href={message.url}
-		rel="noreferrer"
-		data-pswp-width={message.width ?? undefined}
-		data-pswp-height={message.height ?? undefined}
-		aria-label="Photo"
-		class="item block"
+	<button
+		type="button"
+		aria-label="Open image"
+		class="item block w-full appearance-none border-0 bg-transparent p-0"
+		onclick={(event) => openImage(event.currentTarget)}
 	>
 		<img
 			src={message.url}
 			alt=""
+			loading="lazy"
+			decoding="async"
 			class={[
 				"w-full rounded-lg bg-card-foreground/10 object-cover",
 				media.cornerClass,
@@ -154,44 +131,6 @@
 				: undefined}
 			draggable="false"
 		/>
-	</a>
+	</button>
 	{@render media.adornments?.()}
 </div>
-
-<style>
-	:global(.pswp__img) {
-		--pswp-radius: var(--pswp-thumb-radius);
-	}
-	/* div placeholders are sized directly and keep --pswp-thumb-radius */
-	:global(img.pswp__img--placeholder) {
-		--pswp-radius: var(--pswp-placeholder-radius);
-	}
-
-	:global(.pswp--radius-opening .pswp__img) {
-		animation: pswp-radius-open var(--pswp-transition-duration)
-			var(--default-transition-timing-function, ease) forwards;
-	}
-
-	:global(.pswp--radius-closing .pswp__img) {
-		animation: pswp-radius-close var(--pswp-transition-duration)
-			var(--default-transition-timing-function, ease) forwards;
-	}
-
-	@keyframes pswp-radius-open {
-		from {
-			border-radius: var(--pswp-radius);
-		}
-		to {
-			border-radius: 0px;
-		}
-	}
-
-	@keyframes pswp-radius-close {
-		from {
-			border-radius: 0px;
-		}
-		to {
-			border-radius: var(--pswp-radius);
-		}
-	}
-</style>

@@ -20,7 +20,7 @@ test.describe("every control has an accessible name", () => {
 		await page.locator(MESSAGE).first().waitFor({ timeout: 120_000 });
 		await expectEveryControlNamed(page, "conversation");
 
-		await page.locator('[aria-label="Add attachment"]').click();
+		await page.getByRole("button", { name: "Open attachments" }).click();
 		await page.locator('[aria-label="Add photo"]').waitFor();
 		await expectEveryControlNamed(page, "attachments drawer");
 		await page.keyboard.press("Escape");
@@ -43,7 +43,10 @@ test.describe("every control has an accessible name", () => {
 		await expectEveryControlNamed(page, "edit profile");
 
 		await page.goto(DEMO_PROFILE);
-		await page.locator('[aria-label="Profile menu"]').waitFor();
+		await page
+			.getByRole("button", { name: "Profile menu" })
+			.filter({ visible: true })
+			.waitFor();
 		await expectEveryControlNamed(page, "profile");
 	});
 
@@ -60,18 +63,31 @@ test.describe("every control has an accessible name", () => {
 		await page.getByRole("button", { name: "Apply" }).waitFor();
 		await expectEveryControlNamed(page, "all filters");
 		await page.keyboard.press("Escape");
+		await page
+			.getByRole("button", { name: "Apply" })
+			.waitFor({ state: "hidden" });
 
 		await page.getByRole("button", { name: "Age", exact: true }).click();
 		await page.getByRole("slider", { name: "Minimum age" }).waitFor();
 		await expectEveryControlNamed(page, "age filter");
-		await page.keyboard.press("Escape");
+		await page.getByRole("button", { name: "Apply" }).click();
+		await page.reload();
+		await page.locator("nav a").first().waitFor({ timeout: 120_000 });
+		await ensureGridLocation(page);
 
-		await page.locator('[aria-label="Change location"]').click();
+		await page
+			.getByRole("button", {
+				name: /^(Using device location|Browsing another area|Custom profile location active(?:; browsing another area)?|Updating profile location)$/,
+			})
+			.click();
 		await page
 			.getByPlaceholder("Search places...")
 			.waitFor({ timeout: 180_000 });
 		await page
-			.getByRole("button", { name: "Selected location" })
+			.getByRole("button", { name: "Browse this area" })
+			.waitFor({ timeout: 60_000 });
+		await page
+			.getByRole("button", { name: "Set profile location" })
 			.waitFor({ timeout: 60_000 });
 		await expectEveryControlNamed(page, "location picker");
 	});

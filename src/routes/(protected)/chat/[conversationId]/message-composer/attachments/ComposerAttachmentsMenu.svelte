@@ -2,6 +2,7 @@
 	import FolderOpenIcon from "phosphor-svelte/lib/FolderOpenIcon";
 	import ImageIcon from "phosphor-svelte/lib/ImageIcon";
 	import NavigationArrowIcon from "phosphor-svelte/lib/NavigationArrowIcon";
+	import QuotesIcon from "phosphor-svelte/lib/QuotesIcon";
 	import { expoOut, sineIn } from "svelte/easing";
 	import { fly } from "svelte/transition";
 
@@ -10,8 +11,10 @@
 	import * as Drawer from "$lib/components/ui/drawer";
 	import * as Tabs from "$lib/components/ui/tabs";
 	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+	import ComposerAlbumsTab from "./ComposerAlbumsTab.svelte";
+	import ComposerLocationTab from "./ComposerLocationTab.svelte";
 	import ComposerMediaTab from "./ComposerMediaTab.svelte";
-	import ComposerUnimplementedTab from "./ComposerUnimplementedTab.svelte";
+	import ComposerSavedPhrasesTab from "./ComposerSavedPhrasesTab.svelte";
 
 	const FULLSIZE_TABS: Tab[] = ["media"];
 
@@ -21,7 +24,7 @@
 		open: boolean;
 	} = $props();
 
-	type Tab = "media" | "albums" | "location";
+	type Tab = "media" | "albums" | "location" | "phrases";
 
 	let selectedTab = $state("media");
 
@@ -77,6 +80,7 @@
 			{ "h-full": isFullsizeTab, "h-fit": !isFullsizeTab },
 		]}
 		handle={null}
+		style="bottom: var(--chat-ime-offset, 0px)"
 		onclick={(e) => {
 			if (
 				e.target instanceof HTMLDivElement &&
@@ -112,7 +116,7 @@
 				<div
 					data-slot="sheet-panel"
 					class={[
-						" rounded-t-4xl border border-border bg-popover px-4 pb-20 shadow-xl",
+						"rounded-t-4xl border border-border bg-popover px-4 pb-[calc(var(--nav-height)+0.75rem)] shadow-xl",
 						{
 							"min-h-full": isFullsizeTab,
 						},
@@ -132,17 +136,32 @@
 						/>
 					</Tabs.Content>
 					<Tabs.Content value="albums">
-						<ComposerUnimplementedTab label="Sharing albums" issue={33} />
+						<!-- Tabs.Content renders regardless of the active tab, so the
+						     tab is told whether it is showing rather than fetching
+						     albums every time the sheet opens. -->
+						<ComposerAlbumsTab
+							active={open && selectedTab === "albums"}
+							onClose={() => (open = false)}
+						/>
 					</Tabs.Content>
 					<Tabs.Content value="location">
-						<ComposerUnimplementedTab label="Sharing location" issue={35} />
+						<ComposerLocationTab
+							active={open && selectedTab === "location"}
+							onClose={() => (open = false)}
+						/>
+					</Tabs.Content>
+					<Tabs.Content value="phrases">
+						<ComposerSavedPhrasesTab
+							active={open && selectedTab === "phrases"}
+							onClose={() => (open = false)}
+						/>
 					</Tabs.Content>
 				</div>
 			</div>
 
 			{#if selectedCount > 0}
 				<div
-					class="pointer-events-none absolute inset-x-0 bottom-18 flex justify-center"
+					class="pointer-events-none absolute inset-x-0 bottom-[calc(var(--nav-height)+0.5rem)] flex justify-center"
 					in:fly={{ duration: 600, y: 100, easing: expoOut }}
 					out:fly={{ duration: 400, y: 100, easing: sineIn }}
 				>
@@ -165,12 +184,15 @@
 			{/if}
 
 			<Drawer.Footer
-				class="absolute inset-x-0 bottom-0 items-center rounded-b-4xl pt-1 pb-2 select-none"
+				class="absolute inset-x-0 bottom-0 items-center rounded-b-4xl px-[clamp(0.5rem,2vw,1.5rem)] pt-1 pb-2 select-none"
 			>
-				<Tabs.List>
+				<Tabs.List
+					class="min-h-[calc(var(--nav-height)-0.5rem)] w-full gap-[clamp(0.5rem,2vw,1rem)]"
+				>
 					{@render tab("media")}
 					{@render tab("albums")}
 					{@render tab("location")}
+					{@render tab("phrases")}
 				</Tabs.List>
 			</Drawer.Footer>
 		</Tabs.Root>
@@ -178,16 +200,28 @@
 </Drawer.Root>
 
 {#snippet tab(tab: Tab)}
-	<Tabs.Trigger value={tab} class="h-auto flex-col gap-0.5 px-4 py-1.5">
+	<Tabs.Trigger
+		value={tab}
+		class="h-auto min-w-0 flex-col gap-0.5 px-[clamp(0.5rem,2vw,1rem)] py-1 text-[clamp(0.75rem,2vw,0.9375rem)]"
+	>
 		{#if tab === "media"}
-			<ImageIcon weight="fill" class="size-5" />
+			<ImageIcon weight="fill" class="size-[clamp(1.25rem,3.5vw,1.75rem)]" />
 			Media
 		{:else if tab === "albums"}
-			<FolderOpenIcon weight="fill" class="size-5" />
+			<FolderOpenIcon
+				weight="fill"
+				class="size-[clamp(1.25rem,3.5vw,1.75rem)]"
+			/>
 			Albums
 		{:else if tab === "location"}
-			<NavigationArrowIcon weight="fill" class="size-5" />
+			<NavigationArrowIcon
+				weight="fill"
+				class="size-[clamp(1.25rem,3.5vw,1.75rem)]"
+			/>
 			Location
+		{:else if tab === "phrases"}
+			<QuotesIcon weight="fill" class="size-[clamp(1.25rem,3.5vw,1.75rem)]" />
+			Phrases
 		{/if}
 	</Tabs.Trigger>
 {/snippet}

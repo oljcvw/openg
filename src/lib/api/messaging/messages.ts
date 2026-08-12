@@ -7,6 +7,7 @@ import {
 	messageSchema,
 } from "$lib/model/messaging/messages";
 import { unixTimestampMsSchema } from "$lib/model/types";
+import { ws } from "$lib/ws.svelte";
 import type { Conversation } from "$lib/model/messaging/conversations";
 
 const conversationMessagesSchema = z.object({
@@ -23,9 +24,11 @@ const conversationMessagesSchema = z.object({
 });
 
 export async function getConversationMessages({
+	abortController,
 	conversationId,
 	pageKey,
 }: {
+	abortController?: AbortController;
 	conversationId: string;
 	pageKey?: string;
 }) {
@@ -33,7 +36,7 @@ export async function getConversationMessages({
 	if (pageKey !== undefined) params.set("pageKey", pageKey);
 	const messages = await fetchRest(
 		`/v5/chat/conversation/${conversationId}/message?` + params.toString(),
-		{ method: "GET" },
+		{ method: "GET", abortController },
 	).then((res) => res.jsonParsed(conversationMessagesSchema));
 	return messages;
 }
@@ -54,8 +57,10 @@ export async function getSingleMessage({
 	return message;
 }
 
-function toOutboundBody(message: z.infer<typeof messageSchema>): unknown {
-	if (message.type === "Image") {
+export function toOutboundBody(
+	message: z.infer<typeof messageSchema>,
+): unknown {
+	if (message.type === "Image" || message.type === "Audio") {
 		return { mediaId: message.body.mediaId };
 	}
 	return message.body;
@@ -64,21 +69,77 @@ function toOutboundBody(message: z.infer<typeof messageSchema>): unknown {
 export async function sendMessage({
 	toUserId,
 	message,
+	ref = crypto.randomUUID(),
+	commandRef,
 }: {
 	toUserId: number;
 	message: z.infer<typeof messageSchema>;
+	ref?: string;
+	commandRef?: string;
 }) {
-	return await fetchRest("/v4/chat/message/send", {
-		method: "POST",
-		body: {
+	return await ws.requestOutcome(
+		"chat.v1.message.send",
+		{
 			type: message.type,
 			target: {
 				type: "Direct",
 				targetId: toUserId,
 			},
 			body: toOutboundBody(message),
+			ref,
 		},
-	}).then((res) => res.jsonParsed(apiResponseMessageSchema));
+		commandRef,
+	);
+}
+
+export async function sendReplyMessage({
+	toUserId,
+	message,
+	replyToMessageId,
+	ref = crypto.randomUUID(),
+	commandRef,
+}: {
+	toUserId: number;
+	message: z.infer<typeof messageSchema>;
+	replyToMessageId: string;
+	ref?: string;
+	commandRef?: string;
+}) {
+	return await ws.requestOutcome(
+		"chat.v1.message.send",
+		{
+			type: message.type,
+			target: {
+				type: "Direct",
+				targetId: toUserId,
+			},
+			body: toOutboundBody(message),
+			ref,
+			replyToMessageId,
+		},
+		commandRef,
+	);
+}
+
+export function sendExpiringVideoMessage({
+	toUserId,
+	mediaId,
+	looping,
+	maxViews,
+}: {
+	toUserId: number;
+	mediaId: number;
+	looping: boolean;
+	maxViews: 1 | 2;
+}): void {
+	ws.send("chat.v1.message.send", {
+		type: "Video",
+		target: {
+			type: "Direct",
+			targetId: toUserId,
+		},
+		body: { mediaId, looping, maxViews },
+	});
 }
 
 export async function reactToMessage({

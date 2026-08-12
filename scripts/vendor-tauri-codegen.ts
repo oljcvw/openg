@@ -4,9 +4,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const VERSION = "2.6.1";
+const VERSION = "2.6.3";
 const SHA256 =
-	"6bd11644962add2549a60b7e7c6800f17d7020156e02f516021d8103e80cc528";
+	"08279169ff42f8fc45a1dbc9dcae888893ba95288142e5880c59b93a26d2cfc5";
 const KEEP = ["Cargo.toml", "LICENSE_MIT", "LICENSE_APACHE-2.0", "src"];
 
 const repoRoot = path.resolve(

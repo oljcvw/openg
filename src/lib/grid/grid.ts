@@ -1,6 +1,9 @@
 import { getCascadeV4 } from "$lib/api/browse/grid";
-import { TtlCache } from "$lib/api/cache";
 import { getProfiles } from "$lib/api/users/profiles";
+import {
+	getProfileMemoryRecord,
+	mergeProfileMemoryRecord,
+} from "$lib/app-data/profile-memory-cache";
 import { now } from "$lib/util/clock";
 
 function primaryImageHashes(url: string | null | undefined): string[] | null {
@@ -17,6 +20,7 @@ export type RenderedGridProfile = {
 	unread: number | null;
 	onlineUntil: number | null;
 	isFavorite: boolean;
+	isRightNow: boolean;
 	isVisiting: boolean;
 	hasChattedInLast24Hrs: boolean;
 };
@@ -46,6 +50,7 @@ export async function getGrid(query: Parameters<typeof getCascadeV4>[0]) {
 				unread: profile.unreadCount ?? null,
 				onlineUntil: profile.onlineUntil ?? null,
 				isFavorite: profile.favorite ?? false,
+				isRightNow: profile.rightNow !== "NOT_ACTIVE",
 				isVisiting: profile.isVisiting,
 				hasChattedInLast24Hrs: profile.chatted ?? false,
 			});
@@ -80,35 +85,40 @@ export async function getGrid(query: Parameters<typeof getCascadeV4>[0]) {
 	};
 }
 
-const profileCache = new TtlCache<number, RenderedGridProfile>({
-	ttlMs: 60_000,
-});
-
 export function getCachedProfile(id: number): RenderedGridProfile | null {
-	return profileCache.get(id);
+	return (getProfileMemoryRecord(id)?.browse as RenderedGridProfile) ?? null;
 }
 
 export function setCachedProfile(profile: RenderedGridProfile): void {
-	profileCache.set(profile.id, profile);
+	mergeProfileMemoryRecord(profile.id, { browse: profile });
 }
 
-export async function resolveLazyProfile(
-	profile: LazyGridProfile,
-): Promise<RenderedGridProfile | null> {
-	const [resolved] = await getProfiles([profile.id]);
-	if (!resolved || resolved.profileId !== profile.id) return null;
-	return {
-		type: "rendered",
-		id: resolved.profileId,
-		displayName: resolved.displayName ?? null,
-		distance: resolved.distance ?? null,
-		profilePhotosHashes: resolved.medias?.map((m) => m.mediaHash) ?? null,
-		unread: profile.unread,
-		onlineUntil: resolved.onlineUntil ?? null,
-		isFavorite: resolved.isFavorite,
-		isVisiting: profile.isVisiting,
-		hasChattedInLast24Hrs:
-			resolved.lastChatTimestamp !== null &&
-			now() - resolved.lastChatTimestamp < 24 * 60 * 60 * 1000,
-	};
+export async function resolveLazyProfiles(
+	profiles: LazyGridProfile[],
+): Promise<Map<number, RenderedGridProfile>> {
+	const lazyById = new Map(profiles.map((profile) => [profile.id, profile]));
+	const resolvedProfiles = await getProfiles([...lazyById.keys()]);
+	const rendered = new Map<number, RenderedGridProfile>();
+
+	for (const resolved of resolvedProfiles) {
+		const lazy = lazyById.get(resolved.profileId);
+		if (!lazy) continue;
+		rendered.set(resolved.profileId, {
+			type: "rendered",
+			id: resolved.profileId,
+			displayName: resolved.displayName ?? null,
+			distance: resolved.distance ?? null,
+			profilePhotosHashes: resolved.medias?.map((m) => m.mediaHash) ?? null,
+			unread: lazy.unread,
+			onlineUntil: resolved.onlineUntil ?? null,
+			isFavorite: resolved.isFavorite,
+			isRightNow: resolved.rightNow !== "NOT_ACTIVE",
+			isVisiting: lazy.isVisiting,
+			hasChattedInLast24Hrs:
+				resolved.lastChatTimestamp !== null &&
+				now() - resolved.lastChatTimestamp < 24 * 60 * 60 * 1000,
+		});
+	}
+
+	return rendered;
 }

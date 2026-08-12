@@ -38,14 +38,23 @@ impl From<grindr::BanInfo> for BanInfo {
 pub enum AppError {
 	Http(String),
 	Auth(String),
-	NotLoggedIn,
-	Api { code: i32, message: String },
-	Unauthorized { code: i32, message: String },
+	Api {
+		code: i32,
+		message: String,
+	},
+	Unauthorized {
+		code: i32,
+		message: String,
+	},
 	Banned(BanInfo),
 	RateLimited,
 	RequestBlocked,
+	RequestCooldown {
+		#[serde(rename = "retryAtMs")]
+		retry_at_ms: u64,
+	},
+	RequestCancelled,
 	NotInitialized,
-	SessionCleared,
 }
 
 impl fmt::Display for AppError {
@@ -53,7 +62,6 @@ impl fmt::Display for AppError {
 		match self {
 			AppError::Http(msg) => write!(f, "HTTP error: {msg}"),
 			AppError::Auth(msg) => write!(f, "Auth error: {msg}"),
-			AppError::NotLoggedIn => write!(f, "Not logged in"),
 			AppError::Api { code, message } => {
 				write!(f, "API error {code}: {message}")
 			}
@@ -67,9 +75,10 @@ impl fmt::Display for AppError {
 			AppError::RequestBlocked => {
 				write!(f, "Request blocked by Cloudflare")
 			}
-			AppError::SessionCleared => {
-				write!(f, "Signed out while the request was in flight")
+			AppError::RequestCooldown { retry_at_ms } => {
+				write!(f, "Requests paused until {retry_at_ms}")
 			}
+			AppError::RequestCancelled => write!(f, "Request cancelled"),
 			AppError::NotInitialized => {
 				write!(f, "GrindrClient not initialized")
 			}
@@ -93,21 +102,7 @@ impl From<grindr::GrindrError> for AppError {
 			grindr::GrindrError::Banned(info) => AppError::Banned(info.into()),
 			grindr::GrindrError::RateLimited => AppError::RateLimited,
 			grindr::GrindrError::Blocked => AppError::RequestBlocked,
-			grindr::GrindrError::SessionCleared => AppError::SessionCleared,
 			_ => AppError::Http(e.to_string()),
-		}
-	}
-}
-
-impl AppError {
-	pub fn from_client_error(
-		error: grindr::GrindrError,
-		client: &grindr::GrindrClient,
-	) -> Self {
-		let signed_in = client.session_receiver().borrow().is_some();
-		match AppError::from(error) {
-			AppError::Auth(_) if !signed_in => AppError::NotLoggedIn,
-			mapped => mapped,
 		}
 	}
 }
@@ -130,44 +125,6 @@ mod tests {
 		assert_eq!(json["message"]["code"], 27);
 		assert_eq!(json["message"]["subReason"], "DRUG_SALES");
 		assert_eq!(json["message"]["automated"], true);
-	}
-
-	#[tokio::test]
-	async fn auth_failure_without_a_session_maps_to_not_logged_in() {
-		let client =
-			grindr::GrindrClient::new(grindr::DeviceInfo::generate(), None)
-				.unwrap();
-		let error = client.refresh_token().await.unwrap_err();
-
-		let app = AppError::from_client_error(error, &client);
-
-		assert!(matches!(app, AppError::NotLoggedIn));
-		assert_eq!(serde_json::to_value(&app).unwrap()["kind"], "NotLoggedIn");
-	}
-
-	#[test]
-	fn auth_failure_with_a_session_stays_an_auth_error() {
-		let session: grindr::Session =
-			serde_json::from_value(serde_json::json!({
-				"email": "user@example.com",
-				"expires_at": 9_999_999_999u64,
-				"profile_id": "42",
-				"session_id": "session-token",
-				"auth_token": "auth-token",
-			}))
-			.unwrap();
-		let client = grindr::GrindrClient::new(
-			grindr::DeviceInfo::generate(),
-			Some(session),
-		)
-		.unwrap();
-
-		let app = AppError::from_client_error(
-			grindr::GrindrError::Auth("device key rejected".to_owned()),
-			&client,
-		);
-
-		assert!(matches!(app, AppError::Auth(_)));
 	}
 
 	#[test]

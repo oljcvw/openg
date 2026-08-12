@@ -1,6 +1,7 @@
 import z from "zod";
 
 import { fetchRest } from "$lib/api";
+import { geohashSchema } from "$lib/model/geohash";
 
 const placesResponseSchema = z.object({
 	places: z.array(
@@ -14,12 +15,30 @@ const placesResponseSchema = z.object({
 	),
 });
 
-export async function getPlaces({ query }: { query: string }) {
+export async function getPlaces({
+	query,
+	signal,
+}: {
+	query: string;
+	signal?: AbortSignal;
+}) {
 	const response = await fetchRest(
 		"/v3/places/search?" +
 			new URLSearchParams({
 				placeName: query,
 			}).toString(),
+		{ signal },
 	).then((res) => res.jsonParsed(placesResponseSchema));
 	return response;
+}
+
+export async function updateReportedProfileLocation(
+	geohash: string,
+): Promise<void> {
+	const parsedGeohash = geohashSchema.parse(geohash);
+	const response = await fetchRest("/v4/location", {
+		method: "PUT",
+		body: { geohash: parsedGeohash },
+	});
+	response.assertOk();
 }

@@ -323,6 +323,19 @@ pub fn init_keyring() {
 
 use crate::error::AppError;
 
+static ACCOUNT_STORAGE_LOCK: tokio::sync::Mutex<()> =
+	tokio::sync::Mutex::const_new(());
+
+/// Serializes account, signing-key, and device identity persistence.
+///
+/// Android's background notification worker uses the same process and keyring
+/// as the foreground app. Holding this guard across a poll or credential
+/// rotation prevents an already-running worker from restoring stale account
+/// state after sign-out or an account switch.
+pub fn account_storage_lock() -> &'static tokio::sync::Mutex<()> {
+	&ACCOUNT_STORAGE_LOCK
+}
+
 pub struct DeviceStorage;
 
 impl DeviceStorage {
@@ -449,6 +462,47 @@ impl SigningKeyStorage {
 					"[signing] failed to delete keyring key: {e}"
 				),
 			}
+		}
+	}
+}
+
+#[cfg(test)]
+mod capability_tests {
+	use serde_json::Value;
+
+	fn allowed_paths<'a>(
+		capability: &'a Value,
+		identifier: &str,
+	) -> Vec<&'a str> {
+		capability["permissions"]
+			.as_array()
+			.unwrap()
+			.iter()
+			.find(|permission| permission["identifier"] == identifier)
+			.unwrap()["allow"]
+			.as_array()
+			.unwrap()
+			.iter()
+			.filter_map(|entry| entry["path"].as_str())
+			.collect()
+	}
+
+	#[test]
+	fn favorite_notes_capability_supports_atomic_storage() {
+		let capability: Value =
+			serde_json::from_str(include_str!("../capabilities/default.json"))
+				.unwrap();
+		let data = "$APPDATA/favorite-notes.data";
+		let temp = "$APPDATA/favorite-notes.data.tmp";
+
+		assert!(allowed_paths(&capability, "fs:allow-exists").contains(&data));
+		assert!(
+			allowed_paths(&capability, "fs:allow-read-file").contains(&data)
+		);
+		for identifier in ["fs:allow-write-file", "fs:allow-rename"] {
+			let paths = allowed_paths(&capability, identifier);
+			assert!(paths.contains(&data));
+			assert!(paths.contains(&temp));
 		}
 	}
 }

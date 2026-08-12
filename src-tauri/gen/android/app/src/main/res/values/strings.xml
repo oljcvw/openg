@@ -4,4 +4,16 @@
     <string name="webview_warning_title">Android WebView may be too old</string>
     <string name="webview_warning_update">Update WebView</string>
     <string name="webview_warning_continue">Continue anyway</string>
+    <string name="media_record">Record</string>
+    <string name="media_stop">Stop</string>
+    <string name="media_switch_camera">Switch camera</string>
+    <string name="media_toggle_torch">Toggle torch</string>
+    <string name="media_toggle_mute">Toggle microphone</string>
+    <string name="media_cancel">Cancel</string>
+    <string name="video_call_active">Video call active</string>
+    <string name="video_call_active_description">Camera and microphone are active for this call.</string>
+    <string name="video_call_end">End</string>
+    <string name="video_call_switch_camera">Switch camera</string>
+    <string name="video_call_toggle_microphone">Toggle microphone</string>
+    <string name="video_call_toggle_camera">Toggle camera</string>
 </resources>

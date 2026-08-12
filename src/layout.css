@@ -42,7 +42,37 @@
 	--message-bubble-out: oklch(0.8618 0.1973 89.76);
 }
 
+:root[data-contrast="high"] {
+	--background: oklch(0.08 0 0);
+	--foreground: oklch(1 0 0);
+	--card: oklch(0.16 0 0);
+	--card-foreground: oklch(1 0 0);
+	--popover: oklch(0.16 0 0);
+	--popover-foreground: oklch(1 0 0);
+	--primary: oklch(0.92 0.2 100);
+	--primary-foreground: oklch(0.12 0.03 80);
+	--secondary: oklch(0.32 0 0);
+	--secondary-foreground: oklch(1 0 0);
+	--muted: oklch(0.24 0 0);
+	--muted-foreground: oklch(0.88 0 0);
+	--accent: oklch(0.92 0.2 100);
+	--accent-foreground: oklch(0.12 0.03 80);
+	--destructive: oklch(0.76 0.21 25);
+	--border: oklch(1 0 0 / 38%);
+	--input: oklch(1 0 0 / 45%);
+	--ring: oklch(0.92 0.2 100);
+	--sidebar: oklch(0.16 0 0);
+	--sidebar-foreground: oklch(1 0 0);
+	--sidebar-primary: oklch(0.92 0.2 100);
+	--sidebar-primary-foreground: oklch(0.12 0.03 80);
+	--sidebar-accent: oklch(0.28 0 0);
+	--sidebar-accent-foreground: oklch(1 0 0);
+	--sidebar-border: oklch(1 0 0 / 38%);
+	--sidebar-ring: oklch(0.92 0.2 100);
+}
+
 @theme inline {
+	--breakpoint-chat-compact: 20rem;
 	--font-sans: "IBM Plex Sans Variable", sans-serif;
 	--font-heading: "IBM Plex Sans Variable", sans-serif;
 	--color-sidebar-ring: var(--sidebar-ring);
@@ -93,6 +123,7 @@
 
 	--spacing-avatar: 37.5px;
 	--spacing-list-rail: 117px;
+	--spacing-unread-badge-inline: 5.5px;
 }
 
 /* Keep in sync with src/lib/util/breakpoints.svelte.ts */
@@ -107,6 +138,7 @@
 @theme {
 	--radius-grid: 17px;
 
+	--radius-chat-panel: 27px;
 	--radius-composer: 19px;
 }
 
@@ -143,7 +175,7 @@ body {
 	overscroll-behavior: none;
 	user-select: none;
 	-webkit-user-select: none;
-	--nav-height: 4rem;
+	--nav-height: clamp(4rem, 11vw, 5rem);
 	--selection-bar-height: 4.75rem;
 	--content-pb: calc(var(--nav-height) + var(--safe-area-bottom));
 	--screen-safe: calc(100dvh - var(--safe-area-top) - var(--safe-area-bottom));
@@ -272,6 +304,87 @@ a {
 			> :nth-child(7n):last-child {
 				border-bottom-right-radius: var(--radius-grid);
 			}
+		}
+	}
+
+	.photo-grid[data-columns] {
+		> * {
+			border-radius: 0;
+		}
+		> :first-child {
+			border-top-left-radius: var(--radius-grid);
+		}
+	}
+
+	.photo-grid[data-columns="2"] {
+		> :nth-child(2) {
+			border-top-right-radius: var(--radius-grid);
+		}
+		> :nth-child(2n + 1):nth-last-child(-n + 2) {
+			border-bottom-left-radius: var(--radius-grid);
+		}
+		> :nth-child(2n):last-child {
+			border-bottom-right-radius: var(--radius-grid);
+		}
+	}
+
+	.photo-grid[data-columns="3"] {
+		> :nth-child(3) {
+			border-top-right-radius: var(--radius-grid);
+		}
+		> :nth-child(3n + 1):nth-last-child(-n + 3) {
+			border-bottom-left-radius: var(--radius-grid);
+		}
+		> :nth-child(3n):last-child {
+			border-bottom-right-radius: var(--radius-grid);
+		}
+	}
+
+	.photo-grid[data-columns="4"] {
+		> :nth-child(4) {
+			border-top-right-radius: var(--radius-grid);
+		}
+		> :nth-child(4n + 1):nth-last-child(-n + 4) {
+			border-bottom-left-radius: var(--radius-grid);
+		}
+		> :nth-child(4n):last-child {
+			border-bottom-right-radius: var(--radius-grid);
+		}
+	}
+
+	.photo-grid[data-columns="5"] {
+		> :nth-child(5) {
+			border-top-right-radius: var(--radius-grid);
+		}
+		> :nth-child(5n + 1):nth-last-child(-n + 5) {
+			border-bottom-left-radius: var(--radius-grid);
+		}
+		> :nth-child(5n):last-child {
+			border-bottom-right-radius: var(--radius-grid);
+		}
+	}
+
+	.photo-grid[data-columns="6"] {
+		> :nth-child(6) {
+			border-top-right-radius: var(--radius-grid);
+		}
+		> :nth-child(6n + 1):nth-last-child(-n + 6) {
+			border-bottom-left-radius: var(--radius-grid);
+		}
+		> :nth-child(6n):last-child {
+			border-bottom-right-radius: var(--radius-grid);
+		}
+	}
+
+	.photo-grid[data-columns="7"] {
+		> :nth-child(7) {
+			border-top-right-radius: var(--radius-grid);
+		}
+		> :nth-child(7n + 1):nth-last-child(-n + 7) {
+			border-bottom-left-radius: var(--radius-grid);
+		}
+		> :nth-child(7n):last-child {
+			border-bottom-right-radius: var(--radius-grid);
 		}
 	}
 }

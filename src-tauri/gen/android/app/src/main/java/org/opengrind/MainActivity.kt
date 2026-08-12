@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.widget.TextView
@@ -17,6 +18,26 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.crates.keyring.Keyring
+import org.json.JSONObject
+import org.opengrind.notifications.NotificationNotifier
+import org.opengrind.notifications.NotificationRoute
+import org.opengrind.realtime.RealtimeNetworkMonitor
+
+internal enum class ImeLayoutMode(val bridgeValue: String) {
+	RESIZE("resize"),
+	OVERLAY_CHAT_NAVIGATION("overlay-chat-navigation");
+
+	companion object {
+		fun fromBridgeValue(value: String): ImeLayoutMode =
+			entries.firstOrNull { it.bridgeValue == value } ?: RESIZE
+	}
+}
+
+internal fun webViewImeBottomMargin(
+	mode: ImeLayoutMode,
+	imeVisible: Boolean,
+	imeBottomPixels: Int,
+): Int = if (imeVisible && mode == ImeLayoutMode.RESIZE) imeBottomPixels else 0
 
 class MainActivity : TauriActivity() {
 	private var insetsTop = 0
@@ -24,9 +45,13 @@ class MainActivity : TauriActivity() {
 	private var insetsLeft = 0
 	private var insetsRight = 0
 	@Volatile private var imeVisibleState = false
+	@Volatile private var imeBottomInset = 0
+	@Volatile private var imeBottomPixels = 0
+	@Volatile private var imeLayoutMode = ImeLayoutMode.RESIZE
 	private var webViewRef: WebView? = null
 	private var pendingWebViewWarning: WebViewSupport.Status? = null
 	private var shownWebViewWarning = false
+	private var pendingNotificationRoute: String? = null
 
 	override val handleBackNavigation = false
 
@@ -59,6 +84,14 @@ class MainActivity : TauriActivity() {
 		@JavascriptInterface fun left() = insetsLeft
 		@JavascriptInterface fun right() = insetsRight
 		@JavascriptInterface fun imeVisible() = imeVisibleState
+		@JavascriptInterface fun imeBottom() = imeBottomInset
+		@JavascriptInterface fun setImeLayoutMode(mode: String) {
+			val resolvedMode = ImeLayoutMode.fromBridgeValue(mode)
+			runOnUiThread {
+				imeLayoutMode = resolvedMode
+				applyWebViewImeMargin()
+			}
+		}
 	}
 
 	inner class BackInterface {
@@ -66,15 +99,29 @@ class MainActivity : TauriActivity() {
 			runOnUiThread { this@MainActivity.moveTaskToBack(true) }
 		}
 	}
+
+	inner class ScreenInterface {
+		@JavascriptInterface fun setStayAwake(enabled: Boolean) {
+			runOnUiThread {
+				if (enabled) {
+					window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+				} else {
+					window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+				}
+			}
+		}
+	}
 	
 	override fun onCreate(savedInstanceState: Bundle?) {
 		enableEdgeToEdge()
 		Keyring.initializeNdkContext(applicationContext)
+		pendingNotificationRoute = notificationRoute(intent)
 		pendingWebViewWarning = WebViewSupport.current(
 			context = this,
 			minSupportedMajor = BuildConfig.MIN_SUPPORTED_WEBVIEW_MAJOR,
 		).takeIf { it.disposition == WebViewSupport.Disposition.WARNING }
 		super.onCreate(savedInstanceState)
+		RealtimeNetworkMonitor.initialize(applicationContext)
 
 		onBackPressedDispatcher.addCallback(this, backGestureCallback)
 
@@ -88,22 +135,16 @@ class MainActivity : TauriActivity() {
 			val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
 			val isImeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
 			imeVisibleState = isImeVisible
+			imeBottomPixels = if (isImeVisible) ime.bottom else 0
 			val density = resources.displayMetrics.density
 			
 			insetsTop = (bars.top / density).toInt()
 			insetsBottom = if (isImeVisible) 0 else (bars.bottom / density).toInt()
 			insetsLeft = (bars.left / density).toInt()
 			insetsRight = (bars.right / density).toInt()
+			imeBottomInset = (imeBottomPixels / density).toInt()
 			
-			val bottomMargin = if (isImeVisible) ime.bottom else 0
-			webViewRef?.let { wv ->
-				(wv.layoutParams as? ViewGroup.MarginLayoutParams)?.let { params ->
-					if (params.bottomMargin != bottomMargin) {
-						params.bottomMargin = bottomMargin
-						wv.layoutParams = params
-					}
-				}
-			}
+			applyWebViewImeMargin()
 			
 			webViewRef?.evaluateJavascript("window.__reapplyInsets?.()", null)
 			
@@ -116,7 +157,47 @@ class MainActivity : TauriActivity() {
 		webViewRef = webView
 		webView.addJavascriptInterface(InsetsInterface(), "__AndroidInsets")
 		webView.addJavascriptInterface(BackInterface(), "__AndroidBack")
+		webView.addJavascriptInterface(ScreenInterface(), "__AndroidScreen")
+		openPendingNotificationRoute()
 		maybeWarnAboutWebView()
+	}
+
+	private fun applyWebViewImeMargin() {
+		val bottomMargin = webViewImeBottomMargin(
+			mode = imeLayoutMode,
+			imeVisible = imeVisibleState,
+			imeBottomPixels = imeBottomPixels,
+		)
+		webViewRef?.let { webView ->
+			(webView.layoutParams as? ViewGroup.MarginLayoutParams)?.let { params ->
+				if (params.bottomMargin != bottomMargin) {
+					params.bottomMargin = bottomMargin
+					webView.layoutParams = params
+				}
+			}
+		}
+	}
+
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		setIntent(intent)
+		pendingNotificationRoute = notificationRoute(intent)
+		openPendingNotificationRoute()
+	}
+
+	private fun notificationRoute(intent: Intent?): String? =
+		NotificationRoute.sanitize(
+			intent?.getStringExtra(NotificationNotifier.EXTRA_ROUTE),
+		)
+
+	private fun openPendingNotificationRoute() {
+		val webView = webViewRef ?: return
+		val route = pendingNotificationRoute ?: return
+		pendingNotificationRoute = null
+		webView.evaluateJavascript(
+			"window.location.assign(${JSONObject.quote(route)})",
+			null,
+		)
 	}
 
 	private fun maybeWarnAboutWebView() {

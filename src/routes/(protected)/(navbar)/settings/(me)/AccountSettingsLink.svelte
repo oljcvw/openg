@@ -2,11 +2,22 @@
 	import { CaretRightIcon, UserCircleIcon } from "phosphor-svelte";
 
 	import * as Item from "$lib/components/ui/item";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 </script>
 
 <Item.Root variant="outline">
 	{#snippet child({ props })}
-		<a href="/settings/account" {...props}>
+		<a
+			href="/settings/account"
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () =>
+					openAppDetail("/settings/account"),
+				)}
+			{...props}
+		>
 			<Item.Media>
 				<UserCircleIcon weight="fill" class="size-5" />
 			</Item.Media>

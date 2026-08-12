@@ -82,7 +82,9 @@ export class FetchCache<K, V extends CachedValue> extends TtlCache<K, V> {
 export function cachedFetch<V extends CachedValue>(
 	fetch: () => Promise<V>,
 	options?: CacheOptions,
-): () => Promise<V> {
+): (() => Promise<V>) & { clear: () => void } {
 	const cache = new FetchCache<null, V>(fetch, options);
-	return () => cache.fetch(null);
+	return Object.assign(() => cache.fetch(null), {
+		clear: () => cache.clear(),
+	});
 }

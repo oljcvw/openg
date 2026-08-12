@@ -12,3 +12,7 @@ export function profileMediaUrl(
 	if (demoEnabled) return demoMediaUrl(mediaHash);
 	return `https://cdns.grindr.com/images/${CDN_VARIANTS[size]}/${mediaHash}`;
 }
+
+export function gaymojiMediaUrl(assetId: string): string {
+	return `https://cdns.grindr.com/grindr/chat/gaymoji/${encodeURIComponent(assetId)}`;
+}

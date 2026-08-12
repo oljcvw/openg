@@ -1,29 +1,38 @@
 <script lang="ts">
-	import "photoswipe/style.css";
 	import { ImagesIcon } from "phosphor-svelte";
-	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
 	import { showErrorToast } from "$lib/api/error";
 	import { getSingleMessage } from "$lib/api/messaging/messages";
+	import { getConversationMediaViewer } from "$lib/chat/conversation-media-viewer.svelte";
 	import {
 		type ExpiringImageMessage,
 		expiringImageMessageSchema,
 	} from "$lib/model/messaging/messages";
-	import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+	import type { SharedMediaEntry } from "$lib/chat/shared-media";
 	import LockedMedia from "./LockedMedia.svelte";
 	import { MessageMediaState } from "./message-media.svelte";
+	import { ExplicitViewOnceMediaSource } from "./view-once-media";
 
 	let {
 		conversationId,
 		messageId,
 		message,
+		accountProfileId,
+		peerProfileId,
+		receivedFromPeer,
+		sentAt,
 	}: {
 		conversationId: string;
 		messageId: string;
 		message: ExpiringImageMessage["body"];
+		accountProfileId: number;
+		peerProfileId: number | null;
+		receivedFromPeer: boolean;
+		sentAt: number;
 	} = $props();
 
 	const media = new MessageMediaState();
+	const viewer = getConversationMediaViewer()();
 
 	const className: import("svelte/elements").ClassValue = $derived([
 		"relative",
@@ -32,101 +41,97 @@
 			"size-full": media.clone,
 		},
 	]);
-
 	const contentClass: import("svelte/elements").ClassValue = $derived([
 		"rounded-xl",
 		media.cornerClass,
 	]);
 
-	type LoadedImage = { url: string };
-
-	type ImageState =
-		| { status: "idle" }
-		| { status: "loading" }
-		| { status: "open"; image: LoadedImage };
-
-	let imageState = $state<ImageState>({ status: "idle" });
-	let cachedImage: LoadedImage | null = null;
-
-	function openImage() {
-		if (cachedImage) {
-			imageState = { status: "open", image: cachedImage };
-		} else {
-			imageState = { status: "loading" };
-		}
-	}
-
-	$effect(() => {
-		if (imageState.status !== "loading") return;
-		void (async () => {
-			try {
-				const { body: image } = await getSingleMessage({
+	let loading = $state(false);
+	let unavailable = $state(false);
+	const entry = $derived.by((): SharedMediaEntry | null =>
+		receivedFromPeer && peerProfileId !== null
+			? {
+					accountProfileId,
 					conversationId,
+					peerProfileId,
 					messageId,
-				}).then((res) => expiringImageMessageSchema.parse(res.message));
-				if (image.url === null) throw new Error("Image URL is null");
-				cachedImage = { url: image.url };
-				imageState = {
-					status: "open",
-					image: {
-						url: image.url,
-					},
-				};
-			} catch (error) {
-				console.error(error);
-				showErrorToast({
-					label: "Failed to load expiring image",
-					error,
-				});
-				imageState = { status: "idle" };
-			}
-		})();
+					mediaId: String(message.mediaId),
+					kind: "image",
+					messageType: "ExpiringImage",
+					sentAt,
+					remoteAvailability:
+						message.viewsRemaining === 0 ? "views_exhausted" : "available",
+					cacheAvailability: "not_cached",
+					cacheToken: null,
+					consumptive: true,
+					remoteUrl: null,
+				}
+			: null,
+	);
+	const source = $derived.by(() => {
+		const current = entry;
+		if (current === null) return null;
+		const identity = JSON.stringify([
+			current.accountProfileId,
+			current.conversationId,
+			current.peerProfileId,
+			current.messageId,
+			current.mediaId,
+			current.kind,
+			current.messageType,
+		]);
+		return viewer.retainResolver(
+			`view-once:${identity}`,
+			() => new ExplicitViewOnceMediaSource(current),
+		);
 	});
 
-	$effect(() => {
-		if (imageState.status !== "open") return;
-		const { image } = imageState;
-		let lightbox: PhotoSwipeLightbox | undefined;
-		import("photoswipe/lightbox")
-			.then(({ default: PhotoSwipeLightbox }) => {
-				lightbox = new PhotoSwipeLightbox({
-					showHideAnimationType: "fade",
-					pswpModule: () => import("photoswipe"),
-					mainClass: `pswp--buttons-visible`,
-				});
-				lightbox.addFilter("numItems", () => 1);
-				lightbox.addFilter("itemData", () => {
-					return { src: image.url, width: 0, height: 0 };
-				});
-				const onBackGesture = () => {
-					lightbox?.pswp?.close();
-					return false;
-				};
-				lightbox.on("beforeOpen", () => {
-					backGestureEventHandlers.add(onBackGesture);
-				});
-				lightbox.on("close", () => {
-					backGestureEventHandlers.delete(onBackGesture);
-				});
-				lightbox.on("closingAnimationEnd", () => {
-					imageState = { status: "idle" };
-				});
-				lightbox.init();
-				lightbox.loadAndOpen(0);
+	function openImage(opener: HTMLButtonElement): void {
+		if (loading) return;
+		loading = true;
+		void viewer
+			.openExplicit({
+				messageId,
+				opener,
+				resolve: async (signal) => {
+					const authorize = async () => {
+						const { body: image } = await getSingleMessage({
+							conversationId,
+							messageId,
+						}).then((response) =>
+							expiringImageMessageSchema.parse(response.message),
+						);
+						return image.url;
+					};
+					const url = source
+						? await source.open(async () => {
+								const authorizedUrl = await authorize();
+								return authorizedUrl === null
+									? null
+									: { url: authorizedUrl, contentType: "image/*" };
+							}, message.viewsRemaining !== 0)
+						: await authorize();
+					if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+					if (url === null) throw new Error("Expiring image unavailable");
+					return {
+						items: [{ id: messageId, kind: "image" as const, url }],
+						startId: messageId,
+						preload: [0, 0] as [number, number],
+					};
+				},
 			})
 			.catch((error) => {
+				if (error instanceof DOMException && error.name === "AbortError")
+					return;
 				console.error(error);
-				showErrorToast({
-					label: "Failed to open expiring image",
-					error,
-				});
-				imageState = { status: "idle" };
-			});
-		return () => lightbox?.destroy();
-	});
+				showErrorToast({ label: "Failed to load expiring image", error });
+				unavailable = true;
+			})
+			.finally(() => (loading = false));
+	}
 </script>
 
-{#if message.viewsRemaining === null || message.viewsRemaining > 0}
+{#if !unavailable}
 	<button
 		class={[
 			"flex w-50 items-center gap-2 px-4 py-3 text-start font-medium",
@@ -134,16 +139,20 @@
 			contentClass,
 			"border border-border bg-input",
 			{
-				"cursor-pointer": imageState.status === "idle",
-				"opacity-50": imageState.status === "loading",
+				"cursor-pointer": !loading,
+				"opacity-50": loading,
 			},
 		]}
-		onclick={openImage}
-		disabled={imageState.status !== "idle"}
+		onclick={(event) => openImage(event.currentTarget)}
+		disabled={loading}
 		bind:this={media.el}
 	>
 		<ImagesIcon size={24} weight="fill" />
-		<span>View expiring image</span>
+		<span>
+			{message.viewsRemaining === 0
+				? "View cached image"
+				: "View expiring image"}
+		</span>
 		{@render media.adornments?.()}
 	</button>
 {:else}
@@ -152,14 +161,8 @@
 			class={[media.cornerClass, "gap-2 font-medium text-neutral-600"]}
 			size="sm"
 		>
-			Expired image
+			Image unavailable
 		</LockedMedia>
 		{@render media.adornments?.()}
 	</div>
 {/if}
-
-<style>
-	:global(.pswp__img) {
-		object-fit: contain;
-	}
-</style>

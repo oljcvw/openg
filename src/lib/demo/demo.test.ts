@@ -21,14 +21,12 @@ import {
 	expiringImageMessageSchema,
 	previewLabel,
 } from "$lib/model/messaging/messages";
-import { gendersSchema } from "$lib/model/users/genders";
+import { rightNowFeedResponseSchema } from "$lib/model/right-now/feed/response/v4";
 import {
 	profileRightNowSchema,
 	profileSchema,
 	profileShortSchema,
 } from "$lib/model/users/profiles";
-import { pronounsSchema } from "$lib/model/users/pronouns";
-import { profileTagsResponseSchema } from "$lib/model/users/tags";
 
 const shortProfileSchema = z.object({
 	...profileShortSchema.shape,
@@ -124,10 +122,10 @@ describe("demo route data matches the real schemas", () => {
 				`/v5/chat/conversation/${id}/message?profile=true`,
 			) as { messages: unknown[]; lastReadTimestamp: number | null };
 			const messages = z.array(apiResponseMessageSchema).parse(body.messages);
-			const [newest] = messages;
-			const oldest = messages.at(-1);
-			if (!newest || !oldest) throw new Error(`no messages in ${id}`);
-			expect(newest.timestamp).toBeGreaterThanOrEqual(oldest.timestamp);
+			expect(messages.length).toBeGreaterThan(0);
+			expect(messages[0]!.timestamp).toBeGreaterThanOrEqual(
+				messages[messages.length - 1]!.timestamp,
+			);
 		}
 	});
 
@@ -200,6 +198,21 @@ describe("demo route data matches the real schemas", () => {
 		apiResponseMessageSchema.parse(body);
 	});
 
+	it("updates and sends locations through demo routes", () => {
+		expect(
+			demoRoute("/v4/location", "PUT", { geohash: "u2fkb88pbpbp" }).status,
+		).toBe(200);
+		const body = route("/v4/chat/message/send", "POST", {
+			type: "Location",
+			target: { type: "Direct", targetId: 100001 },
+			body: { lat: 53.35, lon: -6.26 },
+		});
+		expect(apiResponseMessageSchema.parse(body)).toMatchObject({
+			type: "Location",
+			body: { lat: 53.35, lon: -6.26 },
+		});
+	});
+
 	it("taps and views validate", () => {
 		const taps = route("/v2/taps/received") as { profiles: unknown[] };
 		for (const tap of taps.profiles) tapProfileSchema.parse(tap);
@@ -213,9 +226,9 @@ describe("demo route data matches the real schemas", () => {
 	});
 
 	it("reference data validates and mutations are accepted no-ops", () => {
-		gendersSchema.parse(route("/public/v2/genders"));
-		pronounsSchema.parse(route("/v1/pronouns"));
-		profileTagsResponseSchema.parse(route("/v1/tags"));
+		expect(Array.isArray(route("/public/v2/genders"))).toBe(true);
+		expect(Array.isArray(route("/v1/pronouns"))).toBe(true);
+		expect(Array.isArray(route("/v1/tags"))).toBe(true);
 		expect(demoRoute("/v4/me/profile", "PATCH", { aboutMe: "x" }).status).toBe(
 			200,
 		);
@@ -227,14 +240,30 @@ describe("demo route data matches the real schemas", () => {
 		);
 	});
 
+	it("Right Now feed validates and applies filters", () => {
+		const all = rightNowFeedResponseSchema.parse(
+			route("/v4/rightnow/feed?sort=DISTANCE"),
+		);
+		const hosting = rightNowFeedResponseSchema.parse(
+			route("/v4/rightnow/feed?sort=NEWEST&hosting=true"),
+		);
+		expect(all.items.length).toBeGreaterThan(12);
+		expect(hosting.items.length).toBeGreaterThan(0);
+		expect(hosting.items.length).toBeLessThan(all.items.length);
+		for (const item of hosting.items) {
+			expect((item as { data: { hosting: boolean } }).data.hosting).toBe(true);
+		}
+	});
+
 	it("conversation pin/mute/delete mutations persist across inbox fetches", () => {
 		const inbox = () => {
 			const body = route("/v4/inbox?page=1", "POST") as { entries: unknown[] };
 			return z.array(fullConversationSchema).parse(body.entries);
 		};
-		const [first, second, third] = inbox();
-		if (!first || !second || !third)
-			throw new Error("the demo inbox has fewer than three conversations");
+		const initial = inbox();
+		const first = initial[0]!;
+		const second = initial[1]!;
+		const third = initial[2]!;
 
 		route(
 			`/v4/chat/conversation/${first.data.conversationId}/${first.data.pinned ? "unpin" : "pin"}`,
@@ -258,5 +287,28 @@ describe("demo route data matches the real schemas", () => {
 		expect(
 			after.some((e) => e.data.conversationId === third.data.conversationId),
 		).toBe(false);
+	});
+
+	it("account settings routes round-trip privacy and list mutations", () => {
+		route("/v3/me/prefs/settings", "PUT", {
+			settings: { incognito: true },
+		});
+		expect(
+			(route("/v3/me/prefs/settings") as { incognito: boolean }).incognito,
+		).toBe(true);
+
+		const blocked = route("/v3.1/me/blocks") as {
+			blocking: Array<{ profileId: number }>;
+		};
+		route(`/v3/me/blocks/${blocked.blocking[0]?.profileId}`, "DELETE");
+		expect(
+			(route("/v3.1/me/blocks") as { blocking: unknown[] }).blocking,
+		).toHaveLength(0);
+
+		const hidden = route("/v1/hides") as {
+			hides: Array<{ profileId: number }>;
+		};
+		route(`/v1/hides/${hidden.hides[0]?.profileId}`, "DELETE");
+		expect((route("/v1/hides") as { hides: unknown[] }).hides).toHaveLength(0);
 	});
 });

@@ -24,10 +24,14 @@
 				m.timestamp > seenTimestamp,
 		).length,
 	);
+
+	const overlayBottom =
+		"calc(var(--chat-ime-offset, 0px) + var(--composer-height) + var(--chat-composer-overlay-height, 0px) + 0.75rem)";
 </script>
 
 <div
-	class="absolute right-3 bottom-[calc(var(--composer-height)+--spacing(3))] z-2"
+	class="absolute right-3 z-2"
+	style:bottom={overlayBottom}
 	transition:fly={{ y: 48, opacity: 0, duration: 200, easing: sineOut }}
 >
 	<Button
@@ -41,7 +45,7 @@
 	</Button>
 	{#if unreadCount > 0}
 		<Badge
-			class="pointer-events-none absolute -top-1.5 -right-1.5 min-w-5 px-[5.5px]"
+			class="pointer-events-none absolute -top-1.5 -right-1.5 min-w-5 px-unread-badge-inline"
 		>
 			{unreadCount}
 		</Badge>

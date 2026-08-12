@@ -1,11 +1,14 @@
 import { getReceivedTaps } from "$lib/api/interest/taps";
+import {
+	readCachedTaps,
+	type TapsSnapshot,
+	writeCachedTaps,
+} from "$lib/app-data/interest-cache";
 import { ReconcilingListState } from "$lib/util/reconciling-list-state.svelte";
 import { tapV1TapSentEventSchema, ws } from "$lib/ws.svelte";
 import type { TapProfile } from "$lib/model/interest/tap-profile";
 
 const PAGE_SIZE = 20;
-
-type TapsSnapshot = { profiles: TapProfile[] };
 
 export class TapsState extends ReconcilingListState<TapProfile, TapsSnapshot> {
 	readonly ourProfileId: number;
@@ -13,7 +16,11 @@ export class TapsState extends ReconcilingListState<TapProfile, TapsSnapshot> {
 	#all: TapProfile[] = $state([]);
 
 	constructor({ ourProfileId }: { ourProfileId: number }) {
-		super({ pageSize: PAGE_SIZE, refreshErrorLabel: "Failed to refresh taps" });
+		super({
+			pageSize: PAGE_SIZE,
+			refreshErrorLabel: "Failed to refresh taps",
+			reconcileScope: "taps",
+		});
 		this.ourProfileId = ourProfileId;
 		this.start();
 	}
@@ -30,6 +37,14 @@ export class TapsState extends ReconcilingListState<TapProfile, TapsSnapshot> {
 		return getReceivedTaps();
 	}
 
+	protected readCached(): Promise<TapsSnapshot | null> {
+		return readCachedTaps(this.ourProfileId);
+	}
+
+	protected writeCached(snapshot: TapsSnapshot): Promise<void> {
+		return writeCachedTaps(this.ourProfileId, snapshot);
+	}
+
 	protected applySnapshot(snapshot: TapsSnapshot): Set<number> {
 		this.#all = snapshot.profiles;
 		return new Set(snapshot.profiles.map((tap) => tap.profileId));
@@ -43,6 +58,10 @@ export class TapsState extends ReconcilingListState<TapProfile, TapsSnapshot> {
 
 	protected keyOf(tap: TapProfile): number {
 		return tap.profileId;
+	}
+
+	protected snapshot(): TapsSnapshot {
+		return { profiles: this.#all };
 	}
 
 	protected subscribeEvents(): Promise<() => void> {

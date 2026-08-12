@@ -9,10 +9,26 @@ import {
 	setConversationMuted,
 	setConversationPinned,
 } from "$lib/api/messaging/conversations";
+import {
+	type FailedCachedMessage,
+	mergeConfirmedMessages,
+	readCachedInbox,
+	readCachedConversation as readPersistedConversation,
+	removeCachedConversation,
+	writeCachedInbox,
+	writeCachedConversation as writePersistedConversation,
+} from "$lib/app-data/chat-cache";
+import {
+	getDeveloperSettingsSnapshot,
+	getShowRetractedMessagesSnapshot,
+	subscribePreferences,
+} from "$lib/app-data/preferences.svelte";
 import { showIncomingMessageToast } from "$lib/components/incoming-message-toast/incoming-message-toast-manager";
+import { runtimeOwnership } from "$lib/dev/runtime-ownership";
 import { previewFromMessage } from "$lib/model/messaging/messages";
+import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 import { below } from "$lib/util/breakpoints.svelte";
-import { reconciler } from "$lib/util/reconcile";
+import { type ReconcileEvent, reconciler } from "$lib/util/reconcile";
 import {
 	chatV1ConversationDeleteEventSchema,
 	chatV1MessageSentEventSchema,
@@ -20,13 +36,26 @@ import {
 } from "$lib/ws.svelte";
 import type { Conversation } from "$lib/model/messaging/conversations";
 import type { ApiResponseMessage } from "$lib/model/messaging/messages";
+import {
+	conversationRowMatchesQuery,
+	messageCorpusMatchesQuery,
+	normalizeConversationSearchQuery,
+	searchableMessageText,
+} from "./conversation-filter";
 
 const singleColumnLayout = below("split");
 
 type OptimisticFlagField = "pinned" | "muted";
+type MessageSearchStatus = "idle" | "searching" | "complete";
+
+type MessageSearchCorpus = {
+	textByMessageId: Map<string, string>;
+	retractedMessageIds: Set<string>;
+};
 
 export type CachedConversation = {
 	messages: ApiResponseMessage[];
+	failedMessages?: FailedCachedMessage[];
 	profile: {
 		distance: number | null;
 		mediaHash: string | null;
@@ -37,18 +66,38 @@ export type CachedConversation = {
 	};
 	pageKey: string | null;
 	lastReadTimestamp: number | null;
+	segments?: {
+		segmentId: string;
+		cursor: string | null;
+		nextCursor: string | null;
+		messageIds: string[];
+	}[];
+	removedMessageIds?: string[];
 };
 
 class ConversationsState {
 	entries = $state<Conversation[]>([]);
 	nextPage = $state<number | null>(null);
 	loadingMore = $state(false);
+	loadMoreError: unknown | null = $state(null);
 	refreshing = $state(false);
 	inboxLastViewedAt = $state(0);
 	initial: Promise<void> = $state(Promise.resolve());
-	listScrollY = 0;
+	messageSearchQuery = $state("");
+	messageSearchMatchIds = $state<string[]>([]);
+	messageSearchStatus = $state<MessageSearchStatus>("idle");
+	messageSearchScanned = $state(0);
+	messageSearchTotal = $state(0);
+	failedConversationIds = $state<string[]>([]);
 
 	readonly ourProfileId: number;
+
+	sharedAlbumsHint(conversationId: string): boolean | null {
+		return (
+			this.entries.find((entry) => entry.data.conversationId === conversationId)
+				?.data.metadata?.hasSharedAlbums ?? null
+		);
+	}
 	#activeConversationId: string | null = null;
 	#wsPromises: Promise<() => void>[] = [];
 	#messageCache = new Map<string, CachedConversation>();
@@ -62,44 +111,132 @@ class ConversationsState {
 	#inFlightFetches = new Set<Promise<unknown>>();
 	#fetchEpoch = 0;
 	#syncLatestInFlight: Promise<void> | null = null;
+	#messageSearchCorpora = new Map<string, MessageSearchCorpus>();
+	#messageSearchEpoch = 0;
+	#unsubscribePreferences: () => void;
+	#releaseOwnership = runtimeOwnership.acquire("conversation-state");
 
 	constructor(ourProfileId: number) {
 		this.ourProfileId = ourProfileId;
 		this.inboxLastViewedAt = this.#loadInboxLastViewed();
-		this.initial = this.#trackFetch(this.#load(1));
+		this.initial = this.#trackFetch(this.#initialize());
 
-		this.#unsubscribeReconcile = reconciler.subscribe(() =>
-			this.#trackFetch(this.#reconcile()),
+		this.#unsubscribeReconcile = reconciler.subscribe(
+			"inbox",
+			(event: ReconcileEvent) => {
+				const requiresFullReconcile =
+					event.reasons.has("events-dropped") ||
+					(event.reasons.has("server-signal") &&
+						event.scopes.size === 1 &&
+						event.scopes.has("inbox"));
+				return this.#trackFetch(
+					requiresFullReconcile
+						? this.#reconcile()
+						: this.#syncLatest({
+								errorLabel: "Failed to sync latest conversations",
+							}),
+				);
+			},
 		);
+		this.#unsubscribePreferences = subscribePreferences(() => {
+			for (const entry of this.entries) {
+				this.#refreshCurrentSearchMatch(entry.data.conversationId);
+			}
+		});
 
 		this.#wsPromises.push(
-			ws.on("chat.v1.message_sent", chatV1MessageSentEventSchema, (event) => {
-				if (this.#destroyed) return;
-				void this.#handleMessageSent(event.payload);
-			}),
-			ws.on(
-				"chat.v1.conversation.delete",
-				chatV1ConversationDeleteEventSchema,
-				(event) => {
+			this.#trackWebsocketListener(
+				ws.on("chat.v1.message_sent", chatV1MessageSentEventSchema, (event) => {
 					if (this.#destroyed) return;
-					for (const id of event.payload.conversationIds) {
-						this.remove(id);
-						this.#markServerDeleted(id);
-					}
-				},
+					void this.#handleMessageSent(event.payload);
+				}),
+			),
+			this.#trackWebsocketListener(
+				ws.on(
+					"chat.v1.conversation.delete",
+					chatV1ConversationDeleteEventSchema,
+					(event) => {
+						if (this.#destroyed) return;
+						for (const id of event.payload.conversationIds) {
+							this.remove(id);
+							this.#markServerDeleted(id);
+						}
+					},
+				),
 			),
 		);
 	}
 
+	async #trackWebsocketListener(
+		pending: Promise<() => void>,
+	): Promise<() => void> {
+		const release = runtimeOwnership.acquire("websocket-listener");
+		try {
+			const unlisten = await pending;
+			let active = true;
+			return () => {
+				if (!active) return;
+				active = false;
+				try {
+					unlisten();
+				} finally {
+					release();
+				}
+			};
+		} catch (error) {
+			release();
+			throw error;
+		}
+	}
+
+	async #initialize(): Promise<void> {
+		const cached = await readCachedInbox(this.ourProfileId).catch((error) => {
+			console.error("Inbox cache hydration failed", error);
+			return null;
+		});
+		if (this.#destroyed) return;
+		if (cached) {
+			this.entries = cached.entries;
+			this.nextPage = cached.nextPage;
+			this.failedConversationIds = cached.failedConversationIds;
+		}
+		try {
+			await this.#load(1);
+		} catch (error) {
+			if (!cached) throw error;
+			console.error("Inbox network refresh failed", error);
+			showErrorToast({ label: "Showing cached conversations", error });
+		}
+	}
+
 	async destroy(): Promise<void> {
+		if (this.#destroyed) return;
 		this.#destroyed = true;
+		this.#releaseOwnership();
+		this.cancelMessageSearch();
+		this.#messageSearchCorpora.clear();
 		this.#unsubscribeReconcile();
-		const unlisteners = await Promise.all(this.#wsPromises);
-		for (const unlisten of unlisteners) unlisten();
+		this.#unsubscribePreferences();
+		const registrations = await Promise.allSettled(this.#wsPromises);
+		const failures: unknown[] = [];
+		for (const registration of registrations) {
+			if (registration.status === "rejected") {
+				failures.push(registration.reason);
+				continue;
+			}
+			try {
+				registration.value();
+			} catch (error) {
+				failures.push(error);
+			}
+		}
 		this.#wsPromises = [];
+		if (failures.length > 0)
+			throw new AggregateError(failures, "WebSocket listener cleanup failed");
 	}
 
 	async #handleMessageSent(message: ApiResponseMessage): Promise<void> {
+		this.#mergeSearchMessages(message.conversationId, [message]);
 		const isActive = message.conversationId === this.#activeConversationId;
 		const isIncoming = message.senderId !== this.ourProfileId;
 		let entry = this.#find(message.conversationId);
@@ -110,7 +247,7 @@ class ConversationsState {
 		}
 
 		if (entry) {
-			if (!isActive && isIncoming) {
+			if (isIncoming) {
 				entry.data.unreadCount += 1;
 			}
 			if (!isActive) {
@@ -268,7 +405,7 @@ class ConversationsState {
 	}
 
 	#isStale(fetchEpoch: number): boolean {
-		return fetchEpoch !== this.#fetchEpoch;
+		return this.#destroyed || fetchEpoch !== this.#fetchEpoch;
 	}
 
 	#trackFetch<T>(fetch: Promise<T>): Promise<T> {
@@ -287,23 +424,27 @@ class ConversationsState {
 		if (this.#destroyed) return;
 		this.entries = [];
 		this.nextPage = null;
+		this.loadMoreError = null;
 		this.initial = this.#trackFetch(this.#load(1));
 	}
 
 	async loadMore(): Promise<void> {
 		if (this.loadingMore || this.nextPage === null) return;
 		this.loadingMore = true;
+		this.loadMoreError = null;
 		try {
 			await this.#trackFetch(this.#load(this.nextPage));
 		} catch (error) {
 			console.error(error);
-			showErrorToast({
-				label: "Failed to load more conversations",
-				error,
-			});
+			this.loadMoreError = error;
 		} finally {
 			this.loadingMore = false;
 		}
+	}
+
+	async retryLoadMore(): Promise<void> {
+		this.loadMoreError = null;
+		await this.loadMore();
 	}
 
 	async ensureLoaded(conversationId: string): Promise<void> {
@@ -317,6 +458,11 @@ class ConversationsState {
 
 	remove(conversationId: string) {
 		this.#messageCache.delete(conversationId);
+		void removeCachedConversation(this.ourProfileId, conversationId);
+		this.#messageSearchCorpora.delete(conversationId);
+		this.messageSearchMatchIds = this.messageSearchMatchIds.filter(
+			(id) => id !== conversationId,
+		);
 		const index = this.entries.findIndex(
 			(e) => e.data.conversationId === conversationId,
 		);
@@ -336,7 +482,6 @@ class ConversationsState {
 
 	setActive(conversationId: string): void {
 		this.#activeConversationId = conversationId;
-		void this.markRead(conversationId);
 	}
 
 	clearActive(conversationId: string): void {
@@ -397,23 +542,30 @@ class ConversationsState {
 	}
 
 	async markRead(conversationId: string) {
-		const entry = this.#find(conversationId);
-		if (entry) {
-			const clearedCount = entry.data.unreadCount;
-			if (clearedCount > 0) {
-				entry.data.unreadCount = 0;
-				try {
-					await markConversationAsRead({ conversationId });
-				} catch (error) {
-					console.error(error);
-					showErrorToast({
-						label: "Failed to mark conversation as read",
-						error,
-					});
-					entry.data.unreadCount += clearedCount;
-				}
-			}
+		const revert = this.markReadLocally(conversationId);
+		try {
+			await markConversationAsRead({ conversationId });
+		} catch (error) {
+			console.error(error);
+			showErrorToast({
+				label: "Failed to mark conversation as read",
+				error,
+			});
+			revert();
 		}
+	}
+
+	markReadLocally(conversationId: string): () => void {
+		const entry = this.#find(conversationId);
+		const clearedCount = entry?.data.unreadCount ?? 0;
+		if (entry && clearedCount > 0) entry.data.unreadCount = 0;
+		let reverted = false;
+		return () => {
+			if (reverted || clearedCount === 0) return;
+			reverted = true;
+			const current = this.#find(conversationId);
+			if (current) current.data.unreadCount += clearedCount;
+		};
 	}
 
 	async #requestWithRollback<T>({
@@ -614,6 +766,11 @@ class ConversationsState {
 	}
 
 	#mergeIncoming(existing: Conversation, incoming: Conversation): void {
+		if (
+			incoming.data.lastActivityTimestamp > existing.data.lastActivityTimestamp
+		) {
+			this.#invalidateSearchCorpus(incoming.data.conversationId);
+		}
 		const { unreadCount, ...data } = incoming.data;
 		const pendingFlags = this.#pendingFlags.get(incoming.data.conversationId);
 		for (const field of pendingFlags?.keys() ?? []) {
@@ -631,18 +788,285 @@ class ConversationsState {
 				Number(b.data.pinned) - Number(a.data.pinned) ||
 				b.data.lastActivityTimestamp - a.data.lastActivityTimestamp,
 		);
+		this.#persistInbox();
 	}
 
-	getCachedConversation(id: string): CachedConversation | undefined {
-		return this.#messageCache.get(id);
+	#persistInbox(): void {
+		if (this.#destroyed) return;
+		void writeCachedInbox(
+			this.ourProfileId,
+			this.entries,
+			this.nextPage,
+			this.failedConversationIds,
+		).catch((error) => console.error("Inbox cache write failed", error));
+	}
+
+	async getCachedConversation(
+		id: string,
+	): Promise<CachedConversation | undefined> {
+		const memory = this.#messageCache.get(id);
+		if (memory) {
+			this.#messageCache.delete(id);
+			this.#messageCache.set(id, memory);
+			return memory;
+		}
+		const persisted = await readPersistedConversation(
+			this.ourProfileId,
+			id,
+		).catch(() => {
+			console.error("Conversation cache hydration failed");
+			reportClientDiagnostic({
+				category: "cache_recovery",
+				component: "conversation",
+				code: "bypassed_unreadable_cache",
+				level: "warning",
+			});
+			return null;
+		});
+		if (!persisted) return undefined;
+		const cached = {
+			messages: persisted.messages,
+			failedMessages: persisted.failedMessages,
+			profile: persisted.profile,
+			pageKey: persisted.pageKey,
+			lastReadTimestamp: persisted.lastReadTimestamp,
+			segments: persisted.segments,
+		};
+		this.#messageCache.set(id, cached);
+		this.#trimConversationCache();
+		return cached;
 	}
 
 	setCachedConversation(id: string, data: CachedConversation): void {
-		this.#messageCache.set(id, data);
+		const current = this.#messageCache.get(id);
+		const removedMessageIds = new Set(data.removedMessageIds ?? []);
+		const normalized = {
+			...data,
+			messages: mergeConfirmedMessages(
+				current?.messages ?? [],
+				data.messages,
+				removedMessageIds,
+			),
+			failedMessages: data.failedMessages ?? [],
+			segments: data.segments ?? current?.segments ?? [],
+		};
+		delete normalized.removedMessageIds;
+		this.#messageCache.set(id, normalized);
+		this.#trimConversationCache();
+		const hasFailed = normalized.failedMessages.some(
+			(message) => message.state === "failed",
+		);
+		if (hasFailed && !this.failedConversationIds.includes(id)) {
+			this.failedConversationIds = [...this.failedConversationIds, id];
+		} else if (!hasFailed && this.failedConversationIds.includes(id)) {
+			this.failedConversationIds = this.failedConversationIds.filter(
+				(conversationId) => conversationId !== id,
+			);
+		}
+		this.#persistInbox();
+		void writePersistedConversation(this.ourProfileId, id, {
+			...normalized,
+		}).catch((error) =>
+			console.error("Conversation cache write failed", error),
+		);
+		const corpus = this.#messageSearchCorpora.get(id);
+		if (corpus) {
+			corpus.textByMessageId.clear();
+			corpus.retractedMessageIds.clear();
+		}
+		this.#mergeSearchMessages(id, data.messages);
+	}
+
+	#trimConversationCache(): void {
+		const maximumNonactive = 20;
+		while (
+			this.#messageCache.size >
+			maximumNonactive + (this.#activeConversationId === null ? 0 : 1)
+		) {
+			const oldest = this.#messageCache.keys().next().value;
+			if (oldest === undefined) return;
+			if (oldest === this.#activeConversationId) {
+				const active = this.#messageCache.get(oldest);
+				this.#messageCache.delete(oldest);
+				if (active) this.#messageCache.set(oldest, active);
+				continue;
+			}
+			this.#messageCache.delete(oldest);
+		}
 	}
 
 	invalidateConversation(id: string): void {
 		this.#messageCache.delete(id);
+	}
+
+	#invalidateSearchCorpus(conversationId: string): void {
+		this.#messageSearchCorpora.delete(conversationId);
+		this.messageSearchMatchIds = this.messageSearchMatchIds.filter(
+			(id) => id !== conversationId,
+		);
+	}
+
+	removeMessageFromSearch(conversationId: string, messageId: string): void {
+		const corpus = this.#messageSearchCorpora.get(conversationId);
+		if (!corpus) return;
+		corpus.textByMessageId.delete(messageId);
+		this.#refreshCurrentSearchMatch(conversationId);
+	}
+
+	cancelMessageSearch(nextQuery = ""): void {
+		const normalizedQuery = normalizeConversationSearchQuery(nextQuery);
+		this.#messageSearchEpoch += 1;
+		this.messageSearchQuery = normalizedQuery;
+		this.messageSearchMatchIds = [];
+		this.messageSearchStatus = normalizedQuery === "" ? "idle" : "searching";
+		this.messageSearchScanned = 0;
+		this.messageSearchTotal = 0;
+		if (normalizedQuery === "") this.#messageSearchCorpora.clear();
+	}
+
+	async searchLoadedMessages(query: string): Promise<void> {
+		const normalizedQuery = normalizeConversationSearchQuery(query);
+		this.cancelMessageSearch(normalizedQuery);
+		if (normalizedQuery === "" || this.#destroyed) return;
+
+		const searchEpoch = ++this.#messageSearchEpoch;
+		const candidates = this.entries.filter(
+			(entry) => !conversationRowMatchesQuery(entry, normalizedQuery),
+		);
+
+		this.messageSearchQuery = normalizedQuery;
+		this.messageSearchStatus = "searching";
+		this.messageSearchTotal = candidates.length;
+		let nextCandidate = 0;
+		const concurrency = Math.min(
+			candidates.length,
+			getDeveloperSettingsSnapshot().conversationSearchConcurrency,
+		);
+		await Promise.all(
+			Array.from({ length: concurrency }, async () => {
+				while (!this.#isMessageSearchStale(searchEpoch)) {
+					const candidate = candidates[nextCandidate++];
+					if (!candidate) return;
+					const id = candidate.data.conversationId;
+					await this.getCachedConversation(id).catch(() => undefined);
+					if (this.#isMessageSearchStale(searchEpoch)) return;
+					this.#seedSearchCorpus(id);
+					if (id !== this.#activeConversationId) this.#messageCache.delete(id);
+					this.messageSearchScanned += 1;
+				}
+			}),
+		);
+		if (this.#isMessageSearchStale(searchEpoch)) return;
+		this.#publishSearchMatches({
+			candidates,
+			normalizedQuery,
+			searchEpoch,
+		});
+
+		if (this.#isMessageSearchStale(searchEpoch)) return;
+		this.messageSearchStatus = "complete";
+	}
+
+	#isMessageSearchStale(searchEpoch: number): boolean {
+		return this.#destroyed || searchEpoch !== this.#messageSearchEpoch;
+	}
+
+	#seedSearchCorpus(conversationId: string): MessageSearchCorpus {
+		let corpus = this.#messageSearchCorpora.get(conversationId);
+		if (!corpus) {
+			corpus = {
+				textByMessageId: new Map(),
+				retractedMessageIds: new Set(),
+			};
+			this.#messageSearchCorpora.set(conversationId, corpus);
+		}
+		const cached = this.#messageCache.get(conversationId);
+		if (!cached) return corpus;
+		corpus.textByMessageId.clear();
+		corpus.retractedMessageIds.clear();
+		this.#mergeSearchMessages(conversationId, cached.messages);
+		return corpus;
+	}
+
+	#mergeSearchMessages(
+		conversationId: string,
+		messages: readonly ApiResponseMessage[],
+	): void {
+		const corpus = this.#messageSearchCorpora.get(conversationId);
+		if (!corpus) return;
+		for (const message of messages) {
+			if (message.type === "Retract") {
+				corpus.retractedMessageIds.add(message.body.targetMessageId);
+			}
+		}
+		for (const message of messages) {
+			if (message.type === "Retract") continue;
+			const text = searchableMessageText(message);
+			if (text === null) {
+				corpus.textByMessageId.delete(message.messageId);
+			} else {
+				corpus.textByMessageId.set(message.messageId, text);
+			}
+		}
+		this.#refreshCurrentSearchMatch(conversationId);
+	}
+
+	#refreshCurrentSearchMatch(conversationId: string): void {
+		const normalizedQuery = this.messageSearchQuery;
+		if (normalizedQuery === "") return;
+		const entry = this.#find(conversationId);
+		const corpus = this.#messageSearchCorpora.get(conversationId);
+		const matches =
+			entry !== undefined &&
+			!conversationRowMatchesQuery(entry, normalizedQuery) &&
+			corpus !== undefined &&
+			messageCorpusMatchesQuery(
+				corpus.textByMessageId,
+				corpus.retractedMessageIds,
+				normalizedQuery,
+				getShowRetractedMessagesSnapshot(),
+			);
+		const alreadyMatches = this.messageSearchMatchIds.includes(conversationId);
+		if (matches && !alreadyMatches) {
+			this.messageSearchMatchIds = [
+				...this.messageSearchMatchIds,
+				conversationId,
+			];
+		} else if (!matches && alreadyMatches) {
+			this.messageSearchMatchIds = this.messageSearchMatchIds.filter(
+				(id) => id !== conversationId,
+			);
+		}
+	}
+
+	#publishSearchMatches({
+		candidates,
+		normalizedQuery,
+		searchEpoch,
+	}: {
+		candidates: readonly Conversation[];
+		normalizedQuery: string;
+		searchEpoch: number;
+	}): void {
+		if (this.#isMessageSearchStale(searchEpoch)) return;
+		const loadedIds = new Set(
+			this.entries.map((entry) => entry.data.conversationId),
+		);
+		this.messageSearchMatchIds = candidates
+			.map((entry) => entry.data.conversationId)
+			.filter((conversationId) => {
+				if (!loadedIds.has(conversationId)) return false;
+				const corpus = this.#messageSearchCorpora.get(conversationId);
+				return (
+					corpus !== undefined &&
+					messageCorpusMatchesQuery(
+						corpus.textByMessageId,
+						corpus.retractedMessageIds,
+						normalizedQuery,
+						getShowRetractedMessagesSnapshot(),
+					)
+				);
+			});
 	}
 }
 

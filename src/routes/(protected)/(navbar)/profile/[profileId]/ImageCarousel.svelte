@@ -24,14 +24,20 @@
 	$effect(() => {
 		if (!gallery) return;
 		let lightbox: PhotoSwipeLightbox | undefined;
+		let disposed = false;
+		let onBackGesture: (() => boolean) | undefined;
 		import("photoswipe/lightbox")
 			.then(({ default: PhotoSwipeLightbox }) => {
-				if (!gallery) return;
+				if (!gallery || disposed) return;
 				lightbox = new PhotoSwipeLightbox({
 					gallery,
 					children: ".item",
 					pswpModule: () => import("photoswipe"),
-					mainClass: `pswp--buttons-visible`,
+					mainClass: "pswp--profile-carousel pswp--buttons-visible",
+					imageClickAction: "close",
+					tapAction: "close",
+					doubleTapAction: false,
+					loop: false,
 				});
 				lightbox.addFilter("itemData", (itemData) => {
 					const img = itemData.element?.querySelector("img");
@@ -41,12 +47,12 @@
 					}
 					return itemData;
 				});
-				const onBackGesture = () => {
+				onBackGesture = () => {
 					lightbox?.pswp?.close();
 					return false;
 				};
 				lightbox.on("beforeOpen", () => {
-					backGestureEventHandlers.add(onBackGesture);
+					if (onBackGesture) backGestureEventHandlers.add(onBackGesture);
 				});
 				lightbox.on("openingAnimationStart", () => {
 					gallery?.querySelectorAll(".item").forEach((item) => {
@@ -56,15 +62,18 @@
 					});
 				});
 				lightbox.on("change", () => {
+					const index = lightbox?.pswp?.currIndex;
+					if (index === undefined || !gallery) return;
 					gallery?.scrollTo({
-						top: lightbox?.pswp?.currSlide?.data.element?.offsetTop ?? 0,
-						behavior: "instant",
+						top: index * gallery.clientHeight,
+						behavior: "auto",
 					});
 				});
 				lightbox.on("close", () => {
-					backGestureEventHandlers.delete(onBackGesture);
+					if (onBackGesture) backGestureEventHandlers.delete(onBackGesture);
 				});
 				lightbox.on("destroy", () => {
+					if (onBackGesture) backGestureEventHandlers.delete(onBackGesture);
 					gallery?.querySelectorAll(".item").forEach((item) => {
 						if (item instanceof HTMLElement) {
 							item.style.visibility = "visible";
@@ -93,7 +102,11 @@
 				lightbox.init();
 			})
 			.catch((error) => console.error(error));
-		return () => lightbox?.destroy();
+		return () => {
+			disposed = true;
+			if (onBackGesture) backGestureEventHandlers.delete(onBackGesture);
+			lightbox?.destroy();
+		};
 	});
 
 	const GAP = 4; //px
@@ -105,11 +118,16 @@
 	let indicatorHeight = $state(BULLET_SIZE);
 </script>
 
-<div class="relative aspect-3/4 h-auto max-h-photo w-full">
+<div
+	class="relative w-full"
+	data-profile-swipe-surface
+	style:height="calc(var(--screen-safe) * 0.7)"
+>
 	{#if medias.length}
 		<div
-			class="carousel relative flex size-full max-h-[inherit] snap-y snap-mandatory flex-col overflow-auto *:snap-center"
+			class="carousel relative flex size-full max-h-[inherit] snap-y snap-mandatory flex-col *:snap-center"
 			bind:this={gallery}
+			data-profile-photo-carousel
 			onscroll={() => {
 				if (!gallery) return;
 				const item = gallery.scrollTop / gallery.clientHeight;
@@ -125,6 +143,7 @@
 					BULLET_SIZE +
 					(item > 0 && item < medias.length - 1 ? indicatorStretch : 0);
 			}}
+			style="overflow-y: auto; overscroll-behavior-y: auto;"
 		>
 			{#each medias as { mediaHash, createdAt }, index}
 				{@const src = profileMediaUrl(mediaHash, "full")}
@@ -132,7 +151,8 @@
 					{src}
 					thumb={src}
 					{createdAt}
-					label="Profile photo {index + 1} of {medias.length}"
+					photoNumber={index + 1}
+					photoCount={medias.length}
 				/>
 			{/each}
 		</div>
@@ -167,16 +187,16 @@
 		display: none;
 	}
 	:global {
-		.pswp .pswp__button {
+		.pswp--profile-carousel .pswp__button {
 			display: none;
 		}
-		.pswp .pswp__created-at-label {
+		.pswp--profile-carousel .pswp__created-at-label {
 			text-shadow: 1px 1px 3px var(--pswp-icon-color-secondary);
 			@apply absolute bottom-0 left-1/2 flex w-full -translate-x-1/2 items-center justify-center bg-linear-to-t from-background/60 pt-4 font-medium text-white/90;
 			height: calc(4rem + var(--safe-area-bottom));
 			padding-bottom: calc(0.5rem + var(--safe-area-bottom));
 		}
-		.pswp .pswp__top-bar {
+		.pswp--profile-carousel .pswp__top-bar {
 			margin-top: var(--safe-area-top);
 		}
 	}

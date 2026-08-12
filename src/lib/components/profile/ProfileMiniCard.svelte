@@ -1,11 +1,15 @@
 <script lang="ts">
-	import { ChatIcon, StarIcon } from "phosphor-svelte";
+	import { ChatIcon, DropIcon, StarIcon } from "phosphor-svelte";
 	import type { Snippet } from "svelte";
 
 	import DistanceFormatted from "$lib/components/profile/DistanceFormatted.svelte";
 	import ProfileStatusIndicator from "$lib/components/profile/ProfileStatusIndicator.svelte";
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import { Badge } from "$lib/components/ui/badge";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 
 	let {
 		mediaHash = null,
@@ -15,6 +19,7 @@
 		unread = null,
 		onlineUntil = null,
 		isFavorite = false,
+		isRightNow = false,
 		isVisiting = false,
 		hadRecentChat = false,
 		href = null,
@@ -28,16 +33,13 @@
 		unread?: number | null;
 		onlineUntil?: number | null;
 		isFavorite?: boolean;
+		isRightNow?: boolean;
 		isVisiting?: boolean;
 		hadRecentChat?: boolean;
 		href?: string | null;
 		class?: import("svelte/elements").ClassValue;
 		overlay?: Snippet;
 	} = $props();
-
-	const hasVisibleText = $derived(
-		displayName !== null || age !== null || distance !== null,
-	);
 </script>
 
 {#snippet content()}
@@ -49,7 +51,7 @@
 			<DistanceFormatted {distance} />
 		</span>
 	{/if}
-	{#if isFavorite || hadRecentChat}
+	{#if isFavorite || isRightNow || hadRecentChat}
 		<div
 			class="absolute inset-s-2 top-2 z-1 flex w-1/6 flex-col items-center gap-1"
 		>
@@ -64,6 +66,16 @@
 						weight="fill"
 						class="m-auto size-3/5 -translate-y-px text-sky-400"
 					/>
+				</div>
+			{/if}
+			{#if isRightNow}
+				<div class="badge" title="Active on Right Now">
+					<DropIcon
+						weight="fill"
+						class="m-auto size-3/5 text-fuchsia-400"
+						aria-hidden="true"
+					/>
+					<span class="sr-only">Active on Right Now</span>
 				</div>
 			{/if}
 		</div>
@@ -107,7 +119,8 @@
 {#if href !== null}
 	<a
 		{href}
-		aria-label={hasVisibleText ? undefined : "Profile"}
+		onclick={(event) =>
+			interceptAppNavigationClick(event, () => openAppDetail(href))}
 		class={["relative flex aspect-square items-end overflow-hidden", className]}
 	>
 		{@render content()}

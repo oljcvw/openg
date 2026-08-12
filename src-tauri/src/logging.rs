@@ -1,6 +1,20 @@
 use tracing_subscriber::EnvFilter;
 
-const DEFAULT_FILTER: &str = "open_grind_lib=warn,grindr=warn";
+#[cfg(target_os = "android")]
+use std::sync::atomic::{AtomicBool, Ordering};
+
+#[cfg(target_os = "android")]
+static LOGCAT_ENABLED: AtomicBool = AtomicBool::new(false);
+
+pub fn set_logcat_enabled(enabled: bool) {
+	#[cfg(target_os = "android")]
+	LOGCAT_ENABLED.store(enabled, Ordering::Relaxed);
+	#[cfg(not(target_os = "android"))]
+	let _ = enabled;
+}
+
+const DEFAULT_FILTER: &str =
+	"open_grind_lib::api::diagnostics=info,open_grind_lib::api::identity=info,open_grind_lib::api::notifications=info,open_grind_lib::api::rest=info,open_grind_lib::api::runtime=info,open_grind_lib=warn,grindr=warn";
 
 pub fn init() {
 	let filter = EnvFilter::try_from_default_env()
@@ -68,10 +82,30 @@ mod tests {
 		let output = capture_with_default_filter(|| {
 			tracing::warn!("[session] persist failed");
 			tracing::warn!(target: "grindr::ws", "connection error");
+			tracing::info!(
+				target: "open_grind_lib::api::diagnostics",
+				"[media-origin] observed"
+			);
 		});
 
 		assert!(output.contains("[session] persist failed"));
 		assert!(output.contains("connection error"));
+		assert!(output.contains("[media-origin] observed"));
+	}
+
+	#[test]
+	fn default_filter_keeps_privacy_safe_request_diagnostics() {
+		let output = capture_with_default_filter(|| {
+			tracing::info!(
+				target: "open_grind_lib::api::rest",
+				request_id = 7,
+				route = "/v4/inbox?page",
+				"[api-request] complete"
+			);
+		});
+
+		assert!(output.contains("[api-request] complete"));
+		assert!(output.contains("/v4/inbox?page"));
 	}
 
 	#[test]
@@ -91,9 +125,12 @@ mod logcat {
 	use std::ffi::{CStr, CString};
 	use std::io::{self, Write};
 	use std::os::raw::{c_char, c_int};
+	use std::sync::atomic::Ordering;
 
 	use tracing::{Level, Metadata};
 	use tracing_subscriber::fmt::MakeWriter;
+
+	use super::LOGCAT_ENABLED;
 
 	// ndk-sys declares this but never links liblog, so bind it directly
 	#[link(name = "log")]
@@ -117,6 +154,9 @@ mod logcat {
 
 	impl Write for LogcatWriter {
 		fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+			if !LOGCAT_ENABLED.load(Ordering::Relaxed) {
+				return Ok(buf.len());
+			}
 			let line = String::from_utf8_lossy(buf);
 			// logcat appends its own newline and rejects interior NULs
 			if let Ok(message) = CString::new(line.trim_end()) {

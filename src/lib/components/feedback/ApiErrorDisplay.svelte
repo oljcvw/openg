@@ -1,7 +1,10 @@
 <script lang="ts">
+	import { onMount } from "svelte";
+
 	import { ApiError } from "$lib/api/api-error";
 	import { promptCopyError } from "$lib/api/error";
 	import { Button } from "$lib/components/ui/button";
+	import { reportPresentedError } from "$lib/platform/client-diagnostics";
 
 	let {
 		error,
@@ -14,6 +17,8 @@
 		class?: import("svelte/elements").ClassValue;
 		buttonVariant?: import("$lib/components/ui/button").ButtonVariant;
 	} = $props();
+
+	onMount(() => reportPresentedError(error, "api_error_display"));
 
 	const apiError = $derived(error instanceof ApiError ? error : null);
 	const retryable = $derived(apiError?.retryable ?? false);

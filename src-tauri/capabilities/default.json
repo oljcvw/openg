@@ -13,6 +13,21 @@
 			"allow": [
 				{
 					"path": "$APPDATA/preferences.data"
+				},
+				{
+					"path": "$APPDATA/favorite-notes.data"
+				},
+				{
+					"path": "$APPDATA/saved-phrases.data"
+				},
+				{
+					"path": "$APPDATA/cache-*.data"
+				},
+				{
+					"path": "$APPDATA/grid-cache.data"
+				},
+				{
+					"path": "$APPDATA/profile-cache.data"
 				}
 			]
 		},
@@ -21,6 +36,21 @@
 			"allow": [
 				{
 					"path": "$APPDATA/preferences.data"
+				},
+				{
+					"path": "$APPDATA/favorite-notes.data"
+				},
+				{
+					"path": "$APPDATA/saved-phrases.data"
+				},
+				{
+					"path": "$APPDATA/cache-*.data"
+				},
+				{
+					"path": "$APPDATA/grid-cache.data"
+				},
+				{
+					"path": "$APPDATA/profile-cache.data"
 				}
 			],
 			"deny": [
@@ -37,6 +67,21 @@
 				},
 				{
 					"path": "$APPDATA/preferences.data.tmp"
+				},
+				{
+					"path": "$APPDATA/favorite-notes.data"
+				},
+				{
+					"path": "$APPDATA/favorite-notes.data.tmp"
+				},
+				{
+					"path": "$APPDATA/saved-phrases.data"
+				},
+				{
+					"path": "$APPDATA/saved-phrases.data.tmp"
+				},
+				{
+					"path": "$APPDATA/cache-*.data.tmp"
 				}
 			]
 		},
@@ -48,6 +93,38 @@
 				},
 				{
 					"path": "$APPDATA/preferences.data.tmp"
+				},
+				{
+					"path": "$APPDATA/favorite-notes.data"
+				},
+				{
+					"path": "$APPDATA/saved-phrases.data"
+				},
+				{
+					"path": "$APPDATA/saved-phrases.data.tmp"
+				},
+				{
+					"path": "$APPDATA/favorite-notes.data.tmp"
+				},
+				{
+					"path": "$APPDATA/cache-*.data"
+				},
+				{
+					"path": "$APPDATA/cache-*.data.tmp"
+				}
+			]
+		},
+		{
+			"identifier": "fs:allow-remove",
+			"allow": [
+				{
+					"path": "$APPDATA/cache-*.data"
+				},
+				{
+					"path": "$APPDATA/grid-cache.data"
+				},
+				{
+					"path": "$APPDATA/profile-cache.data"
 				}
 			]
 		},

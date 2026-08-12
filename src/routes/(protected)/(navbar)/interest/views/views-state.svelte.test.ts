@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
 	getViewsMock,
@@ -23,9 +23,13 @@ const {
 
 vi.mock("$lib/api/error", () => ({ showErrorToast: showErrorToastMock }));
 vi.mock("$lib/api/interest/views", () => ({ getViews: getViewsMock }));
+vi.mock("$lib/app-data/interest-cache", () => ({
+	readCachedViews: vi.fn(() => Promise.resolve(null)),
+	writeCachedViews: vi.fn(() => Promise.resolve()),
+}));
 vi.mock("$lib/util/reconcile", () => ({
 	reconciler: {
-		subscribe(handler: () => void | Promise<void>) {
+		subscribe(_scope: string, handler: () => void | Promise<void>) {
 			reconcileHandlers.push(handler);
 			return unsubscribeReconcileMock;
 		},
@@ -129,6 +133,8 @@ beforeEach(() => {
 	viewHandlers.length = 0;
 });
 
+afterEach(() => vi.restoreAllMocks());
+
 describe("ViewsState", () => {
 	it("loads profiles before previews and pages visible results", async () => {
 		getViewsMock.mockResolvedValue({
@@ -136,7 +142,7 @@ describe("ViewsState", () => {
 			previews: [preview()],
 		});
 
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		expect(state.error).toBeNull();
@@ -156,7 +162,7 @@ describe("ViewsState", () => {
 			.mockRejectedValueOnce(new Error("offline"))
 			.mockResolvedValueOnce({ profiles: [profile(1)], previews: [] });
 
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		expect(state.error?.message).toBe("offline");
@@ -180,7 +186,7 @@ describe("ViewsState", () => {
 			],
 			previews: [],
 		});
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		emitView({
@@ -210,11 +216,15 @@ describe("ViewsState", () => {
 	});
 
 	it("reconciles after initial load and reports refresh failures", async () => {
+		const consoleError = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+		const refreshError = new Error("refresh failed");
 		getViewsMock
 			.mockResolvedValueOnce({ profiles: [profile(1)], previews: [] })
 			.mockResolvedValueOnce({ profiles: [profile(2)], previews: [] })
-			.mockRejectedValueOnce(new Error("refresh failed"));
-		const state = new ViewsState();
+			.mockRejectedValueOnce(refreshError);
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		await reconcileHandlers[0]?.();
@@ -230,6 +240,7 @@ describe("ViewsState", () => {
 			label: "Failed to refresh views",
 			error: expect.any(Error),
 		});
+		expect(consoleError).toHaveBeenCalledWith(refreshError);
 	});
 
 	it("keeps a websocket view that lands while a reconcile fetch is in flight", async () => {
@@ -237,7 +248,7 @@ describe("ViewsState", () => {
 			profiles: [profile(1)],
 			previews: [],
 		});
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		const gate = deferred<ViewsSnapshot>();
@@ -259,7 +270,7 @@ describe("ViewsState", () => {
 			profiles: [profile(1)],
 			previews: [],
 		});
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		const gate = deferred<ViewsSnapshot>();
@@ -288,7 +299,7 @@ describe("ViewsState", () => {
 
 	it("cleans up subscriptions on destroy", async () => {
 		getViewsMock.mockResolvedValue({ profiles: [profile(1)], previews: [] });
-		const state = new ViewsState();
+		const state = new ViewsState({ ourProfileId: 99 });
 		await waitForLoaded(state);
 
 		state.destroy();

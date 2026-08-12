@@ -7,11 +7,17 @@
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as Item from "$lib/components/ui/item";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import {
+		interceptAppNavigationClick,
+		openAppDetail,
+	} from "$lib/navigation/app-navigation";
 
 	let {
 		id,
+		grouped = false,
 	}: {
 		id: number;
+		grouped?: boolean;
 	} = $props();
 
 	const myProfile = $derived(getProfile(id));
@@ -22,8 +28,16 @@
 	{#snippet child({ props })}
 		<a
 			href="/profile/{id}"
+			onclick={(event) =>
+				interceptAppNavigationClick(event, () =>
+					openAppDetail(`/profile/${id}`),
+				)}
 			{...props}
-			class={["rounded-full", props.class, "flex-nowrap!"]}
+			class={[
+				grouped ? "rounded-none" : "rounded-full",
+				props.class,
+				"flex-nowrap!",
+			]}
 		>
 			<Item.Media class="translate-y-none size-14 rounded-full bg-neutral-700">
 				{#await myProfilePhotos then photos}

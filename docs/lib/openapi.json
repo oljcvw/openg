@@ -1298,8 +1298,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "AcceptedLegalAgreementsResponse"
+									"x-original-type": "AcceptedLegalAgreementsResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1347,8 +1351,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "VipMatchmakerConsentAgreementResponse"
+									"x-original-type": "VipMatchmakerConsentAgreementResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1423,8 +1431,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "TopPicksConsentAgreementResponse"
+									"x-original-type": "TopPicksConsentAgreementResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1484,8 +1496,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "TopPicksConsentAgreementResponse"
+									"x-original-type": "TopPicksConsentAgreementResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1533,8 +1549,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RightNowConsentAgreementResponse"
+									"x-original-type": "RightNowConsentAgreementResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1582,8 +1602,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "LegalAgreementsInfo"
+									"x-original-type": "LegalAgreementsInfo",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1673,8 +1697,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ConsentOptStatusResponse"
+									"x-original-type": "ConsentOptStatusResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1794,8 +1822,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "Offer"
+									"x-original-type": "Offer",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1823,8 +1855,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "Offer"
+									"x-original-type": "Offer",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1845,8 +1881,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "EligibleOffers"
+									"x-original-type": "EligibleOffers",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1872,8 +1912,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ReportProfileResponse"
+									"x-original-type": "ReportProfileResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -1931,8 +1975,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ReportProfileResponse"
+									"x-original-type": "ReportProfileResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2133,8 +2181,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ExploreFreeChatsResponse"
+									"x-original-type": "ExploreFreeChatsResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2172,8 +2224,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RightNowGetActivePostResponse"
+									"x-original-type": "RightNowGetActivePostResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2199,8 +2255,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RightNowGetOtherUserPostResponse"
+									"x-original-type": "RightNowGetOtherUserPostResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2278,8 +2338,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RightNowCreatePostResponse"
+									"x-original-type": "RightNowCreatePostResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2315,8 +2379,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RightNowCreatePostResponse"
+									"x-original-type": "RightNowCreatePostResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2444,8 +2512,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RightNowMediaUploadResponse"
+									"x-original-type": "RightNowMediaUploadResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2466,8 +2538,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RightNowSkuResponse"
+									"x-original-type": "RightNowSkuResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2517,8 +2593,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "StoreResponse"
+									"x-original-type": "StoreResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2554,8 +2634,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "PaymentTokenResponse"
+									"x-original-type": "PaymentTokenResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2577,8 +2661,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ConsumableProductsResponse"
+									"x-original-type": "ConsumableProductsResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2599,8 +2687,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "StoreInProfileResponse"
+									"x-original-type": "StoreInProfileResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2631,8 +2723,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "StoreResponse"
+									"x-original-type": "StoreResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2668,8 +2764,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "PaymentTokenResponse"
+									"x-original-type": "PaymentTokenResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2700,8 +2800,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "Product"
+									"x-original-type": "Product",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2722,8 +2826,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "StoreInProfileResponse"
+									"x-original-type": "StoreInProfileResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2891,8 +2999,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "SubscriptionRestorationResponse"
+									"x-original-type": "SubscriptionRestorationResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2929,8 +3041,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "SubscriptionResponse"
+									"x-original-type": "SubscriptionResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -2956,8 +3072,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "TopPicksEntitlementResponse"
+									"x-original-type": "TopPicksEntitlementResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3020,8 +3140,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "VideoCallInfoResponse"
+									"x-original-type": "VideoCallInfoResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3057,8 +3181,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "CreateVideoCallResponse"
+									"x-original-type": "CreateVideoCallResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3077,8 +3205,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RenewVideoCallResponse"
+									"x-original-type": "RenewVideoCallResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3114,8 +3246,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "JoinVideoCallResponse"
+									"x-original-type": "JoinVideoCallResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3190,8 +3326,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "StarProfilesResponse"
+									"x-original-type": "StarProfilesResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3226,8 +3366,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "BannedWarningList"
+									"x-original-type": "BannedWarningList",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3379,8 +3523,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "AgeVerificationFaceTecResponse"
+									"x-original-type": "AgeVerificationFaceTecResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3403,8 +3551,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "AgeVerificationSessionResponse"
+									"x-original-type": "AgeVerificationSessionResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3425,8 +3577,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "AgeVerificationFaceTecResponse"
+									"x-original-type": "AgeVerificationFaceTecResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3462,8 +3618,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "AgeVerificationFaceTecResponse"
+									"x-original-type": "AgeVerificationFaceTecResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -3484,8 +3644,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "AgeVerificationOptionsResponse"
+									"x-original-type": "AgeVerificationOptionsResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -4515,8 +4679,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RoamSession"
+									"x-original-type": "RoamSession",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -4790,8 +4958,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "AListFullProfileApiResponse"
+									"x-original-type": "AListFullProfileApiResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -4829,8 +5001,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "AListUpdatesApiResponse"
+									"x-original-type": "AListUpdatesApiResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -4899,8 +5075,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "AListProfilesResponse"
+									"x-original-type": "AListProfilesResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -7588,8 +7768,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "FirstPartyCreateAccountResponse"
+									"x-original-type": "FirstPartyCreateAccountResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -7731,8 +7915,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ChangePasswordResponse"
+									"x-original-type": "ChangePasswordResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -7806,8 +7994,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ChangePasswordResponse"
+									"x-original-type": "ChangePasswordResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -7844,8 +8036,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ThirdPartyCreateAccountResponse"
+									"x-original-type": "ThirdPartyCreateAccountResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -7883,8 +8079,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ForgotPwdEmailResponse"
+									"x-original-type": "ForgotPwdEmailResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -8325,8 +8525,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "SpotifyAuthResponse"
+									"x-original-type": "SpotifyAuthResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -8376,8 +8580,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "SpotifyBackendResponse"
+									"x-original-type": "SpotifyBackendResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -8450,8 +8658,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "SpotifySearchTrackResponse"
+									"x-original-type": "SpotifySearchTrackResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -8481,8 +8693,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "SpotifyGetTrackResponse"
+									"x-original-type": "SpotifyGetTrackResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -8503,8 +8719,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "SpotifyRecentlyPlayedResponse"
+									"x-original-type": "SpotifyRecentlyPlayedResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -9542,8 +9762,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "StoreResponse"
+									"x-original-type": "StoreResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -10153,8 +10377,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ReportRightNowPostResponse"
+									"x-original-type": "ReportRightNowPostResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -10225,8 +10453,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RightNowGetReceivedRequestsResponse"
+									"x-original-type": "RightNowGetReceivedRequestsResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -10253,8 +10485,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "RightNowGetSentRequestsResponse"
+									"x-original-type": "RightNowGetSentRequestsResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -10337,8 +10573,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ThirdPartyCreateAccountResponse"
+									"x-original-type": "ThirdPartyCreateAccountResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -10388,8 +10628,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ProductsWithDetailsResponseDto"
+									"x-original-type": "ProductsWithDetailsResponseDto",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -10421,8 +10665,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ProfileInsightsResponse"
+									"x-original-type": "ProfileInsightsResponse",
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/UndocumentedObject"
+										}
+									]
 								}
 							}
 						},
@@ -17437,8 +17685,12 @@
 						"type": "array",
 						"nullable": true,
 						"items": {
-							"$ref": "#/components/schemas/UndocumentedObject",
-							"x-original-type": "VipPhotoProfileResponse"
+							"x-original-type": "VipPhotoProfileResponse",
+							"allOf": [
+								{
+									"$ref": "#/components/schemas/UndocumentedObject"
+								}
+							]
 						}
 					},
 					"sexualPosition": {
@@ -17543,8 +17795,12 @@
 					"settings": {
 						"type": "array",
 						"items": {
-							"$ref": "#/components/schemas/UndocumentedObject",
-							"x-original-type": "ProfileInsightsInference"
+							"x-original-type": "ProfileInsightsInference",
+							"allOf": [
+								{
+									"$ref": "#/components/schemas/UndocumentedObject"
+								}
+							]
 						}
 					}
 				},

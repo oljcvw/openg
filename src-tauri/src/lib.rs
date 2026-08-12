@@ -5,12 +5,16 @@ mod logging;
 mod state;
 mod storage;
 
-use std::sync::OnceLock;
-
-use tauri::Manager;
-
 use crate::state::AppState;
-use crate::storage::{AuthStorage, DeviceStorage, SigningKeyStorage};
+use crate::storage::{
+	account_storage_lock, AuthStorage, DeviceStorage, SigningKeyStorage,
+};
+use tauri::Emitter;
+#[cfg(any(
+	target_os = "linux",
+	all(target_os = "macos", not(feature = "keychain"))
+))]
+use tauri::Manager;
 
 // Mirrors MIN_SUPPORTED_WEBVIEW_MAJOR in gen/android/app/build.gradle.kts and the
 // CSS feature floor in src/app.html (Tailwind v4: Chromium 111 / WebKitGTK 2.42 /
@@ -40,6 +44,23 @@ fn open_grind_platform_plugin<R: tauri::Runtime>(
 		.js_init_script(format!(
 			r#"window.__OPEN_GRIND_PLATFORM = "{OPEN_GRIND_PLATFORM}";"#
 		))
+		.on_event(|_app, event| match event {
+			tauri::RunEvent::Ready => api::ws::set_app_foreground(true),
+			tauri::RunEvent::Exit | tauri::RunEvent::ExitRequested { .. } => {
+				api::ws::set_app_foreground(false);
+			}
+			#[cfg(mobile)]
+			tauri::RunEvent::WindowEvent { event, .. } => match event {
+				tauri::WindowEvent::Resumed => {
+					api::ws::set_app_foreground(true);
+				}
+				tauri::WindowEvent::Suspended => {
+					api::ws::set_app_foreground(false);
+				}
+				_ => {}
+			},
+			_ => {}
+		})
 		.build()
 }
 
@@ -119,10 +140,50 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(api::google_oauth::plugin())
-        .manage(AppState {
-            client: OnceLock::new(),
-        })
+		.plugin(api::media_capture::plugin())
+        .plugin(api::notifications::plugin())
+        .plugin(api::voice_recorder::plugin())
+		.plugin(api::video_call::plugin())
+		.plugin(api::album_cache::plugin())
+		.plugin(api::direct_media_cache::plugin())
+        .manage(AppState)
         .invoke_handler(tauri::generate_handler![
+            api::account::validate_password_complexity,
+            api::account::update_account_password,
+            api::account::update_account_email,
+            api::account::delete_account,
+			api::album_cache::album_cache_store,
+			api::album_cache::album_cache_lookup,
+			api::album_cache::album_cache_bind_legacy_owner,
+			api::album_cache::album_cache_record_store,
+			api::album_cache::album_cache_record_read,
+			api::album_cache::album_cache_records_page,
+			api::album_cache::album_cache_records_reconcile_membership,
+			api::album_cache::album_cache_membership_snapshot_store,
+			api::album_cache::album_cache_membership_snapshot_read,
+			api::album_cache::album_cache_stats,
+			api::album_cache::album_cache_trim,
+			api::album_cache::album_cache_clear,
+			api::album_presets::album_preset_import,
+			api::album_presets::album_preset_import_remote,
+			api::album_presets::album_preset_list,
+			api::album_presets::album_preset_read_item,
+			api::album_presets::album_preset_delete,
+			api::album_presets::album_preset_stats,
+			api::album_presets::album_preset_clear,
+			api::album_presets::album_activation_journal_save,
+			api::album_presets::album_activation_journal_read,
+			api::direct_media_cache::direct_media_cache_upsert,
+			api::direct_media_cache::direct_media_cache_upsert_batch,
+			api::direct_media_cache::direct_media_cache_set_scope,
+			api::direct_media_cache::direct_media_cache_store,
+			api::direct_media_cache::direct_media_cache_import_legacy,
+			api::direct_media_cache::direct_media_cache_lookup,
+			api::direct_media_cache::direct_media_cache_presence,
+			api::direct_media_cache::direct_media_cache_list,
+			api::direct_media_cache::direct_media_cache_stats,
+			api::direct_media_cache::direct_media_cache_trim,
+			api::direct_media_cache::direct_media_cache_clear,
             api::auth::login,
             api::auth::login_with_google,
             api::auth::google_sign_in,
@@ -130,12 +191,43 @@ pub fn run() {
             api::auth::logout,
             api::auth::auth_state,
             api::auth::account_restriction,
-            api::auth::recaptcha_first_party_enabled,
+			api::auth::recaptcha_first_party_enabled,
+			api::runtime::api_runtime_configure,
             api::rest::request,
+            api::rest::cancel_request,
+            api::media_upload::upload_album_media,
             api::media_upload::upload_chat_media,
+            api::media_upload::upload_expiring_chat_video,
+			api::media_capture::media_capture_photo,
+			api::media_capture::media_capture_short_video,
+			api::media_capture::media_capture_delete_short_video,
+			api::media_capture::short_video_cache_put,
+			api::media_capture::short_video_cache_get,
+			api::media_capture::short_video_cache_clear,
+			api::media_capture::short_video_cache_remove,
+			api::media_capture::short_video_cache_trim,
+			api::media_capture::short_video_cache_stats,
+            api::notifications::notification_get_settings,
+            api::notifications::notification_set_settings,
+            api::notifications::notification_test,
+            api::notifications::notification_sync,
+            api::notifications::notification_cancel,
+            api::notifications::notification_clear_account,
+			api::notifications::set_logcat_enabled,
+            api::voice_recorder::voice_recorder_permission_status,
+            api::voice_recorder::voice_recorder_request_permission,
+            api::voice_recorder::voice_recorder_start,
+            api::voice_recorder::voice_recorder_stop,
+            api::voice_recorder::voice_recorder_cancel,
+			api::video_call::video_call_availability,
+			api::video_call::video_call_start,
+			api::video_call::video_call_renew_token,
+			api::video_call::video_call_stop,
             api::ws::ws_connect,
             api::ws::ws_send,
-            api::client::rotate_api_params,
+            api::diagnostics::report_media_origin,
+			api::diagnostics::report_client_diagnostic,
+			api::diagnostics::report_viewer_diagnostic,
         ])
         .setup(|app| {
             let user_agent = format!(
@@ -175,7 +267,7 @@ pub fn run() {
 
             storage::init_keyring();
 
-            let device = match DeviceStorage::load() {
+            let mut device = match DeviceStorage::load() {
                 Ok(Some(d)) => d,
                 Ok(None) => {
                     let d = grindr::DeviceInfo::generate();
@@ -190,6 +282,17 @@ pub fn run() {
                 }
             };
 
+			if let Err(error) = api::identity::align_device(&mut device) {
+				tracing::warn!(target: "open_grind_lib::api::identity", "[api-identity] physical field alignment failed: {error}");
+			} else if let Err(error) = DeviceStorage::save(&device) {
+				tracing::error!(target: "open_grind_lib::api::identity", "[api-identity] aligned identity persist failed: {error}");
+			} else {
+				tracing::info!(
+					target: "open_grind_lib::api::identity",
+					"[api-identity] physical fields aligned"
+				);
+			}
+
             let session = match AuthStorage::get_session() {
                 Ok(s) => s,
                 Err(e) => {
@@ -198,13 +301,28 @@ pub fn run() {
                 }
             };
 
-            let client =
+            let candidate =
                 grindr::GrindrClient::new(device, session).expect("failed to build GrindrClient");
+            let runtime = api::runtime::ApiRuntime::install(candidate);
+			let mitigation_handle = app.handle().clone();
+			runtime.set_event_sink(std::sync::Arc::new(
+				move |event: &api::runtime::ApiMitigationEvent| {
+					if let Err(error) =
+						mitigation_handle.emit("api:runtime-status", event)
+					{
+						tracing::warn!(error = %error, "[api-mitigation] frontend_event_failed");
+					}
+				},
+			));
+            let client = runtime.client().clone();
+			api::ws::install_realtime_controller(client.clone());
+			tracing::info!(target: "open_grind_lib::api::runtime", runtime_id = runtime.id(), "[api-runtime] initialized");
 
             {
                 let mut session_rx = client.session_receiver();
                 tauri::async_runtime::spawn(async move {
                     while session_rx.changed().await.is_ok() {
+                        let _storage_guard = account_storage_lock().lock().await;
                         match session_rx.borrow().as_ref() {
                             Some(s) => {
                                 if let Err(e) = AuthStorage::set_session(s) {
@@ -226,6 +344,7 @@ pub fn run() {
                         client.restore_signing_key(k).await;
                     }
                     while key_rx.changed().await.is_ok() {
+                        let _storage_guard = account_storage_lock().lock().await;
                         match key_rx.borrow().clone() {
                             Some(k) => {
                                 if let Err(e) = SigningKeyStorage::save(&k) {
@@ -237,12 +356,6 @@ pub fn run() {
                     }
                 });
             }
-
-            app.state::<AppState>()
-                .client
-                .set(client)
-                .ok()
-                .expect("client already set");
 
             api::ws::spawn_ws_task(app.handle().clone());
 
