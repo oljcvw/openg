@@ -411,7 +411,7 @@ fn apply_batch_partitions(
 		let conversation_hash = identifier_hash(&conversation_id);
 		let key = load_or_create_key(KEY_SERVICE, &account_hash)?;
 		let mut index = load_conversation_index(
-			&root,
+			root,
 			&account_hash,
 			&conversation_hash,
 			&key,
@@ -419,7 +419,7 @@ fn apply_batch_partitions(
 		let mut index_changed = false;
 		for delta in partition_deltas {
 			index_changed |= apply_history_delta(
-				&root,
+				root,
 				&account_hash,
 				&key,
 				&mut index,
@@ -1687,11 +1687,7 @@ fn load_account_index(
 ) -> Result<AccountIndex, AppError> {
 	let account_dir = root.join(account_hash);
 	let legacy_path = account_dir.join(INDEX_FILE);
-	let mut combined = if legacy_path.is_file() {
-		load_v2_indexes(&account_dir, account_hash, key)?
-	} else {
-		load_v2_indexes(&account_dir, account_hash, key)?
-	};
+	let mut combined = load_v2_indexes(&account_dir, account_hash, key)?;
 	if legacy_path.is_file() {
 		let legacy = load_legacy_index(&legacy_path, account_hash, key)?;
 		for entry in legacy.entries {
@@ -3772,8 +3768,12 @@ mod tests {
 		let account_hash = identifier_hash("account");
 		let key = [65_u8; 32];
 		let record = DirectMediaEntry::test("message", 1);
-		let index =
-			save_legacy_records(&root, &account_hash, &key, &[record.clone()]);
+		let index = save_legacy_records(
+			&root,
+			&account_hash,
+			&key,
+			std::slice::from_ref(&record),
+		);
 		let mut mismatched = record;
 		mismatched.sent_at = 99;
 		save_record(&root, &account_hash, &index.entries[0], &key, &mismatched)

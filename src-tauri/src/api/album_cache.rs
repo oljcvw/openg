@@ -175,6 +175,10 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 }
 
 #[tauri::command]
+#[expect(
+	clippy::too_many_arguments,
+	reason = "Tauri command parameters are the stable frontend invocation contract"
+)]
 pub async fn album_cache_store(
 	app: tauri::AppHandle,
 	account_id: String,
@@ -2160,7 +2164,7 @@ mod tests {
 				last_accessed_ms: accessed,
 				history_order: Some(sequence),
 			};
-		let mut entries = vec![
+		let mut entries = [
 			entry("album-2", 2, 100),
 			entry("album-0", 0, 200),
 			entry("album-1", 1, 9_999),

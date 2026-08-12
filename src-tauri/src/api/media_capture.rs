@@ -11,6 +11,7 @@ use crate::{error::AppError, storage::AuthStorage};
 static SHORT_VIDEO_CACHE_EPOCH: AtomicU64 = AtomicU64::new(0);
 static SHORT_VIDEO_WRITE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
+#[cfg(any(target_os = "android", test))]
 fn short_video_put_is_current(
 	captured_epoch: u64,
 	current_epoch: u64,
@@ -19,6 +20,7 @@ fn short_video_put_is_current(
 	captured_epoch == current_epoch && account_is_active
 }
 
+#[cfg(any(target_os = "android", test))]
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ShortVideoCleanupResult {
@@ -26,6 +28,7 @@ struct ShortVideoCleanupResult {
 	stale_write_absent: bool,
 }
 
+#[cfg(any(target_os = "android", test))]
 fn stale_cleanup_is_verified(cleanup: &ShortVideoCleanupResult) -> bool {
 	matches!(
 		(cleanup.removed, cleanup.stale_write_absent),
@@ -33,6 +36,7 @@ fn stale_cleanup_is_verified(cleanup: &ShortVideoCleanupResult) -> bool {
 	)
 }
 
+#[cfg(any(target_os = "android", test))]
 fn require_verified_stale_cleanup(
 	result: Result<ShortVideoCleanupResult, AppError>,
 ) -> Result<(), AppError> {

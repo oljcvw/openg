@@ -365,6 +365,10 @@ impl DeviceStorage {
 			.map_err(|e| AppError::Auth(e.to_string()))
 	}
 
+	#[allow(
+		dead_code,
+		reason = "reserved for explicit device identity reset; account sign-out must retain device identity"
+	)]
 	pub fn delete() {
 		match Self::entry() {
 			Ok(entry) => match entry.delete_credential() {

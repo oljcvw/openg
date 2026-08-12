@@ -234,6 +234,36 @@ fn runtime_error(error: super::runtime::RuntimeError) -> AppError {
 	}
 }
 
+fn validate_encoded_upload_length(encoded_len: usize) -> Result<(), AppError> {
+	let maximum_encoded_len = MAX_UPLOAD_BYTES.div_ceil(3) * 4;
+	if encoded_len > maximum_encoded_len {
+		return Err(AppError::Api {
+			code: 413,
+			message: "Media size is outside the supported range".to_owned(),
+		});
+	}
+	Ok(())
+}
+
+async fn decode_upload(
+	data: String,
+) -> Result<(tokio::sync::SemaphorePermit<'static>, Vec<u8>), AppError> {
+	validate_encoded_upload_length(data.len())?;
+	let permit = UPLOAD_PERMITS.acquire().await.map_err(|_| {
+		AppError::Http("Media upload service unavailable".to_owned())
+	})?;
+	let bytes = STANDARD.decode(data).map_err(|_| {
+		AppError::Http("Failed to decode base64 media".to_owned())
+	})?;
+	if bytes.len() > MAX_UPLOAD_BYTES {
+		return Err(AppError::Api {
+			code: 413,
+			message: "Media size is outside the supported range".to_owned(),
+		});
+	}
+	Ok((permit, bytes))
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -269,34 +299,4 @@ mod tests {
 		let (boundary, _) = album_multipart_body(7, "image/png", bytes);
 		assert_eq!(boundary, "open-grind-album-7-1");
 	}
-}
-
-fn validate_encoded_upload_length(encoded_len: usize) -> Result<(), AppError> {
-	let maximum_encoded_len = MAX_UPLOAD_BYTES.div_ceil(3) * 4;
-	if encoded_len > maximum_encoded_len {
-		return Err(AppError::Api {
-			code: 413,
-			message: "Media size is outside the supported range".to_owned(),
-		});
-	}
-	Ok(())
-}
-
-async fn decode_upload(
-	data: String,
-) -> Result<(tokio::sync::SemaphorePermit<'static>, Vec<u8>), AppError> {
-	validate_encoded_upload_length(data.len())?;
-	let permit = UPLOAD_PERMITS.acquire().await.map_err(|_| {
-		AppError::Http("Media upload service unavailable".to_owned())
-	})?;
-	let bytes = STANDARD.decode(data).map_err(|_| {
-		AppError::Http("Failed to decode base64 media".to_owned())
-	})?;
-	if bytes.len() > MAX_UPLOAD_BYTES {
-		return Err(AppError::Api {
-			code: 413,
-			message: "Media size is outside the supported range".to_owned(),
-		});
-	}
-	Ok((permit, bytes))
 }
