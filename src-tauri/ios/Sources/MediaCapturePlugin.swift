@@ -273,10 +273,10 @@ final class MediaCapturePlugin: Plugin, UIImagePickerControllerDelegate, UINavig
     do {
       let id = UUID().uuidString
       let destination = try capturesDirectory().appendingPathComponent("video-\(id).mp4")
-      try FileManager.default.moveItem(at: source, to: destination)
-      let asset = AVURLAsset(url: destination)
       Task { @MainActor in
         do {
+          try await exportMP4(from: source, to: destination)
+          let asset = AVURLAsset(url: destination)
           let durationTime = try await asset.load(.duration)
           let duration = MediaCaptureContract.clampedVideoDuration(
             milliseconds: Int(CMTimeGetSeconds(durationTime) * 1_000)
@@ -307,6 +307,31 @@ final class MediaCapturePlugin: Plugin, UIImagePickerControllerDelegate, UINavig
       }
     } catch {
       finishPending { $0.reject("Captured video could not be processed") }
+    }
+  }
+
+  private func exportMP4(from source: URL, to destination: URL) async throws {
+    let asset = AVURLAsset(url: source)
+    guard let exporter = AVAssetExportSession(
+      asset: asset,
+      presetName: AVAssetExportPresetMediumQuality
+    ) else {
+      throw MediaCaptureProcessingError.exportUnavailable
+    }
+    exporter.outputURL = destination
+    exporter.outputFileType = .mp4
+    exporter.shouldOptimizeForNetworkUse = true
+    try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+      exporter.exportAsynchronously {
+        switch exporter.status {
+        case .completed:
+          continuation.resume()
+        case .failed, .cancelled:
+          continuation.resume(throwing: exporter.error ?? MediaCaptureProcessingError.exportFailed)
+        default:
+          continuation.resume(throwing: MediaCaptureProcessingError.exportFailed)
+        }
+      }
     }
   }
 
@@ -434,6 +459,8 @@ private enum MediaCapturePhotoProcessor {
 
 private enum MediaCaptureProcessingError: Error {
   case encoding
+  case exportFailed
+  case exportUnavailable
   case tooLarge
 }
 

@@ -262,16 +262,8 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
       tapWatermark: readWatermark(payload.accountId, category: "tap")
     )
 
-    saveWatermark(payload.accountId, category: "message", watermark: decision.messageWatermark)
-    saveWatermark(payload.accountId, category: "tap", watermark: decision.tapWatermark)
-    if defaults.bool(forKey: "notifications.messages") {
-      defaults.set(true, forKey: accountKey(payload.accountId, "messagesInitialized"))
-    }
-    if defaults.bool(forKey: "notifications.taps") {
-      defaults.set(true, forKey: accountKey(payload.accountId, "tapsInitialized"))
-    }
-
     guard UIApplication.shared.applicationState != .active else {
+      commit(decision: decision, accountId: payload.accountId)
       recordSuccess()
       return true
     }
@@ -300,8 +292,24 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
       }
     }
     group.wait()
-    if deliveryFailed { recordFailure() } else { recordSuccess() }
+    if deliveryFailed {
+      recordFailure()
+    } else {
+      commit(decision: decision, accountId: payload.accountId)
+      recordSuccess()
+    }
     return !deliveryFailed
+  }
+
+  private func commit(decision: NotificationDecision, accountId: String) {
+    saveWatermark(accountId, category: "message", watermark: decision.messageWatermark)
+    saveWatermark(accountId, category: "tap", watermark: decision.tapWatermark)
+    if defaults.bool(forKey: "notifications.messages") {
+      defaults.set(true, forKey: accountKey(accountId, "messagesInitialized"))
+    }
+    if defaults.bool(forKey: "notifications.taps") {
+      defaults.set(true, forKey: accountKey(accountId, "tapsInitialized"))
+    }
   }
 
   private func currentDeliverySettings() -> NotificationDeliverySettings {

@@ -88,7 +88,7 @@
 
 	onMount(() => {
 		let notificationListenerCancelled = false;
-		const seenNotificationRoutes = new Set<string>();
+		let lastNotificationRoute: { key: string; handledAt: number } | null = null;
 		function navigateNotification(payload: unknown): void {
 			const accepted = acceptedNativeNotificationRoute(
 				payload,
@@ -96,8 +96,13 @@
 			);
 			if (!accepted) return;
 			const key = `${accepted.accountId}:${accepted.route}`;
-			if (seenNotificationRoutes.has(key)) return;
-			seenNotificationRoutes.add(key);
+			const now = Date.now();
+			if (
+				lastNotificationRoute?.key === key &&
+				now - lastNotificationRoute.handledAt < 2_000
+			)
+				return;
+			lastNotificationRoute = { key, handledAt: now };
 			void goto(accepted.route);
 		}
 		const notificationListener = addPluginListener(
