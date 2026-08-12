@@ -102,7 +102,7 @@ final class VoiceRecorderPlugin: Plugin, AVAudioRecorderDelegate {
   }
 
   func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
-    guard !finishingManually else { return }
+    guard !finishingManually, recorder === self.recorder else { return }
     guard flag else {
       cancelActiveRecording()
       trigger("recording-error", data: [:])
@@ -119,6 +119,7 @@ final class VoiceRecorderPlugin: Plugin, AVAudioRecorderDelegate {
   }
 
   func audioRecorderEncodeErrorDidOccur(_ recorder: AVAudioRecorder, error: Error?) {
+    guard !finishingManually, recorder === self.recorder else { return }
     cancelActiveRecording()
     trigger("recording-error", data: [:])
   }

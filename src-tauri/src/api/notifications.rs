@@ -857,23 +857,21 @@ pub extern "C" fn open_grind_notifications_poll(
 	messages_enabled: i32,
 	taps_enabled: i32,
 ) -> *mut c_char {
-	crate::logging::init();
 	let response = catch_unwind(AssertUnwindSafe(|| {
-		poll_notifications(messages_enabled != 0, taps_enabled != 0)
+		crate::logging::init();
+		let response =
+			poll_notifications(messages_enabled != 0, taps_enabled != 0);
+		serde_json::to_string(&response)
+			.ok()
+			.and_then(|json| CString::new(json).ok())
 	}))
-	.unwrap_or_else(|_| PollResponse::Retry {
-		code: PollFailureCode::PollPanicked,
+	.ok()
+	.flatten()
+	.unwrap_or_else(|| {
+		CString::new(r#"{"state":"retry","code":"poll_panicked"}"#)
+			.unwrap_or_default()
 	});
-	let json = serde_json::to_string(&response).unwrap_or_else(|_| {
-		serde_json::json!({
-			"state": "retry",
-			"code": PollFailureCode::ResponseEncoding,
-		})
-		.to_string()
-	});
-	CString::new(json)
-		.expect("serialized notification response contains no NUL")
-		.into_raw()
+	response.into_raw()
 }
 
 #[cfg(target_os = "ios")]

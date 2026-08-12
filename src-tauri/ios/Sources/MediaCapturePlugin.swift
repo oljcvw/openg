@@ -11,9 +11,14 @@ final class MediaCapturePlugin: Plugin, UIImagePickerControllerDelegate, UINavig
 
   private var pendingInvoke: Invoke?
   private var mode: Mode?
-  private lazy var shortVideoCache: ShortVideoCache? = try? ShortVideoCache(
+  private let shortVideoCache: ShortVideoCache? = try? ShortVideoCache(
     root: ShortVideoCache.defaultRoot()
   )
+
+  override init() {
+    super.init()
+    removeAbandonedCaptures()
+  }
 
   @objc func getCameraPermissionStatus(_ invoke: Invoke) {
     invoke.resolve([
@@ -348,6 +353,17 @@ final class MediaCapturePlugin: Plugin, UIImagePickerControllerDelegate, UINavig
     return directory
   }
 
+  private func removeAbandonedCaptures() {
+    guard let directory = try? capturesDirectory(),
+          let captures = try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+          ) else { return }
+    for capture in captures where capture.lastPathComponent.hasPrefix("video-") {
+      try? FileManager.default.removeItem(at: capture)
+    }
+  }
+
   private func captureURL(for id: String) -> URL? {
     guard id.range(of: "^[A-Fa-f0-9-]{36}$", options: .regularExpression) != nil,
           let directory = try? capturesDirectory() else { return nil }
@@ -404,20 +420,25 @@ private enum MediaCapturePhotoProcessor {
   static func process(_ source: UIImage) throws -> ProcessedPhoto {
     var image = normalizedAndScaled(source)
     for _ in 0...4 {
-      guard let data = image.jpegData(compressionQuality: 1) else {
-        throw MediaCaptureProcessingError.encoding
+      for quality in [1.0, 0.8, 0.6, 0.45, 0.3] {
+        guard let data = image.jpegData(compressionQuality: quality) else {
+          throw MediaCaptureProcessingError.encoding
+        }
+        if data.count <= MediaCaptureContract.maximumPhotoBytes {
+          return ProcessedPhoto(
+            data: data,
+            width: Int(image.size.width.rounded()),
+            height: Int(image.size.height.rounded())
+          )
+        }
       }
-      if data.count <= MediaCaptureContract.maximumPhotoBytes {
-        return ProcessedPhoto(
-          data: data,
-          width: Int(image.size.width.rounded()),
-          height: Int(image.size.height.rounded())
-        )
+      guard let data = image.jpegData(compressionQuality: 0.3) else {
+        throw MediaCaptureProcessingError.encoding
       }
       let scale = min(0.95, max(0.1, sqrt(
         Double(MediaCaptureContract.maximumPhotoBytes) / Double(data.count)
       )))
-      image = render(image, size: CGSize(
+      image = resize(image, size: CGSize(
         width: max(1, (image.size.width * scale).rounded()),
         height: max(1, (image.size.height * scale).rounded())
       ))
@@ -430,15 +451,26 @@ private enum MediaCapturePhotoProcessor {
       width: Int(source.size.width.rounded()),
       height: Int(source.size.height.rounded())
     )
-    return render(source, size: CGSize(width: dimensions.width, height: dimensions.height))
+    let image = resize(source, size: CGSize(width: dimensions.width, height: dimensions.height))
+    return watermark(image)
   }
 
-  private static func render(_ image: UIImage, size: CGSize) -> UIImage {
+  private static func resize(_ image: UIImage, size: CGSize) -> UIImage {
     let format = UIGraphicsImageRendererFormat()
     format.scale = 1
     format.opaque = true
     return UIGraphicsImageRenderer(size: size, format: format).image { _ in
       image.draw(in: CGRect(origin: .zero, size: size))
+    }
+  }
+
+  private static func watermark(_ image: UIImage) -> UIImage {
+    let size = image.size
+    let format = UIGraphicsImageRendererFormat()
+    format.scale = 1
+    format.opaque = true
+    return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+      image.draw(at: .zero)
       let font = UIFont.boldSystemFont(ofSize: max(12, size.width * 0.035))
       let label = "Open Grind"
       let attributes: [NSAttributedString.Key: Any] = [

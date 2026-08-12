@@ -123,6 +123,7 @@
 		}
 		maxDurationListener = successful[0]!;
 		recordingErrorListener = successful[1]!;
+		listenerAvailable = true;
 	}
 
 	function stopTimer(): void {
@@ -281,7 +282,6 @@
 				)
 					return;
 				supported = true;
-				listenerAvailable = true;
 				observeBackgroundTask(registerVoiceListeners(generation), {
 					category: "listener_error",
 					component: "voice_recorder",

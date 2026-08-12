@@ -191,26 +191,33 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
   private func handleRefresh(_ task: BGAppRefreshTask) {
     let completion = BackgroundCompletion()
     task.expirationHandler = { completion.finish(task, success: false) }
-    scheduleRefresh()
 
     let settings = currentDeliverySettings()
     guard defaults.bool(forKey: "notifications.enabled"), settings.messages || settings.taps else {
+      cancelRefresh()
       completion.finish(task, success: true)
       return
     }
+    scheduleRefresh()
     center.getNotificationSettings { nativeSettings in
       guard NotificationPermission.status(for: nativeSettings.authorizationStatus) == "granted" else {
         completion.finish(task, success: true)
         return
       }
-      self.pollQueue.async {
-        let success = self.pollAndDeliver(settings: settings)
-        completion.finish(task, success: success)
+      DispatchQueue.main.async {
+        let isActive = UIApplication.shared.applicationState == .active
+        self.pollQueue.async {
+          let success = self.pollAndDeliver(settings: settings, isActive: isActive)
+          completion.finish(task, success: success)
+        }
       }
     }
   }
 
-  private func pollAndDeliver(settings: NotificationDeliverySettings) -> Bool {
+  private func pollAndDeliver(
+    settings: NotificationDeliverySettings,
+    isActive: Bool
+  ) -> Bool {
     guard let pointer = openGrindNotificationsPoll(
       settings.messages ? 1 : 0,
       settings.taps ? 1 : 0
@@ -241,7 +248,7 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
         recordFailure()
         return false
       }
-      return process(payload: payload, settings: settings)
+      return process(payload: payload, settings: settings, isActive: isActive)
     default:
       recordFailure()
       return false
@@ -250,19 +257,20 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
 
   private func process(
     payload: NotificationPollPayload,
-    settings: NotificationDeliverySettings
+    settings: NotificationDeliverySettings,
+    isActive: Bool
   ) -> Bool {
     guard defaults.bool(forKey: "notifications.enabled") else { return true }
     let decision = NotificationDecision.decide(
       payload: payload,
-      settings: currentDeliverySettings(),
+      settings: settings,
       messageInitialized: defaults.bool(forKey: accountKey(payload.accountId, "messagesInitialized")),
       tapInitialized: defaults.bool(forKey: accountKey(payload.accountId, "tapsInitialized")),
       messageWatermark: readWatermark(payload.accountId, category: "message"),
       tapWatermark: readWatermark(payload.accountId, category: "tap")
     )
 
-    guard UIApplication.shared.applicationState != .active else {
+    guard !isActive else {
       commit(decision: decision, accountId: payload.accountId)
       recordSuccess()
       return true

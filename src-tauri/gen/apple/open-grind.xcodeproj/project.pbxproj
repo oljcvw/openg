@@ -460,12 +460,12 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/AgoraRtcKit.framework/AgoraRtcKit",
-				"$(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/AgoraSoundTouch.framework/AgoraSoundTouch",
-				"$(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/Agorafdkaac.framework/Agorafdkaac",
-				"$(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/Agoraffmpeg.framework/Agoraffmpeg",
-				"$(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/aosl.framework/aosl",
-				"$(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/video_dec.framework/video_dec",
+				"$(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/AgoraRtcKit.framework/AgoraRtcKit",
+				"$(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/AgoraSoundTouch.framework/AgoraSoundTouch",
+				"$(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/Agorafdkaac.framework/Agorafdkaac",
+				"$(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/Agoraffmpeg.framework/Agoraffmpeg",
+				"$(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/aosl.framework/aosl",
+				"$(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/video_dec.framework/video_dec",
 			);
 			name = "Embed Agora Frameworks";
 			outputFileListPaths = (
@@ -480,7 +480,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\ndestination=\"${TARGET_BUILD_DIR:?}/${FRAMEWORKS_FOLDER_PATH:?}\"\nmkdir -p \"$destination\"\nfor framework in \"${PROJECT_DIR:?}\"/Frameworks/\"${PLATFORM_NAME:?}\"/*.framework; do\n  ditto \"$framework\" \"$destination/$(basename \"$framework\")\"\n  if [ \"${CODE_SIGNING_ALLOWED:-NO}\" = \"YES\" ] && [ -n \"${EXPANDED_CODE_SIGN_IDENTITY:-}\" ]; then\n    codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --preserve-metadata=identifier,entitlements \"$destination/$(basename \"$framework\")\"\n  else\n    codesign --force --sign - --preserve-metadata=identifier,entitlements \"$destination/$(basename \"$framework\")\"\n  fi\ndone\n";
+			shellScript = "set -euo pipefail\ndestination=\"${TARGET_BUILD_DIR:?}/${FRAMEWORKS_FOLDER_PATH:?}\"\nmkdir -p \"$destination\"\nfor framework in \"${PROJECT_DIR:?}\"/Frameworks/\"${CONFIGURATION:?}-${PLATFORM_NAME:?}\"/*.framework; do\n  ditto \"$framework\" \"$destination/$(basename \"$framework\")\"\n  if [ \"${CODE_SIGNING_ALLOWED:-NO}\" = \"YES\" ] && [ -n \"${EXPANDED_CODE_SIGN_IDENTITY:-}\" ]; then\n    codesign --force --sign \"$EXPANDED_CODE_SIGN_IDENTITY\" --preserve-metadata=identifier,entitlements \"$destination/$(basename \"$framework\")\"\n  else\n    codesign --force --sign - --preserve-metadata=identifier,entitlements \"$destination/$(basename \"$framework\")\"\n  fi\ndone\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -533,7 +533,7 @@
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited) $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)",
+					"$(inherited) $(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)",
 					"\".\"",
 				);
 				INFOPLIST_FILE = "open-grind_iOS/Info.plist";
@@ -584,7 +584,7 @@
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited) $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)",
+					"$(inherited) $(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)",
 					"\".\"",
 				);
 				INFOPLIST_FILE = "open-grind_iOS/Info.plist";

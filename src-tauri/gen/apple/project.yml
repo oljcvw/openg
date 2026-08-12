@@ -85,7 +85,7 @@ targets:
         LIBRARY_SEARCH_PATHS[arch=x86_64]: $(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)
         LIBRARY_SEARCH_PATHS[arch=arm64]: $(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: true
-        FRAMEWORK_SEARCH_PATHS: $(inherited) $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)
+        FRAMEWORK_SEARCH_PATHS: $(inherited) $(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)
         EXCLUDED_ARCHS[sdk=iphoneos*]: x86_64
       groups: [app]
     dependencies:
@@ -111,7 +111,7 @@ targets:
           set -euo pipefail
           destination="${TARGET_BUILD_DIR:?}/${FRAMEWORKS_FOLDER_PATH:?}"
           mkdir -p "$destination"
-          for framework in "${PROJECT_DIR:?}"/Frameworks/"${PLATFORM_NAME:?}"/*.framework; do
+          for framework in "${PROJECT_DIR:?}"/Frameworks/"${CONFIGURATION:?}-${PLATFORM_NAME:?}"/*.framework; do
             ditto "$framework" "$destination/$(basename "$framework")"
             if [ "${CODE_SIGNING_ALLOWED:-NO}" = "YES" ] && [ -n "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
               codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" --preserve-metadata=identifier,entitlements "$destination/$(basename "$framework")"
@@ -121,12 +121,12 @@ targets:
           done
         basedOnDependencyAnalysis: false
         inputFiles:
-          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/AgoraRtcKit.framework/AgoraRtcKit
-          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/AgoraSoundTouch.framework/AgoraSoundTouch
-          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/Agorafdkaac.framework/Agorafdkaac
-          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/Agoraffmpeg.framework/Agoraffmpeg
-          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/aosl.framework/aosl
-          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/video_dec.framework/video_dec
+          - $(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/AgoraRtcKit.framework/AgoraRtcKit
+          - $(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/AgoraSoundTouch.framework/AgoraSoundTouch
+          - $(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/Agorafdkaac.framework/Agorafdkaac
+          - $(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/Agoraffmpeg.framework/Agoraffmpeg
+          - $(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/aosl.framework/aosl
+          - $(PROJECT_DIR)/Frameworks/$(CONFIGURATION)-$(PLATFORM_NAME)/video_dec.framework/video_dec
         outputFiles:
           - $(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/AgoraRtcKit.framework/AgoraRtcKit
           - $(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/AgoraSoundTouch.framework/AgoraSoundTouch

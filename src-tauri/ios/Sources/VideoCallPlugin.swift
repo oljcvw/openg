@@ -51,13 +51,18 @@ final class VideoCallPlugin: Plugin {
       invoke.reject("invalid-video-call-arguments")
       return
     }
-    guard !launchReserved, callController == nil else {
-      invoke.reject("video-call-already-active")
-      return
-    }
-    launchReserved = true
-    requestMediaPermissions { [weak self] granted in
-      self?.finishStart(granted: granted, appId: appId, args: args, invoke: invoke)
+    DispatchQueue.main.async { [weak self] in
+      guard let self else { return }
+      guard !self.launchReserved, self.callController == nil else {
+        invoke.reject("video-call-already-active")
+        return
+      }
+      self.launchReserved = true
+      self.requestMediaPermissions { granted in
+        DispatchQueue.main.async {
+          self.finishStart(granted: granted, appId: appId, args: args, invoke: invoke)
+        }
+      }
     }
   }
 
@@ -72,9 +77,7 @@ final class VideoCallPlugin: Plugin {
       invoke.reject("video-call-media-permissions-required")
       return
     }
-    DispatchQueue.main.async { [weak self] in
-      self?.presentCall(appId: appId, args: args, invoke: invoke)
-    }
+    presentCall(appId: appId, args: args, invoke: invoke)
   }
 
   private func presentCall(appId: String, args: VideoCallStartArgs, invoke: Invoke) {
@@ -106,21 +109,25 @@ final class VideoCallPlugin: Plugin {
 
   @objc func renewToken(_ invoke: Invoke) throws {
     let args = try invoke.parseArgs(VideoCallRenewArgs.self)
-    guard !args.token.isEmpty, callController?.renewToken(args.token) == true else {
-      invoke.reject("video-call-not-active")
-      return
+    DispatchQueue.main.async { [weak self] in
+      guard !args.token.isEmpty, self?.callController?.renewToken(args.token) == true else {
+        invoke.reject("video-call-not-active")
+        return
+      }
+      invoke.resolve()
     }
-    invoke.resolve()
   }
 
   @objc func stop(_ invoke: Invoke) {
-    guard let callController else {
-      launchReserved = false
-      invoke.reject("video-call-not-active")
-      return
+    DispatchQueue.main.async { [weak self] in
+      guard let self, let callController = self.callController else {
+        self?.launchReserved = false
+        invoke.reject("video-call-not-active")
+        return
+      }
+      callController.requestStop(reason: "local-ended")
+      invoke.resolve()
     }
-    callController.requestStop(reason: "local-ended")
-    invoke.resolve()
   }
 
   private func permissionStatus(for mediaType: AVMediaType) -> String {
@@ -358,31 +365,38 @@ private final class AgoraVideoCallViewController: UIViewController, AgoraRtcEngi
   }
 
   func rtcEngine(_ engine: AgoraRtcEngineKit, didJoinedOfUid uid: UInt, elapsed: Int) {
-    guard !ended else { return }
-    remoteUid = uid
-    if connectedAt == nil {
-      connectedAt = .now()
-      let workItem = DispatchWorkItem { [weak self] in self?.finish(reason: "time-limit") }
-      limitWorkItem = workItem
-      DispatchQueue.main.asyncAfter(
-        deadline: .now() + .seconds(connectedLimitSeconds),
-        execute: workItem
-      )
+    DispatchQueue.main.async { [weak self] in
+      guard let self, !self.ended else { return }
+      self.remoteUid = uid
+      if self.connectedAt == nil {
+        self.connectedAt = .now()
+        let workItem = DispatchWorkItem { [weak self] in self?.finish(reason: "time-limit") }
+        self.limitWorkItem = workItem
+        DispatchQueue.main.asyncAfter(
+          deadline: .now() + .seconds(self.connectedLimitSeconds),
+          execute: workItem
+        )
+      }
+      let canvas = AgoraRtcVideoCanvas()
+      canvas.uid = uid
+      canvas.view = self.remoteView
+      canvas.renderMode = .hidden
+      engine.setupRemoteVideo(canvas)
+      self.onRemoteUserJoined?(uid)
     }
-    let canvas = AgoraRtcVideoCanvas()
-    canvas.uid = uid
-    canvas.view = remoteView
-    canvas.renderMode = .hidden
-    engine.setupRemoteVideo(canvas)
-    onRemoteUserJoined?(uid)
   }
 
   func rtcEngine(_ engine: AgoraRtcEngineKit, didOfflineOfUid uid: UInt, reason: AgoraUserOfflineReason) {
-    if uid == remoteUid { finish(reason: "remote-ended") }
+    DispatchQueue.main.async { [weak self] in
+      guard let self, uid == self.remoteUid else { return }
+      self.finish(reason: "remote-ended")
+    }
   }
 
   func rtcEngine(_ engine: AgoraRtcEngineKit, didOccurError errorCode: AgoraErrorCode) {
-    finish(reason: "agora-error-\(errorCode.rawValue)")
+    DispatchQueue.main.async { [weak self] in
+      self?.finish(reason: "agora-error-\(errorCode.rawValue)")
+    }
   }
 
   override func viewDidDisappear(_ animated: Bool) {

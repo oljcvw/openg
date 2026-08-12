@@ -109,14 +109,25 @@
 			"open-grind-notifications",
 			"notification-route",
 			navigateNotification,
-		).then(async (listener) => {
-			if (notificationListenerCancelled) {
-				await listener.unregister();
+		)
+			.then(async (listener) => {
+				if (notificationListenerCancelled) {
+					await listener.unregister();
+					return null;
+				}
+				try {
+					navigateNotification(await callMethod("notification_take_route"));
+				} catch (error) {
+					await listener.unregister().catch(() => undefined);
+					console.error("Failed to initialize notification routing", error);
+					return null;
+				}
+				return listener;
+			})
+			.catch((error) => {
+				console.error("Failed to register notification routing", error);
 				return null;
-			}
-			navigateNotification(await callMethod("notification_take_route"));
-			return listener;
-		});
+			});
 		const releaseAccountGeneration = subscribeAccountGeneration(
 			(generation) => {
 				accountGeneration = generation;
@@ -130,7 +141,9 @@
 		});
 		return () => {
 			notificationListenerCancelled = true;
-			void notificationListener.then((listener) => listener?.unregister());
+			void notificationListener
+				.then((listener) => listener?.unregister())
+				.catch(() => undefined);
 			releaseAccountGeneration();
 		};
 	});

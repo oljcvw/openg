@@ -142,6 +142,14 @@ fn swift_products_dir() -> std::path::PathBuf {
 		.join(format!("{configuration}-{}", ios_platform()))
 }
 
+fn ios_configuration() -> &'static str {
+	if std::env::var("PROFILE").as_deref() == Ok("release") {
+		"Release"
+	} else {
+		"Debug"
+	}
+}
+
 fn ios_platform() -> &'static str {
 	if std::env::var("CARGO_CFG_TARGET_ABI").as_deref() == Ok("sim") {
 		"iphonesimulator"
@@ -167,10 +175,16 @@ fn link_agora_ios_frameworks() {
 	for framework in framework_names {
 		println!("cargo:rustc-link-lib=framework={framework}");
 	}
+	// Xcode links and embeds these dynamic frameworks after Cargo produces the
+	// Rust static archive. A stable project-relative handoff is required because
+	// Cargo does not propagate an OUT_DIR framework path through that archive.
+	// Include configuration and platform so concurrent Xcode builds never share
+	// a mutable destination.
+	let staging_key = format!("{}-{}", ios_configuration(), ios_platform());
 	ios_build_support::stage_frameworks(
 		&frameworks,
 		std::path::Path::new("gen/apple/Frameworks"),
-		ios_platform(),
+		&staging_key,
 		&framework_names,
 	)
 	.unwrap_or_else(|error| {

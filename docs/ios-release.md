@@ -158,8 +158,7 @@ unexpected writable secret, personal test data, or private log artifact.
 ## Physical-device parity matrix
 
 Run against exact signed candidate on at least one iPhone and one iPad. Include an
-iOS/iPadOS 16.x device or runtime; newer-only evidence does not prove deployment
-target compatibility.
+iOS/iPadOS 17.5 or later device or runtime.
 
 | Area | Required outcome |
 | --- | --- |
@@ -243,7 +242,7 @@ candidate, refresh it from live evidence:
 - local Apple Distribution identity and App Store profile availability
 - App Store Connect app/bundle ownership and service/branding authorization
 - configured Agora application identifier and successful real-call validation
-- iOS/iPadOS 16.x runtime/device coverage
+- iOS/iPadOS 17.5 or later runtime/device coverage
 - exact signed iPhone+iPad physical-device matrix
 - owner-approved collected-data/tracking declarations and App Store privacy
   answers; required-reason declarations alone do not describe server data use
