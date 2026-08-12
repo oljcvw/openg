@@ -1,4 +1,5 @@
 use std::future::Future;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, OnceLock};
 
 use serde::Serialize;
@@ -10,6 +11,12 @@ use jni::{objects::JClass, sys::jboolean, JNIEnv};
 
 use crate::error::{AppError, BanInfo};
 use crate::state::AppState;
+
+#[cfg(target_os = "ios")]
+tauri::ios_plugin_binding!(init_plugin_open_grind_realtime_network);
+
+static NETWORK_STATE_OBSERVED: AtomicBool = AtomicBool::new(false);
+static EARLY_NETWORK_AVAILABLE: AtomicBool = AtomicBool::new(false);
 
 #[derive(Debug, Clone, Copy)]
 struct RealtimeInputs {
@@ -23,9 +30,18 @@ impl Default for RealtimeInputs {
 		Self {
 			requested: false,
 			foreground: !cfg!(mobile),
-			network_available: !cfg!(target_os = "android"),
+			network_available: initial_network_available(
+				cfg!(mobile),
+				NETWORK_STATE_OBSERVED
+					.load(Ordering::Acquire)
+					.then(|| EARLY_NETWORK_AVAILABLE.load(Ordering::Acquire)),
+			),
 		}
 	}
+}
+
+fn initial_network_available(is_mobile: bool, observed: Option<bool>) -> bool {
+	observed.unwrap_or(!is_mobile)
 }
 
 impl RealtimeInputs {
@@ -74,9 +90,21 @@ pub fn set_app_foreground(foreground: bool) {
 }
 
 pub fn set_network_available(available: bool) {
+	EARLY_NETWORK_AVAILABLE.store(available, Ordering::Release);
+	NETWORK_STATE_OBSERVED.store(true, Ordering::Release);
 	update_realtime_inputs("network", |inputs| {
 		inputs.network_available = available;
 	});
+}
+
+pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
+	tauri::plugin::Builder::new("open-grind-realtime-network")
+		.setup(|_app, _api| {
+			#[cfg(target_os = "ios")]
+			_api.register_ios_plugin(init_plugin_open_grind_realtime_network)?;
+			Ok(())
+		})
+		.build()
 }
 
 fn request_realtime() -> Result<(), AppError> {
@@ -161,6 +189,17 @@ pub extern "system" fn Java_org_opengrind_realtime_RealtimeNetworkMonitor_native
 	});
 	if result.is_err() {
 		tracing::error!("[ws-lifecycle] JNI network update panicked");
+	}
+}
+
+#[cfg(target_os = "ios")]
+#[no_mangle]
+pub extern "C" fn open_grind_set_network_available(available: u8) {
+	let result = std::panic::catch_unwind(|| {
+		set_network_available(available != 0);
+	});
+	if result.is_err() {
+		tracing::error!("[ws-lifecycle] iOS network update panicked");
 	}
 }
 
@@ -309,7 +348,17 @@ mod tests {
 
 	use tokio::sync::{watch, Mutex, Notify};
 
-	use super::{run_latest_state_loop, RealtimeInputs};
+	use super::{
+		initial_network_available, run_latest_state_loop, RealtimeInputs,
+	};
+
+	#[test]
+	fn mobile_network_state_fails_closed_until_native_observation() {
+		assert!(!initial_network_available(true, None));
+		assert!(initial_network_available(true, Some(true)));
+		assert!(!initial_network_available(true, Some(false)));
+		assert!(initial_network_available(false, None));
+	}
 
 	#[test]
 	fn realtime_requires_request_foreground_and_network() {

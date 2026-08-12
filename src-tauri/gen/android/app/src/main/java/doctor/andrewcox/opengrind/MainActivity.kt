@@ -1,4 +1,4 @@
-package org.opengrind
+package doctor.andrewcox.opengrind
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
@@ -19,6 +19,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.crates.keyring.Keyring
 import org.json.JSONObject
+import org.opengrind.WebViewSupport
 import org.opengrind.notifications.NotificationNotifier
 import org.opengrind.notifications.NotificationRoute
 import org.opengrind.realtime.RealtimeNetworkMonitor

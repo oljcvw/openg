@@ -1,9 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { captureShortVideoMock } = vi.hoisted(() => ({
-	captureShortVideoMock: vi.fn(),
-}));
+const { captureShortVideoMock, getMediaCaptureAvailabilityMock } = vi.hoisted(
+	() => ({
+		captureShortVideoMock: vi.fn(),
+		getMediaCaptureAvailabilityMock: vi.fn(),
+	}),
+);
 
 vi.mock("$lib/api/messaging/chat-media", () => ({
 	addCapturedPhotoToDrawer: vi.fn(),
@@ -18,6 +21,7 @@ vi.mock("$lib/api/messaging/messages", () => ({
 vi.mock("$lib/app-data/media-capture", () => ({
 	capturePhoto: vi.fn(),
 	captureShortVideo: captureShortVideoMock,
+	getMediaCaptureAvailability: getMediaCaptureAvailabilityMock,
 	deleteCapturedShortVideo: vi.fn().mockResolvedValue(undefined),
 	reportMediaWorkflowDiagnostic: vi.fn(),
 }));
@@ -30,6 +34,10 @@ import Harness from "./ComposerCaptureActions.test.svelte";
 describe("ComposerCaptureActions pending review", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		getMediaCaptureAvailabilityMock.mockResolvedValue({
+			available: true,
+			reason: null,
+		});
 		captureShortVideoMock.mockResolvedValue({
 			status: "ready",
 			dataBase64: "AA==",
@@ -47,12 +55,29 @@ describe("ComposerCaptureActions pending review", () => {
 
 	it("blocks another recording while a captured video awaits review", async () => {
 		render(Harness);
-		await fireEvent.click(screen.getByRole("button", { name: "Short video" }));
+		await fireEvent.click(
+			await screen.findByRole("button", { name: "Short video" }),
+		);
 
 		const reviewButton = await screen.findByRole("button", {
 			name: "Review video below",
 		});
 		expect(reviewButton.hasAttribute("disabled")).toBe(true);
 		expect(captureShortVideoMock).toHaveBeenCalledOnce();
+	});
+
+	it("hides native capture actions when the capability is unavailable", async () => {
+		getMediaCaptureAvailabilityMock.mockResolvedValue({
+			available: false,
+			reason: "unsupported-platform",
+		});
+
+		render(Harness);
+
+		expect(
+			await screen.findByText("Camera capture isn't available on this device."),
+		).toBeTruthy();
+		expect(screen.queryByRole("button", { name: "Camera" })).toBeNull();
+		expect(screen.queryByRole("button", { name: "Short video" })).toBeNull();
 	});
 });

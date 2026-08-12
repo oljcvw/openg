@@ -9,6 +9,7 @@ license = "MIT"
 readme = "../README.md"
 publish = false
 edition = "2021"
+links = "open-grind"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -24,6 +25,7 @@ keychain = ["dep:apple-native-keyring-store"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+tauri-plugin = { version = "2", features = ["build"] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
@@ -81,4 +83,5 @@ strip = "symbols"
 # See https://github.com/tauri-apps/tauri/pull/15777
 [patch.crates-io]
 grindr = { path = "patches/grindr" }
+swift-rs = { git = "https://github.com/SteveSSL45/swift-rs.git", rev = "f80356b83a43e6203ab24a537446b45007984997" }
 tauri-codegen = { path = "patches/tauri-codegen" }

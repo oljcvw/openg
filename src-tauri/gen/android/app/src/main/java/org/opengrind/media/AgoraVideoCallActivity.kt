@@ -22,8 +22,8 @@ import io.agora.rtc2.RtcEngineConfig
 import io.agora.rtc2.SimulcastStreamConfig
 import io.agora.rtc2.video.VideoCanvas
 import io.agora.rtc2.video.VideoEncoderConfiguration
-import org.opengrind.BuildConfig
-import org.opengrind.R
+import doctor.andrewcox.opengrind.BuildConfig
+import doctor.andrewcox.opengrind.R
 
 class AgoraVideoCallActivity : AppCompatActivity() {
 	private lateinit var root: FrameLayout

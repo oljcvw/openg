@@ -9,11 +9,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
 	cancelVoiceRecordingMock,
+	getVoiceRecorderAvailabilityMock,
 	getVoicePermissionStatusMock,
 	onVoiceRecordingErrorMock,
 	onVoiceRecordingMaxDurationMock,
 	observeBackgroundTaskMock,
-	platformMock,
 	reportClientDiagnosticMock,
 	startVoiceRecordingMock,
 	stopVoiceRecordingMock,
@@ -21,13 +21,13 @@ const {
 	uploadChatMediaMock,
 } = vi.hoisted(() => ({
 	cancelVoiceRecordingMock: vi.fn(),
+	getVoiceRecorderAvailabilityMock: vi.fn(),
 	getVoicePermissionStatusMock: vi.fn(),
 	onVoiceRecordingErrorMock: vi.fn(),
 	onVoiceRecordingMaxDurationMock: vi.fn(),
 	observeBackgroundTaskMock: vi.fn(
 		(task: Promise<unknown>) => void task.catch(() => {}),
 	),
-	platformMock: vi.fn(),
 	reportClientDiagnosticMock: vi.fn(),
 	startVoiceRecordingMock: vi.fn(),
 	stopVoiceRecordingMock: vi.fn(),
@@ -35,12 +35,12 @@ const {
 	uploadChatMediaMock: vi.fn(),
 }));
 
-vi.mock("@tauri-apps/plugin-os", () => ({ platform: platformMock }));
 vi.mock("$lib/api/messaging/chat-media", () => ({
 	uploadChatMedia: uploadChatMediaMock,
 }));
 vi.mock("$lib/api/voice-recorder", () => ({
 	cancelVoiceRecording: cancelVoiceRecordingMock,
+	getVoiceRecorderAvailability: getVoiceRecorderAvailabilityMock,
 	getVoicePermissionStatus: getVoicePermissionStatusMock,
 	onVoiceRecordingError: onVoiceRecordingErrorMock,
 	onVoiceRecordingMaxDuration: onVoiceRecordingMaxDurationMock,
@@ -73,7 +73,14 @@ function deferred<T>() {
 describe("ComposerVoiceMessageTrigger keyboard semantics", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		platformMock.mockReturnValue("android");
+		Element.prototype.animate = vi.fn(() => ({
+			cancel: vi.fn(),
+			finished: Promise.resolve(),
+		})) as unknown as typeof Element.prototype.animate;
+		getVoiceRecorderAvailabilityMock.mockResolvedValue({
+			available: true,
+			reason: null,
+		});
 		getVoicePermissionStatusMock.mockResolvedValue("granted");
 		startVoiceRecordingMock.mockResolvedValue(undefined);
 		stopVoiceRecordingMock.mockResolvedValue({ status: "tooShort" });
@@ -95,7 +102,7 @@ describe("ComposerVoiceMessageTrigger keyboard semantics", () => {
 
 	it("toggles recording with Space and exposes switch state", async () => {
 		render(Harness, { sendMessage: vi.fn() });
-		const control = screen.getByRole("switch", {
+		const control = await screen.findByRole("switch", {
 			name: "Hold to record voice message",
 		});
 		expect(control.getAttribute("aria-checked")).toBe("false");
@@ -111,7 +118,7 @@ describe("ComposerVoiceMessageTrigger keyboard semantics", () => {
 
 	it("toggles recording with Enter without starting a pointer gesture", async () => {
 		render(Harness, { sendMessage: vi.fn() });
-		const control = screen.getByRole("switch");
+		const control = await screen.findByRole("switch");
 
 		await fireEvent.keyDown(control, { key: "Enter" });
 		await waitFor(() => expect(startVoiceRecordingMock).toHaveBeenCalledOnce());
@@ -125,7 +132,7 @@ describe("ComposerVoiceMessageTrigger keyboard semantics", () => {
 		const permission = deferred<string>();
 		getVoicePermissionStatusMock.mockReturnValue(permission.promise);
 		render(Harness, { sendMessage: vi.fn() });
-		const control = screen.getByRole("switch");
+		const control = await screen.findByRole("switch");
 
 		await fireEvent.keyDown(control, { key: "Enter" });
 		await fireEvent.keyDown(control, { key: "Enter" });
@@ -139,6 +146,9 @@ describe("ComposerVoiceMessageTrigger keyboard semantics", () => {
 		const unregister = vi.fn().mockResolvedValue(undefined);
 		onVoiceRecordingMaxDurationMock.mockReturnValue(registration.promise);
 		const view = render(Harness, { sendMessage: vi.fn() });
+		await waitFor(() =>
+			expect(onVoiceRecordingMaxDurationMock).toHaveBeenCalledOnce(),
+		);
 
 		view.unmount();
 		registration.resolve({ unregister });
@@ -224,12 +234,16 @@ describe("ComposerVoiceMessageTrigger keyboard semantics", () => {
 		);
 	});
 
-	it("defaults safely when the Tauri platform API is unavailable", () => {
-		platformMock.mockImplementation(() => {
-			throw new Error("Tauri unavailable");
+	it("hides recording when the native capability is unavailable", async () => {
+		getVoiceRecorderAvailabilityMock.mockResolvedValue({
+			available: false,
+			reason: "unsupported-platform",
 		});
 		render(Harness, { sendMessage: vi.fn() });
 
+		await waitFor(() =>
+			expect(getVoiceRecorderAvailabilityMock).toHaveBeenCalledOnce(),
+		);
 		expect(screen.queryByRole("switch")).toBeNull();
 	});
 
@@ -245,7 +259,7 @@ describe("ComposerVoiceMessageTrigger keyboard semantics", () => {
 			durationMs: 1_500,
 		});
 		render(Harness, { sendMessage });
-		const control = screen.getByRole("switch");
+		const control = await screen.findByRole("switch");
 
 		await fireEvent.keyDown(control, { key: "Enter" });
 		await waitFor(() => expect(startVoiceRecordingMock).toHaveBeenCalledOnce());

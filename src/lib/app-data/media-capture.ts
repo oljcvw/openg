@@ -6,6 +6,11 @@ import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 
 const cancelledCaptureSchema = z.object({ status: z.literal("cancelled") });
 
+const mediaCaptureAvailabilitySchema = z.object({
+	available: z.boolean(),
+	reason: z.string().nullable(),
+});
+
 const capturedPhotoSchema = z.object({
 	status: z.literal("ready"),
 	dataBase64: z.string().min(1),
@@ -38,11 +43,20 @@ const shortVideoCaptureResultSchema = z.discriminatedUnion("status", [
 ]);
 
 export type CapturedPhoto = z.infer<typeof capturedPhotoSchema>;
+export type MediaCaptureAvailability = z.infer<
+	typeof mediaCaptureAvailabilitySchema
+>;
 export type CapturedShortVideo = z.infer<typeof capturedShortVideoSchema>;
 export type PhotoCaptureResult = z.infer<typeof photoCaptureResultSchema>;
 export type ShortVideoCaptureResult = z.infer<
 	typeof shortVideoCaptureResultSchema
 >;
+
+export async function getMediaCaptureAvailability(): Promise<MediaCaptureAvailability> {
+	return mediaCaptureAvailabilitySchema.parse(
+		await invoke("media_capture_availability"),
+	);
+}
 
 export async function capturePhoto(): Promise<PhotoCaptureResult> {
 	try {

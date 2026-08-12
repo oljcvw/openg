@@ -1,23 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { events, gotoMock, removeAccountCacheMock } = vi.hoisted(() => ({
-	events: [] as string[],
-	gotoMock: vi.fn(() => {
-		events.push("navigate");
-		return Promise.resolve();
+const { callMethodMock, events, gotoMock, removeAccountCacheMock } = vi.hoisted(
+	() => ({
+		callMethodMock: vi.fn((method: string) => {
+			events.push(method);
+			return Promise.resolve();
+		}),
+		events: [] as string[],
+		gotoMock: vi.fn(() => {
+			events.push("navigate");
+			return Promise.resolve();
+		}),
+		removeAccountCacheMock: vi.fn(() => {
+			events.push("cache");
+			return Promise.resolve();
+		}),
 	}),
-	removeAccountCacheMock: vi.fn(() => {
-		events.push("cache");
-		return Promise.resolve();
-	}),
-}));
+);
 
 vi.mock("$app/navigation", () => ({ goto: gotoMock }));
 vi.mock("$lib/api", () => ({
-	callMethod: vi.fn((method: string) => {
-		events.push(method);
-		return Promise.resolve();
-	}),
+	callMethod: callMethodMock,
 }));
 vi.mock("$lib/api/account-caches", () => ({
 	invalidateAccountSession: vi.fn(() => ({ accountId: 42, generation: 1 })),
@@ -51,11 +54,15 @@ describe("sign-out cleanup ordering", () => {
 		await signOut();
 		expect(events).toEqual([
 			"notification_cancel",
+			"notification_clear_account",
 			"cache",
 			"logout",
 			"preferences",
 			"navigate",
 		]);
+		expect(callMethodMock).toHaveBeenCalledWith("notification_clear_account", {
+			accountId: 42,
+		});
 	});
 
 	it("continues native logout when local cache cleanup is incomplete", async () => {

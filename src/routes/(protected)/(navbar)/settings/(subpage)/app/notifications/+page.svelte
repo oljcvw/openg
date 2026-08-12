@@ -40,7 +40,7 @@
 			});
 			if (next.enabled && !settings.enabled) {
 				toast.error(
-					"Notification permission was not granted. You can enable it in Android system settings.",
+					"Notification permission was not granted. You can enable it in system settings.",
 				);
 			}
 		} catch (error) {
@@ -80,18 +80,18 @@
 	</Item.Root>
 {:else if !settings.supported}
 	<Alert.Root>
-		<Alert.Title>Android only</Alert.Title>
+		<Alert.Title>Unavailable on this platform</Alert.Title>
 		<Alert.Description>
-			Background message and tap notifications are currently available on
-			Android.
+			Background message and tap notifications are available in Open Grind's
+			iOS, iPadOS, and Android apps.
 		</Alert.Description>
 	</Alert.Root>
 {:else}
 	<Alert.Root>
 		<Alert.Title>Periodic, not real-time</Alert.Title>
 		<Alert.Description>
-			Android checks about every 15 minutes while network access is available.
-			Battery optimization may delay a check.
+			Open Grind requests periodic checks while network access is available.
+			iOS, iPadOS, and Android may delay checks to protect battery life.
 		</Alert.Description>
 	</Alert.Root>
 

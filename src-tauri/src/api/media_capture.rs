@@ -1,12 +1,30 @@
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use tauri::plugin::PluginHandle;
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use tauri::{Manager, Wry};
 
+#[cfg(target_os = "ios")]
+tauri::ios_plugin_binding!(init_plugin_open_grind_media_capture);
+
 use crate::{error::AppError, storage::AuthStorage};
+
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MediaCaptureAvailability {
+	pub available: bool,
+	pub reason: Option<String>,
+}
+
+fn availability(native_plugin_registered: bool) -> MediaCaptureAvailability {
+	MediaCaptureAvailability {
+		available: native_plugin_registered,
+		reason: (!native_plugin_registered)
+			.then(|| "unsupported-platform".to_owned()),
+	}
+}
 
 static SHORT_VIDEO_CACHE_EPOCH: AtomicU64 = AtomicU64::new(0);
 static SHORT_VIDEO_WRITE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
@@ -45,7 +63,7 @@ fn require_verified_stale_cleanup(
 		Ok(())
 	} else {
 		Err(AppError::Http(
-			"Android short-video cache could not verify stale-write cleanup"
+			"Native short-video cache could not verify stale-write cleanup"
 				.to_owned(),
 		))
 	}
@@ -71,7 +89,7 @@ fn ensure_active_cache_account(account_id: &str) -> Result<(), AppError> {
 	}
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CameraPermissionStatus {
 	pub status: String,
@@ -88,7 +106,7 @@ pub struct CapturedPhoto {
 	pub height: u32,
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct NativeShortVideo {
@@ -101,7 +119,7 @@ struct NativeShortVideo {
 	has_audio: bool,
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct NativeShortVideoBytes {
@@ -138,8 +156,8 @@ pub struct CachedShortVideo {
 	pub byte_length: Option<u64>,
 }
 
-#[cfg(target_os = "android")]
-pub struct AndroidMediaCapture {
+#[cfg(any(target_os = "android", target_os = "ios"))]
+pub struct MobileMediaCapture {
 	handle: PluginHandle<Wry>,
 }
 
@@ -152,7 +170,14 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 					"org.opengrind.media",
 					"MediaCapturePlugin",
 				)?;
-				_app.manage(AndroidMediaCapture { handle });
+				_app.manage(MobileMediaCapture { handle });
+			}
+			#[cfg(target_os = "ios")]
+			{
+				let handle = _api.register_ios_plugin(
+					init_plugin_open_grind_media_capture,
+				)?;
+				_app.manage(MobileMediaCapture { handle });
 			}
 			Ok(())
 		})
@@ -160,15 +185,20 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 }
 
 #[tauri::command]
+pub async fn media_capture_availability() -> MediaCaptureAvailability {
+	availability(cfg!(any(target_os = "android", target_os = "ios")))
+}
+
+#[tauri::command]
 pub async fn media_capture_photo(
 	app: tauri::AppHandle,
 ) -> Result<CapturedPhoto, AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		ensure_camera_permission(&app).await?;
 		return run_mobile(&app, "capturePhoto", ()).await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = app;
 		Err(unsupported_error())
@@ -179,7 +209,7 @@ pub async fn media_capture_photo(
 pub async fn media_capture_short_video(
 	app: tauri::AppHandle,
 ) -> Result<CapturedShortVideo, AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		ensure_camera_permission(&app).await?;
 		let captured: NativeShortVideo =
@@ -202,7 +232,7 @@ pub async fn media_capture_short_video(
 			has_audio: captured.has_audio,
 		});
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = app;
 		Err(unsupported_error())
@@ -214,7 +244,7 @@ pub async fn media_capture_delete_short_video(
 	app: tauri::AppHandle,
 	capture_id: String,
 ) -> Result<(), AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(
 			&app,
@@ -223,7 +253,7 @@ pub async fn media_capture_delete_short_video(
 		)
 		.await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, capture_id);
 		Ok(())
@@ -241,7 +271,7 @@ pub async fn short_video_cache_put(
 	ensure_active_cache_account(&account_id)?;
 	let captured_epoch = SHORT_VIDEO_CACHE_EPOCH.load(Ordering::Acquire);
 	let write_token = short_video_write_token(captured_epoch);
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		let result = run_mobile(
 			&app,
@@ -277,7 +307,7 @@ pub async fn short_video_cache_put(
 		}
 		return Ok(result);
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (
 			app,
@@ -299,7 +329,7 @@ pub async fn short_video_cache_get(
 	media_id: String,
 ) -> Result<CachedShortVideo, AppError> {
 	ensure_active_cache_account(&account_id)?;
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(
 			&app,
@@ -311,7 +341,7 @@ pub async fn short_video_cache_get(
 		)
 		.await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, account_id, media_id);
 		Ok(CachedShortVideo {
@@ -330,7 +360,7 @@ pub async fn short_video_cache_clear(
 ) -> Result<ShortVideoCacheStats, AppError> {
 	let clear_generation =
 		SHORT_VIDEO_CACHE_EPOCH.fetch_add(1, Ordering::AcqRel) + 1;
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		let input = account_id.map_or_else(
 			|| serde_json::json!({ "cacheGeneration": clear_generation }),
@@ -343,7 +373,7 @@ pub async fn short_video_cache_clear(
 		);
 		return run_mobile(&app, "clearShortVideoCache", input).await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, account_id, clear_generation);
 		Ok(empty_cache_stats())
@@ -402,7 +432,7 @@ pub async fn short_video_cache_remove(
 	media_id: String,
 ) -> Result<bool, AppError> {
 	ensure_active_cache_account(&account_id)?;
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		#[derive(serde::Deserialize)]
 		struct Removed {
@@ -419,7 +449,7 @@ pub async fn short_video_cache_remove(
 		.await?;
 		return Ok(result.removed);
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, account_id, media_id);
 		Ok(false)
@@ -431,7 +461,7 @@ pub async fn short_video_cache_trim(
 	app: tauri::AppHandle,
 	maximum_bytes: u64,
 ) -> Result<ShortVideoCacheStats, AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(
 			&app,
@@ -440,7 +470,7 @@ pub async fn short_video_cache_trim(
 		)
 		.await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, maximum_bytes);
 		Ok(empty_cache_stats())
@@ -451,18 +481,18 @@ pub async fn short_video_cache_trim(
 pub async fn short_video_cache_stats(
 	app: tauri::AppHandle,
 ) -> Result<ShortVideoCacheStats, AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(&app, "getShortVideoCacheStats", ()).await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = app;
 		Ok(empty_cache_stats())
 	}
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 fn empty_cache_stats() -> ShortVideoCacheStats {
 	ShortVideoCacheStats {
 		byte_length: 0,
@@ -470,7 +500,7 @@ fn empty_cache_stats() -> ShortVideoCacheStats {
 	}
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 async fn ensure_camera_permission(
 	app: &tauri::AppHandle,
 ) -> Result<(), AppError> {
@@ -489,7 +519,7 @@ async fn ensure_camera_permission(
 	}
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 async fn run_mobile<I, O>(
 	app: &tauri::AppHandle,
 	command: &str,
@@ -499,21 +529,48 @@ where
 	I: Serialize,
 	O: for<'de> Deserialize<'de>,
 {
-	app.state::<AndroidMediaCapture>()
+	app.state::<MobileMediaCapture>()
 		.handle
 		.run_mobile_plugin_async(command, input)
 		.await
 		.map_err(|error| {
 			AppError::Http(format!(
-				"Android media capture bridge failed: {error}"
+				"Native media capture bridge failed: {error}"
 			))
 		})
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 fn unsupported_error() -> AppError {
 	AppError::Api {
 		code: 400,
-		message: "Camera media capture is only supported on Android".to_owned(),
+		message: "Camera media capture is only supported on mobile".to_owned(),
+	}
+}
+
+#[cfg(test)]
+mod availability_tests {
+	use super::*;
+
+	#[test]
+	fn availability_reports_registered_native_support() {
+		assert_eq!(
+			availability(true),
+			MediaCaptureAvailability {
+				available: true,
+				reason: None,
+			}
+		);
+	}
+
+	#[test]
+	fn availability_reports_unsupported_platform() {
+		assert_eq!(
+			availability(false),
+			MediaCaptureAvailability {
+				available: false,
+				reason: Some("unsupported-platform".to_owned()),
+			}
+		);
 	}
 }

@@ -50,7 +50,7 @@ This section answers some questions on why the decision to release a separate co
 
 #### Why not the native Google OAuth flow?
 
-The official Grindr app uses Google Identity Services installed on the Android device to authenticate user. This means the app calls host system's GIS, which checks both caller package id (which must be `com.grindrapp.android` and not `org.opengrind`, and setting latter to former would cause conflict errors for users who use both) and, more importantly, package signature (which is not possible to forge, since we don't hold Grindr's JKS; signature spoofing is only possible on some ROMs and rooted devices). 
+The official Grindr app uses Google Identity Services installed on the Android device to authenticate user. This means the app calls host system's GIS, which checks both caller package id (which must be `com.grindrapp.android` and not `doctor.andrewcox.opengrind`, and setting latter to former would cause conflict errors for users who use both) and, more importantly, package signature (which is not possible to forge, since we don't hold Grindr's JKS; signature spoofing is only possible on some ROMs and rooted devices).
 
 **There is no way to launch native Google OAuth flow for Grindr's official app from a third-party client using the official Google Play Services.**
 

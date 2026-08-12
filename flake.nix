@@ -1,5 +1,5 @@
 {
-  description = "Open Grind — declarative Android build toolchain";
+  description = "Open Grind — declarative Android and iOS build toolchains";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -233,6 +233,129 @@
               fi
             '';
           };
+
+          iosToolchainInputs = [
+            rustToolchain
+            pkgs.bun
+            pkgs.nodejs_24
+            pkgs.git
+          ]
+          ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
+            pkgs.cocoapods
+            pkgs.libimobiledevice
+            pkgs.xcodegen
+          ];
+
+          buildIosScript = pkgs.writeShellApplication {
+            name = "open-grind-build-ios";
+            runtimeInputs = iosToolchainInputs;
+            text = ''
+              set -euo pipefail
+
+              if [ "$(uname -s)" != "Darwin" ]; then
+                echo "The iOS build requires macOS and a host-installed Xcode." >&2
+                exit 1
+              fi
+
+              developer_dir="$(xcode-select -p)"
+              if [ ! -x "$developer_dir/usr/bin/xcodebuild" ]; then
+                echo "xcode-select does not point to a complete Xcode developer directory: $developer_dir" >&2
+                exit 1
+              fi
+              if ! xcrun --sdk iphoneos --show-sdk-path >/dev/null; then
+                echo "The selected Xcode does not provide an iPhoneOS SDK." >&2
+                exit 1
+              fi
+
+              root="''${OPEN_GRIND_ROOT:-$PWD}"
+              cd "$root"
+              if [ ! -f src-tauri/gen/apple/project.yml ]; then
+                echo "Missing generated Apple project; run 'bun run tauri ios init --ci --skip-targets-install'." >&2
+                exit 1
+              fi
+              submodule_status="$(git submodule status --recursive)"
+              if [ -z "$submodule_status" ] || printf '%s\n' "$submodule_status" | grep -Eq '^[-+U]'; then
+                echo "Git submodules are not initialized at their pinned revisions." >&2
+                exit 1
+              fi
+
+              if [ "$#" -eq 0 ]; then
+                set -- --debug --target aarch64-sim --no-sign
+                # Tauri 2.11's iOS bundler does not replace its previous app
+                # bundle and otherwise fails with "Directory not empty" on a
+                # second identical build. This is a generated, target-exact
+                # artifact; remove no other Apple build products.
+                rm -rf "$root/src-tauri/gen/apple/build/arm64-sim/Open Grind.app"
+              fi
+
+              bash scripts/check-ios-build-authority.sh "$@"
+
+              signed_build=1
+              for argument in "$@"; do
+                if [ "$argument" = "--no-sign" ]; then
+                  signed_build=0
+                  break
+                fi
+              done
+              if [ "$signed_build" -eq 1 ]; then
+                # xcodebuild consumes DEVELOPMENT_TEAM as a build setting.
+                # Keep APPLE_DEVELOPMENT_TEAM as the explicit authority input,
+                # then bridge it only for signed builds after the guard passes.
+                export DEVELOPMENT_TEAM="$APPLE_DEVELOPMENT_TEAM"
+              fi
+
+              export NODE_OPTIONS="''${NODE_OPTIONS:---max-old-space-size=4096}"
+              bun ci
+
+              echo "Building iOS with Xcode at: $developer_dir"
+              bun run tauri ios build "$@"
+            '';
+          };
+
+          testIosScript = pkgs.writeShellApplication {
+            name = "open-grind-test-ios";
+            runtimeInputs = iosToolchainInputs;
+            text = ''
+              set -euo pipefail
+
+              if [ "$(uname -s)" != "Darwin" ]; then
+                echo "The iOS tests require macOS and a host-installed Xcode." >&2
+                exit 1
+              fi
+              if [ "$#" -ne 1 ] || [ -z "$1" ]; then
+                echo "Usage: nix run .#test-ios -- <simulator-udid>" >&2
+                exit 2
+              fi
+
+              developer_dir="$(xcode-select -p)"
+              if [ ! -x "$developer_dir/usr/bin/xcodebuild" ]; then
+                echo "xcode-select does not point to a complete Xcode developer directory: $developer_dir" >&2
+                exit 1
+              fi
+
+              root="''${OPEN_GRIND_ROOT:-$PWD}"
+              project="$root/src-tauri/gen/apple/open-grind.xcodeproj"
+              if [ ! -d "$project" ]; then
+                echo "Missing generated Apple project: $project" >&2
+                exit 1
+              fi
+
+              # Nix compiler-wrapper variables corrupt host Xcode's XCTest
+              # linker arguments. Keep Nix-provided command dependencies, but
+              # let Xcode own its compiler and SDK environment end to end.
+              while IFS='=' read -r name _; do
+                case "$name" in
+                  NIX_* | LD_FOR_BUILD | LD_DYLD_PATH) unset "$name" ;;
+                esac
+              done < <(env)
+
+              exec xcodebuild test \
+                -project "$project" \
+                -scheme open-grind_iOSTests \
+                -destination "platform=iOS Simulator,id=$1" \
+                CODE_SIGNING_ALLOWED=NO
+            '';
+          };
         in
         {
           devShells.default = pkgs.mkShell (
@@ -258,6 +381,10 @@
           packages = {
             default = buildAndroidScript;
             build-android = buildAndroidScript;
+          }
+          // pkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
+            build-ios = buildIosScript;
+            test-ios = testIosScript;
           };
 
           apps = {
@@ -268,6 +395,16 @@
             build-android = {
               type = "app";
               program = "${buildAndroidScript}/bin/open-grind-build-android";
+            };
+          }
+          // pkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
+            build-ios = {
+              type = "app";
+              program = "${buildIosScript}/bin/open-grind-build-ios";
+            };
+            test-ios = {
+              type = "app";
+              program = "${testIosScript}/bin/open-grind-test-ios";
             };
           };
 

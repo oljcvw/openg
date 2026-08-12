@@ -1,11 +1,14 @@
 use serde::{Deserialize, Serialize};
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 use serde_json::Value;
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use std::panic::{catch_unwind, AssertUnwindSafe};
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use std::str::FromStr;
+
+#[cfg(target_os = "ios")]
+use std::ffi::{c_char, CString};
 
 #[cfg(target_os = "android")]
 use jni::objects::{JClass, JString};
@@ -13,15 +16,18 @@ use jni::objects::{JClass, JString};
 use jni::sys::{jboolean, jstring};
 #[cfg(target_os = "android")]
 use jni::JNIEnv;
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use tauri::plugin::PluginHandle;
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use tauri::{Manager, Wry};
 
-#[cfg(target_os = "android")]
+#[cfg(target_os = "ios")]
+tauri::ios_plugin_binding!(init_plugin_open_grind_notifications);
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use super::runtime::{ApiRuntime, RequestClass, RetryPolicy, RuntimeError};
 use crate::error::AppError;
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use crate::storage::{
 	account_storage_lock, AuthStorage, DeviceStorage, SigningKeyStorage,
 };
@@ -39,7 +45,7 @@ pub struct NotificationSettings {
 	pub last_error: Option<String>,
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 impl NotificationSettings {
 	fn unsupported() -> Self {
 		Self {
@@ -64,8 +70,15 @@ pub struct SetNotificationSettings {
 	pub show_previews: bool,
 }
 
-#[cfg(target_os = "android")]
-pub struct AndroidNotifications {
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NotificationRoute {
+	pub route: String,
+	pub account_id: String,
+}
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
+pub struct MobileNotifications {
 	handle: PluginHandle<Wry>,
 }
 
@@ -78,7 +91,14 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 					"org.opengrind.notifications",
 					"NotificationsPlugin",
 				)?;
-				_app.manage(AndroidNotifications { handle });
+				_app.manage(MobileNotifications { handle });
+			}
+			#[cfg(target_os = "ios")]
+			{
+				let handle = _api.register_ios_plugin(
+					init_plugin_open_grind_notifications,
+				)?;
+				_app.manage(MobileNotifications { handle });
 			}
 			Ok(())
 		})
@@ -89,11 +109,11 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 pub async fn notification_get_settings(
 	app: tauri::AppHandle,
 ) -> Result<NotificationSettings, AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(&app, "getSettings", ()).await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = app;
 		Ok(NotificationSettings::unsupported())
@@ -114,11 +134,11 @@ pub async fn notification_set_settings(
 		taps,
 		show_previews,
 	};
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(&app, "setSettings", settings).await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, settings);
 		Ok(NotificationSettings::unsupported())
@@ -127,12 +147,12 @@ pub async fn notification_set_settings(
 
 #[tauri::command]
 pub async fn notification_test(app: tauri::AppHandle) -> Result<(), AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		let _: Value = run_mobile(&app, "testNotification", ()).await?;
 		return Ok(());
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = app;
 		Err(AppError::Api {
@@ -155,7 +175,7 @@ pub async fn notification_sync(
 				.to_owned(),
 		});
 	}
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		let _: Value = run_mobile(
 			&app,
@@ -165,14 +185,14 @@ pub async fn notification_sync(
 		.await?;
 		return Ok(());
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, interval_minutes);
 		Ok(())
 	}
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct NotificationScheduleInput {
@@ -209,12 +229,12 @@ pub async fn set_logcat_enabled(
 pub async fn notification_cancel(
 	app: tauri::AppHandle,
 ) -> Result<(), AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		let _: Value = run_mobile(&app, "cancelSchedule", ()).await?;
 		return Ok(());
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = app;
 		Ok(())
@@ -235,19 +255,34 @@ pub async fn notification_clear_account(
 	let input = ClearNotificationAccount {
 		account_id: account_id.to_string(),
 	};
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		let _: Value = run_mobile(&app, "clearAccount", input).await?;
 		return Ok(());
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, input);
 		Ok(())
 	}
 }
 
-#[cfg(target_os = "android")]
+#[tauri::command]
+pub async fn notification_take_route(
+	app: tauri::AppHandle,
+) -> Result<Option<NotificationRoute>, AppError> {
+	#[cfg(target_os = "ios")]
+	{
+		return run_mobile(&app, "takePendingRoute", ()).await;
+	}
+	#[cfg(not(target_os = "ios"))]
+	{
+		let _ = app;
+		Ok(None)
+	}
+}
+
+#[cfg(any(target_os = "android", target_os = "ios"))]
 async fn run_mobile<I, O>(
 	app: &tauri::AppHandle,
 	command: &str,
@@ -257,20 +292,20 @@ where
 	I: Serialize,
 	O: for<'de> Deserialize<'de>,
 {
-	app.state::<AndroidNotifications>()
+	app.state::<MobileNotifications>()
 		.handle
 		.run_mobile_plugin_async(command, input)
 		.await
 		.map_err(|error| {
 			AppError::Http(format!(
-				"Android notification bridge failed: {error}"
+				"Native notification bridge failed: {error}"
 			))
 		})
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 struct PollMessage {
 	conversation_id: String,
 	title: String,
@@ -281,7 +316,7 @@ struct PollMessage {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 struct PollTap {
 	profile_id: u64,
 	display_name: Option<String>,
@@ -290,7 +325,7 @@ struct PollTap {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(tag = "state", rename_all = "camelCase")]
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 #[cfg_attr(all(test, not(target_os = "android")), allow(dead_code))]
 enum PollResponse {
 	Ok {
@@ -307,7 +342,7 @@ enum PollResponse {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 #[cfg_attr(all(test, not(target_os = "android")), allow(dead_code))]
 enum PollFailureCode {
 	RuntimeUnavailable,
@@ -326,7 +361,7 @@ enum PollFailureCode {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 enum PollHttpDisposition {
 	Success,
 	Deferred,
@@ -334,7 +369,7 @@ enum PollHttpDisposition {
 	Retry(&'static str),
 }
 
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 fn parse_messages(body: &[u8]) -> Result<Vec<PollMessage>, String> {
 	let root: Value = serde_json::from_slice(body)
 		.map_err(|e| format!("inbox decode failed: {e}"))?;
@@ -378,7 +413,7 @@ fn parse_messages(body: &[u8]) -> Result<Vec<PollMessage>, String> {
 		.collect())
 }
 
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 fn parse_taps(body: &[u8]) -> Result<Vec<PollTap>, String> {
 	let root: Value = serde_json::from_slice(body)
 		.map_err(|e| format!("taps decode failed: {e}"))?;
@@ -403,14 +438,14 @@ fn parse_taps(body: &[u8]) -> Result<Vec<PollTap>, String> {
 		.collect())
 }
 
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 fn value_u64(value: &Value) -> Option<u64> {
 	value
 		.as_u64()
 		.or_else(|| value.as_str().and_then(|raw| raw.parse().ok()))
 }
 
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 fn notification_error_kind(error: &grindr::GrindrError) -> &'static str {
 	match error {
 		grindr::GrindrError::Http(_) => "http",
@@ -424,7 +459,7 @@ fn notification_error_kind(error: &grindr::GrindrError) -> &'static str {
 	}
 }
 
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", target_os = "ios", test))]
 fn classify_poll_http_response(
 	status: u16,
 	body: &[u8],
@@ -444,7 +479,7 @@ fn classify_poll_http_response(
 	}
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 fn poll_notifications(
 	messages_enabled: bool,
 	taps_enabled: bool,
@@ -768,7 +803,7 @@ fn poll_notifications(
 	})
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 fn persist_client_state(client: &grindr::GrindrClient) {
 	match client.session_receiver().borrow().as_ref() {
 		Some(session) => {
@@ -814,6 +849,41 @@ pub extern "system" fn Java_org_opengrind_notifications_NotificationBridge_nativ
 	env.new_string(json)
 		.map(JString::into_raw)
 		.unwrap_or(std::ptr::null_mut())
+}
+
+#[cfg(target_os = "ios")]
+#[no_mangle]
+pub extern "C" fn open_grind_notifications_poll(
+	messages_enabled: i32,
+	taps_enabled: i32,
+) -> *mut c_char {
+	crate::logging::init();
+	let response = catch_unwind(AssertUnwindSafe(|| {
+		poll_notifications(messages_enabled != 0, taps_enabled != 0)
+	}))
+	.unwrap_or_else(|_| PollResponse::Retry {
+		code: PollFailureCode::PollPanicked,
+	});
+	let json = serde_json::to_string(&response).unwrap_or_else(|_| {
+		serde_json::json!({
+			"state": "retry",
+			"code": PollFailureCode::ResponseEncoding,
+		})
+		.to_string()
+	});
+	CString::new(json)
+		.expect("serialized notification response contains no NUL")
+		.into_raw()
+}
+
+#[cfg(target_os = "ios")]
+#[no_mangle]
+pub unsafe extern "C" fn open_grind_notifications_free(value: *mut c_char) {
+	if !value.is_null() {
+		// SAFETY: `value` must come from `open_grind_notifications_poll`
+		// and this function consumes it exactly once.
+		drop(unsafe { CString::from_raw(value) });
+	}
 }
 
 #[cfg(test)]

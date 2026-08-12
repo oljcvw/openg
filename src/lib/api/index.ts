@@ -37,7 +37,7 @@ export const notificationSettingsSchema = z.object({
 	messages: z.boolean(),
 	taps: z.boolean(),
 	showPreviews: z.boolean(),
-	permission: z.enum(["granted", "denied", "unsupported"]),
+	permission: z.enum(["prompt", "granted", "denied", "unsupported"]),
 	lastSuccessfulCheck: z.number().int().nonnegative().nullable(),
 	lastError: z.string().nullable(),
 });
@@ -166,6 +166,15 @@ export const methods = {
 			accountId: z.coerce.number().int().nonnegative(),
 		}),
 		response: z.undefined(),
+	},
+	notification_take_route: {
+		request: z.undefined(),
+		response: z
+			.object({
+				route: z.string(),
+				accountId: z.string().regex(/^[0-9]+$/),
+			})
+			.nullable(),
 	},
 } satisfies Record<string, { request: z.ZodType; response: z.ZodType }>;
 

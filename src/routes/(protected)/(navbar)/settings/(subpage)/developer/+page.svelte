@@ -275,7 +275,7 @@
 <DeveloperNumberSetting
 	setting="notificationPollIntervalMinutes"
 	title="Background polling interval"
-	description="Requested spacing between Android background notification checks. Android may delay checks further."
+	description="Requested spacing between background notification checks. iOS, iPadOS, and Android may delay checks further."
 	min={15}
 	max={1440}
 	unit="minutes"

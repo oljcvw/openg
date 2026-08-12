@@ -11,7 +11,7 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.exifinterface.media.ExifInterface
-import org.opengrind.R
+import doctor.andrewcox.opengrind.R
 import java.io.ByteArrayOutputStream
 import java.io.File
 import kotlin.math.max

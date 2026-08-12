@@ -13,6 +13,7 @@ vi.mock("$lib/platform/client-diagnostics", () => ({
 import {
 	capturePhoto,
 	captureShortVideo,
+	getMediaCaptureAvailability,
 	reportMediaWorkflowDiagnostic,
 } from "$lib/app-data/media-capture";
 
@@ -36,11 +37,31 @@ describe("native media capture bridge", () => {
 		expect(invokeMock).toHaveBeenCalledWith("media_capture_photo");
 	});
 
+	it("uses native capability availability instead of platform identity", async () => {
+		invokeMock.mockResolvedValue({
+			available: true,
+			reason: null,
+		});
+
+		await expect(getMediaCaptureAvailability()).resolves.toEqual({
+			available: true,
+			reason: null,
+		});
+		expect(invokeMock).toHaveBeenCalledWith("media_capture_availability");
+	});
+
 	it("passes the fixed protocol duration limit to video capture", async () => {
 		invokeMock.mockRejectedValue("cancelled");
 
 		await expect(captureShortVideo()).resolves.toEqual({ status: "cancelled" });
 		expect(invokeMock).toHaveBeenCalledWith("media_capture_short_video");
+	});
+
+	it("normalizes an Error-shaped native photo cancellation", async () => {
+		invokeMock.mockRejectedValue(new Error("cancelled"));
+
+		await expect(capturePhoto()).resolves.toEqual({ status: "cancelled" });
+		expect(invokeMock).toHaveBeenCalledWith("media_capture_photo");
 	});
 
 	it("rejects a video result beyond the protocol limit", async () => {

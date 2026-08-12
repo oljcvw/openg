@@ -83,6 +83,8 @@ export function demoCallMethod(method: string): unknown {
 				lastSuccessfulCheck: null,
 				lastError: null,
 			};
+		case "notification_take_route":
+			return null;
 		case "notification_test":
 		case "notification_sync":
 		case "notification_cancel":

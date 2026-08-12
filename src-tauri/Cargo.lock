@@ -3617,6 +3617,7 @@ dependencies = [
  "sha2",
  "tauri",
  "tauri-build",
+ "tauri-plugin",
  "tauri-plugin-android-fs",
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-devtools",
@@ -5128,8 +5129,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 [[package]]
 name = "swift-rs"
 version = "1.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4057c98e2e852d51fdcfca832aac7b571f6b351ad159f9eda5db1655f8d0c4d7"
+source = "git+https://github.com/SteveSSL45/swift-rs.git?rev=f80356b83a43e6203ab24a537446b45007984997#f80356b83a43e6203ab24a537446b45007984997"
 dependencies = [
  "base64 0.21.7",
  "serde",

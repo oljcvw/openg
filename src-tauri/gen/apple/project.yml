@@ -1,0 +1,159 @@
+name: open-grind
+options:
+  bundleIdPrefix: doctor.andrewcox
+  deploymentTarget:
+    iOS: 17.5
+fileGroups: [../../src]
+configs:
+  debug: debug
+  release: release
+schemes:
+  open-grind_iOSTests:
+    build:
+      targets:
+        open-grind_iOSTests: [test]
+    test:
+      config: debug
+      targets:
+        - open-grind_iOSTests
+settingGroups:
+  app:
+    base:
+      DEVELOPMENT_TEAM: LWB94HQ8S4
+      PRODUCT_NAME: Open Grind
+      PRODUCT_BUNDLE_IDENTIFIER: doctor.andrewcox.opengrind
+targetTemplates:
+  app:
+    type: application
+    sources:
+      - path: Sources
+    scheme:
+      environmentVariables:
+        RUST_BACKTRACE: full
+        RUST_LOG: info
+    settings:
+      groups: [app]
+targets:
+  open-grind_iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Assets.xcassets
+      - path: AppIcon.icon
+      # Keep generated Rust archives visible without copying every existing
+      # debug/release libapp.a into app bundle when XcodeGen runs again.
+      - path: Externals
+        buildPhase: none
+      - path: open-grind_iOS
+      - path: assets
+        buildPhase: resources
+        type: folder
+      - path: ../../PrivacyInfo.xcprivacy
+        buildPhase: resources
+      - path: LaunchScreen.storyboard
+    info:
+      path: open-grind_iOS/Info.plist
+      properties:
+        LSRequiresIPhoneOS: true
+        UILaunchStoryboardName: LaunchScreen
+        UIRequiredDeviceCapabilities: [arm64, metal]
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        CFBundleShortVersionString: 0.1.0
+        CFBundleVersion: "1060"
+    entitlements:
+      path: open-grind_iOS/open-grind_iOS.entitlements
+    scheme:
+      environmentVariables:
+        RUST_BACKTRACE: full
+        RUST_LOG: info
+      testTargets:
+        - open-grind_iOSTests
+    settings:
+      base:
+        ENABLE_BITCODE: false
+        ARCHS: [arm64]
+        VALID_ARCHS: arm64
+        LIBRARY_SEARCH_PATHS[arch=x86_64]: $(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)
+        LIBRARY_SEARCH_PATHS[arch=arm64]: $(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: true
+        FRAMEWORK_SEARCH_PATHS: $(inherited) $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)
+        EXCLUDED_ARCHS[sdk=iphoneos*]: x86_64
+      groups: [app]
+    dependencies:
+      - framework: libapp.a
+        embed: false
+      - sdk: CoreGraphics.framework
+      - sdk: Metal.framework
+      - sdk: MetalKit.framework
+      - sdk: QuartzCore.framework
+      - sdk: Security.framework
+      - sdk: UIKit.framework
+      - sdk: WebKit.framework
+    preBuildScripts:
+      - script: bun tauri ios xcode-script -v --platform ${PLATFORM_DISPLAY_NAME:?} --sdk-root ${SDKROOT:?} --framework-search-paths "${FRAMEWORK_SEARCH_PATHS:?}" --header-search-paths "${HEADER_SEARCH_PATHS:?}" --gcc-preprocessor-definitions "${GCC_PREPROCESSOR_DEFINITIONS:-}" --configuration ${CONFIGURATION:?} ${FORCE_COLOR} ${ARCHS:?}
+        name: Build Rust Code
+        basedOnDependencyAnalysis: false
+        outputFiles:
+          - $(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a
+          - $(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a
+    postBuildScripts:
+      - name: Embed Agora Frameworks
+        script: |
+          set -euo pipefail
+          destination="${TARGET_BUILD_DIR:?}/${FRAMEWORKS_FOLDER_PATH:?}"
+          mkdir -p "$destination"
+          for framework in "${PROJECT_DIR:?}"/Frameworks/"${PLATFORM_NAME:?}"/*.framework; do
+            ditto "$framework" "$destination/$(basename "$framework")"
+            if [ "${CODE_SIGNING_ALLOWED:-NO}" = "YES" ] && [ -n "${EXPANDED_CODE_SIGN_IDENTITY:-}" ]; then
+              codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" --preserve-metadata=identifier,entitlements "$destination/$(basename "$framework")"
+            else
+              codesign --force --sign - --preserve-metadata=identifier,entitlements "$destination/$(basename "$framework")"
+            fi
+          done
+        basedOnDependencyAnalysis: false
+        inputFiles:
+          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/AgoraRtcKit.framework/AgoraRtcKit
+          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/AgoraSoundTouch.framework/AgoraSoundTouch
+          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/Agorafdkaac.framework/Agorafdkaac
+          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/Agoraffmpeg.framework/Agoraffmpeg
+          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/aosl.framework/aosl
+          - $(PROJECT_DIR)/Frameworks/$(PLATFORM_NAME)/video_dec.framework/video_dec
+        outputFiles:
+          - $(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/AgoraRtcKit.framework/AgoraRtcKit
+          - $(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/AgoraSoundTouch.framework/AgoraSoundTouch
+          - $(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Agorafdkaac.framework/Agorafdkaac
+          - $(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Agoraffmpeg.framework/Agoraffmpeg
+          - $(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/aosl.framework/aosl
+          - $(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/video_dec.framework/video_dec
+  open-grind_iOSTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.5"
+    settings:
+      base:
+        BUNDLE_LOADER: ""
+        DEVELOPMENT_TEAM: LWB94HQ8S4
+        PRODUCT_BUNDLE_IDENTIFIER: doctor.andrewcox.opengrind.tests
+        TEST_HOST: ""
+    sources:
+      - path: Tests/open-grindTests
+      - path: ../../ios/Sources/VoiceRecorderPermission.swift
+      - path: ../../ios/Sources/VoiceRecordingContract.swift
+      - path: ../../ios/Sources/VoiceRecordingLifecycle.swift
+      - path: ../../ios/Sources/MediaCapturePermission.swift
+      - path: ../../ios/Sources/MediaCaptureContract.swift
+      - path: ../../ios/Sources/ShortVideoCache.swift
+      - path: ../../ios/Sources/NotificationPermission.swift
+      - path: ../../ios/Sources/NotificationContract.swift
+      - path: ../../ios/Sources/AgoraConfiguration.swift
+      - path: ../../ios/Sources/VideoCallLifecycle.swift
+      - path: ../../ios/Sources/RealtimeNetworkContract.swift

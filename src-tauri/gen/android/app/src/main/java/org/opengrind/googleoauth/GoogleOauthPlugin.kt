@@ -43,9 +43,9 @@ class GoogleOauthPlugin(private val activity: Activity) : Plugin(activity) {
     }
 
     private companion object {
-        const val COMPANION_PACKAGE = "org.opengrind.google_oauth"
-        const val REQUEST_TOKEN_ACTION = "org.opengrind.google_oauth.action.REQUEST_TOKEN"
-        const val EXTRA_TOKEN = "org.opengrind.google_oauth.extra.TOKEN"
+        const val COMPANION_PACKAGE = "doctor.andrewcox.opengrind.google_oauth"
+        const val REQUEST_TOKEN_ACTION = "doctor.andrewcox.opengrind.google_oauth.action.REQUEST_TOKEN"
+        const val EXTRA_TOKEN = "doctor.andrewcox.opengrind.google_oauth.extra.TOKEN"
 
         const val ERROR_UNAVAILABLE = "companion-unavailable"
         const val ERROR_CANCELLED = "cancelled"

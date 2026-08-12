@@ -15,6 +15,7 @@
 	import { Input } from "$lib/components/ui/input";
 	import { Label } from "$lib/components/ui/label";
 	import { Spinner } from "$lib/components/ui/spinner";
+	import { isIosPlatform } from "$lib/platform/os";
 	import RecaptchaUnsupported from "./RecaptchaUnsupported.svelte";
 
 	let email = $state("");
@@ -93,6 +94,10 @@
 
 	async function signInWithGoogle() {
 		if (submitting) return;
+		if (isIosPlatform()) {
+			void goto("/auth/sign-in/google");
+			return;
+		}
 		submitting = "google";
 		try {
 			const result = await callMethod("login_with_google");

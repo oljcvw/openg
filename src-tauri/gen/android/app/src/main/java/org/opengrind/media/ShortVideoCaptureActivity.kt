@@ -32,7 +32,7 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
-import org.opengrind.R
+import doctor.andrewcox.opengrind.R
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.TimeUnit

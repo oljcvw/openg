@@ -1,9 +1,12 @@
 use serde::{Deserialize, Serialize};
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use tauri::plugin::PluginHandle;
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 use tauri::{Manager, Wry};
+
+#[cfg(target_os = "ios")]
+tauri::ios_plugin_binding!(init_plugin_open_grind_video_call);
 
 use crate::error::AppError;
 
@@ -29,8 +32,8 @@ pub struct VideoCallSession {
 	pub quality: String,
 }
 
-#[cfg(target_os = "android")]
-pub struct AndroidVideoCall {
+#[cfg(any(target_os = "android", target_os = "ios"))]
+pub struct MobileVideoCall {
 	handle: PluginHandle<Wry>,
 }
 
@@ -43,7 +46,13 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 					"org.opengrind.media",
 					"VideoCallPlugin",
 				)?;
-				_app.manage(AndroidVideoCall { handle });
+				_app.manage(MobileVideoCall { handle });
+			}
+			#[cfg(target_os = "ios")]
+			{
+				let handle = _api
+					.register_ios_plugin(init_plugin_open_grind_video_call)?;
+				_app.manage(MobileVideoCall { handle });
 			}
 			Ok(())
 		})
@@ -54,11 +63,11 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 pub async fn video_call_availability(
 	app: tauri::AppHandle,
 ) -> Result<VideoCallAvailability, AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(&app, "availability", ()).await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = app;
 		Ok(VideoCallAvailability {
@@ -78,7 +87,7 @@ pub async fn video_call_start(
 	app: tauri::AppHandle,
 	session: VideoCallSession,
 ) -> Result<(), AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(
 			&app,
@@ -94,7 +103,7 @@ pub async fn video_call_start(
 		)
 		.await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, session);
 		Err(unsupported_error())
@@ -106,7 +115,7 @@ pub async fn video_call_renew_token(
 	app: tauri::AppHandle,
 	token: String,
 ) -> Result<(), AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(
 			&app,
@@ -115,7 +124,7 @@ pub async fn video_call_renew_token(
 		)
 		.await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = (app, token);
 		Err(unsupported_error())
@@ -124,18 +133,18 @@ pub async fn video_call_renew_token(
 
 #[tauri::command]
 pub async fn video_call_stop(app: tauri::AppHandle) -> Result<(), AppError> {
-	#[cfg(target_os = "android")]
+	#[cfg(any(target_os = "android", target_os = "ios"))]
 	{
 		return run_mobile(&app, "stop", ()).await;
 	}
-	#[cfg(not(target_os = "android"))]
+	#[cfg(not(any(target_os = "android", target_os = "ios")))]
 	{
 		let _ = app;
 		Ok(())
 	}
 }
 
-#[cfg(target_os = "android")]
+#[cfg(any(target_os = "android", target_os = "ios"))]
 async fn run_mobile<I, O>(
 	app: &tauri::AppHandle,
 	command: &str,
@@ -145,19 +154,19 @@ where
 	I: Serialize,
 	O: for<'de> Deserialize<'de>,
 {
-	app.state::<AndroidVideoCall>()
+	app.state::<MobileVideoCall>()
 		.handle
 		.run_mobile_plugin_async(command, input)
 		.await
 		.map_err(|error| {
-			AppError::Http(format!("Android video-call bridge failed: {error}"))
+			AppError::Http(format!("Native video-call bridge failed: {error}"))
 		})
 }
 
-#[cfg(not(target_os = "android"))]
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
 fn unsupported_error() -> AppError {
 	AppError::Api {
 		code: 400,
-		message: "Video calls are only supported on Android".to_owned(),
+		message: "Video calls are not supported on this platform".to_owned(),
 	}
 }

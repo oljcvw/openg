@@ -20,7 +20,10 @@ if (!packageVersion) fail("no version found in package.json");
 
 const config: {
 	version?: string;
-	bundle?: { android?: { versionCode?: number } };
+	bundle?: {
+		android?: { versionCode?: number };
+		iOS?: { bundleVersion?: string; minimumSystemVersion?: string };
+	};
 } = JSON.parse(readFileSync(join(root, "src-tauri/tauri.conf.json"), "utf8"));
 const configVersion = config.version;
 if (!configVersion) fail("no version found in src-tauri/tauri.conf.json");
@@ -44,6 +47,20 @@ if (!Number.isInteger(versionCode)) {
 	fail("bundle.android.versionCode must be an integer");
 }
 
+const iosBundleVersion = config.bundle?.iOS?.bundleVersion;
+if (iosBundleVersion !== String(versionCode)) {
+	fail(
+		`bundle.iOS.bundleVersion must equal bundle.android.versionCode (${versionCode}) ` +
+			`so signed mobile artifacts share one monotonically increasing build identity`,
+	);
+}
+
+if (config.bundle?.iOS?.minimumSystemVersion !== "17.5") {
+	fail(
+		"bundle.iOS.minimumSystemVersion must remain 17.5 for the supported device baseline",
+	);
+}
+
 const isDev =
 	prerelease.split(".").includes("dev") || prerelease.endsWith("-dev");
 
@@ -55,4 +72,6 @@ if (!isDev) {
 	);
 }
 
-console.log(`version ${configVersion} (versionCode ${versionCode}) ok`);
+console.log(
+	`version ${configVersion} (mobile build ${versionCode}, iOS 17.5+) ok`,
+);

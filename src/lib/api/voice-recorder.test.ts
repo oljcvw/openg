@@ -12,6 +12,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 import {
 	getVoicePermissionStatus,
+	getVoiceRecorderAvailability,
 	startVoiceRecording,
 	stopVoiceRecording,
 } from "$lib/api/voice-recorder";
@@ -42,5 +43,15 @@ describe("voice recorder bridge", () => {
 			"voice_recorder_start",
 			"voice_recorder_stop",
 		]);
+	});
+
+	it("uses native capability availability instead of platform identity", async () => {
+		invokeMock.mockResolvedValue({ available: true, reason: null });
+
+		await expect(getVoiceRecorderAvailability()).resolves.toEqual({
+			available: true,
+			reason: null,
+		});
+		expect(invokeMock).toHaveBeenCalledWith("voice_recorder_availability");
 	});
 });

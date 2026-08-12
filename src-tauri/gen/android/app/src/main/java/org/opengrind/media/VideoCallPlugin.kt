@@ -17,7 +17,7 @@ import app.tauri.plugin.Invoke
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import io.agora.rtc2.RtcEngine
-import org.opengrind.BuildConfig
+import doctor.andrewcox.opengrind.BuildConfig
 
 @TauriPlugin(
 	permissions = [

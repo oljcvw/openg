@@ -130,6 +130,54 @@ End-to-end tests are a separate tier:
 
 [ShellCheck](https://www.shellcheck.net/) and [rustfmt](https://github.com/rust-lang/rustfmt) must be on `PATH`. `nix develop` provides both, along with the pinned Rust and Android toolchains.
 
+### iOS builds
+
+iOS builds use host-installed Xcode through the Nix-owned tool wrapper. Nix
+provides Rust, Bun, Node.js, CocoaPods, XcodeGen, and supporting CLI tools; Apple
+SDKs, simulators, signing identities, and provisioning profiles still come from
+Xcode and the selected Apple developer account.
+
+Select Xcode first, then use one of these explicit build outcomes from the
+repository root:
+
+```sh
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+# Default: unsigned debug simulator app.
+nix --extra-experimental-features 'nix-command flakes' run .#build-ios
+
+# Unsigned debug device IPA: compilation/package proof, not installable.
+nix --extra-experimental-features 'nix-command flakes' run .#build-ios -- \
+  --debug --target aarch64 --no-sign --ci
+
+# Unsigned release archive: archive-structure proof, not distributable.
+nix --extra-experimental-features 'nix-command flakes' run .#build-ios -- \
+  --target aarch64 --no-sign --archive-only --ci
+
+# Signed TestFlight export. Requires local Apple Distribution credentials,
+# matching App Store provisioning, explicit portal-mutation authority, and an
+# explicit build number.
+OPEN_GRIND_ALLOW_PROVISIONING_UPDATES=1 \
+APPLE_DEVELOPMENT_TEAM=<AUTHORIZED_TEAM_ID> \
+  nix --extra-experimental-features 'nix-command flakes' run .#build-ios -- \
+  --target aarch64 --build-number 1061 --export-method release-testing --ci
+```
+
+`--export-method release-testing` creates a signed package suitable for
+TestFlight; it does not upload it. Upload and internal-tester assignment are
+separate, externally visible actions. Never add `--no-sign` to a candidate
+described as signed, installable, TestFlight-ready, or App Store-ready.
+Tauri asks Xcode to manage provisioning for signed builds, which can mutate the
+Apple Developer portal. The wrapper blocks that path unless both acknowledgement
+and authorized team are explicit; setting them is an authority decision, not a
+generic build prerequisite.
+
+Open Grind targets iPhone and iPad with iOS/iPadOS 17.5 or newer. A beta package
+version such as `0.1.0-beta.7-dev` is normalized to Apple's three-integer
+marketing version `0.1.0`; `CFBundleVersion` is the independently increasing
+build number. See [iOS release preparation](docs/ios-release.md) for signing,
+artifact verification, TestFlight, CI, and compliance gates.
+
 ### Submitting your changes
 
 1. [Create an account](https://git.opengrind.org/user/sign_up) on git.opengrind.org

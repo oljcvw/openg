@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { addPluginListener } from "@tauri-apps/api/core";
 	import { afterNavigate, goto, replaceState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { onMount, untrack } from "svelte";
@@ -20,6 +21,7 @@
 		installCurrentNavigationCoordinator,
 		setSemanticRouteBackHandler,
 	} from "$lib/navigation/app-navigation";
+	import { acceptedNativeNotificationRoute } from "$lib/notifications/native-route";
 	import VideoCallHost from "$lib/video-call/components/VideoCallHost.svelte";
 
 	let { children }: import("./$types").LayoutProps = $props();
@@ -85,6 +87,31 @@
 	}
 
 	onMount(() => {
+		let notificationListenerCancelled = false;
+		const seenNotificationRoutes = new Set<string>();
+		function navigateNotification(payload: unknown): void {
+			const accepted = acceptedNativeNotificationRoute(
+				payload,
+				getAccountSessionSnapshot().accountId,
+			);
+			if (!accepted) return;
+			const key = `${accepted.accountId}:${accepted.route}`;
+			if (seenNotificationRoutes.has(key)) return;
+			seenNotificationRoutes.add(key);
+			void goto(accepted.route);
+		}
+		const notificationListener = addPluginListener(
+			"open-grind-notifications",
+			"notification-route",
+			navigateNotification,
+		).then(async (listener) => {
+			if (notificationListenerCancelled) {
+				await listener.unregister();
+				return null;
+			}
+			navigateNotification(await callMethod("notification_take_route"));
+			return listener;
+		});
 		const releaseAccountGeneration = subscribeAccountGeneration(
 			(generation) => {
 				accountGeneration = generation;
@@ -96,7 +123,11 @@
 		void reconcilePendingProfileLocation().catch((error) => {
 			console.error("Failed to reconcile pending profile location", error);
 		});
-		return releaseAccountGeneration;
+		return () => {
+			notificationListenerCancelled = true;
+			void notificationListener.then((listener) => listener?.unregister());
+			releaseAccountGeneration();
+		};
 	});
 </script>
 

@@ -17,10 +17,10 @@
 	<uses-feature android:name="android.hardware.microphone" android:required="false" />
 	<uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
-	<uses-permission android:name="org.opengrind.google_oauth.permission.REQUEST_TOKEN" />
+	<uses-permission android:name="doctor.andrewcox.opengrind.google_oauth.permission.REQUEST_TOKEN" />
 
 	<queries>
-		<package android:name="org.opengrind.google_oauth" />
+		<package android:name="doctor.andrewcox.opengrind.google_oauth" />
 	</queries>
 
 	<!-- AndroidTV support -->

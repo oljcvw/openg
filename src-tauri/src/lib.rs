@@ -1,5 +1,7 @@
 pub mod api;
 mod error;
+#[cfg(test)]
+mod ios_build_support;
 #[cfg_attr(debug_assertions, allow(dead_code))]
 mod logging;
 mod state;
@@ -139,6 +141,7 @@ pub fn run() {
         .plugin(tauri_plugin_geolocation::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+		.plugin(api::ws::plugin())
         .plugin(api::google_oauth::plugin())
 		.plugin(api::media_capture::plugin())
         .plugin(api::notifications::plugin())
@@ -199,6 +202,7 @@ pub fn run() {
             api::media_upload::upload_chat_media,
             api::media_upload::upload_expiring_chat_video,
 			api::media_capture::media_capture_photo,
+			api::media_capture::media_capture_availability,
 			api::media_capture::media_capture_short_video,
 			api::media_capture::media_capture_delete_short_video,
 			api::media_capture::short_video_cache_put,
@@ -213,8 +217,10 @@ pub fn run() {
             api::notifications::notification_sync,
             api::notifications::notification_cancel,
             api::notifications::notification_clear_account,
+            api::notifications::notification_take_route,
 			api::notifications::set_logcat_enabled,
             api::voice_recorder::voice_recorder_permission_status,
+			api::voice_recorder::voice_recorder_availability,
             api::voice_recorder::voice_recorder_request_permission,
             api::voice_recorder::voice_recorder_start,
             api::voice_recorder::voice_recorder_stop,

@@ -19,6 +19,13 @@ export async function signOut(): Promise<void> {
 	} catch (error) {
 		console.error(error);
 	}
+	if (accountId !== null) {
+		try {
+			await callMethod("notification_clear_account", { accountId });
+		} catch (error) {
+			console.error(error);
+		}
+	}
 
 	await removeLocalAccountCache(accountId);
 

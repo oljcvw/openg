@@ -10,8 +10,8 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import org.opengrind.MainActivity
-import org.opengrind.R
+import doctor.andrewcox.opengrind.MainActivity
+import doctor.andrewcox.opengrind.R
 
 class NotificationNotifier(private val context: Context) {
 	fun createChannel() {

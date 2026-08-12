@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { CameraIcon, VideoCameraIcon } from "phosphor-svelte";
-	import { onDestroy } from "svelte";
+	import { onDestroy, onMount } from "svelte";
 	import { toast } from "svelte-sonner";
 
 	import { showErrorToast } from "$lib/api/error";
@@ -15,6 +15,7 @@
 		capturePhoto,
 		captureShortVideo,
 		deleteCapturedShortVideo,
+		getMediaCaptureAvailability,
 		reportMediaWorkflowDiagnostic,
 	} from "$lib/app-data/media-capture";
 	import { getDeveloperSettingsSnapshot } from "$lib/app-data/preferences.svelte";
@@ -38,6 +39,21 @@
 	let capturingVideo = $state(false);
 	let sendingVideo = $state(false);
 	let pendingVideo = $state<CapturedShortVideo | null>(null);
+	let captureAvailable = $state<boolean | null>(null);
+
+	onMount(() => {
+		let active = true;
+		void getMediaCaptureAvailability()
+			.then((availability) => {
+				if (active) captureAvailable = availability.available;
+			})
+			.catch(() => {
+				if (active) captureAvailable = false;
+			});
+		return () => {
+			active = false;
+		};
+	});
 
 	onDestroy(() => {
 		if (pendingVideo) {
@@ -176,28 +192,34 @@
 	}
 </script>
 
-<div class="flex flex-wrap items-center gap-2 p-2">
-	<Button
-		variant="secondary"
-		disabled={disabled || capturingPhoto}
-		onclick={() => void takePhoto()}
-	>
-		<CameraIcon weight="fill" />
-		{capturingPhoto ? "Adding photo…" : "Camera"}
-	</Button>
-	<Button
-		variant="secondary"
-		disabled={disabled || capturingVideo || pendingVideo !== null}
-		onclick={() => void recordVideo()}
-	>
-		<VideoCameraIcon weight="fill" />
-		{capturingVideo
-			? "Opening camera…"
-			: pendingVideo !== null
-				? "Review video below"
-				: "Short video"}
-	</Button>
-</div>
+{#if captureAvailable === false}
+	<p class="p-2 text-sm text-muted-foreground">
+		Camera capture isn't available on this device.
+	</p>
+{:else if captureAvailable === true}
+	<div class="flex flex-wrap items-center gap-2 p-2">
+		<Button
+			variant="secondary"
+			disabled={disabled || capturingPhoto}
+			onclick={() => void takePhoto()}
+		>
+			<CameraIcon weight="fill" />
+			{capturingPhoto ? "Adding photo…" : "Camera"}
+		</Button>
+		<Button
+			variant="secondary"
+			disabled={disabled || capturingVideo || pendingVideo !== null}
+			onclick={() => void recordVideo()}
+		>
+			<VideoCameraIcon weight="fill" />
+			{capturingVideo
+				? "Opening camera…"
+				: pendingVideo !== null
+					? "Review video below"
+					: "Short video"}
+		</Button>
+	</div>
+{/if}
 
 {#if pendingVideo !== null}
 	<div class="mx-2 mb-2 rounded-xl border bg-card p-3">

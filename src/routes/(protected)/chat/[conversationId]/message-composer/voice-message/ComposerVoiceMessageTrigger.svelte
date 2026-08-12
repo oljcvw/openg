@@ -3,7 +3,6 @@
 </script>
 
 <script lang="ts">
-	import { platform } from "@tauri-apps/plugin-os";
 	import { MicrophoneIcon, PaperPlaneTiltIcon, XIcon } from "phosphor-svelte";
 	import { onDestroy, onMount } from "svelte";
 	import { toast } from "svelte-sonner";
@@ -13,6 +12,7 @@
 	import {
 		cancelVoiceRecording,
 		getVoicePermissionStatus,
+		getVoiceRecorderAvailability,
 		onVoiceRecordingError,
 		onVoiceRecordingMaxDuration,
 		type ReadyVoiceRecording,
@@ -32,16 +32,8 @@
 	const composer = $derived(getMessageComposerContext()());
 	type VoiceMessage = Extract<Message, { type: "Audio" }>;
 
-	function supportsVoiceRecording(): boolean {
-		try {
-			return platform() === "android";
-		} catch {
-			return false;
-		}
-	}
-
-	const supported = supportsVoiceRecording();
-	let listenerAvailable = $state(supported);
+	let supported = $state(false);
+	let listenerAvailable = $state(false);
 	let recording = $state(false);
 	let starting = $state(false);
 	let canceling = $state(false);
@@ -279,14 +271,25 @@
 	}
 
 	onMount(() => {
-		if (!supported) return;
 		const generation = ++listenerGeneration;
-		observeBackgroundTask(registerVoiceListeners(generation), {
-			category: "listener_error",
-			component: "voice_recorder",
-			code: "registration_task_failed",
-			level: "error",
-		});
+		void getVoiceRecorderAvailability()
+			.then((availability) => {
+				if (
+					destroyed ||
+					generation !== listenerGeneration ||
+					!availability.available
+				)
+					return;
+				supported = true;
+				listenerAvailable = true;
+				observeBackgroundTask(registerVoiceListeners(generation), {
+					category: "listener_error",
+					component: "voice_recorder",
+					code: "registration_task_failed",
+					level: "error",
+				});
+			})
+			.catch(() => {});
 		const onBlur = () => void cancel();
 		const onVisibility = () => {
 			if (document.hidden) void cancel();

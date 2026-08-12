@@ -12,12 +12,14 @@
 	import Link from "$lib/components/ui/link/Link.svelte";
 	import { Spinner } from "$lib/components/ui/spinner";
 	import { Textarea } from "$lib/components/ui/textarea";
+	import { isIosPlatform } from "$lib/platform/os";
 
 	let token = $state("");
 	let submitting = $state(false);
 	let retrying = $state(false);
 
-	let manualInput = $state(false);
+	const ios = isIosPlatform();
+	let manualInput = $state(ios);
 
 	async function retry() {
 		if (retrying) return;
@@ -85,33 +87,39 @@
 		<Card.Header>
 			<Card.Title>Sign in with Google</Card.Title>
 			<Card.Description>
-				<ol class="ms-5 list-decimal">
-					<li>
-						Install <Link
-							href="https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app/releases#install"
-							class="font-medium text-primary underline underline-offset-2"
-						>
-							Open Grind companion app
-						</Link>
-					</li>
+				{#if ios}
+					Paste the OAuth token below, then tap "Sign in".
+				{:else}
+					<ol class="ms-5 list-decimal">
+						<li>
+							Install <Link
+								href="https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app/releases#install"
+								class="font-medium text-primary underline underline-offset-2"
+							>
+								Open Grind companion app
+							</Link>
+						</li>
+						{#if !manualInput}
+							<li>On this screen, tap the "Retry" button</li>
+						{:else}
+							<li>
+								Sign in with Google in the companion app and copy the token
+							</li>
+							<li>Return to this screen, paste it and tap "Sign in"</li>
+						{/if}
+					</ol>
 					{#if !manualInput}
-						<li>On this screen, tap the "Retry" button</li>
-					{:else}
-						<li>Sign in with Google in the companion app and copy the token</li>
-						<li>Return to this screen, paste it and tap "Sign in"</li>
+						<div class="my-2 block text-center">
+							or <Button
+								variant="secondary"
+								size="xs"
+								disabled={retrying}
+								onclick={() => (manualInput = true)}
+							>
+								paste the OAuth token manually
+							</Button>
+						</div>
 					{/if}
-				</ol>
-				{#if !manualInput}
-					<div class="my-2 block text-center">
-						or <Button
-							variant="secondary"
-							size="xs"
-							disabled={retrying}
-							onclick={() => (manualInput = true)}
-						>
-							paste the OAuth token manually
-						</Button>
-					</div>
 				{/if}
 			</Card.Description>
 		</Card.Header>
