@@ -61,6 +61,16 @@ if (config.bundle?.iOS?.minimumSystemVersion !== "17.5") {
 	);
 }
 
+const iosPackage = readFileSync(
+	join(root, "src-tauri/ios/Package.swift"),
+	"utf8",
+);
+if (!/platforms:\s*\[\.iOS\("17\.5"\)\]/.test(iosPackage)) {
+	fail(
+		"src-tauri/ios/Package.swift must remain at iOS 17.5 for the supported device baseline",
+	);
+}
+
 const isDev =
 	prerelease.split(".").includes("dev") || prerelease.endsWith("-dev");
 

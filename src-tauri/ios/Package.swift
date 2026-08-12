@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
   name: "open-grind",
-  platforms: [.iOS(.v16)],
+  platforms: [.iOS("17.5")],
   products: [
     .library(name: "open-grind", type: .static, targets: ["open-grind"])
   ],
