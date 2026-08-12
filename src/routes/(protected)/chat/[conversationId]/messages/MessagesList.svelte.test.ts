@@ -120,7 +120,7 @@ describe("MessagesList virtualization", () => {
 				thresholds = [0];
 			},
 		);
-		const reportRead = vi.fn();
+		const reportIncomingVisible = vi.fn();
 		const incoming = { ...message(1), senderId: 2 };
 		const state = {
 			messages: [incoming],
@@ -134,7 +134,7 @@ describe("MessagesList virtualization", () => {
 			locateMessage: () => Promise.resolve(null),
 			loadMore: () => Promise.resolve("end" as const),
 			loadNewer: () => Promise.resolve("end" as const),
-			reportRead,
+			reportIncomingVisible,
 		};
 
 		const view = render(Harness, {
@@ -149,11 +149,11 @@ describe("MessagesList virtualization", () => {
 			);
 		}
 		await tick();
-		expect(reportRead).not.toHaveBeenCalled();
+		expect(reportIncomingVisible).not.toHaveBeenCalled();
 
 		await view.rerender({ state, readReportingEnabled: true });
-		await waitFor(() => expect(reportRead).toHaveBeenCalledOnce());
-		expect(reportRead).toHaveBeenCalledWith(
+		await waitFor(() => expect(reportIncomingVisible).toHaveBeenCalledOnce());
+		expect(reportIncomingVisible).toHaveBeenCalledWith(
 			expect.objectContaining({
 				conversationId: incoming.conversationId,
 				messageId: incoming.messageId,

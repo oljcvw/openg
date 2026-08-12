@@ -61,6 +61,7 @@
 	});
 
 	function markReadMessagesEffect(): void {
+		conversationState.setReadBoundaryReady(scrollDone && atFloor);
 		const latest = conversationState.messages.reduce(
 			(max, m) => Math.max(max, m.timestamp),
 			0,
@@ -190,6 +191,7 @@
 	function onConversationChangeEffect(): void {
 		void conversationState.conversationId;
 		untrack(() => {
+			conversationState.resetReadBoundary();
 			restoreGeneration += 1;
 			scrollDone = false;
 			restoring = false;

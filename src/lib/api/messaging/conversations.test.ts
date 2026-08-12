@@ -76,11 +76,14 @@ describe("conversation API wrappers", () => {
 		});
 	});
 
-	it("marks conversations as read using the default message id", async () => {
+	it("marks conversations as read privately using the sentinel message id", async () => {
 		fetchRestMock.mockResolvedValue(response());
 
 		await expect(
-			markConversationAsRead({ conversationId: "conversation-1" }),
+			markConversationAsRead({
+				conversationId: "conversation-1",
+				disclosure: { kind: "private" },
+			}),
 		).resolves.toBeUndefined();
 
 		expect(fetchRestMock).toHaveBeenCalledWith(
@@ -89,11 +92,30 @@ describe("conversation API wrappers", () => {
 		);
 	});
 
+	it("marks conversations as read visibly using the observed message id", async () => {
+		fetchRestMock.mockResolvedValue(response());
+
+		await expect(
+			markConversationAsRead({
+				conversationId: "conversation-1",
+				disclosure: { kind: "visible", messageId: "message-9" },
+			}),
+		).resolves.toBeUndefined();
+
+		expect(fetchRestMock).toHaveBeenCalledWith(
+			"/v4/chat/conversation/conversation-1/read/message-9",
+			{ method: "POST" },
+		);
+	});
+
 	it("rejects marking as read on non-2xx responses", async () => {
 		fetchRestMock.mockResolvedValue(response(undefined, 500));
 
 		await expect(
-			markConversationAsRead({ conversationId: "conversation-1" }),
+			markConversationAsRead({
+				conversationId: "conversation-1",
+				disclosure: { kind: "private" },
+			}),
 		).rejects.toThrow("mock assertOk rejected status 500");
 	});
 

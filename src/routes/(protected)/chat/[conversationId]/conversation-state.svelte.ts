@@ -8,7 +8,6 @@ import {
 	subscribeAccountGeneration,
 } from "$lib/api/account-caches";
 import { showErrorToast } from "$lib/api/error";
-import { markConversationAsRead } from "$lib/api/messaging/conversations";
 import { reactToMessage } from "$lib/api/messaging/messages";
 import {
 	getDeveloperSettingsSnapshot,
@@ -162,6 +161,12 @@ export type ConversationProfile = Awaited<
 >["profile"];
 
 export class ConversationState {
+	#highestVisibleIncoming: { messageId: string; timestamp: number } | null =
+		null;
+	#readBoundaryReady = false;
+	#lastAcknowledgedIncomingTimestamp = 0;
+	#readGeneration = 0;
+	#readInFlight = false;
 	messages: OptimisticMessage[] = $state([]);
 	profile: ConversationProfile | null = $state(null);
 	pageKey: string | null = $state(null);
@@ -316,7 +321,9 @@ export class ConversationState {
 		this.#unsubscribePreferences();
 		this.#unsubscribeAccountGeneration();
 		if (this.#readTimer !== null) clearTimeout(this.#readTimer);
-		if (this.#readQueue.length > 0) void this.#flushReadQueue();
+		this.#readGeneration += 1;
+		this.#readQueue = [];
+		this.#readDeadline = null;
 		this.voiceNotes.exit();
 	}
 
@@ -491,6 +498,7 @@ export class ConversationState {
 			}
 		} finally {
 			this.refreshing = false;
+			if (this.#isCurrentOwner()) this.#queueReadCandidate();
 		}
 	}
 
@@ -1239,7 +1247,7 @@ export class ConversationState {
 		};
 	}
 
-	reportRead({
+	reportIncomingVisible({
 		messageId,
 		timestamp,
 	}: {
@@ -1247,8 +1255,38 @@ export class ConversationState {
 		timestamp: number;
 	}): void {
 		if (!this.#isCurrentOwner()) return;
-		if (this.lastReadTimestamp !== null && timestamp <= this.lastReadTimestamp)
+		if (timestamp <= this.#lastAcknowledgedIncomingTimestamp) return;
+		if (
+			this.#highestVisibleIncoming === null ||
+			timestamp > this.#highestVisibleIncoming.timestamp
+		) {
+			this.#highestVisibleIncoming = { messageId, timestamp };
+		}
+		this.#queueReadCandidate();
+	}
+
+	setReadBoundaryReady(ready: boolean): void {
+		if (!this.#isCurrentOwner()) return;
+		if (!ready) return;
+		this.#readBoundaryReady = true;
+		this.#queueReadCandidate();
+	}
+
+	resetReadBoundary(): void {
+		this.#readGeneration += 1;
+		this.#readBoundaryReady = false;
+		this.#highestVisibleIncoming = null;
+		this.#readQueue = [];
+		if (this.#readTimer !== null) clearTimeout(this.#readTimer);
+		this.#readTimer = null;
+		this.#readDeadline = null;
+	}
+
+	#queueReadCandidate(): void {
+		if (!this.#readBoundaryReady || this.#highestVisibleIncoming === null)
 			return;
+		if (this.#readInFlight) return;
+		const { messageId, timestamp } = this.#highestVisibleIncoming;
 		this.#readQueue.push({ messageId, timestamp });
 		const current = now();
 		this.#readDeadline ??= current + READ_MAX_WAIT_MS;
@@ -1268,26 +1306,68 @@ export class ConversationState {
 		this.#readTimer = null;
 		this.#readDeadline = null;
 		if (queue.length === 0) return;
+		if (!this.#readBoundaryReady) return;
 		queue.sort((a, b) => a.timestamp - b.timestamp);
 		const highest = queue[queue.length - 1];
-		const { revealMessageRead } = await getPreferences();
-		if (!isAccountSessionCurrent(this.accountSession)) return;
-		const revertLocalRead = this.#conversations.markReadLocally(
-			this.conversationId,
-		);
-		if (revealMessageRead) {
-			try {
-				await markConversationAsRead({
-					conversationId: this.conversationId,
-					messageId: highest!.messageId,
-				});
-			} catch (error) {
-				revertLocalRead();
+		if (
+			!highest ||
+			highest.timestamp <= this.#lastAcknowledgedIncomingTimestamp ||
+			this.#highestVisibleIncoming?.timestamp !== highest.timestamp
+		)
+			return;
+		const generation = this.#readGeneration;
+		this.#readInFlight = true;
+		let acknowledged = false;
+		let supersededBeforeSend = false;
+		try {
+			const { revealMessageRead } = await getPreferences();
+			if (
+				!isAccountSessionCurrent(this.accountSession) ||
+				generation !== this.#readGeneration ||
+				!this.#readBoundaryReady
+			)
+				return;
+			if (
+				this.#highestVisibleIncoming?.timestamp !== highest.timestamp ||
+				this.#highestVisibleIncoming.messageId !== highest.messageId
+			) {
+				supersededBeforeSend = true;
+				return;
+			}
+			const result = await this.#conversations.markRead(
+				this.conversationId,
+				revealMessageRead
+					? { kind: "visible", messageId: highest.messageId }
+					: { kind: "private" },
+			);
+			if (
+				result === "acknowledged" &&
+				generation === this.#readGeneration &&
+				isAccountSessionCurrent(this.accountSession)
+			) {
+				acknowledged = true;
+				this.#lastAcknowledgedIncomingTimestamp = Math.max(
+					this.#lastAcknowledgedIncomingTimestamp,
+					highest.timestamp,
+				);
+			}
+		} catch (error) {
+			if (this.#isCurrentOwner()) {
 				console.error(error);
 				showErrorToast({
-					label: "Failed to mark conversation as read",
+					label: "Failed to prepare conversation read acknowledgement",
 					error,
 				});
+			}
+		} finally {
+			this.#readInFlight = false;
+			if (
+				(acknowledged || supersededBeforeSend) &&
+				this.#highestVisibleIncoming !== null &&
+				this.#highestVisibleIncoming.timestamp >
+					this.#lastAcknowledgedIncomingTimestamp
+			) {
+				this.#queueReadCandidate();
 			}
 		}
 	}

@@ -6,8 +6,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
 	getConversationMock,
+	getPreferencesMock,
 	markReadMock,
-	markConversationAsReadMock,
+	preferences,
 	sendMessageMock,
 	sendReplyMessageMock,
 	readHandlers,
@@ -17,8 +18,9 @@ const {
 	developerSettings,
 } = vi.hoisted(() => ({
 	getConversationMock: vi.fn(),
-	markReadMock: vi.fn(),
-	markConversationAsReadMock: vi.fn(() => Promise.resolve()),
+	getPreferencesMock: vi.fn(),
+	markReadMock: vi.fn(() => Promise.resolve("acknowledged")),
+	preferences: { revealMessageRead: true },
 	sendMessageMock: vi.fn(),
 	sendReplyMessageMock: vi.fn(),
 	readHandlers: [] as ((event: unknown) => void)[],
@@ -30,13 +32,10 @@ const {
 
 vi.mock("$lib/api/error", () => ({ showErrorToast: showErrorToastMock }));
 vi.mock("$lib/app-data/preferences.svelte", () => ({
-	getPreferences: () => Promise.resolve({ revealMessageRead: true }),
+	getPreferences: getPreferencesMock,
 	getDeveloperSettingsSnapshot: () => developerSettings,
 	getShowRetractedMessagesSnapshot: () => false,
 	subscribePreferences: () => vi.fn(),
-}));
-vi.mock("$lib/api/messaging/conversations", () => ({
-	markConversationAsRead: markConversationAsReadMock,
 }));
 vi.mock("$lib/api/messaging/messages", () => ({
 	reactToMessage: vi.fn(),
@@ -106,7 +105,6 @@ function conversationsStub() {
 		removeMessageFromSearch: vi.fn(),
 		updatePreview: vi.fn(),
 		markRead: markReadMock,
-		markReadLocally: vi.fn(() => vi.fn()),
 		ensureLoaded: vi.fn(),
 	};
 }
@@ -146,6 +144,9 @@ function echo(messageId: string, type: string, body: unknown) {
 describe("ConversationState read marker", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		getPreferencesMock.mockImplementation(() => Promise.resolve(preferences));
+		markReadMock.mockResolvedValue("acknowledged");
+		preferences.revealMessageRead = true;
 		readHandlers.length = 0;
 		messageSentHandlers.length = 0;
 		reconcileHandlers.length = 0;
@@ -1217,6 +1218,8 @@ describe("ConversationState search-corpus synchronization", () => {
 describe("ConversationState read receipts", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		markReadMock.mockResolvedValue("acknowledged");
+		preferences.revealMessageRead = true;
 		readHandlers.length = 0;
 		messageSentHandlers.length = 0;
 		reconcileHandlers.length = 0;
@@ -1234,15 +1237,212 @@ describe("ConversationState read receipts", () => {
 
 		vi.useFakeTimers();
 		try {
-			state.reportRead({ messageId: "m1", timestamp: 1000 });
-			state.reportRead({ messageId: "m2", timestamp: 1001 });
+			state.setReadBoundaryReady(true);
+			state.reportIncomingVisible({ messageId: "m1", timestamp: 1000 });
+			state.reportIncomingVisible({ messageId: "m2", timestamp: 1001 });
 			await vi.advanceTimersByTimeAsync(500);
 
-			expect(markConversationAsReadMock).toHaveBeenCalledTimes(1);
-			expect(markConversationAsReadMock).toHaveBeenCalledWith({
-				conversationId: CONVERSATION_ID,
+			expect(markReadMock).toHaveBeenCalledExactlyOnceWith(CONVERSATION_ID, {
+				kind: "visible",
 				messageId: "m2",
 			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("acknowledges privately without exposing the visible message id", async () => {
+		preferences.revealMessageRead = false;
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		vi.useFakeTimers();
+		try {
+			state.setReadBoundaryReady(true);
+			state.reportIncomingVisible({
+				messageId: "private-message",
+				timestamp: 1000,
+			});
+			await vi.advanceTimersByTimeAsync(500);
+
+			expect(markReadMock).toHaveBeenCalledExactlyOnceWith(CONVERSATION_ID, {
+				kind: "private",
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("does not acknowledge an older restored row until the transcript floor is reached", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create();
+		await flush();
+
+		vi.useFakeTimers();
+		try {
+			state.reportIncomingVisible({
+				messageId: "older-visible",
+				timestamp: 1000,
+			});
+			await vi.advanceTimersByTimeAsync(2_500);
+			expect(markReadMock).not.toHaveBeenCalled();
+
+			state.setReadBoundaryReady(true);
+			await vi.advanceTimersByTimeAsync(500);
+			expect(markReadMock).toHaveBeenCalledExactlyOnceWith(CONVERSATION_ID, {
+				kind: "visible",
+				messageId: "older-visible",
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("preserves an in-flight newer message until that message is visibly acknowledged", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		let resolveFirst!: (value: "acknowledged") => void;
+		const first = new Promise<"acknowledged">((resolve) => {
+			resolveFirst = resolve;
+		});
+		markReadMock
+			.mockReturnValueOnce(first)
+			.mockResolvedValueOnce("acknowledged");
+		const state = create();
+		await flush();
+
+		vi.useFakeTimers();
+		try {
+			state.setReadBoundaryReady(true);
+			state.reportIncomingVisible({ messageId: "message-1", timestamp: 1000 });
+			await vi.advanceTimersByTimeAsync(500);
+			expect(markReadMock).toHaveBeenCalledTimes(1);
+
+			state.reportIncomingVisible({ messageId: "message-2", timestamp: 2000 });
+			await vi.advanceTimersByTimeAsync(1_000);
+			expect(markReadMock).toHaveBeenCalledTimes(1);
+
+			resolveFirst("acknowledged");
+			vi.runAllTicks();
+			await vi.advanceTimersByTimeAsync(500);
+			expect(markReadMock).toHaveBeenCalledTimes(2);
+			expect(markReadMock).toHaveBeenLastCalledWith(CONVERSATION_ID, {
+				kind: "visible",
+				messageId: "message-2",
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("revalidates the newest visible message immediately before sending", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		let resolvePreferences!: (value: typeof preferences) => void;
+		getPreferencesMock.mockReturnValueOnce(
+			new Promise<typeof preferences>((resolve) => {
+				resolvePreferences = resolve;
+			}),
+		);
+		const state = create();
+		await flush();
+
+		vi.useFakeTimers();
+		try {
+			state.setReadBoundaryReady(true);
+			state.reportIncomingVisible({ messageId: "message-1", timestamp: 1000 });
+			await vi.advanceTimersByTimeAsync(500);
+			state.reportIncomingVisible({ messageId: "message-2", timestamp: 2000 });
+			resolvePreferences(preferences);
+			vi.runAllTicks();
+			await vi.advanceTimersByTimeAsync(500);
+
+			expect(markReadMock).toHaveBeenCalledExactlyOnceWith(CONVERSATION_ID, {
+				kind: "visible",
+				messageId: "message-2",
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("does not send a follow-up for a newer message that was never visible", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		let resolveFirst!: (value: "acknowledged") => void;
+		markReadMock.mockReturnValueOnce(
+			new Promise<"acknowledged">((resolve) => {
+				resolveFirst = resolve;
+			}),
+		);
+		const state = create();
+		await flush();
+
+		vi.useFakeTimers();
+		try {
+			state.setReadBoundaryReady(true);
+			state.reportIncomingVisible({ messageId: "message-1", timestamp: 1000 });
+			await vi.advanceTimersByTimeAsync(500);
+			emitMessageSent({ ...message("message-2", 2000), senderId: PEER_ID });
+			resolveFirst("acknowledged");
+			vi.runAllTicks();
+			await vi.advanceTimersByTimeAsync(2_500);
+
+			expect(markReadMock).toHaveBeenCalledTimes(1);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it("retries a failed eligible acknowledgement only on the next read event", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		markReadMock
+			.mockResolvedValueOnce("failed")
+			.mockResolvedValueOnce("acknowledged");
+		const state = create();
+		await flush();
+
+		vi.useFakeTimers();
+		try {
+			state.setReadBoundaryReady(true);
+			state.reportIncomingVisible({
+				messageId: "retry-message",
+				timestamp: 1000,
+			});
+			await vi.advanceTimersByTimeAsync(3_000);
+			expect(markReadMock).toHaveBeenCalledTimes(1);
+
+			state.setReadBoundaryReady(true);
+			await vi.advanceTimersByTimeAsync(500);
+			expect(markReadMock).toHaveBeenCalledTimes(2);
 		} finally {
 			vi.useRealTimers();
 		}
@@ -1275,21 +1475,18 @@ describe("ConversationState read receipts", () => {
 		vi.useFakeTimers();
 		try {
 			await vi.advanceTimersByTimeAsync(2_500);
-			expect(markConversationAsReadMock).not.toHaveBeenCalled();
+			expect(markReadMock).not.toHaveBeenCalled();
 			expect(conversations.markRead).not.toHaveBeenCalled();
-			expect(conversations.markReadLocally).not.toHaveBeenCalled();
 
-			state.reportRead({
+			state.setReadBoundaryReady(true);
+			state.reportIncomingVisible({
 				messageId: reconciled.messageId,
 				timestamp: reconciled.timestamp,
 			});
 			await vi.advanceTimersByTimeAsync(500);
-			expect(markConversationAsReadMock).toHaveBeenCalledExactlyOnceWith({
-				conversationId: CONVERSATION_ID,
-				messageId: reconciled.messageId,
-			});
-			expect(conversations.markReadLocally).toHaveBeenCalledExactlyOnceWith(
+			expect(conversations.markRead).toHaveBeenCalledExactlyOnceWith(
 				CONVERSATION_ID,
+				{ kind: "visible", messageId: reconciled.messageId },
 			);
 		} finally {
 			vi.useRealTimers();
@@ -1337,12 +1534,16 @@ describe("ConversationState read receipts", () => {
 		vi.useFakeTimers();
 		try {
 			for (let i = 0; i < 6; i++) {
-				state.reportRead({ messageId: `m${i}`, timestamp: 1000 + i });
+				state.setReadBoundaryReady(true);
+				state.reportIncomingVisible({
+					messageId: `m${i}`,
+					timestamp: 1000 + i,
+				});
 				await vi.advanceTimersByTimeAsync(400);
 			}
-			expect(markConversationAsReadMock).toHaveBeenCalled();
-			expect(markConversationAsReadMock).toHaveBeenCalledWith({
-				conversationId: CONVERSATION_ID,
+			expect(markReadMock).toHaveBeenCalled();
+			expect(markReadMock).toHaveBeenCalledWith(CONVERSATION_ID, {
+				kind: "visible",
 				messageId: "m4",
 			});
 		} finally {
@@ -1360,12 +1561,16 @@ describe("ConversationState read receipts", () => {
 		const state = create();
 		await flush();
 
-		state.reportRead({ messageId: "old-account-message", timestamp: 1000 });
+		state.setReadBoundaryReady(true);
+		state.reportIncomingVisible({
+			messageId: "old-account-message",
+			timestamp: 1000,
+		});
 		invalidateAccountSession();
 		state.destroy();
 		await flush();
 
-		expect(markConversationAsReadMock).not.toHaveBeenCalled();
+		expect(markReadMock).not.toHaveBeenCalled();
 	});
 
 	it("does not mark a conversation read after its initial cache load is destroyed", async () => {

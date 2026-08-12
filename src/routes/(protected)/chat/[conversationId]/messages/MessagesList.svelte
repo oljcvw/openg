@@ -318,7 +318,7 @@
 								if (message.timestamp > seenTimestamp) {
 									seenTimestamp = message.timestamp;
 								}
-								conversationState.reportRead(message);
+								conversationState.reportIncomingVisible(message);
 							}
 						: undefined}
 					onDelete={async () => {

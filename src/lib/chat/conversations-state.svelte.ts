@@ -6,6 +6,7 @@ import {
 	deleteConversationForMe,
 	getConversations,
 	markConversationAsRead,
+	type ReadDisclosure,
 	setConversationMuted,
 	setConversationPinned,
 } from "$lib/api/messaging/conversations";
@@ -75,7 +76,14 @@ export type CachedConversation = {
 	removedMessageIds?: string[];
 };
 
+export type MarkReadResult = "acknowledged" | "failed" | "stale";
+
 class ConversationsState {
+	#readFlights = new Map<string, Promise<MarkReadResult>>();
+	#pendingReads = new Map<
+		string,
+		{ activityWatermark: number; clearedCount: number }
+	>();
 	entries = $state<Conversation[]>([]);
 	nextPage = $state<number | null>(null);
 	loadingMore = $state(false);
@@ -541,31 +549,80 @@ class ConversationsState {
 		});
 	}
 
-	async markRead(conversationId: string) {
-		const revert = this.markReadLocally(conversationId);
+	async markRead(
+		conversationId: string,
+		disclosure: ReadDisclosure,
+	): Promise<MarkReadResult> {
+		const previous = this.#readFlights.get(conversationId);
+		const flight = previous
+			? previous
+					.catch(() => "failed" as const)
+					.then(() => this.#performMarkRead(conversationId, disclosure))
+			: this.#performMarkRead(conversationId, disclosure);
+		this.#readFlights.set(conversationId, flight);
 		try {
-			await markConversationAsRead({ conversationId });
-		} catch (error) {
-			console.error(error);
-			showErrorToast({
-				label: "Failed to mark conversation as read",
-				error,
-			});
-			revert();
+			return await flight;
+		} finally {
+			if (this.#readFlights.get(conversationId) === flight) {
+				this.#readFlights.delete(conversationId);
+			}
 		}
 	}
 
-	markReadLocally(conversationId: string): () => void {
+	async #performMarkRead(
+		conversationId: string,
+		disclosure: ReadDisclosure,
+	): Promise<MarkReadResult> {
+		if (this.#destroyed) return "stale";
+		const entry = this.#find(conversationId);
+		const activityWatermark = entry?.data.lastActivityTimestamp ?? 0;
+		const optimistic = this.#markReadLocally(conversationId);
+		const pending = {
+			activityWatermark,
+			clearedCount: optimistic.clearedCount,
+		};
+		this.#pendingReads.set(conversationId, pending);
+		try {
+			await markConversationAsRead({ conversationId, disclosure });
+			return this.#destroyed ? "stale" : "acknowledged";
+		} catch (error) {
+			if (!this.#destroyed) {
+				optimistic.revert();
+				console.error(error);
+				showErrorToast({
+					label: "Failed to mark conversation as read",
+					error,
+				});
+			}
+			return this.#destroyed ? "stale" : "failed";
+		} finally {
+			if (this.#pendingReads.get(conversationId) === pending) {
+				this.#pendingReads.delete(conversationId);
+			}
+		}
+	}
+
+	#markReadLocally(conversationId: string): {
+		clearedCount: number;
+		revert: () => void;
+	} {
 		const entry = this.#find(conversationId);
 		const clearedCount = entry?.data.unreadCount ?? 0;
-		if (entry && clearedCount > 0) entry.data.unreadCount = 0;
+		if (entry && clearedCount > 0) {
+			entry.data.unreadCount = 0;
+			this.#persistInbox();
+		}
 		let reverted = false;
-		return () => {
+		const revert = () => {
 			if (reverted || clearedCount === 0) return;
 			reverted = true;
 			const current = this.#find(conversationId);
-			if (current) current.data.unreadCount += clearedCount;
+			if (current) {
+				current.data.unreadCount += clearedCount;
+				this.#persistInbox();
+			}
 		};
+		return { clearedCount, revert };
 	}
 
 	async #requestWithRollback<T>({
@@ -778,7 +835,21 @@ class ConversationsState {
 		}
 		Object.assign(existing.data, data);
 		if (incoming.data.conversationId !== this.#activeConversationId) {
-			existing.data.unreadCount = unreadCount;
+			const pendingRead = this.#pendingReads.get(incoming.data.conversationId);
+			if (!pendingRead) {
+				existing.data.unreadCount = unreadCount;
+			} else if (
+				incoming.data.lastActivityTimestamp > pendingRead.activityWatermark
+			) {
+				const postWatermarkUnread =
+					unreadCount > pendingRead.clearedCount
+						? unreadCount - pendingRead.clearedCount
+						: unreadCount;
+				existing.data.unreadCount = Math.max(
+					existing.data.unreadCount,
+					postWatermarkUnread,
+				);
+			}
 		}
 	}
 

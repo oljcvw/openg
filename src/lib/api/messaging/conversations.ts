@@ -11,6 +11,9 @@ const conversationsSchema = z.object({
 	nextPage: z.number().nullable(),
 });
 
+export type ReadDisclosure =
+	{ kind: "private" } | { kind: "visible"; messageId: string };
+
 export async function getConversations(page: number = 1) {
 	const conversations = await fetchRest(
 		"/v4/inbox?" + new URLSearchParams({ page: String(page) }).toString(),
@@ -23,11 +26,15 @@ export async function getConversations(page: number = 1) {
 
 export async function markConversationAsRead({
 	conversationId,
-	messageId = "0:00000000-0000-0000-0000-000000000000",
+	disclosure,
 }: {
 	conversationId: string;
-	messageId?: string;
+	disclosure: ReadDisclosure;
 }) {
+	const messageId =
+		disclosure.kind === "visible"
+			? disclosure.messageId
+			: "0:00000000-0000-0000-0000-000000000000";
 	return await fetchRest(
 		`/v4/chat/conversation/${conversationId}/read/${messageId}`,
 		{

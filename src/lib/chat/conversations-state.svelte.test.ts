@@ -340,17 +340,95 @@ describe("ConversationsState markRead rollback (P1.9)", () => {
 		const gate = deferred<void>();
 		markConversationAsReadMock.mockReturnValueOnce(gate.promise);
 
-		const markPromise = state.markRead("a:1");
+		const markPromise = state.markRead("a:1", { kind: "private" });
 		expect(entryFor(state, "a:1").data.unreadCount).toBe(0);
 
 		emitMessageSent(incomingMessage("a:1", 2000, PEER_ID));
 		expect(entryFor(state, "a:1").data.unreadCount).toBe(1);
 
 		gate.reject(markReadError);
-		await markPromise;
+		await expect(markPromise).resolves.toBe("failed");
 
 		expect(entryFor(state, "a:1").data.unreadCount).toBe(4);
 		expect(consoleError).toHaveBeenCalledWith(markReadError);
+	});
+
+	it("does not let a stale inbox refresh resurrect unread while acknowledgement is pending", async () => {
+		getConversationsMock.mockResolvedValueOnce({
+			entries: [conversation("a:1", 1000, { unreadCount: 3 })],
+			nextPage: null,
+		});
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+		const gate = deferred<void>();
+		markConversationAsReadMock.mockReturnValueOnce(gate.promise);
+
+		const markPromise = state.markRead("a:1", { kind: "private" });
+		expect(entryFor(state, "a:1").data.unreadCount).toBe(0);
+		getConversationsMock.mockResolvedValueOnce({
+			entries: [conversation("a:1", 1000, { unreadCount: 3 })],
+			nextPage: null,
+		});
+		await state.refresh();
+		expect(entryFor(state, "a:1").data.unreadCount).toBe(0);
+
+		gate.resolve();
+		await expect(markPromise).resolves.toBe("acknowledged");
+	});
+
+	it("preserves newer server unread activity while an older acknowledgement is pending", async () => {
+		getConversationsMock.mockResolvedValueOnce({
+			entries: [conversation("a:1", 1000, { unreadCount: 3 })],
+			nextPage: null,
+		});
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+		const gate = deferred<void>();
+		markConversationAsReadMock.mockReturnValueOnce(gate.promise);
+
+		const markPromise = state.markRead("a:1", { kind: "private" });
+		getConversationsMock.mockResolvedValueOnce({
+			entries: [conversation("a:1", 2000, { unreadCount: 4 })],
+			nextPage: null,
+		});
+		await state.refresh();
+
+		expect(entryFor(state, "a:1").data.unreadCount).toBe(1);
+		gate.resolve();
+		await expect(markPromise).resolves.toBe("acknowledged");
+	});
+
+	it("serializes read acknowledgements for the same conversation", async () => {
+		getConversationsMock.mockResolvedValueOnce({
+			entries: [conversation("a:1", 1000, { unreadCount: 2 })],
+			nextPage: null,
+		});
+		const state = new ConversationsState(OUR_ID);
+		await state.initial;
+		const first = deferred<void>();
+		const second = deferred<void>();
+		markConversationAsReadMock
+			.mockReturnValueOnce(first.promise)
+			.mockReturnValueOnce(second.promise);
+
+		const firstMark = state.markRead("a:1", { kind: "private" });
+		const secondMark = state.markRead("a:1", {
+			kind: "visible",
+			messageId: "message-2",
+		});
+		expect(markConversationAsReadMock).toHaveBeenCalledTimes(1);
+
+		first.resolve();
+		await expect(firstMark).resolves.toBe("acknowledged");
+		await vi.waitFor(() =>
+			expect(markConversationAsReadMock).toHaveBeenCalledTimes(2),
+		);
+		second.resolve();
+		await expect(secondMark).resolves.toBe("acknowledged");
+		expect(markConversationAsReadMock).toHaveBeenLastCalledWith({
+			conversationId: "a:1",
+			disclosure: { kind: "visible", messageId: "message-2" },
+		});
 	});
 });
 
