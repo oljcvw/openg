@@ -179,7 +179,7 @@ async fn run_latest_state_loop<Apply, ApplyFuture>(
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "system" fn Java_org_opengrind_realtime_RealtimeNetworkMonitor_nativeSetNetworkAvailable(
+pub extern "system" fn Java_doctor_andrewcox_opengrind_realtime_RealtimeNetworkMonitor_nativeSetNetworkAvailable(
 	_env: JNIEnv,
 	_class: JClass,
 	available: jboolean,

@@ -56,9 +56,10 @@ pub fn align_device(device: &mut grindr::DeviceInfo) -> Result<(), String> {
 				format!("Android class loader result failed: {error}")
 			})?;
 		let class_name = JObject::from(
-			env.new_string("org.opengrind.AndroidApiIdentity").map_err(
-				|error| format!("Android identity class name failed: {error}"),
-			)?,
+			env.new_string("doctor.andrewcox.opengrind.AndroidApiIdentity")
+				.map_err(|error| {
+					format!("Android identity class name failed: {error}")
+				})?,
 		);
 		let identity_class = env
 			.call_method(
@@ -79,7 +80,7 @@ pub fn align_device(device: &mut grindr::DeviceInfo) -> Result<(), String> {
 			.get_static_field(
 				identity_class,
 				"INSTANCE",
-				"Lorg/opengrind/AndroidApiIdentity;",
+				"Ldoctor/andrewcox/opengrind/AndroidApiIdentity;",
 			)
 			.map_err(|error| {
 				format!("Android identity instance failed: {error}")

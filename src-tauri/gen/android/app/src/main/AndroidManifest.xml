@@ -51,19 +51,19 @@
 		</activity>
 
 		<activity
-			android:name="org.opengrind.media.ShortVideoCaptureActivity"
+			android:name="doctor.andrewcox.opengrind.media.ShortVideoCaptureActivity"
 			android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
 			android:exported="false"
 			android:theme="@style/Theme.OpenGrind.MediaCapture" />
 
 		<activity
-			android:name="org.opengrind.media.AgoraVideoCallActivity"
+			android:name="doctor.andrewcox.opengrind.media.AgoraVideoCallActivity"
 			android:configChanges="orientation|screenSize"
 			android:exported="false"
 			android:theme="@style/Theme.OpenGrind.MediaCapture" />
 
 		<service
-			android:name="org.opengrind.media.VideoCallForegroundService"
+			android:name="doctor.andrewcox.opengrind.media.VideoCallForegroundService"
 			android:exported="false"
 			android:foregroundServiceType="camera|microphone" />
 

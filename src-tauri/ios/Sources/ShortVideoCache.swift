@@ -60,7 +60,7 @@ protocol ShortVideoCacheCrypto {
 }
 
 final class AppleKeychainMediaCrypto: ShortVideoCacheCrypto {
-  private let service = "org.opengrind.short-video-cache"
+  private let service = "doctor.andrewcox.opengrind.short-video-cache"
 
   func encrypt(accountKey: String, authenticatedData: Data, plaintext: Data) throws -> Data {
     let sealed = try AES.GCM.seal(
@@ -238,7 +238,13 @@ final class ShortVideoCache {
         throw ShortVideoCacheError.invalidWriteToken
       }
       let identity = try ShortVideoCacheIdentity(accountId: accountId, mediaId: mediaId)
-      guard writeTokens[identity] == expectedWriteToken else {
+      guard let currentWriteToken = writeTokens[identity] else {
+        return ShortVideoCleanupResult(
+          removed: false,
+          staleWriteAbsent: !fileManager.fileExists(atPath: identity.file(in: root).path)
+        )
+      }
+      guard currentWriteToken == expectedWriteToken else {
         return ShortVideoCleanupResult(removed: false, staleWriteAbsent: true)
       }
       let destination = identity.file(in: root)

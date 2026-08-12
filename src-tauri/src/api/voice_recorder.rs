@@ -55,7 +55,7 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 			#[cfg(target_os = "android")]
 			{
 				let handle = _api.register_android_plugin(
-					"org.opengrind.voicerecorder",
+					"doctor.andrewcox.opengrind.voicerecorder",
 					"VoiceRecorderPlugin",
 				)?;
 				_app.manage(MobileVoiceRecorder { handle });

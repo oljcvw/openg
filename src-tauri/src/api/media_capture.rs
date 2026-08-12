@@ -167,7 +167,7 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 			#[cfg(target_os = "android")]
 			{
 				let handle = _api.register_android_plugin(
-					"org.opengrind.media",
+					"doctor.andrewcox.opengrind.media",
 					"MediaCapturePlugin",
 				)?;
 				_app.manage(MobileMediaCapture { handle });

@@ -88,7 +88,7 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 			#[cfg(target_os = "android")]
 			{
 				let handle = _api.register_android_plugin(
-					"org.opengrind.notifications",
+					"doctor.andrewcox.opengrind.notifications",
 					"NotificationsPlugin",
 				)?;
 				_app.manage(MobileNotifications { handle });
@@ -826,7 +826,7 @@ fn persist_client_state(client: &grindr::GrindrClient) {
 
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "system" fn Java_org_opengrind_notifications_NotificationBridge_nativePoll(
+pub extern "system" fn Java_doctor_andrewcox_opengrind_notifications_NotificationBridge_nativePoll(
 	env: JNIEnv,
 	_class: JClass,
 	messages_enabled: jboolean,

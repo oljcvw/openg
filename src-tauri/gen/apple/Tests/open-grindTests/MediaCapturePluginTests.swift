@@ -96,6 +96,22 @@ final class MediaCapturePluginTests: XCTestCase {
                     maximumBytes: 1_000, writeToken: "late-write", cacheGeneration: 0)
     )
   }
+
+  func testConditionalCleanupDoesNotCertifyPersistedEntryAfterRestart() throws {
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: root) }
+    let original = try ShortVideoCache(root: root, crypto: ReversingCacheCrypto())
+    _ = try original.put(accountId: "100", mediaId: "same", plaintext: Data([1]),
+                         maximumBytes: 1_000, writeToken: "owned-write", cacheGeneration: 0)
+
+    let restarted = try ShortVideoCache(root: root, crypto: ReversingCacheCrypto())
+    let cleanup = try restarted.removeIfWriteToken(
+      accountId: "100", mediaId: "same", expectedWriteToken: "owned-write"
+    )
+
+    XCTAssertEqual(cleanup, ShortVideoCleanupResult(removed: false, staleWriteAbsent: false))
+    XCTAssertEqual(try restarted.get(accountId: "100", mediaId: "same"), Data([1]))
+  }
 }
 
 private final class ReversingCacheCrypto: ShortVideoCacheCrypto {

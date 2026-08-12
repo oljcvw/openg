@@ -7,7 +7,7 @@ private func openGrindSetNetworkAvailable(_ available: UInt8)
 
 final class RealtimeNetworkPlugin: Plugin {
   private let monitor = NWPathMonitor()
-  private let queue = DispatchQueue(label: "org.opengrind.realtime-network")
+  private let queue = DispatchQueue(label: "doctor.andrewcox.opengrind.realtime-network")
   private var started = false
 
   override func load(webview: WKWebView) {

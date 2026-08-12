@@ -45,7 +45,7 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
   private let center = UNUserNotificationCenter.current()
   private let defaults = UserDefaults.standard
   private let refreshIdentifier = "doctor.andrewcox.opengrind.background-refresh"
-  private let pollQueue = DispatchQueue(label: "org.opengrind.notifications.poll", qos: .utility)
+  private let pollQueue = DispatchQueue(label: "doctor.andrewcox.opengrind.notifications.poll", qos: .utility)
   private let routeLock = NSLock()
 
   override init() {

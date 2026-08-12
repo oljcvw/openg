@@ -19,10 +19,10 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.crates.keyring.Keyring
 import org.json.JSONObject
-import org.opengrind.WebViewSupport
-import org.opengrind.notifications.NotificationNotifier
-import org.opengrind.notifications.NotificationRoute
-import org.opengrind.realtime.RealtimeNetworkMonitor
+import doctor.andrewcox.opengrind.WebViewSupport
+import doctor.andrewcox.opengrind.notifications.NotificationNotifier
+import doctor.andrewcox.opengrind.notifications.NotificationRoute
+import doctor.andrewcox.opengrind.realtime.RealtimeNetworkMonitor
 
 internal enum class ImeLayoutMode(val bridgeValue: String) {
 	RESIZE("resize"),
