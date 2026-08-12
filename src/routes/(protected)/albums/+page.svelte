@@ -295,7 +295,7 @@
 													class="size-full object-cover"
 													loading="lazy"
 												/>
-											{:else if "thumbUrl" in item}
+											{:else if "thumbUrl" in item && typeof item.thumbUrl === "string"}
 												<img
 													src={item.thumbUrl}
 													alt=""

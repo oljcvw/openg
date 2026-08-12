@@ -143,10 +143,7 @@ export class AlbumActivationService {
 					itemId: this.#dependencies.createId(),
 					kind: item.contentType.startsWith("video/") ? "video" : "image",
 					mimeType: item.contentType as
-						| "image/jpeg"
-						| "image/png"
-						| "video/mp4"
-						| "video/webm",
+						"image/jpeg" | "image/png" | "video/mp4" | "video/webm",
 					sourceUrl: item.url,
 					maximumBytes: limits.maxContentSizeInBytes,
 					width: null,
@@ -163,7 +160,7 @@ export class AlbumActivationService {
 
 			const live = album.content.map((item, index) => ({
 				contentId: item.contentId,
-				checksum: recovery.items[index].checksum,
+				checksum: recovery.items[index]!.checksum,
 				kind: item.contentType.startsWith("video/")
 					? ("video" as const)
 					: ("image" as const),
@@ -341,10 +338,7 @@ export class AlbumActivationService {
 				itemId: this.#dependencies.createId(),
 				kind: item.contentType.startsWith("video/") ? "video" : "image",
 				mimeType: item.contentType as
-					| "image/jpeg"
-					| "image/png"
-					| "video/mp4"
-					| "video/webm",
+					"image/jpeg" | "image/png" | "video/mp4" | "video/webm",
 				sourceUrl: item.url,
 				maximumBytes: limits.maxContentSizeInBytes,
 				width: null,
@@ -416,7 +410,7 @@ export class AlbumActivationService {
 					);
 					if (index < 0)
 						throw new Error("Saved-set target order is unresolved");
-					return remaining.splice(index, 1)[0].contentId;
+					return remaining.splice(index, 1)[0]!.contentId;
 				});
 				await this.#dependencies.reorder({
 					albumId: journal.targetAlbumId,

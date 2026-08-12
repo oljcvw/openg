@@ -14,7 +14,7 @@ const consoleMethods: ConsoleMethod[] = [
 const originalConsole = new Map<ConsoleMethod, typeof console.log>();
 
 for (const method of consoleMethods)
-	originalConsole.set(method, console[method]);
+	originalConsole.set(method, console[method].bind(console));
 
 function setFrontendLogging(enabled: boolean): void {
 	if (!isTauri()) return;

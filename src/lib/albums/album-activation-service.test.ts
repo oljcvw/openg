@@ -178,7 +178,7 @@ describe("AlbumActivationService", () => {
 						{
 							id: "already-applied",
 							kind: "upload",
-							itemId: desired.items[0].itemId,
+							itemId: desired.items[0]!.itemId,
 							expectedBefore: [],
 							expectedAfter: ["a".repeat(64)],
 						},
@@ -254,15 +254,15 @@ describe("AlbumActivationService", () => {
 				plan: {
 					version: 1,
 					presetId: desired.presetId,
-					desiredChecksums: [desired.items[0].checksum],
+					desiredChecksums: [desired.items[0]!.checksum],
 					retainedContentIds: [],
 					actions: [
 						{
 							id: "upload-interrupted-after-server-commit",
 							kind: "upload",
-							itemId: desired.items[0].itemId,
+							itemId: desired.items[0]!.itemId,
 							expectedBefore: [],
-							expectedAfter: [desired.items[0].checksum],
+							expectedAfter: [desired.items[0]!.checksum],
 						},
 					],
 				},
@@ -276,7 +276,9 @@ describe("AlbumActivationService", () => {
 		);
 
 		expect(result.status).toBe("completed");
-		expect(result.contentChecksums).toEqual({ "2": desired.items[0].checksum });
+		expect(result.contentChecksums).toEqual({
+			"2": desired.items[0]!.checksum,
+		});
 		expect(upload).not.toHaveBeenCalled();
 		expect(snapshot).toHaveBeenCalledOnce();
 		expect(deletePreset).toHaveBeenCalledOnce();

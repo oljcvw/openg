@@ -43,6 +43,8 @@ import {
 	searchableMessageText,
 } from "./conversation-filter";
 
+const singleColumnLayout = below("split");
+
 type OptimisticFlagField = "pinned" | "muted";
 type MessageSearchStatus = "idle" | "searching" | "complete";
 
@@ -261,7 +263,7 @@ class ConversationsState {
 			entry = this.#find(message.conversationId);
 		}
 		const isInboxPageRoot = page.route.id === "/(protected)/chat";
-		const twoColLayout = !below("split").current;
+		const twoColLayout = !singleColumnLayout.current;
 		const isConversationsListVisible = isInboxPageRoot || twoColLayout;
 		if (
 			isIncoming &&
@@ -532,7 +534,8 @@ class ConversationsState {
 			message,
 			sender: {
 				name: conversation.data.name,
-				avatarMediaHash: conversation.data.participants[0].primaryMediaHash,
+				avatarMediaHash:
+					conversation.data.participants[0]?.primaryMediaHash ?? null,
 			},
 			conversationId: conversation.data.conversationId,
 		});
@@ -579,9 +582,10 @@ class ConversationsState {
 		const results = await Promise.allSettled(items.map(request));
 		const failures: T[] = [];
 		let error: unknown = null;
-		results.forEach((result, index) => {
-			if (result.status !== "rejected") return;
-			failures.push(items[index]);
+		items.forEach((item, index) => {
+			const result = results[index];
+			if (result?.status !== "rejected") return;
+			failures.push(item);
 			error ??= result.reason;
 		});
 		if (failures.length === 0) return;

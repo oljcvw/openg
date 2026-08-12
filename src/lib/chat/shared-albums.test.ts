@@ -52,7 +52,7 @@ describe("shared-album collection reconciliation", () => {
 
 		expect(first.current.map((entry) => entry.identity.albumId)).toEqual([1]);
 		expect(first.cached.map((entry) => entry.identity.albumId)).toEqual([2]);
-		expect(first.cached[0].membership).toMatchObject({
+		expect(first.cached[0]!.membership).toMatchObject({
 			isCurrentlyShared: false,
 			unavailableReason: "unshared",
 		});
@@ -162,7 +162,7 @@ describe("SharedAlbumCollection authoritative refresh", () => {
 		await collection.refresh();
 		expect(collection.status).toBe("error");
 		expect(collection.current).toEqual([]);
-		expect(collection.cached[0].membership.isCurrentlyShared).toBe(true);
+		expect(collection.cached[0]!.membership.isCurrentlyShared).toBe(true);
 	});
 
 	it("commits the complete validated current set only after successful parsing", async () => {

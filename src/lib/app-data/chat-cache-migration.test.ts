@@ -170,7 +170,7 @@ describe("beta-5 conversation conversion", () => {
 			migrateBeta4ConversationCaches(7, { retentionAuthorization: null }),
 		).resolves.toEqual({ conversations: 1, mediaEntries: 0 });
 		expect(harness.upsert).not.toHaveBeenCalled();
-		expect(harness.items[0].value.version).toBe(2);
+		expect(harness.items[0]!.value.version).toBe(2);
 	});
 
 	it("lets retention disable win a suspended native upsert race", async () => {
@@ -209,7 +209,7 @@ describe("beta-5 conversation conversion", () => {
 		await disabling;
 		expect(harness.directHistory.size).toBe(0);
 		expect(harness.clearDirect).toHaveBeenCalledTimes(1);
-		expect(harness.items[0].value.version).toBe(2);
+		expect(harness.items[0]!.value.version).toBe(2);
 	});
 
 	it("pages 1,000 conversations with a hard per-step native-call bound", async () => {
@@ -263,14 +263,14 @@ describe("beta-5 conversation conversion", () => {
 			messageOffset: 60,
 			complete: false,
 		});
-		expect(harness.items[0].value.version).toBe(1);
+		expect(harness.items[0]!.value.version).toBe(1);
 
 		const second = await migrateBeta4ConversationCaches(7, {
 			retentionAuthorization: captureSharedMediaRetentionAuthorization(),
 		});
 		expect(second).toEqual({ conversations: 1, mediaEntries: 60 });
 		expect(harness.upsert).toHaveBeenCalledTimes(120);
-		expect(harness.items[0].value.version).toBe(2);
+		expect(harness.items[0]!.value.version).toBe(2);
 		expect(harness.ledger).toMatchObject({ complete: true, messageOffset: 0 });
 	});
 });

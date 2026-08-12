@@ -68,7 +68,7 @@ describe("Reconciler resync after dropped websocket events", () => {
 		const handler = vi.fn();
 		reconciler.subscribe("inbox", handler);
 
-		droppedHandlers[0](3);
+		droppedHandlers[0]!(3);
 		await vi.advanceTimersByTimeAsync(0);
 
 		expect(handler).toHaveBeenCalledTimes(1);
@@ -79,12 +79,12 @@ describe("Reconciler resync after dropped websocket events", () => {
 		const handler = vi.fn();
 		reconciler.subscribe("inbox", handler);
 
-		droppedHandlers[0](3);
+		droppedHandlers[0]!(3);
 		await vi.advanceTimersByTimeAsync(0);
 		expect(handler).toHaveBeenCalledTimes(1);
 
 		await vi.advanceTimersByTimeAsync(1200);
-		droppedHandlers[0](7);
+		droppedHandlers[0]!(7);
 		await vi.advanceTimersByTimeAsync(0);
 		expect(handler).toHaveBeenCalledTimes(1);
 
@@ -97,14 +97,14 @@ describe("Reconciler resync after dropped websocket events", () => {
 		const handler = vi.fn();
 		reconciler.subscribe("inbox", handler);
 
-		droppedHandlers[0](3);
+		droppedHandlers[0]!(3);
 		await vi.advanceTimersByTimeAsync(0);
 		expect(handler).toHaveBeenCalledTimes(1);
 
 		await vi.advanceTimersByTimeAsync(1000);
-		droppedHandlers[0](256);
-		droppedHandlers[0](256);
-		droppedHandlers[0](256);
+		droppedHandlers[0]!(256);
+		droppedHandlers[0]!(256);
+		droppedHandlers[0]!(256);
 
 		await vi.advanceTimersByTimeAsync(2000);
 		expect(handler).toHaveBeenCalledTimes(2);
@@ -115,18 +115,18 @@ describe("Reconciler resync after dropped websocket events", () => {
 		const handler = vi.fn();
 		reconciler.subscribe("inbox", handler);
 
-		droppedHandlers[0](3);
+		droppedHandlers[0]!(3);
 		await vi.advanceTimersByTimeAsync(0);
 		expect(handler).toHaveBeenCalledTimes(1);
 
 		await vi.advanceTimersByTimeAsync(1200);
-		droppedHandlers[0](7);
+		droppedHandlers[0]!(7);
 
-		connectedHandlers[0]();
-		connectedHandlers[0]();
+		connectedHandlers[0]!();
+		connectedHandlers[0]!();
 		await vi.advanceTimersByTimeAsync(800);
 		expect(handler).toHaveBeenCalledTimes(2);
-		expect(handler.mock.calls[1][0].reasons).toEqual(
+		expect(handler.mock.calls[1]![0].reasons).toEqual(
 			new Set(["events-dropped", "reconnected"]),
 		);
 	});
@@ -146,7 +146,7 @@ describe("Reconciler resync after dropped websocket events", () => {
 		await vi.advanceTimersByTimeAsync(1_000);
 
 		expect(handler).toHaveBeenCalledTimes(2);
-		expect(handler.mock.calls[1][0]).toMatchObject({
+		expect(handler.mock.calls[1]![0]).toMatchObject({
 			allConversations: true,
 			conversationIds: new Set(),
 		});

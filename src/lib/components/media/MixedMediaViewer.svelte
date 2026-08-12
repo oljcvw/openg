@@ -37,8 +37,7 @@
 		statusLabel?: string | null;
 		diagnostics?: ViewerDiagnosticContext;
 		onItemActivate?:
-			| ((item: ConversationMediaViewerItem, index: number) => void)
-			| null;
+			((item: ConversationMediaViewerItem, index: number) => void) | null;
 		onOpening?: () => void;
 		onOpened?: () => void;
 		onClose: () => void;
@@ -179,6 +178,7 @@
 				lightbox.addFilter("numItems", () => mutableItems.length);
 				lightbox.addFilter("itemData", (_, index) => {
 					const item = mutableItems[index];
+					if (!item) return { html: "", width: 1, height: 1 };
 					const fallbackWidth = Math.max(2, window.innerWidth || 1200);
 					const fallbackHeight = Math.max(2, window.innerHeight || 1200);
 					const hasDimensions =
@@ -373,7 +373,7 @@
 				'"': "&quot;",
 				"'": "&#39;",
 			};
-			return escaped[character];
+			return escaped[character] ?? character;
 		});
 	}
 

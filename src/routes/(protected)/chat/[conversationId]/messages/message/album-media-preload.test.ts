@@ -109,7 +109,7 @@ describe("detached album media preload diagnostics", () => {
 		let created = 0;
 		vi.spyOn(document, "createElement").mockImplementation(
 			(name: string, options?: ElementCreationOptions) => {
-				if (name === "img") return images[created++];
+				if (name === "img") return images[created++]!;
 				return createElement(name, options);
 			},
 		);
@@ -125,12 +125,12 @@ describe("detached album media preload diagnostics", () => {
 		);
 		expect(created).toBe(2);
 
-		images[1].dispatchEvent(new Event("load"));
+		images[1]!.dispatchEvent(new Event("load"));
 		await vi.waitFor(() => expect(created).toBe(3));
-		images[0].dispatchEvent(new Event("load"));
+		images[0]!.dispatchEvent(new Event("load"));
 		await vi.waitFor(() => expect(created).toBe(4));
-		images[2].dispatchEvent(new Event("load"));
-		images[3].dispatchEvent(new Event("load"));
+		images[2]!.dispatchEvent(new Event("load"));
+		images[3]!.dispatchEvent(new Event("load"));
 
 		await expect(pending).resolves.toEqual(
 			[1, 2, 3, 4].map((contentId) =>
@@ -196,11 +196,11 @@ describe("detached album media preload diagnostics", () => {
 				value: false,
 			});
 		}
-		const siblingRemoveSource = vi.spyOn(images[1], "removeAttribute");
+		const siblingRemoveSource = vi.spyOn(images[1]!, "removeAttribute");
 		let created = 0;
 		vi.spyOn(document, "createElement").mockImplementation(
 			(name: string, options?: ElementCreationOptions) => {
-				if (name === "img") return images[created++];
+				if (name === "img") return images[created++]!;
 				return createElement(name, options);
 			},
 		);
@@ -209,7 +209,7 @@ describe("detached album media preload diagnostics", () => {
 			[albumSlide({ contentId: 1 }), albumSlide({ contentId: 2 })],
 			{ concurrency: 2 },
 		);
-		images[0].dispatchEvent(new Event("error"));
+		images[0]!.dispatchEvent(new Event("error"));
 
 		await expect(pending).rejects.toThrow("Failed to load album image");
 		expect(siblingRemoveSource).toHaveBeenCalledWith("src");

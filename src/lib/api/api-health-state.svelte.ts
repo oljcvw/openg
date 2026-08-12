@@ -35,7 +35,8 @@ class ApiHealthState {
 	#lastSequence = -1;
 
 	get retrySeconds(): number | null {
-		if (this.status?.retryAtMs == null) return null;
+		if (this.status?.retryAtMs === null || this.status?.retryAtMs === undefined)
+			return null;
 		return Math.max(0, Math.ceil((this.status.retryAtMs - this.nowMs) / 1000));
 	}
 

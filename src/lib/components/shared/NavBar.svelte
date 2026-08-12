@@ -86,6 +86,7 @@
 	</div>
 	<a
 		href="/settings"
+		aria-label="Settings"
 		onclick={(event) =>
 			interceptAppNavigationClick(event, () => activateAppRoot("settings"))}
 		class={[

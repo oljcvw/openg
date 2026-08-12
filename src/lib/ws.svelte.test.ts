@@ -276,8 +276,8 @@ describe("WsState request outcome", () => {
 		void ws.requestOutcome("chat.v1.message.send", { ref: "attempt" });
 		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledTimes(1));
 
-		expect(listenMock.mock.invocationCallOrder[0]).toBeLessThan(
-			invokeMock.mock.invocationCallOrder[0],
+		expect(listenMock.mock.invocationCallOrder[0]!).toBeLessThan(
+			invokeMock.mock.invocationCallOrder[0]!,
 		);
 	});
 

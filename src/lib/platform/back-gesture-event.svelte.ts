@@ -17,7 +17,7 @@ class LegacyBackGestureHandlers extends SvelteSet<LegacyBackGestureHandler> {
 				handler: () => {
 					const handlers = [...this];
 					for (let index = handlers.length - 1; index >= 0; index--) {
-						if (handlers[index]() === false) return "handled";
+						if (handlers[index]!() === false) return "handled";
 					}
 					return "unhandled";
 				},

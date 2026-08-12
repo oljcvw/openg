@@ -2,19 +2,12 @@ import { getAccountSessionSnapshot } from "$lib/api/account-caches";
 import { runtimeOwnership } from "$lib/dev/runtime-ownership";
 
 export type RootSurface =
-	| "browse"
-	| "rightNow"
-	| "interest"
-	| "inbox"
-	| "settings";
+	"browse" | "rightNow" | "interest" | "inbox" | "settings";
 
 export type NavigationLevel = "root" | "detail";
 
 export type DetailKind =
-	| "profile"
-	| "conversation"
-	| "album"
-	| "settingsSubpage";
+	"profile" | "conversation" | "album" | "settingsSubpage";
 
 export type NavigationSurface =
 	| "browse"
@@ -47,11 +40,7 @@ export interface RouteClassification {
 export type BackResult = "handled" | "unhandled";
 
 export type BackPriority =
-	| "viewer"
-	| "dialog"
-	| "drawer"
-	| "localMode"
-	| "route";
+	"viewer" | "dialog" | "drawer" | "localMode" | "route";
 
 export type BackHandler = () => BackResult | Promise<BackResult>;
 
@@ -294,7 +283,7 @@ export function classifyRoute(route: string): RouteClassification {
 		};
 	}
 
-	return { ...ROOT_ROUTES["/"] };
+	return { ...ROOT_ROUTES["/"]! };
 }
 
 export interface NavigationEffects {
@@ -521,8 +510,7 @@ export class NavigationCoordinator {
 	readonly #accountGeneration: number;
 	readonly #createEntryId: () => string;
 	readonly #onTransitionFailure:
-		| ((failure: NavigationTransitionFailure) => void)
-		| undefined;
+		((failure: NavigationTransitionFailure) => void) | undefined;
 	#currentState: AppNavigationStateV1 | null = null;
 	#lastRootRoute: Record<RootSurface, SafeReturnRoute> = {
 		...DEFAULT_ROOT_ROUTE,

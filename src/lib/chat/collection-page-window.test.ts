@@ -33,7 +33,7 @@ describe("CollectionPageWindow", () => {
 		const window = new CollectionPageWindow<Item>((item) => item.id, {
 			onEvict: evicted,
 		});
-		const pinned = page(0)[0];
+		const pinned = page(0)[0]!;
 		window.pin(pinned);
 		for (let index = 0; index < 167; index += 1) {
 			window.setPage(index, page(index, index === 166 ? 40 : 60));
@@ -56,7 +56,7 @@ describe("CollectionPageWindow", () => {
 		const window = new CollectionPageWindow<Item>((item) => item.id, {
 			onEvict: evicted,
 		});
-		const pinned = page(0)[2];
+		const pinned = page(0)[2]!;
 		window.setPage(0, page(0));
 		window.pin(pinned);
 		window.clear();

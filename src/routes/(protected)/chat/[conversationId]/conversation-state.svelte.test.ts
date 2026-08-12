@@ -288,7 +288,7 @@ describe("ConversationState send echo matching", () => {
 			kind: "accepted",
 			operationId: expect.stringMatching(/^pending-/),
 		});
-		expect(state.messages[0].messageId).toBe(accepted.operationId);
+		expect(state.messages[0]!.messageId).toBe(accepted.operationId);
 		expect(
 			conversations.setCachedConversation.mock.lastCall?.[1].failedMessages[0],
 		).toMatchObject({
@@ -344,7 +344,7 @@ describe("ConversationState send echo matching", () => {
 		state.send(outbound("Text", { text: "ordinary" }));
 		await flush();
 
-		const pending = state.messages[0];
+		const pending = state.messages[0]!;
 		expect(pending).toMatchObject({
 			status: "confirming",
 			refValue: expect.any(String),
@@ -384,7 +384,7 @@ describe("ConversationState send echo matching", () => {
 		await flush();
 		state.send(outbound("Text", { text: "ordinary" }));
 		await flush();
-		const attemptRef = state.messages[0].attemptRef!;
+		const attemptRef = state.messages[0]!.attemptRef!;
 
 		emitMessageSent({
 			...echo("server-ordinary", "Text", { text: "ordinary" }),
@@ -393,7 +393,7 @@ describe("ConversationState send echo matching", () => {
 		finish({ kind: "unknown", reason: "timeout" });
 		await flush();
 
-		expect(state.messages[0]).toMatchObject({
+		expect(state.messages[0]!).toMatchObject({
 			messageId: "server-ordinary",
 			status: "sent",
 			refValue: attemptRef,
@@ -417,8 +417,8 @@ describe("ConversationState send echo matching", () => {
 
 		state.send(outbound("Text", { text: "history ordinary" }));
 		await flush();
-		const attemptRef = state.messages[0].attemptRef!;
-		expect(state.messages[0].status).toBe("confirming");
+		const attemptRef = state.messages[0]!.attemptRef!;
+		expect(state.messages[0]!.status).toBe("confirming");
 
 		getConversationMock.mockResolvedValue({
 			messages: [
@@ -436,7 +436,7 @@ describe("ConversationState send echo matching", () => {
 		await state.refresh();
 
 		expect(state.messages).toHaveLength(1);
-		expect(state.messages[0]).toMatchObject({
+		expect(state.messages[0]!).toMatchObject({
 			messageId: "server-history-ordinary",
 			status: "sent",
 			refValue: attemptRef,
@@ -461,16 +461,16 @@ describe("ConversationState send echo matching", () => {
 		await flush();
 		state.send(outbound("Text", { text: "ordinary" }));
 		await flush();
-		const first = sendMessageMock.mock.calls[0][0];
-		expect(state.messages[0].status).toBe("failed");
+		const first = sendMessageMock.mock.calls[0]![0];
+		expect(state.messages[0]!.status).toBe("failed");
 
-		await state.retryFailedMessage(state.messages[0].messageId);
+		await state.retryFailedMessage(state.messages[0]!.messageId);
 		await flush();
-		const second = sendMessageMock.mock.calls[1][0];
+		const second = sendMessageMock.mock.calls[1]![0];
 		expect(second.ref).not.toBe(first.ref);
 		expect(second.commandRef).not.toBe(first.commandRef);
 
-		await state.retryFailedMessage(state.messages[0].messageId);
+		await state.retryFailedMessage(state.messages[0]!.messageId);
 		expect(sendMessageMock).toHaveBeenCalledTimes(2);
 	});
 });
@@ -576,7 +576,7 @@ describe("ConversationState replies", () => {
 		state.setReplyTarget(target);
 		state.send(outbound("Text", { text: "answer" }));
 
-		const optimistic = state.messages[0];
+		const optimistic = state.messages[0]!;
 		expect(state.replyTarget).toBeNull();
 		expect(optimistic.replyToMessage).toEqual(
 			expect.objectContaining({ messageId: "target" }),
@@ -610,7 +610,7 @@ describe("ConversationState replies", () => {
 		state.send(outbound("Text", { text: "answer" }));
 		await flush();
 
-		expect(state.messages[0].status).toBe("confirming");
+		expect(state.messages[0]!.status).toBe("confirming");
 	});
 
 	it("send again intentionally creates a new logical reply and handles the ambiguous original", async () => {
@@ -629,11 +629,11 @@ describe("ConversationState replies", () => {
 		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
 		state.send(outbound("Text", { text: "answer" }));
 		await flush();
-		const original = state.messages[0];
+		const original = state.messages[0]!;
 		const firstAttemptRef = original.attemptRef;
 
 		state.sendAgain(original.messageId);
-		const duplicate = state.messages[0];
+		const duplicate = state.messages[0]!;
 		expect(original.status).toBe("handled");
 		expect(duplicate.messageId).not.toBe(original.messageId);
 		expect(duplicate.replyToMessage?.messageId).toBe("target");
@@ -658,8 +658,8 @@ describe("ConversationState replies", () => {
 		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
 		state.send(outbound("Text", { text: "answer" }));
 		await flush();
-		const attemptRef = state.messages[0].refValue!;
-		expect(state.messages[0].status).toBe("failed");
+		const attemptRef = state.messages[0]!.refValue!;
+		expect(state.messages[0]!.status).toBe("failed");
 
 		emitMessageSent({
 			...echo("server-message", "Text", { text: "answer" }),
@@ -667,7 +667,7 @@ describe("ConversationState replies", () => {
 			replyToMessage: message("target", 1000),
 		});
 
-		expect(state.messages[0]).toMatchObject({
+		expect(state.messages[0]!).toMatchObject({
 			messageId: "server-message",
 			status: "sent",
 		});
@@ -691,8 +691,8 @@ describe("ConversationState replies", () => {
 
 		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
 		state.send(outbound("Text", { text: "answer" }));
-		const logicalMessageId = state.messages[0].messageId;
-		const attemptRef = state.messages[0].refValue!;
+		const logicalMessageId = state.messages[0]!.messageId;
+		const attemptRef = state.messages[0]!.refValue!;
 		emitMessageSent({
 			...echo(logicalMessageId, "Text", { text: "answer" }),
 			refValue: attemptRef,
@@ -701,7 +701,7 @@ describe("ConversationState replies", () => {
 		settle({ kind: "notSent", error: new Error("late rejection") });
 		await flush();
 
-		expect(state.messages[0].status).toBe("sent");
+		expect(state.messages[0]!.status).toBe("sent");
 	});
 
 	it("does not let a late thrown transport error regress an event-confirmed reply", async () => {
@@ -722,8 +722,8 @@ describe("ConversationState replies", () => {
 
 		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
 		state.send(outbound("Text", { text: "answer" }));
-		const logicalMessageId = state.messages[0].messageId;
-		const attemptRef = state.messages[0].refValue!;
+		const logicalMessageId = state.messages[0]!.messageId;
+		const attemptRef = state.messages[0]!.refValue!;
 		emitMessageSent({
 			...echo(logicalMessageId, "Text", { text: "answer" }),
 			refValue: attemptRef,
@@ -732,7 +732,7 @@ describe("ConversationState replies", () => {
 		reject(new Error("late bridge failure"));
 		await flush();
 
-		expect(state.messages[0]).toMatchObject({
+		expect(state.messages[0]!).toMatchObject({
 			messageId: logicalMessageId,
 			status: "sent",
 		});
@@ -751,8 +751,8 @@ describe("ConversationState replies", () => {
 		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
 		state.send(outbound("Text", { text: "answer" }));
 		await flush();
-		const attemptRef = state.messages[0].refValue!;
-		expect(state.messages[0].status).toBe("sent");
+		const attemptRef = state.messages[0]!.refValue!;
+		expect(state.messages[0]!.status).toBe("sent");
 
 		emitMessageSent({
 			...echo("server-message", "Text", { text: "answer" }),
@@ -761,7 +761,7 @@ describe("ConversationState replies", () => {
 		});
 
 		expect(state.messages).toHaveLength(1);
-		expect(state.messages[0].messageId).toBe("server-message");
+		expect(state.messages[0]!.messageId).toBe("server-message");
 	});
 
 	it("persists ambiguous delivery state and all three operation identities", async () => {
@@ -783,8 +783,11 @@ describe("ConversationState replies", () => {
 		state.send(outbound("Text", { text: "answer" }));
 		await flush();
 
-		const stored =
-			conversations.setCachedConversation.mock.lastCall?.[1].failedMessages[0];
+		const [stored] =
+			conversations.setCachedConversation.mock.lastCall?.[1].failedMessages ??
+			[];
+		expect(stored).toBeDefined();
+		if (!stored) throw new Error("expected a persisted failed message");
 		expect(stored).toMatchObject({
 			localId: expect.stringMatching(/^pending-/),
 			state: "confirming",
@@ -812,15 +815,15 @@ describe("ConversationState replies", () => {
 		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
 		state.send(outbound("Text", { text: "answer" }));
 		await flush();
-		const first = sendReplyMessageMock.mock.calls[0][0];
+		const first = sendReplyMessageMock.mock.calls[0]![0];
 
-		await state.retryFailedMessage(state.messages[0].messageId);
+		await state.retryFailedMessage(state.messages[0]!.messageId);
 		await flush();
-		const second = sendReplyMessageMock.mock.calls[1][0];
+		const second = sendReplyMessageMock.mock.calls[1]![0];
 		expect(second.ref).not.toBe(first.ref);
 		expect(second.commandRef).not.toBe(first.commandRef);
 
-		await state.retryFailedMessage(state.messages[0].messageId);
+		await state.retryFailedMessage(state.messages[0]!.messageId);
 		expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
 	});
 
@@ -854,7 +857,7 @@ describe("ConversationState replies", () => {
 			pageKey: null,
 			lastReadTimestamp: null,
 		});
-		await state.retryFailedMessage(state.messages[0].messageId);
+		await state.retryFailedMessage(state.messages[0]!.messageId);
 		await flush();
 
 		expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
@@ -890,10 +893,10 @@ describe("ConversationState replies", () => {
 			pageKey: null,
 			lastReadTimestamp: null,
 		});
-		await state.retryFailedMessage(state.messages[0].messageId);
+		await state.retryFailedMessage(state.messages[0]!.messageId);
 
 		expect(sendReplyMessageMock).toHaveBeenCalledOnce();
-		expect(state.messages[0]).toMatchObject({
+		expect(state.messages[0]!).toMatchObject({
 			messageId: "server-reply",
 			status: "sent",
 		});
@@ -917,7 +920,7 @@ describe("ConversationState replies", () => {
 		state.send(outbound("Text", { text: "legacy history reply" }));
 		await flush();
 
-		const pending = state.messages[0];
+		const pending = state.messages[0]!;
 		pending.attemptRef = undefined;
 		pending.refValue = null;
 		expect(pending.status).toBe("confirming");
@@ -939,7 +942,7 @@ describe("ConversationState replies", () => {
 		await state.refresh();
 
 		expect(state.messages).toHaveLength(1);
-		expect(state.messages[0]).toMatchObject({
+		expect(state.messages[0]!).toMatchObject({
 			messageId: "server-history-reply",
 			status: "sent",
 			replyToMessage: expect.objectContaining({ messageId: "target" }),
@@ -965,7 +968,7 @@ describe("ConversationState replies", () => {
 			state.setReplyTarget(target);
 			state.send(outbound("Text", { text: "same" }));
 			await flush();
-			const previousAttemptAt = state.messages[0].lastAttemptAt!;
+			const previousAttemptAt = state.messages[0]!.lastAttemptAt!;
 
 			getConversationMock.mockResolvedValue({
 				messages: [
@@ -979,7 +982,7 @@ describe("ConversationState replies", () => {
 				pageKey: null,
 				lastReadTimestamp: null,
 			});
-			await state.retryFailedMessage(state.messages[0].messageId);
+			await state.retryFailedMessage(state.messages[0]!.messageId);
 			await flush();
 
 			expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
@@ -1020,7 +1023,7 @@ describe("ConversationState replies", () => {
 			pageKey: null,
 			lastReadTimestamp: null,
 		});
-		await state.retryFailedMessage(state.messages[0].messageId);
+		await state.retryFailedMessage(state.messages[0]!.messageId);
 		await flush();
 
 		expect(sendReplyMessageMock).toHaveBeenCalledTimes(2);
@@ -1049,7 +1052,7 @@ describe("ConversationState replies", () => {
 				finishReconcile = resolve;
 			}),
 		);
-		const messageId = state.messages[0].messageId;
+		const messageId = state.messages[0]!.messageId;
 		const first = state.retryFailedMessage(messageId);
 		const second = state.retryFailedMessage(messageId);
 		expect(getConversationMock).toHaveBeenCalledTimes(2);
@@ -1082,7 +1085,7 @@ describe("ConversationState replies", () => {
 		state.setReplyTarget({ ...message("target", 1000), senderId: PEER_ID });
 		state.send(outbound("Text", { text: "answer" }));
 		await flush();
-		const attemptRef = state.messages[0].refValue!;
+		const attemptRef = state.messages[0]!.refValue!;
 
 		let finishReconcile!: (value: unknown) => void;
 		getConversationMock.mockReturnValue(
@@ -1090,7 +1093,7 @@ describe("ConversationState replies", () => {
 				finishReconcile = resolve;
 			}),
 		);
-		const retry = state.retryFailedMessage(state.messages[0].messageId);
+		const retry = state.retryFailedMessage(state.messages[0]!.messageId);
 		emitMessageSent({
 			...echo("server-message", "Text", { text: "answer" }),
 			refValue: attemptRef,
@@ -1106,7 +1109,7 @@ describe("ConversationState replies", () => {
 		await flush();
 
 		expect(sendReplyMessageMock).toHaveBeenCalledOnce();
-		expect(state.messages[0].status).toBe("sent");
+		expect(state.messages[0]!.status).toBe("sent");
 	});
 
 	it("semantically matches legacy bodies regardless of object key order", async () => {
@@ -1142,10 +1145,10 @@ describe("ConversationState replies", () => {
 			pageKey: null,
 			lastReadTimestamp: null,
 		});
-		await state.retryFailedMessage(state.messages[0].messageId);
+		await state.retryFailedMessage(state.messages[0]!.messageId);
 
 		expect(sendReplyMessageMock).toHaveBeenCalledOnce();
-		expect(state.messages[0]).toMatchObject({
+		expect(state.messages[0]!).toMatchObject({
 			messageId: "server-location",
 			status: "sent",
 		});
@@ -1417,7 +1420,7 @@ describe("ConversationState active history window", () => {
 			});
 		const state = create(conversations);
 		await flush();
-		state.setReplyTarget(allMessages[0]);
+		state.setReplyTarget(allMessages[0]!);
 
 		for (let page = 1; page < 9; page += 1) await state.loadMore();
 

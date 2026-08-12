@@ -58,7 +58,8 @@ function ok(data: unknown) {
 		assertOk() {},
 		json: () => data,
 		jsonParsed: () => data,
-		text: () => (data == null ? "" : JSON.stringify(data)),
+		text: () =>
+			data === null || data === undefined ? "" : JSON.stringify(data),
 	};
 }
 
@@ -327,7 +328,7 @@ describe("getProfiles batching", () => {
 
 		expect(profiles.map((profile) => profile.profileId)).toEqual([3, 1, 2]);
 		expect(fetchRestMock).toHaveBeenCalledOnce();
-		expect(fetchRestMock.mock.calls[0][1]?.body).toEqual({
+		expect(fetchRestMock.mock.calls[0]![1]?.body).toEqual({
 			targetProfileIds: [3, 1, 2],
 		});
 	});

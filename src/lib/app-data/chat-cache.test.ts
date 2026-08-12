@@ -52,14 +52,14 @@ describe("chat cache retention", () => {
 		});
 
 		expect(migrated.version).toBe(2);
-		expect(migrated.failedMessages[0]).toMatchObject({
+		expect(migrated.failedMessages[0]!).toMatchObject({
 			localId: "local-reply",
 			state: "failed",
 			retryCount: 0,
 			message: { replyToMessage: { messageId: "original" } },
 		});
-		expect(migrated.failedMessages[0]).not.toHaveProperty("attemptRef");
-		expect(migrated.failedMessages[0]).not.toHaveProperty("outerCommandRef");
+		expect(migrated.failedMessages[0]!).not.toHaveProperty("attemptRef");
+		expect(migrated.failedMessages[0]!).not.toHaveProperty("outerCommandRef");
 	});
 
 	it("keeps only confirmed messages from the last 30 days", () => {
@@ -81,7 +81,7 @@ describe("chat cache retention", () => {
 		);
 		const retained = pruneConfirmedMessages(messages, 550);
 		expect(retained).toHaveLength(500);
-		expect(retained[0].messageId).toBe("549");
+		expect(retained[0]!.messageId).toBe("549");
 		expect(retained.at(-1)?.messageId).toBe("50");
 	});
 

@@ -143,7 +143,7 @@ describe("cache write account fencing", () => {
 		await vi.waitFor(() =>
 			expect(writeAppDataFileAtomicMock).toHaveBeenCalledOnce(),
 		);
-		const path = writeAppDataFileAtomicMock.mock.calls[0][0] as string;
+		const path = writeAppDataFileAtomicMock.mock.calls[0]![0] as string;
 
 		invalidateAccountSession();
 		gate.resolve();

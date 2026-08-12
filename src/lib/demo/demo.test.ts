@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import z from "zod";
 
 import { demoRoute } from "$lib/demo";
+import { demoMeProfileId } from "$lib/demo/config";
 import { cascadeV4ResponseSchema } from "$lib/model/browse/grid/cascade/response/v4";
 import { searchProfileSchema } from "$lib/model/browse/grid/search";
 import { tapProfileSchema } from "$lib/model/interest/tap-profile";
@@ -72,9 +73,11 @@ describe("demo route data matches the real schemas", () => {
 		for (const profile of body.profiles) shortProfileSchema.parse(profile);
 	});
 
-	it("my profile + uploaded photos validate", () => {
-		const me = route("/v4/me/profile") as { profiles: unknown[] };
-		shortProfileSchema.parse(me.profiles[0]);
+	it("own profile + uploaded photos validate", () => {
+		const me = route(`/v7/profiles/${demoMeProfileId}`) as {
+			profiles: unknown[];
+		};
+		profileSchema.parse(me.profiles[0]);
 		z.object({
 			medias: z.array(
 				z.object({
@@ -120,8 +123,8 @@ describe("demo route data matches the real schemas", () => {
 			) as { messages: unknown[]; lastReadTimestamp: number | null };
 			const messages = z.array(apiResponseMessageSchema).parse(body.messages);
 			expect(messages.length).toBeGreaterThan(0);
-			expect(messages[0].timestamp).toBeGreaterThanOrEqual(
-				messages[messages.length - 1].timestamp,
+			expect(messages[0]!.timestamp).toBeGreaterThanOrEqual(
+				messages[messages.length - 1]!.timestamp,
 			);
 		}
 	});
@@ -257,7 +260,10 @@ describe("demo route data matches the real schemas", () => {
 			const body = route("/v4/inbox?page=1", "POST") as { entries: unknown[] };
 			return z.array(fullConversationSchema).parse(body.entries);
 		};
-		const [first, second, third] = inbox();
+		const initial = inbox();
+		const first = initial[0]!;
+		const second = initial[1]!;
+		const third = initial[2]!;
 
 		route(
 			`/v4/chat/conversation/${first.data.conversationId}/${first.data.pinned ? "unpin" : "pin"}`,

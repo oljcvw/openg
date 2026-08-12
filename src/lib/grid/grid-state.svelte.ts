@@ -271,7 +271,7 @@ export class GridState {
 					if (token !== this.#fetchToken) continue;
 					for (const lazy of lazyProfiles) {
 						const index = this.items.findIndex((item) => item.id === lazy.id);
-						if (index === -1 || this.items[index].type !== "lazy") continue;
+						if (index === -1 || this.items[index]!.type !== "lazy") continue;
 						const profile = resolved.get(lazy.id);
 						if (profile) {
 							this.#lazyRetryAttempts.delete(lazy.id);
@@ -285,13 +285,11 @@ export class GridState {
 					this.#compactPayloads();
 				} catch (error) {
 					console.error("Browse lazy-profile batch failed");
-					if (
-						!(
-							error instanceof ApiError &&
-							(error.kind === "RequestBlocked" ||
-								error.kind === "RequestCooldown")
-						)
-					) {
+					if (!(
+						error instanceof ApiError &&
+						(error.kind === "RequestBlocked" ||
+							error.kind === "RequestCooldown")
+					)) {
 						showErrorToast({ label: "Failed to load profiles", error });
 					}
 					this.#queueLazyRetries(
@@ -388,12 +386,12 @@ export class GridState {
 					bodyTypes: filters?.bodyTypes,
 				}),
 				...(filters?.heightEnabled && {
-					heightCmMin: filters?.height[0],
-					heightCmMax: filters?.height[1],
+					heightCmMin: filters.height[0]!,
+					heightCmMax: filters.height[1]!,
 				}),
 				...(filters?.weightEnabled && {
-					weightGramsMin: filters?.weight[0] * 1000,
-					weightGramsMax: filters?.weight[1] * 1000,
+					weightGramsMin: filters.weight[0]! * 1000,
+					weightGramsMax: filters.weight[1]! * 1000,
 				}),
 				...(filters?.relationshipStatusesEnabled && {
 					relationshipStatuses: filters?.relationshipStatuses,
@@ -490,7 +488,7 @@ export class GridState {
 				(candidate) => candidate.id === item.id,
 			);
 			if (index === -1) this.items.push(item);
-			else if (this.items[index].type === "lazy" || item.type === "rendered")
+			else if (this.items[index]!.type === "lazy" || item.type === "rendered")
 				this.items[index] = item;
 		}
 		this.#pageProfileIds.push(items.map((item) => item.id));

@@ -37,6 +37,12 @@
 		gap: 0,
 		initialRect: { width: 0, height: 640 },
 	});
+	function itemAt(collection: readonly T[], index: number): T {
+		const item = collection[index];
+		if (item === undefined)
+			throw new RangeError(`virtual item index ${index} is out of bounds`);
+		return item;
+	}
 
 	$effect(() => {
 		const snapshot = items;
@@ -49,7 +55,7 @@
 			$virtualizer.setOptions({
 				count: snapshot.length,
 				getScrollElement: () => scrollElement,
-				getItemKey: (index) => keyForItem(snapshot[index], index),
+				getItemKey: (index) => keyForItem(itemAt(snapshot, index), index),
 				estimateSize: typeof size === "function" ? size : () => size,
 				measureElement: (element, _entry, instance) =>
 					element.getBoundingClientRect().height ||
@@ -117,7 +123,7 @@
 			style:transform={`translateY(${virtualItem.start - scrollMargin}px)`}
 			use:measureElement
 		>
-			{@render children(items[virtualItem.index], virtualItem.index)}
+			{@render children(itemAt(items, virtualItem.index), virtualItem.index)}
 		</div>
 	{/each}
 </div>

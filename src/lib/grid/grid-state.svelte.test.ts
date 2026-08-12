@@ -85,7 +85,7 @@ beforeEach(() => {
 				new Map(
 					profiles.map((profile: { id: number }) => [
 						profile.id,
-						page(profile.id).items[0],
+						page(profile.id).items[0]!,
 					]),
 				),
 			),
@@ -133,7 +133,7 @@ describe("GridState profile resolution", () => {
 					new Map(
 						profiles.map((profile: { id: number }) => [
 							profile.id,
-							page(profile.id).items[0],
+							page(profile.id).items[0]!,
 						]),
 					),
 				),
@@ -153,7 +153,7 @@ describe("GridState profile resolution", () => {
 		await vi.advanceTimersByTimeAsync(1);
 
 		expect(resolveLazyProfiles).toHaveBeenCalledTimes(2);
-		expect(state.items[0]).toMatchObject({ type: "rendered", id: 1 });
+		expect(state.items[0]!).toMatchObject({ type: "rendered", id: 1 });
 		expect(consoleError).toHaveBeenCalledOnce();
 		expect(consoleError).toHaveBeenCalledWith(
 			"Browse lazy-profile batch failed",
@@ -211,7 +211,7 @@ describe("GridState profile resolution", () => {
 		await vi.advanceTimersByTimeAsync(2_000);
 
 		expect(resolveLazyProfiles).toHaveBeenCalledOnce();
-		expect(state.items[0]).toMatchObject({ type: "rendered", id: 2 });
+		expect(state.items[0]!).toMatchObject({ type: "rendered", id: 2 });
 		expect(consoleError).toHaveBeenCalledOnce();
 		expect(consoleError).toHaveBeenCalledWith(
 			"Browse lazy-profile batch failed",
@@ -234,7 +234,7 @@ describe("GridState profile resolution", () => {
 		await vi.advanceTimersByTimeAsync(20_000);
 
 		expect(resolveLazyProfiles).toHaveBeenCalledTimes(3);
-		expect(state.items[0]).toMatchObject({ type: "lazy", id: 1 });
+		expect(state.items[0]!).toMatchObject({ type: "lazy", id: 1 });
 		expect(consoleError).toHaveBeenCalledTimes(3);
 		expect(consoleError).toHaveBeenCalledWith(
 			"Browse lazy-profile batch failed",
@@ -312,7 +312,9 @@ describe("GridState Cascade coordination", () => {
 		await vi.waitFor(() =>
 			expect(state.items.map((item) => item.id)).toEqual([2]),
 		);
-		expect(getGrid.mock.calls[1][0]).toMatchObject({ nearbyGeoHash: "latest" });
+		expect(getGrid.mock.calls[1]![0]).toMatchObject({
+			nearbyGeoHash: "latest",
+		});
 		expect(getGrid.mock.calls.map(([query]) => query.nearbyGeoHash)).toEqual([
 			"first",
 			"latest",

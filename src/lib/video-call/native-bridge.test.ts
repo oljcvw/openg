@@ -65,8 +65,8 @@ describe("native video-call bridge", () => {
 		const unlistenRemote =
 			await nativeVideoCallBridge.onRemoteParticipantJoined(remoteHandler);
 		const unlistenEnded = await nativeVideoCallBridge.onEnded(endedHandler);
-		addPluginListenerMock.mock.calls[0][2]({ uid: 9 });
-		addPluginListenerMock.mock.calls[1][2]({ reason: "ended" });
+		addPluginListenerMock.mock.calls[0]![2]({ uid: 9 });
+		addPluginListenerMock.mock.calls[1]![2]({ reason: "ended" });
 		unlistenRemote();
 		unlistenEnded();
 

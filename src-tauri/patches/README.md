@@ -7,6 +7,9 @@ Open Grind carries a narrow realtime lifecycle patch here until equivalent
 disconnect, ping, and reconnect controls are available in an upstream release.
 See `docs/design/api-behavior-parity.md` for the supported behavior.
 
+`tauri-codegen` generates embedded assets and CSP hashes in hash-map order,
+which causes nondeterministic builds.
+
 `tauri-codegen/` is **generated**, do not edit it. Wipe and regenerate any time with:
 
 ```sh

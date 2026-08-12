@@ -135,6 +135,7 @@
 	{#if avatar.link}
 		<a
 			href={avatar.link}
+			aria-label={`View ${title.value ?? "profile"} profile`}
 			onclick={(event) =>
 				interceptAppNavigationClick(event, () => openAppDetail(avatar.link!))}
 			class="rounded-l-2xl outline-none focus-visible:z-3 focus-visible:ring-[3px] focus-visible:ring-primary/70 @max-row:hidden"
@@ -144,6 +145,7 @@
 		</a>
 		<a
 			href={link}
+			aria-label={`Open conversation with ${title.value ?? "profile"}`}
 			aria-current={ariaCurrent}
 			onclick={(event) =>
 				interceptAppNavigationClick(event, () => navigateRow(link))}
@@ -157,6 +159,7 @@
 		</a>
 		<a
 			href={link}
+			aria-label={`Open conversation with ${title.value ?? "profile"}`}
 			aria-current={ariaCurrent}
 			onclick={(event) =>
 				interceptAppNavigationClick(event, () => navigateRow(link))}

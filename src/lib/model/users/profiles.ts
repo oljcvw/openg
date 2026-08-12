@@ -1,5 +1,8 @@
 import z from "zod";
 
+export { genderSchema } from "$lib/model/users/genders";
+export { pronounSchema } from "$lib/model/users/pronouns";
+
 import { tapTypeSchema } from "$lib/model/interest/taps";
 import { viewSourceEnumSchema } from "$lib/model/interest/view-source";
 import { mediaHashPublicSchema } from "$lib/model/media";
@@ -253,25 +256,6 @@ export const vaccines = {
 export const vaccinesSchema = z.enum(Vaccine);
 
 export type VaccineId = z.infer<typeof vaccinesSchema>;
-
-export const genderSchema = z.object({
-	genderId: z.int(),
-	gender: z.string(),
-	displayGroup: z.int().optional(),
-	sortProfile: z.int().nullable().optional(),
-	genderPlural: z.string().nullable().optional(),
-	excludeOnProfileSelection: z.array(z.int()).nullable().optional(),
-	alsoClassifiedAs: z.array(z.int()).optional(),
-});
-
-export type Gender = z.infer<typeof genderSchema>;
-
-export const pronounSchema = z.object({
-	pronounId: z.int(),
-	pronoun: z.string(),
-});
-
-export type Pronoun = z.infer<typeof pronounSchema>;
 
 export const socialNetworksSchema = z.object({
 	twitter: z

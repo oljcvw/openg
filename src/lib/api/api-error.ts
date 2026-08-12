@@ -1,15 +1,20 @@
-export type ApiErrorKind =
-	| "Http"
-	| "Auth"
-	| "Api"
-	| "Unauthorized"
-	| "Banned"
-	| "RateLimited"
-	| "RequestBlocked"
-	| "RequestCooldown"
-	| "RequestCancelled"
-	| "RequestTimeout"
-	| "NotInitialized";
+export const apiErrorKinds = [
+	"Http",
+	"Auth",
+	"NotLoggedIn",
+	"Api",
+	"Unauthorized",
+	"Banned",
+	"RateLimited",
+	"RequestBlocked",
+	"RequestCooldown",
+	"RequestCancelled",
+	"RequestTimeout",
+	"NotInitialized",
+	"SessionCleared",
+] as const;
+
+export type ApiErrorKind = (typeof apiErrorKinds)[number];
 
 export class ApiError extends Error {
 	readonly request: {
@@ -83,7 +88,7 @@ export class ApiError extends Error {
 }
 
 function sanitizedRoute(path: string): string {
-	const [pathname, query = ""] = path.split("?", 2);
+	const [pathname = "", query = ""] = path.split("?", 2);
 	const route = pathname
 		.split("/")
 		.map((segment) => {
@@ -95,8 +100,8 @@ function sanitizedRoute(path: string): string {
 		.join("/");
 	const keys = query
 		.split("&")
-		.map((part) => part.split("=", 1)[0])
+		.map((part) => part.split("=", 1)[0] ?? "")
 		.filter((key) => /^[a-z0-9_-]{1,32}$/i.test(key))
-		.sort();
+		.sort((a, b) => a.localeCompare(b));
 	return keys.length > 0 ? `${route}?${[...new Set(keys)].join("&")}` : route;
 }

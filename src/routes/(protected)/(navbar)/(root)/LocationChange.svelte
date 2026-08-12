@@ -7,7 +7,6 @@
 		getGeohashSnapshot,
 		getLocationActivitySnapshot,
 	} from "$lib/app-data/preferences.svelte";
-	import LocationChooser from "$lib/components/location-chooser/LocationChooser.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import {
 		browseThisArea,
@@ -15,6 +14,7 @@
 		useCurrentDeviceLocation,
 	} from "$lib/location/profile-location";
 	import { decodeGeohash } from "$lib/model/geohash";
+	import type LocationChooser from "$lib/components/location-chooser/LocationChooser.svelte";
 	import type { LocationPoint } from "$lib/model/location";
 
 	let {
@@ -78,10 +78,13 @@
 				}
 			: undefined;
 		geoMapPickerOpen = true;
-		if (pinPos) locationChooser.centerAt(pinPos);
 	}
 
-	let locationChooser: LocationChooser;
+	let locationChooser: LocationChooser | null = $state(null);
+	$effect(() => {
+		if (geoMapPickerOpen && pinPos && locationChooser)
+			locationChooser.centerAt(pinPos);
+	});
 </script>
 
 <Button
@@ -111,13 +114,17 @@
 		{/if}
 	{/if}
 </Button>
-<LocationChooser
-	{onBrowse}
-	{onSetProfile}
-	onUseDeviceLocation={deviceLocationAvailable
-		? onUseDeviceLocation
-		: undefined}
-	bind:open={geoMapPickerOpen}
-	bind:this={locationChooser}
-	bind:pinPos
-/>
+{#if geoMapPickerOpen}
+	{#await import("$lib/components/location-chooser/LocationChooser.svelte") then { default: LocationChooser }}
+		<LocationChooser
+			{onBrowse}
+			{onSetProfile}
+			onUseDeviceLocation={deviceLocationAvailable
+				? onUseDeviceLocation
+				: undefined}
+			bind:open={geoMapPickerOpen}
+			bind:this={locationChooser}
+			bind:pinPos
+		/>
+	{/await}
+{/if}

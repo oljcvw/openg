@@ -247,7 +247,7 @@
 
 	function requestActivation(preset: AlbumPresetManifest): void {
 		selectedPreset = preset;
-		selectedTargetId = albums?.length === 1 ? albums[0].albumId : null;
+		selectedTargetId = albums?.length === 1 ? albums[0]!.albumId : null;
 		activationDialogOpen = true;
 	}
 

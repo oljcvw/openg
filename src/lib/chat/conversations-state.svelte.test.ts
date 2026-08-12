@@ -485,7 +485,7 @@ describe("ConversationsState epoch guards (P1.7)", () => {
 			nextPage: null,
 		});
 
-		await reconcileHandlers[0]({
+		await reconcileHandlers[0]!({
 			reasons: new Set<
 				"reconnected" | "events-dropped" | "foreground" | "server-signal"
 			>(["events-dropped"]),

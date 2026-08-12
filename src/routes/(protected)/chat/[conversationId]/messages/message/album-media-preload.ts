@@ -50,7 +50,7 @@ export async function preloadAlbumSlides(
 		while (nextIndex < displayable.length) {
 			if (workerAbortController.signal.aborted) throw abortError();
 			const index = nextIndex++;
-			const slide = displayable[index];
+			const slide = displayable[index]!;
 			if (slide.contentType.startsWith("video/")) {
 				results[index] = {
 					...slide,

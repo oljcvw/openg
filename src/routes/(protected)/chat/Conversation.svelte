@@ -92,15 +92,15 @@
 		]}
 		titleClass={presentation.tone === "unread" ? "font-bold" : undefined}
 		avatar={{
-			mediaHash: participant.primaryMediaHash ?? null,
-			link: `/profile/${participant.profileId}`,
+			mediaHash: participant?.primaryMediaHash ?? null,
+			link: participant ? `/profile/${participant.profileId}` : undefined,
 			overlay: isSelected ? selectedOverlay : undefined,
 		}}
 		title={{
 			value: conversation.data.name,
 			badge: conversation.data.muted ? mutedBadge : undefined,
 		}}
-		onlineUntil={conversation.data.onlineUntil ?? participant.onlineUntil}
+		onlineUntil={conversation.data.onlineUntil ?? participant?.onlineUntil}
 		link="/chat/{conversationId}"
 		onNavigate={openInboxConversationDetail}
 		actionsPlacement="title"

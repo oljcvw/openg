@@ -84,7 +84,7 @@
 	function observeSentinel(node: HTMLElement) {
 		const observer = new IntersectionObserver(
 			(entries) => {
-				if (entries[0].isIntersecting) taps.loadMore();
+				if (entries[0]?.isIntersecting) taps.loadMore();
 			},
 			{ root: nearestScrollableAncestor(node), rootMargin: "400px" },
 		);

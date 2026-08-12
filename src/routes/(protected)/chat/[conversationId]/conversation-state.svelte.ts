@@ -42,12 +42,7 @@ import { getConversation } from "./messages";
 
 export type OptimisticMessage = ApiResponseMessage & {
 	status:
-		| "queued"
-		| "awaitingAck"
-		| "confirming"
-		| "sent"
-		| "failed"
-		| "handled";
+		"queued" | "awaitingAck" | "confirming" | "sent" | "failed" | "handled";
 	lastAttemptAt?: number;
 	attemptRef?: string;
 	outerCommandRef?: string;
@@ -372,7 +367,7 @@ export class ConversationState {
 			);
 			const oldestServerTs =
 				result.messages.length > 0
-					? result.messages[result.messages.length - 1].timestamp
+					? result.messages[result.messages.length - 1]!.timestamp
 					: Number.POSITIVE_INFINITY;
 
 			const newValue: OptimisticMessage[] = [];
@@ -1002,7 +997,7 @@ export class ConversationState {
 			if (correlated) return correlated;
 		}
 		for (let i = this.messages.length - 1; i >= 0; i--) {
-			const candidate = this.messages[i];
+			const candidate = this.messages[i]!;
 			if (candidate.status === "sent") continue;
 			if (sameLegacyMessage(incoming, candidate)) return candidate;
 		}
@@ -1284,7 +1279,7 @@ export class ConversationState {
 			try {
 				await markConversationAsRead({
 					conversationId: this.conversationId,
-					messageId: highest.messageId,
+					messageId: highest!.messageId,
 				});
 			} catch (error) {
 				revertLocalRead();

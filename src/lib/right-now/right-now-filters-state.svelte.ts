@@ -1,5 +1,3 @@
-import { isEqual } from "lodash-es";
-
 import { showErrorToast } from "$lib/api/error";
 import {
 	getPreferences,
@@ -10,6 +8,7 @@ import {
 	type RightNowFilters,
 	rightNowFiltersSchema,
 } from "$lib/components/filters/filters";
+import { deepEqual } from "$lib/util/deep-equal";
 
 type FilterPersistence = {
 	load(): Promise<RightNowFilters | undefined>;
@@ -51,7 +50,7 @@ export class RightNowSearchFiltersState {
 			...oldValue,
 			...values,
 		});
-		if (isEqual(oldValue, newValue)) return;
+		if (deepEqual(oldValue, newValue)) return;
 
 		this.#changeVersion += 1;
 		this.value = newValue;

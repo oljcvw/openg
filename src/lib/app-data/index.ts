@@ -19,6 +19,11 @@ export async function readAppDataFile(path: string) {
 	});
 }
 
+export async function removeAppDataFile(path: string) {
+	if (!(await existsAppDataFile(path))) return;
+	await remove(path, { baseDir: BaseDirectory.AppData });
+}
+
 export async function writeAppDataFileAtomic(
 	path: string,
 	content: Uint8Array,
@@ -34,9 +39,4 @@ export async function writeAppDataFileAtomic(
 		oldPathBaseDir: BaseDirectory.AppData,
 		newPathBaseDir: BaseDirectory.AppData,
 	});
-}
-
-export async function removeAppDataFile(path: string): Promise<void> {
-	if (!(await existsAppDataFile(path))) return;
-	await remove(path, { baseDir: BaseDirectory.AppData });
 }

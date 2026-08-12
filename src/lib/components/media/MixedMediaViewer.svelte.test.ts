@@ -207,7 +207,7 @@ describe("MixedMediaViewer", () => {
 		harness.pswp.currIndex = 1;
 
 		await view.rerender({
-			items: [items[2], ...items.slice(0, 2)],
+			items: [items[2]!, ...items.slice(0, 2)],
 			startIndex: 2,
 			onClose: vi.fn(),
 		});

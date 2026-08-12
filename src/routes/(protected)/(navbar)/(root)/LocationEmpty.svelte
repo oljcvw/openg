@@ -5,7 +5,6 @@
 	import NavigationArrowIcon from "phosphor-svelte/lib/NavigationArrowIcon";
 
 	import { showErrorToast } from "$lib/api/error";
-	import LocationChooser from "$lib/components/location-chooser/LocationChooser.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import * as Empty from "$lib/components/ui/empty";
 	import {
@@ -96,9 +95,13 @@
 		</a>
 	</Button> -->
 </Empty.Root>
-<LocationChooser
-	{onBrowse}
-	{onSetProfile}
-	onUseDeviceLocation={geoApiSupported ? onUseDeviceLocation : undefined}
-	bind:open={geoMapPickerOpen}
-/>
+{#if geoMapPickerOpen}
+	{#await import("$lib/components/location-chooser/LocationChooser.svelte") then { default: LocationChooser }}
+		<LocationChooser
+			{onBrowse}
+			{onSetProfile}
+			onUseDeviceLocation={geoApiSupported ? onUseDeviceLocation : undefined}
+			bind:open={geoMapPickerOpen}
+		/>
+	{/await}
+{/if}

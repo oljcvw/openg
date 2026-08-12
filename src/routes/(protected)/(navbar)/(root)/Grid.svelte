@@ -61,7 +61,7 @@
 		let enabled = params.enabled;
 		const observer = new IntersectionObserver(
 			(entries) => {
-				if (enabled && entries[0].isIntersecting)
+				if (enabled && entries[0]?.isIntersecting)
 					gridState.loadMore().catch((error) => console.error(error));
 			},
 			{ root: nearestScrollableAncestor(node) },
@@ -85,7 +85,7 @@
 	function observeLazy(node: HTMLElement, params: { id: number }) {
 		const observer = new IntersectionObserver(
 			(entries) => {
-				if (entries[0].isIntersecting) {
+				if (entries[0]?.isIntersecting) {
 					gridState
 						.resolveProfile(params.id)
 						.catch((error) => console.error(error));
@@ -105,7 +105,7 @@
 		let visible = false;
 		const observer = new IntersectionObserver(
 			(entries) => {
-				const nextVisible = entries[0].isIntersecting;
+				const nextVisible = entries[0]?.isIntersecting ?? false;
 				if (nextVisible === visible) return;
 				visible = nextVisible;
 				gridState.setProfileVisible(params.id, visible);

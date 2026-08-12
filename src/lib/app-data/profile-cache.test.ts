@@ -104,7 +104,7 @@ describe("profile cache schema", () => {
 			"profile-cache.data",
 		);
 		const migrated = parseProfileCache(
-			decode(writeAppDataFileAtomicMock.mock.calls[0][1]),
+			decode(writeAppDataFileAtomicMock.mock.calls[0]![1]),
 		);
 		expect(migrated.accounts).toEqual({
 			"7002": {

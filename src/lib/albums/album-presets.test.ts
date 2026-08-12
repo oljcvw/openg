@@ -47,7 +47,7 @@ describe("album preset manifests", () => {
 		expect(
 			albumPresetManifestSchema.safeParse({
 				...valid,
-				items: [{ ...valid.items[0], mimeType: "text/plain" }],
+				items: [{ ...valid.items[0]!, mimeType: "text/plain" }],
 			}).success,
 		).toBe(false);
 	});
@@ -123,7 +123,7 @@ describe("AlbumActivationCoordinator", () => {
 
 		const conflicting: AlbumActivationJournal = {
 			...journal,
-			completedActionIds: [journal.plan.actions[0].id],
+			completedActionIds: [journal.plan.actions[0]!.id],
 		};
 		checksums = ["f".repeat(64)];
 		expect((await coordinator.resume(conflicting)).status).toBe("conflict");

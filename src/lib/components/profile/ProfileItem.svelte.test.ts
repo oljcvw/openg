@@ -24,8 +24,8 @@ describe("ProfileItem app navigation", () => {
 		});
 		const links = view.getAllByRole("link");
 
-		await fireEvent.click(links[0]);
-		await fireEvent.click(links[1]);
+		await fireEvent.click(links[0]!);
+		await fireEvent.click(links[1]!);
 
 		expect(navigation.openAppDetail).toHaveBeenNthCalledWith(1, "/profile/42");
 		expect(navigation.openAppDetail).toHaveBeenNthCalledWith(2, "/chat/7");
@@ -41,8 +41,8 @@ describe("ProfileItem app navigation", () => {
 		});
 		const links = view.getAllByRole("link");
 
-		await fireEvent.click(links[0]);
-		await fireEvent.click(links[1]);
+		await fireEvent.click(links[0]!);
+		await fireEvent.click(links[1]!);
 
 		expect(navigation.openAppDetail).toHaveBeenCalledExactlyOnceWith(
 			"/profile/42",
@@ -67,7 +67,7 @@ describe("ProfileItem app navigation", () => {
 			{ once: true },
 		);
 
-		row.dispatchEvent(
+		row!.dispatchEvent(
 			new MouseEvent("click", {
 				bubbles: true,
 				cancelable: true,
@@ -89,9 +89,9 @@ describe("ProfileItem app navigation", () => {
 		});
 
 		const links = view.getAllByRole("link");
-		expect(links[0].getAttribute("aria-current")).toBeNull();
-		expect(links[1].getAttribute("aria-current")).toBe("page");
-		expect(links[2].getAttribute("aria-current")).toBe("page");
+		expect(links[0]!.getAttribute("aria-current")).toBeNull();
+		expect(links[1]!.getAttribute("aria-current")).toBe("page");
+		expect(links[2]!.getAttribute("aria-current")).toBe("page");
 	});
 
 	it("exposes the requested Inbox density without clipping the row", () => {

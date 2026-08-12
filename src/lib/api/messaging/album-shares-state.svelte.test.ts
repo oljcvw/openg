@@ -201,11 +201,11 @@ describe("ensureAlbumSharesSwept", () => {
 		activateAccountSession(201);
 		const current = ensureAlbumSharesSwept(42, [{ albumId: 2 }]);
 		await vi.waitFor(() => expect(releases).toHaveLength(2));
-		releases[0]();
+		releases[0]!();
 		await obsolete;
 		const overlapping = ensureAlbumSharesSwept(42, [{ albumId: 2 }]);
 		expect(getAlbumSharesMock).toHaveBeenCalledTimes(2);
-		releases[1]();
+		releases[1]!();
 		await Promise.all([current, overlapping]);
 		expect(getAlbumSharesMock).toHaveBeenCalledTimes(2);
 	});

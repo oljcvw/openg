@@ -157,6 +157,7 @@ export function attachTouchPull(
 		}
 		if (!canStart(event.target)) return;
 		const touch = event.changedTouches[0];
+		if (!touch) return;
 		touchId = touch.identifier;
 		anchorPullOrigin(touch);
 		startTarget = event.target;

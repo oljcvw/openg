@@ -455,7 +455,7 @@ export function demoConversationMessages(
 		name: seed?.name ?? null,
 		onlineUntil: seed ? onlineUntilOf(seed) : null,
 		profileId: conv?.withId ?? 0,
-		showDistance: seed?.distanceM != null,
+		showDistance: seed?.distanceM !== null && seed?.distanceM !== undefined,
 	};
 	if (!conv || pageKey !== undefined) {
 		return { lastReadTimestamp: null, messages: [], profile };
@@ -654,7 +654,7 @@ export function demoDeleteAlbum(albumId: number) {
 	const albums = demoAlbumStore();
 	const index = albums.findIndex((item) => item.albumId === albumId);
 	if (index !== -1) {
-		for (const item of albums[index].content) {
+		for (const item of albums[index]!.content) {
 			demoObjectUrls.release(item.url);
 			demoObjectUrls.release(item.coverUrl);
 			demoObjectUrls.release(item.thumbUrl);

@@ -1,9 +1,5 @@
 export type MessagePinReason =
-	| "optimistic"
-	| "reply-target"
-	| "selected"
-	| "viewer"
-	| "voice-note";
+	"optimistic" | "reply-target" | "selected" | "viewer" | "voice-note";
 
 export type MessageSegmentMetadata = {
 	segmentId: string;
@@ -141,7 +137,7 @@ export class ActiveMessageWindow<T extends MessageRecord> {
 			(segment) => segment.segmentId === segmentId,
 		);
 		if (targetIndex === -1) return false;
-		const allowedIds = new Set(this.#metadata[targetIndex].messageIds);
+		const allowedIds = new Set(this.#metadata[targetIndex]!.messageIds);
 		const restored = this.#dedupe(
 			messages.filter((message) => allowedIds.has(message.messageId)),
 		);
@@ -184,7 +180,7 @@ export class ActiveMessageWindow<T extends MessageRecord> {
 			this.#activeSegments.has(segment.segmentId),
 		);
 		if (firstActiveIndex <= 0) return null;
-		const segment = this.#metadata[firstActiveIndex - 1];
+		const segment = this.#metadata[firstActiveIndex - 1]!;
 		return { ...segment, messageIds: [...segment.messageIds] };
 	}
 
@@ -256,9 +252,9 @@ export class ActiveMessageWindow<T extends MessageRecord> {
 		);
 		if (additions.length > 0) {
 			this.#ensureNewestSegment();
-			const newest = this.#activeSegments.get(this.#metadata[0].segmentId)!;
+			const newest = this.#activeSegments.get(this.#metadata[0]!.segmentId)!;
 			newest.messages = this.#dedupe([...additions, ...newest.messages]);
-			this.#metadata[0].messageIds = newest.messages.map(
+			this.#metadata[0]!.messageIds = newest.messages.map(
 				(message) => message.messageId,
 			);
 		}
@@ -271,7 +267,7 @@ export class ActiveMessageWindow<T extends MessageRecord> {
 				(candidate) => candidate.messageId !== message.messageId,
 			);
 		}
-		const newest = this.#activeSegments.get(this.#metadata[0].segmentId)!;
+		const newest = this.#activeSegments.get(this.#metadata[0]!.segmentId)!;
 		newest.messages = [message, ...newest.messages];
 		for (const metadata of this.#metadata) {
 			const segment = this.#activeSegments.get(metadata.segmentId);
@@ -365,7 +361,7 @@ export class ActiveMessageWindow<T extends MessageRecord> {
 					right - left,
 			)[0];
 			if (removeIndex === undefined) return;
-			this.#activeSegments.delete(this.#metadata[removeIndex].segmentId);
+			this.#activeSegments.delete(this.#metadata[removeIndex]!.segmentId);
 		}
 	}
 

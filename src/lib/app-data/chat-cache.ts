@@ -233,7 +233,7 @@ export async function migrateBeta4ConversationCaches(
 			if (retentionAuthorization !== null) {
 				const start = activeConversationKey === item.key ? messageOffset : 0;
 				for (let index = start; index < migrated.messages.length; index += 1) {
-					const message = migrated.messages[index];
+					const message = migrated.messages[index]!;
 					const entry = classifyReceivedSharedMedia(message, {
 						accountProfileId: accountId,
 						conversationId: item.key,

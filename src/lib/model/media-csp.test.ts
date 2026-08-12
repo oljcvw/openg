@@ -12,7 +12,7 @@ function directives(csp: string): Map<string, string[]> {
 	return new Map(
 		csp.split(";").map((directive) => {
 			const [name, ...sources] = directive.trim().split(/\s+/);
-			return [name, sources];
+			return [name ?? "", sources];
 		}),
 	);
 }

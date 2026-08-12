@@ -2,7 +2,9 @@ use serde::Serialize;
 
 use crate::error::AppError;
 use crate::state::AppState;
-use crate::storage::{account_storage_lock, AuthStorage, DeviceStorage};
+use crate::storage::{
+	account_storage_lock, AuthStorage, DeviceStorage, SigningKeyStorage,
+};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -114,6 +116,7 @@ pub async fn logout(state: tauri::State<'_, AppState>) -> Result<(), AppError> {
 	client.logout().await;
 	let _storage_guard = account_storage_lock().lock().await;
 	AuthStorage::delete_session();
+	SigningKeyStorage::delete();
 
 	let new_device = super::identity::generate_aligned_device();
 	if let Err(e) = DeviceStorage::save(&new_device) {

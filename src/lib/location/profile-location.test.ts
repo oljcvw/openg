@@ -63,9 +63,9 @@ describe("profile location transactions", () => {
 			pendingProfileLocation: null,
 			reportedProfileLocation: location,
 		});
-		const pendingOrder = mocks.setPreferences.mock.invocationCallOrder[0];
+		const pendingOrder = mocks.setPreferences.mock.invocationCallOrder[0]!;
 		const remoteOrder =
-			mocks.updateReportedProfileLocation.mock.invocationCallOrder[0];
+			mocks.updateReportedProfileLocation.mock.invocationCallOrder[0]!;
 		expect(pendingOrder).toBeLessThan(remoteOrder);
 	});
 
@@ -133,8 +133,8 @@ describe("profile location transactions", () => {
 		await Promise.all([first, second]);
 
 		expect(mocks.updateReportedProfileLocation).toHaveBeenCalledTimes(2);
-		expect(mocks.updateReportedProfileLocation.mock.calls[0]).not.toEqual(
-			mocks.updateReportedProfileLocation.mock.calls[1],
+		expect(mocks.updateReportedProfileLocation.mock.calls[0]!).not.toEqual(
+			mocks.updateReportedProfileLocation.mock.calls[1]!,
 		);
 	});
 

@@ -219,6 +219,7 @@ async function fetchProfile(
 		}).then((res) => res.jsonParsed(profileResponseSchema))
 	).profiles[0];
 	assertAccountSessionCurrent(session);
+	if (!profile) throw new ProfileUnavailableError();
 	if (isProbablyUnavailable(profile)) {
 		if (profile.displayName === MAGIC_PROFILE_BLOCK_DISPLAY_NAME) {
 			const blockedByUs = await getBlockedUsers().then((blocking) =>
@@ -287,13 +288,13 @@ export async function getProfiles(
 export async function getMyProfile() {
 	const session = getAccountSessionSnapshot();
 	const cached = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY)?.me as
-		| z.infer<typeof getProfilesResponseSchema>["profiles"][0]
-		| undefined;
+		z.infer<typeof getProfilesResponseSchema>["profiles"][0] | undefined;
 	if (cached) return cached;
 	const profile = await fetchRest("/v4/me/profile").then(
 		(res) => res.jsonParsed(getProfilesResponseSchema).profiles[0],
 	);
 	assertAccountSessionCurrent(session);
+	if (!profile) throw new ProfileUnavailableError();
 	mergeProfileMemoryRecord(MY_PROFILE_CACHE_KEY, { me: profile });
 	return profile;
 }
@@ -321,8 +322,7 @@ function assertAccountSessionCurrent(session: AccountSessionSnapshot): void {
 export function invalidateProfile(profileId: number) {
 	deleteProfileMemoryRecord(profileId);
 	const own = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY)?.me as
-		| z.infer<typeof getProfilesResponseSchema>["profiles"][0]
-		| undefined;
+		z.infer<typeof getProfilesResponseSchema>["profiles"][0] | undefined;
 	if (own?.profileId === profileId)
 		deleteProfileMemoryRecord(MY_PROFILE_CACHE_KEY);
 	void removeCachedProfile(profileId).catch((error: unknown) => {
@@ -392,8 +392,7 @@ export function mergeProfileEditIntoCaches(
 	}
 	const ownRecord = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY);
 	const ownProfile = ownRecord?.me as
-		| z.infer<typeof getProfilesResponseSchema>["profiles"][0]
-		| undefined;
+		z.infer<typeof getProfilesResponseSchema>["profiles"][0] | undefined;
 	if (ownProfile?.profileId === cacheProfileId) {
 		const next: Record<string, unknown> = { ...ownProfile };
 		for (const key of Object.keys(patch)) {
@@ -525,8 +524,7 @@ export async function deleteProfilePhotos(
 		});
 	}
 	const ownProfile = getProfileMemoryRecord(MY_PROFILE_CACHE_KEY)?.me as
-		| z.infer<typeof getProfilesResponseSchema>["profiles"][0]
-		| undefined;
+		z.infer<typeof getProfilesResponseSchema>["profiles"][0] | undefined;
 	if (ownProfile?.profileId === cacheProfileId) {
 		mergeProfileMemoryRecord(MY_PROFILE_CACHE_KEY, {
 			me: {

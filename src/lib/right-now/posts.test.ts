@@ -78,7 +78,7 @@ describe("getPosts", () => {
 		const result = await getPosts({ sort: "NEWEST" });
 
 		expect(result.posts).toHaveLength(1);
-		expect(result.posts[0].displayName).toBe("New");
+		expect(result.posts[0]!.displayName).toBe("New");
 	});
 });
 

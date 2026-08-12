@@ -310,7 +310,7 @@
 						(message.retryCount ?? 0) >= 1)
 						? () => conversationState.sendAgain(message.messageId)
 						: undefined}
-					isRead={isOut && message.messageId === messages[0].messageId
+					isRead={isOut && message.messageId === messages[0]?.messageId
 						? conversationState.lastReadTimestamp === message.timestamp
 						: null}
 					onVisible={!isOut

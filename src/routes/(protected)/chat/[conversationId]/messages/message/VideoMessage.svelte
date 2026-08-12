@@ -132,7 +132,11 @@
 				} else if (!isOut && directSource) {
 					source = await directSource.open(async () => {
 						const authorizedBody = await authorizeRecipientView();
-						if (authorizedBody?.url == null) return null;
+						if (
+							authorizedBody?.url === null ||
+							authorizedBody?.url === undefined
+						)
+							return null;
 						return {
 							url: authorizedBody.url,
 							contentType: authorizedBody.contentType ?? "video/*",

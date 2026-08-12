@@ -1,5 +1,3 @@
-import { isEqual } from "lodash-es";
-
 import { showErrorToast } from "$lib/api/error";
 import {
 	getBrowseAgeScaleSnapshot,
@@ -11,6 +9,7 @@ import {
 	defaultFilters,
 	type GridSearchFilters,
 } from "$lib/components/filters/filters";
+import { deepEqual } from "$lib/util/deep-equal";
 
 export class GridSearchFiltersState {
 	value: GridSearchFilters | null = $state(null);
@@ -27,7 +26,7 @@ export class GridSearchFiltersState {
 		const newValue = this.#normalize(
 			Object.assign({}, oldValue ?? defaultFilters, gridSearchFilters),
 		);
-		if (!isEqual(oldValue, newValue)) {
+		if (!deepEqual(oldValue, newValue)) {
 			this.value = newValue;
 			void this.#save();
 			this.onRefresh();

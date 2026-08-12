@@ -255,7 +255,7 @@ export function applyAuthoritativeAlbumMembership<
 		[record],
 		new Set(snapshot.currentAlbumIds),
 		snapshot.listedAt,
-	)[0];
+	)[0]!;
 }
 
 export function albumHistoryCursorScopeKey(
@@ -1511,7 +1511,7 @@ async function mapConcurrent<T, R>(
 		async () => {
 			while (index < values.length) {
 				const current = index++;
-				results[current] = await map(values[current]);
+				results[current] = await map(values[current]!);
 			}
 		},
 	);

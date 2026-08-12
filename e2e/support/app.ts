@@ -1,6 +1,22 @@
 import type { CDPSession, Page } from "@playwright/test";
 
 export const DEMO_CONVERSATION = "/chat/100001:123456000";
+export const DEMO_GEOHASH = "u33dc0cpgp00";
+
+export async function ensureGridLocation(page: Page): Promise<void> {
+	const allFilters = page.locator('[aria-label="All filters"]');
+	if ((await allFilters.count()) === 0) {
+		await page.keyboard.press("Meta+k");
+		const palette = page.getByRole("combobox");
+		await palette.waitFor();
+		await palette.fill(`@${DEMO_GEOHASH}`);
+		await page
+			.locator(`[role="option"][data-value="@${DEMO_GEOHASH}"]`)
+			.waitFor();
+		await page.keyboard.press("Enter");
+	}
+	await allFilters.waitFor({ timeout: 60_000 });
+}
 
 export async function installTauriShim(
 	page: Page,
@@ -15,6 +31,13 @@ export async function installTauriShim(
 		interface InvokeOptions {
 			headers?: Record<string, string>;
 		}
+		interface EventListenArgs {
+			event: string;
+			handler: number;
+		}
+		interface WsSendArgs {
+			command?: { type?: string; ref_id?: string };
+		}
 
 		const files = new Map<string, Uint8Array>(
 			Object.entries(seedFiles).map(([path, bytes]) => [
@@ -22,13 +45,50 @@ export async function installTauriShim(
 				new Uint8Array(bytes),
 			]),
 		);
+		const callbacks = new Map<number, (value: unknown) => unknown>();
+		const listeners = new Map<string, Set<number>>();
+		let callbackId = 0;
+		const emit = (event: string, payload: unknown) => {
+			for (const handler of listeners.get(event) ?? [])
+				callbacks.get(handler)?.({ event, id: handler, payload });
+		};
 
 		const invoke = (cmd: string, args?: unknown, opts?: unknown): unknown => {
 			const fs = (args ?? {}) as FsArgs;
 			const headers = ((opts ?? {}) as InvokeOptions).headers ?? {};
 
 			if (cmd === "plugin:path|resolve_directory") return "/appdata";
-			if (cmd.startsWith("plugin:event|")) return null;
+			if (cmd === "plugin:event|listen") {
+				const { event, handler } = args as EventListenArgs;
+				const eventListeners = listeners.get(event) ?? new Set<number>();
+				eventListeners.add(handler);
+				listeners.set(event, eventListeners);
+				return handler;
+			}
+			if (cmd === "plugin:event|unlisten") {
+				const { event, eventId } = args as {
+					event: string;
+					eventId: number;
+				};
+				listeners.get(event)?.delete(eventId);
+				callbacks.delete(eventId);
+				return null;
+			}
+			if (cmd === "ws_send") {
+				const { command } = args as WsSendArgs;
+				if (command?.type && command.ref_id) {
+					const event = `grindr:${command.type.replaceAll(".", "_")}_response`;
+					queueMicrotask(() =>
+						emit(event, {
+							type: `${command.type}.response`,
+							ref: command.ref_id,
+							status: 200,
+							payload: null,
+						}),
+					);
+				}
+				return null;
+			}
 			if (cmd === "plugin:fs|exists") return files.has(fs.path ?? "");
 			if (cmd === "plugin:fs|read_file") {
 				const data = files.get(fs.path ?? "");
@@ -61,7 +121,11 @@ export async function installTauriShim(
 				exe_extension: "",
 			},
 			__TAURI_INTERNALS__: {
-				transformCallback: () => Math.floor(Math.random() * 1e9),
+				transformCallback: (callback: (value: unknown) => unknown) => {
+					const id = ++callbackId;
+					callbacks.set(id, callback);
+					return id;
+				},
 				metadata: {
 					currentWindow: { label: "main" },
 					currentWebview: { label: "main" },

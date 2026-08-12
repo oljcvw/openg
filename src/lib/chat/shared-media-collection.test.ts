@@ -66,8 +66,8 @@ describe("received shared-media collection", () => {
 			"message-2",
 			"message-3",
 		]);
-		expect(entries[0].remoteUrl).toContain("message-1.jpg");
-		expect(entries[0].cacheAvailability).toBe("cached");
+		expect(entries[0]!.remoteUrl).toContain("message-1.jpg");
+		expect(entries[0]!.cacheAvailability).toBe("cached");
 	});
 
 	it("keeps a retracted share only when encrypted bytes remain", () => {
@@ -88,7 +88,7 @@ describe("received shared-media collection", () => {
 		});
 
 		expect(entries).toHaveLength(1);
-		expect(entries[0]).toMatchObject({
+		expect(entries[0]!).toMatchObject({
 			messageId: "message-1",
 			remoteAvailability: "retracted",
 			cacheAvailability: "cached",
@@ -166,7 +166,9 @@ describe("received shared-media collection", () => {
 		expect(collection.historyPage(0).entries).toHaveLength(60);
 		expect(collection.historyPage(16).entries).toHaveLength(40);
 		expect(collection.historyPage(17).entries).toHaveLength(0);
-		expect(collection.historyPage(0).entries[0].messageId).toBe("message-0999");
+		expect(collection.historyPage(0).entries[0]!.messageId).toBe(
+			"message-0999",
+		);
 	});
 
 	it("builds the viewer deck oldest-to-newest and excludes uncached limited media", () => {
@@ -190,7 +192,7 @@ describe("received shared-media collection", () => {
 		});
 
 		expect(items.map((item) => item.id)).toEqual(["message-1", "message-3"]);
-		expect(items[0]).toMatchObject({ width: 10, height: 10 });
+		expect(items[0]!).toMatchObject({ width: 10, height: 10 });
 
 		const retainedLimited = conversationMediaDeckItems({
 			context,

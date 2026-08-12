@@ -233,7 +233,7 @@ export async function moveSavedPhrase(
 		) {
 			throw new RangeError("Saved phrase destination is out of range.");
 		}
-		const [phrase] = accountPhrases.splice(sourceIndex, 1);
+		const phrase = accountPhrases.splice(sourceIndex, 1)[0]!;
 		accountPhrases.splice(destinationIndex, 0, phrase);
 		phrases.accounts[ownerKey] = accountPhrases;
 		await persist(generation, phrases);

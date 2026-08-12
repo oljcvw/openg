@@ -301,6 +301,14 @@ export function getGeohashSnapshot(): string | null {
 	return preferencesSnapshot.geohash;
 }
 
+export function getPreferencesSnapshot(): Preferences {
+	return preferencesSnapshot;
+}
+
+export function preferencesLoaded(): boolean {
+	return cache !== null;
+}
+
 export function getReportedProfileLocationSnapshot() {
 	return preferencesSnapshot.reportedProfileLocation;
 }

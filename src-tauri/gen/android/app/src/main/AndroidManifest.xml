@@ -27,6 +27,7 @@
 	<uses-feature android:name="android.software.leanback" android:required="false" />
 
 	<application
+		android:allowBackup="false"
 		android:banner="@drawable/ic_launcher_foreground"
 		android:dataExtractionRules="@xml/data_extraction_rules"
 		android:fullBackupContent="@xml/backup_rules"

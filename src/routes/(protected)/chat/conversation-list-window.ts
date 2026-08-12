@@ -113,7 +113,7 @@ export function resolveConversationRestoreTarget(
 ): { index: number; itemKey: string } | null {
 	const exactIndex = conversationIds.indexOf(anchorItemKey);
 	if (exactIndex !== -1)
-		return { index: exactIndex, itemKey: conversationIds[exactIndex] };
+		return { index: exactIndex, itemKey: conversationIds[exactIndex]! };
 	if (!neighborhood) return null;
 
 	for (

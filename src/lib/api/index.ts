@@ -194,6 +194,7 @@ export function asAppError(error: unknown) {
 			kind: z.enum([
 				"Http",
 				"Auth",
+				"NotLoggedIn",
 				"Api",
 				"Unauthorized",
 				"Banned",
@@ -202,6 +203,7 @@ export function asAppError(error: unknown) {
 				"RequestCooldown",
 				"RequestCancelled",
 				"NotInitialized",
+				"SessionCleared",
 			]),
 			message: z
 				.string()

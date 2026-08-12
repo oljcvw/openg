@@ -12,6 +12,8 @@
 	import SwitchField from "$lib/components/ui/switch-field/SwitchField.svelte";
 	import ShowDistanceSetting from "./ShowDistanceSetting.svelte";
 
+	let { data }: import("./$types").PageProps = $props();
+
 	let settings = $state<AccountPreferences | null>(null);
 	let updating = $state<Set<keyof AccountPreferencesUpdate>>(new Set());
 
@@ -66,7 +68,7 @@
 	}
 </script>
 
-<ShowDistanceSetting />
+<ShowDistanceSetting ourProfileId={data.ourProfileId} />
 {#if settings}
 	<SwitchField
 		title="Incognito"

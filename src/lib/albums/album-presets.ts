@@ -192,7 +192,8 @@ export function buildAlbumActivationPlan({
 			(candidate) =>
 				candidate.checksum === item.checksum && candidate.kind === item.kind,
 		);
-		if (index >= 0) matches.set(item.itemId, unmatchedLive.splice(index, 1)[0]);
+		if (index >= 0)
+			matches.set(item.itemId, unmatchedLive.splice(index, 1)[0]!);
 	}
 
 	let state = live

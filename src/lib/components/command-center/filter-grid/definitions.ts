@@ -1,4 +1,4 @@
-import { getUnitsSnapshot } from "$lib/app-data/preferences.svelte";
+import { getPreferencesSnapshot } from "$lib/app-data/preferences.svelte";
 import {
 	AGE_MAX,
 	AGE_MIN,
@@ -12,6 +12,10 @@ import {
 	FilterRelationshipStatus,
 	FilterTribe,
 	type GridSearchFilters,
+	HEIGHT_CM_MAX,
+	HEIGHT_CM_MIN,
+	WEIGHT_KG_MAX,
+	WEIGHT_KG_MIN,
 } from "$lib/components/filters/filters";
 import {
 	acceptNSFWPics,
@@ -38,12 +42,12 @@ import {
 import type { BooleanKey, Filter, ListKey, Render } from "./types";
 
 function rangeText(
-	[min, max]: number[],
 	floor: number,
 	ceiling: number,
+	[min = floor, max = ceiling]: number[],
 	format: (value: number, units: UnitSystem) => string,
 ): string {
-	const units = getUnitsSnapshot();
+	const units = getPreferencesSnapshot().units;
 	return `${min === floor ? "No min" : format(min, units)} - ${
 		max === ceiling ? "No max" : format(max, units)
 	}`;
@@ -168,23 +172,25 @@ export const filters: Filter[] = [
 	rangeFilter({
 		label: "height",
 		target: "height",
-		min: 120,
-		max: 242,
+		min: HEIGHT_CM_MIN,
+		max: HEIGHT_CM_MAX,
 		minKey: "heightCmMin",
 		maxKey: "heightCmMax",
-		render: (f) => rangeText(f.height, 120, 242, formatHeight),
+		render: (f) =>
+			rangeText(HEIGHT_CM_MIN, HEIGHT_CM_MAX, f.height, formatHeight),
 	}),
 	rangeFilter({
 		label: "weight",
 		target: "weight",
-		min: 40,
-		max: 273,
+		min: WEIGHT_KG_MIN,
+		max: WEIGHT_KG_MAX,
 		minKey: "weightGramsMin",
 		maxKey: "weightGramsMax",
-		rawMin: 40000,
-		rawMax: 273000,
+		rawMin: WEIGHT_KG_MIN * 1000,
+		rawMax: WEIGHT_KG_MAX * 1000,
 		store: (grams) => grams / 1000,
-		render: (f) => rangeText(f.weight, 40, 273, formatWeightKg),
+		render: (f) =>
+			rangeText(WEIGHT_KG_MIN, WEIGHT_KG_MAX, f.weight, formatWeightKg),
 	}),
 	enumFilter(
 		"position",

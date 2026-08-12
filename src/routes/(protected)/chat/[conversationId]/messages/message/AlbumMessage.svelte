@@ -362,6 +362,7 @@
 
 {#if canOpen || cachedItemCount > 0}
 	<button
+		aria-label="Open shared album"
 		class={[
 			className,
 			contentClass,

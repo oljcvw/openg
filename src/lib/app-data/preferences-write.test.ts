@@ -43,7 +43,7 @@ describe("developer preference writes", () => {
 		expect(migrated.retainSharedChatMedia).toBe(true);
 		expect(migrated.developerSettings.directMediaCacheMb).toBe(125);
 		expect(writeAppDataFileAtomicMock).toHaveBeenCalledOnce();
-		const persisted = decode(writeAppDataFileAtomicMock.mock.calls[0][1]);
+		const persisted = decode(writeAppDataFileAtomicMock.mock.calls[0]![1]);
 		expect(persisted).toMatchObject({
 			storageVersion: 2,
 			keepUnavailableCachedAlbums: false,
@@ -85,7 +85,7 @@ describe("developer preference writes", () => {
 
 		expect(getInboxLayoutModeSnapshot()).toBe("stacked");
 		expect(getInboxRowDensitySnapshot()).toBe("roomy");
-		const persisted = decode(writeAppDataFileAtomicMock.mock.calls[0][1]);
+		const persisted = decode(writeAppDataFileAtomicMock.mock.calls[0]![1]);
 		expect(persisted).toMatchObject({
 			inboxLayoutMode: "stacked",
 			inboxRowDensity: "roomy",
