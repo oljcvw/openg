@@ -12,7 +12,9 @@ const {
 	getVoicePermissionStatusMock,
 	onVoiceRecordingErrorMock,
 	onVoiceRecordingMaxDurationMock,
+	observeBackgroundTaskMock,
 	platformMock,
+	reportClientDiagnosticMock,
 	startVoiceRecordingMock,
 	stopVoiceRecordingMock,
 	toastErrorMock,
@@ -22,7 +24,11 @@ const {
 	getVoicePermissionStatusMock: vi.fn(),
 	onVoiceRecordingErrorMock: vi.fn(),
 	onVoiceRecordingMaxDurationMock: vi.fn(),
+	observeBackgroundTaskMock: vi.fn(
+		(task: Promise<unknown>) => void task.catch(() => {}),
+	),
 	platformMock: vi.fn(),
+	reportClientDiagnosticMock: vi.fn(),
 	startVoiceRecordingMock: vi.fn(),
 	stopVoiceRecordingMock: vi.fn(),
 	toastErrorMock: vi.fn(),
@@ -41,6 +47,10 @@ vi.mock("$lib/api/voice-recorder", () => ({
 	requestVoicePermission: vi.fn(),
 	startVoiceRecording: startVoiceRecordingMock,
 	stopVoiceRecording: stopVoiceRecordingMock,
+}));
+vi.mock("$lib/platform/client-diagnostics", () => ({
+	observeBackgroundTask: observeBackgroundTaskMock,
+	reportClientDiagnostic: reportClientDiagnosticMock,
 }));
 vi.mock("svelte-sonner", () => ({
 	toast: {
@@ -68,8 +78,12 @@ describe("ComposerVoiceMessageTrigger keyboard semantics", () => {
 		startVoiceRecordingMock.mockResolvedValue(undefined);
 		stopVoiceRecordingMock.mockResolvedValue({ status: "tooShort" });
 		cancelVoiceRecordingMock.mockResolvedValue(undefined);
-		onVoiceRecordingErrorMock.mockResolvedValue({ unregister: vi.fn() });
-		onVoiceRecordingMaxDurationMock.mockResolvedValue({ unregister: vi.fn() });
+		onVoiceRecordingErrorMock.mockResolvedValue({
+			unregister: vi.fn().mockResolvedValue(undefined),
+		});
+		onVoiceRecordingMaxDurationMock.mockResolvedValue({
+			unregister: vi.fn().mockResolvedValue(undefined),
+		});
 		uploadChatMediaMock.mockResolvedValue({
 			mediaId: 40,
 			mediaHash: "hash",
@@ -130,6 +144,84 @@ describe("ComposerVoiceMessageTrigger keyboard semantics", () => {
 		registration.resolve({ unregister });
 
 		await waitFor(() => expect(unregister).toHaveBeenCalledOnce());
+	});
+
+	it("owns listener registration failures and disables only voice messaging", async () => {
+		const unregister = vi.fn().mockResolvedValue(undefined);
+		onVoiceRecordingMaxDurationMock.mockResolvedValue({ unregister });
+		onVoiceRecordingErrorMock.mockRejectedValue(
+			new Error("listener permission denied"),
+		);
+		render(Harness, { sendMessage: vi.fn() });
+
+		await waitFor(() => expect(unregister).toHaveBeenCalledOnce());
+		await waitFor(() =>
+			expect(
+				screen.getByRole("switch", { name: "Voice messages unavailable" }),
+			).toHaveProperty("disabled", true),
+		);
+		expect(reportClientDiagnosticMock).toHaveBeenCalledWith({
+			category: "listener_error",
+			component: "voice_recorder",
+			code: "registration_failed",
+			level: "error",
+		});
+		expect(toastErrorMock).toHaveBeenCalledWith(
+			"Voice messages unavailable",
+			expect.objectContaining({ id: "voice-recorder-listener-error" }),
+		);
+
+		render(Harness, { sendMessage: vi.fn() });
+		await waitFor(() =>
+			expect(reportClientDiagnosticMock).toHaveBeenCalledTimes(2),
+		);
+		expect(toastErrorMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("reports rejected partial cleanup without leaking the native error", async () => {
+		onVoiceRecordingMaxDurationMock.mockResolvedValue({
+			unregister: vi.fn().mockRejectedValue(new Error("private native detail")),
+		});
+		onVoiceRecordingErrorMock.mockRejectedValue(
+			new Error("registration failed"),
+		);
+		render(Harness, { sendMessage: vi.fn() });
+
+		await waitFor(() =>
+			expect(reportClientDiagnosticMock).toHaveBeenCalledWith({
+				category: "listener_error",
+				component: "voice_recorder",
+				code: "listener_cleanup_failed",
+				level: "warning",
+			}),
+		);
+		expect(reportClientDiagnosticMock).not.toHaveBeenCalledWith(
+			expect.objectContaining({ error: expect.anything() }),
+		);
+	});
+
+	it("owns rejected listener cleanup during teardown", async () => {
+		const unregister = vi.fn().mockRejectedValue(new Error("cleanup failed"));
+		onVoiceRecordingMaxDurationMock.mockResolvedValue({ unregister });
+		const view = render(Harness, { sendMessage: vi.fn() });
+		await waitFor(() =>
+			expect(onVoiceRecordingErrorMock).toHaveBeenCalledOnce(),
+		);
+		const registrationTask = observeBackgroundTaskMock.mock.calls[0]?.[0];
+		expect(registrationTask).toBeInstanceOf(Promise);
+		await registrationTask;
+
+		view.unmount();
+
+		expect(observeBackgroundTaskMock).toHaveBeenCalledWith(
+			expect.any(Promise),
+			{
+				category: "listener_error",
+				component: "voice_recorder",
+				code: "listener_cleanup_failed",
+				level: "warning",
+			},
+		);
 	});
 
 	it("defaults safely when the Tauri platform API is unavailable", () => {

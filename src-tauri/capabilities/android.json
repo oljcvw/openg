@@ -10,6 +10,7 @@
 	"permissions": [
 		"android-fs:allow-show-open-file-picker",
 		"android-fs:allow-read-file",
-		"android-fs:allow-get-mime-type"
+		"android-fs:allow-get-mime-type",
+		"open-grind-voice-recorder:default"
 	]
 }

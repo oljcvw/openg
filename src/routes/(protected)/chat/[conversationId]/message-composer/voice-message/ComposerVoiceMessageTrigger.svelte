@@ -1,3 +1,7 @@
+<script module lang="ts">
+	let listenerFailurePresented = false;
+</script>
+
 <script lang="ts">
 	import { platform } from "@tauri-apps/plugin-os";
 	import { MicrophoneIcon, PaperPlaneTiltIcon, XIcon } from "phosphor-svelte";
@@ -16,6 +20,10 @@
 		startVoiceRecording,
 		stopVoiceRecording,
 	} from "$lib/api/voice-recorder";
+	import {
+		observeBackgroundTask,
+		reportClientDiagnostic,
+	} from "$lib/platform/client-diagnostics";
 	import { fromBase64 } from "$lib/util/base64";
 	import type { Message } from "$lib/model/messaging/messages";
 	import { getMessageComposerContext } from "../message-composer-context.svelte";
@@ -33,6 +41,7 @@
 	}
 
 	const supported = supportsVoiceRecording();
+	let listenerAvailable = $state(supported);
 	let recording = $state(false);
 	let starting = $state(false);
 	let canceling = $state(false);
@@ -46,6 +55,83 @@
 	let recordingErrorListener: { unregister(): Promise<void> } | null = null;
 	let listenerGeneration = 0;
 	let destroyed = false;
+
+	function observeListenerCleanup(task: Promise<unknown>): void {
+		observeBackgroundTask(task, {
+			category: "listener_error",
+			component: "voice_recorder",
+			code: "listener_cleanup_failed",
+			level: "warning",
+		});
+	}
+
+	async function registerVoiceListeners(generation: number): Promise<void> {
+		const registrations = await Promise.allSettled([
+			onVoiceRecordingMaxDuration(() => {
+				if (destroyed || generation !== listenerGeneration || !recording)
+					return;
+				resetRecordingState();
+				void stopVoiceRecording()
+					.then((result) => {
+						if (result.status === "ready") return sendRecording(result);
+					})
+					.catch((error) =>
+						showErrorToast({
+							label: "Failed to finish voice recording",
+							error,
+						}),
+					);
+			}),
+			onVoiceRecordingError(() => {
+				if (destroyed || generation !== listenerGeneration || !recording)
+					return;
+				resetRecordingState();
+				toast.error("Voice recording stopped unexpectedly.");
+			}),
+		]);
+		const successful = registrations.flatMap((registration) =>
+			registration.status === "fulfilled" ? [registration.value] : [],
+		);
+		const failed = registrations.some(
+			(registration) => registration.status === "rejected",
+		);
+		if (
+			failed ||
+			destroyed ||
+			generation !== listenerGeneration ||
+			successful.length !== 2
+		) {
+			const cleanupResults = await Promise.allSettled(
+				successful.map((listener) => listener.unregister()),
+			);
+			if (cleanupResults.some((result) => result.status === "rejected")) {
+				reportClientDiagnostic({
+					category: "listener_error",
+					component: "voice_recorder",
+					code: "listener_cleanup_failed",
+					level: "warning",
+				});
+			}
+			if (destroyed || generation !== listenerGeneration) return;
+			listenerAvailable = false;
+			reportClientDiagnostic({
+				category: "listener_error",
+				component: "voice_recorder",
+				code: "registration_failed",
+				level: "error",
+			});
+			if (!listenerFailurePresented) {
+				listenerFailurePresented = true;
+				toast.error("Voice messages unavailable", {
+					description: "Text and media messaging are unaffected.",
+					id: "voice-recorder-listener-error",
+				});
+			}
+			return;
+		}
+		maxDurationListener = successful[0]!;
+		recordingErrorListener = successful[1]!;
+	}
 
 	function stopTimer(): void {
 		if (timer !== null) clearInterval(timer);
@@ -195,33 +281,11 @@
 	onMount(() => {
 		if (!supported) return;
 		const generation = ++listenerGeneration;
-		void onVoiceRecordingMaxDuration(() => {
-			if (destroyed || generation !== listenerGeneration || !recording) return;
-			resetRecordingState();
-			void stopVoiceRecording()
-				.then((result) => {
-					if (result.status === "ready") return sendRecording(result);
-				})
-				.catch((error) =>
-					showErrorToast({ label: "Failed to finish voice recording", error }),
-				);
-		}).then(async (listener) => {
-			if (destroyed || generation !== listenerGeneration) {
-				await listener.unregister();
-				return;
-			}
-			maxDurationListener = listener;
-		});
-		void onVoiceRecordingError(() => {
-			if (destroyed || generation !== listenerGeneration || !recording) return;
-			resetRecordingState();
-			toast.error("Voice recording stopped unexpectedly.");
-		}).then(async (listener) => {
-			if (destroyed || generation !== listenerGeneration) {
-				await listener.unregister();
-				return;
-			}
-			recordingErrorListener = listener;
+		observeBackgroundTask(registerVoiceListeners(generation), {
+			category: "listener_error",
+			component: "voice_recorder",
+			code: "registration_task_failed",
+			level: "error",
 		});
 		const onBlur = () => void cancel();
 		const onVisibility = () => {
@@ -239,8 +303,10 @@
 		destroyed = true;
 		listenerGeneration += 1;
 		void cancel();
-		void maxDurationListener?.unregister();
-		void recordingErrorListener?.unregister();
+		if (maxDurationListener)
+			observeListenerCleanup(maxDurationListener.unregister());
+		if (recordingErrorListener)
+			observeListenerCleanup(recordingErrorListener.unregister());
 		maxDurationListener = null;
 		recordingErrorListener = null;
 	});
@@ -278,12 +344,14 @@
 		onclick={(event) => event.preventDefault()}
 		onkeydown={toggleFromKeyboard}
 		class="z-30 touch-none ps-0"
-		disabled={composer.disabled || sending || starting}
+		disabled={composer.disabled || sending || starting || !listenerAvailable}
 		role="switch"
 		aria-checked={recording}
-		aria-label={recording
-			? "Recording voice message"
-			: "Hold to record voice message"}
+		aria-label={!listenerAvailable
+			? "Voice messages unavailable"
+			: recording
+				? "Recording voice message"
+				: "Hold to record voice message"}
 	>
 		{#snippet icon({ ...props })}
 			{#if sending}
