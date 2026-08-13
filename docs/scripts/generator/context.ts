@@ -138,6 +138,7 @@ function isReusableSchema(
 ): boolean {
 	const schema = doc.components.schemas[name];
 	if (!schema) return false;
+	if (schema["x-exclude-from-markdown"]) return false;
 	if (schema["x-render-on-tag"]) return true;
 	if (schema["x-enum-labels"]) return true;
 	const hasBody = !!(schema.properties || schema.allOf || schema.oneOf);

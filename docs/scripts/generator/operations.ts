@@ -7,7 +7,12 @@ import {
 	isPlaceholderSchema,
 	renderProperty,
 } from "./properties";
-import { urlForParamGroup, urlForSchema, withWipSuffix } from "./slugs";
+import {
+	slugify,
+	urlForParamGroup,
+	urlForSchema,
+	withWipSuffix,
+} from "./slugs";
 import type { Parameter, ParameterOrRef, Schema } from "./types";
 
 const HTTP_DEFAULT_DESCRIPTIONS = new Set([
@@ -25,6 +30,10 @@ function humanizeOperationId(opId: string): string {
 		.replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
 		.toLowerCase()
 		.replace(/^./, (c) => c.toUpperCase());
+}
+
+export function operationSummary(op: Op["op"]): string {
+	return op.summary ?? humanizeOperationId(op.operationId);
 }
 
 function resolveParam(ctx: Context, p: ParameterOrRef): Parameter | undefined {
@@ -194,14 +203,18 @@ export function renderOperation(
 	ctx: Context,
 	entry: Op,
 	tagIsWip: boolean,
+	anchor?: string,
 ): string {
 	const { path, method, op } = entry;
-	const summary = op.summary ?? humanizeOperationId(op.operationId);
+	const summary = operationSummary(op);
 	const wip = op["x-wip"] === true;
 	const deprecated = op.deprecated === true;
 	let headingTitle = withWipSuffix(summary, wip);
 	if (deprecated) headingTitle = withDeprecatedSuffix(headingTitle);
-	const lines: string[] = [`## ${headingTitle}`, ""];
+	const lines: string[] = [
+		`## ${headingTitle} {#${anchor ?? slugify(summary)}}`,
+		"",
+	];
 
 	if (wip && !tagIsWip) {
 		lines.push("> [!NOTE]\n> This endpoint hasn't been researched yet", "");

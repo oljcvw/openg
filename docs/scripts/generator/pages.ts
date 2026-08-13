@@ -1,10 +1,11 @@
 import type { Context } from "./context";
 import { SHARED_PAGE } from "./context";
-import { renderOperation } from "./operations";
+import { operationSummary, renderOperation } from "./operations";
 import { renderProperty } from "./properties";
 import {
 	pageTitle,
 	schemaDisplay,
+	slugify,
 	tagTitle,
 	urlForParamGroup,
 	urlForSchema,
@@ -208,14 +209,30 @@ export function renderTagPage(ctx: Context, tagName: string): string {
 	} else if (wip) {
 		lines.push(
 			"> [!NOTE]\n> This page is a work in progress. Endpoints below haven't been fully researched.",
-		"",
+			"",
 		);
 	} else if (tagObj?.["x-wip-note"]) {
 		lines.push(`> [!NOTE]\n> ${tagObj["x-wip-note"]}`, "");
 	}
 
-	for (const entry of ctx.operationsByTag.get(tagName) ?? []) {
-		lines.push(renderOperation(ctx, entry, wip));
+	const operations = ctx.operationsByTag.get(tagName) ?? [];
+	const summaryCounts = new Map<string, number>();
+	for (const entry of operations) {
+		const key = slugify(operationSummary(entry.op));
+		summaryCounts.set(key, (summaryCounts.get(key) ?? 0) + 1);
+	}
+	const usedAnchors = new Set<string>();
+	for (const entry of operations) {
+		const summaryAnchor = slugify(operationSummary(entry.op));
+		const anchor =
+			(summaryCounts.get(summaryAnchor) ?? 0) > 1
+				? slugify(entry.op.operationId)
+				: summaryAnchor;
+		if (usedAnchors.has(anchor)) {
+			throw new Error(`Duplicate operation anchor on ${tagName}: ${anchor}`);
+		}
+		usedAnchors.add(anchor);
+		lines.push(renderOperation(ctx, entry, wip, anchor));
 	}
 	for (const name of ctx.paramGroupsByPage.get(tagName) ?? []) {
 		lines.push(renderParamGroupSection(ctx, name));

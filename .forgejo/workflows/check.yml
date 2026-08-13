@@ -64,11 +64,13 @@ jobs:
           step cargo metadata --manifest-path src-tauri/Cargo.toml --format-version 1 >/dev/null
 
           step bun install --frozen-lockfile
+          step bun install --cwd docs --frozen-lockfile --no-summary
           step bun run check:version
           step bun run lint
           step bun run check
           step bun run check:ci
           step bun run check:scripts
+          step bun run check:docs
           step bun run test:unit
           step bun run test:rust
           step bun run test:e2e

@@ -107,3 +107,5 @@ if (unmentioned.length) {
 	);
 	for (const u of unmentioned) console.log(`  ${u}`);
 }
+
+if (missing.length || wrongMethod.length) process.exitCode = 1;

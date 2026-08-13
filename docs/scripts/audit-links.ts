@@ -1,8 +1,9 @@
-import { readdirSync, readFileSync, statSync } from "fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import { join } from "path";
 
-const ROOT = "content/grindr-api";
-const GENERATED = "content/generated/grindr-api";
+const CONTENT = "content";
+const GENERATED_PREFIX = "content/generated/";
+const PUBLIC = "content/public";
 
 function walk(dir: string): string[] {
 	const out: string[] = [];
@@ -33,7 +34,9 @@ function collectAnchors(filePath: string): Set<string> {
 	const content = readFileSync(filePath, "utf8");
 	const anchors = new Set<string>([""]);
 	for (const m of content.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)) {
-		anchors.add(slugify(m[1] ?? ""));
+		const heading = m[1] ?? "";
+		const explicit = heading.match(/\s+\{#([^}]+)\}\s*$/)?.[1];
+		anchors.add(explicit ?? slugify(heading));
 	}
 	return anchors;
 }
@@ -44,7 +47,13 @@ function register(route: string, anchors: Set<string>): void {
 	if (existing) for (const a of anchors) existing.add(a);
 	else pages.set(route, new Set(anchors));
 }
-for (const f of [...walk(ROOT), ...walk(GENERATED)]) {
+const markdownFiles = walk(CONTENT).filter(
+	(f) => !f.startsWith(GENERATED_PREFIX),
+);
+const generatedFiles = existsSync("content/generated")
+	? walk("content/generated")
+	: [];
+for (const f of [...markdownFiles, ...generatedFiles]) {
 	const route = pageOf(f);
 	const anchors = collectAnchors(f);
 	register(route, anchors);
@@ -62,9 +71,9 @@ interface Broken {
 }
 
 const broken: Broken[] = [];
-const linkRe = /\[([^\]]*)\]\((\/grindr-api\/[^)#\s]*)(#[^)\s]+)?\)/g;
+const linkRe = /!?\[([^\]]*)\]\((\/[^)#\s]*)(#[^)\s]+)?\)/g;
 
-for (const f of [...walk(ROOT), ...walk(GENERATED)]) {
+for (const f of [...markdownFiles, ...generatedFiles]) {
 	const content = readFileSync(f, "utf8");
 	const fromPage = pageOf(f);
 	for (const m of content.matchAll(linkRe)) {
@@ -73,6 +82,8 @@ for (const f of [...walk(ROOT), ...walk(GENERATED)]) {
 		const hash = m[3];
 		const anchor = hash ? hash.slice(1) : "";
 		const anchors = pages.get(path);
+		const publicAsset = existsSync(join(PUBLIC, path));
+		if (publicAsset) continue;
 		if (!anchors) {
 			broken.push({
 				file: fromPage,
@@ -120,3 +131,5 @@ for (const [link, info] of sorted) {
 		`  ${info.reason}: ${link}  (${info.refs.length}x) "${info.label}"  [${sample}]`,
 	);
 }
+
+if (broken.length > 0) process.exitCode = 1;

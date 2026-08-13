@@ -71,3 +71,5 @@ console.log(`Missing from openapi: ${missing.length}\n`);
 for (const m of missing) {
 	console.log(`  ${m.key}  [${m.files.join(", ")}]`);
 }
+
+if (missing.length > 0) process.exitCode = 1;

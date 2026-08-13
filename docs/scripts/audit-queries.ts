@@ -119,3 +119,5 @@ for (const m of mismatches) {
 		`  ${m.path}  ${m.param}: openapi=${m.openapi}, markdown=${m.original}`,
 	);
 }
+
+if (mismatches.length > 0) process.exitCode = 1;

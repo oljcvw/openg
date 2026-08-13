@@ -45,7 +45,7 @@ export interface Schema {
 	"x-wip"?: boolean;
 	"x-property-groups"?: PropertyGroup[];
 	"x-key-description"?: string;
-	"x-exclude-from-markdown"?: string;
+	"x-exclude-from-markdown"?: boolean;
 	"x-original-type"?: string;
 	__allOfRefs?: string[];
 }

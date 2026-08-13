@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "fs";
+import { mkdirSync, rmSync, writeFileSync } from "fs";
 import { dirname } from "path";
 
 import { loadContext, SKIP_TAGS } from "./generator/context";
@@ -15,6 +15,7 @@ function writeFile(path: string, content: string): void {
 }
 
 const ctx = loadContext("lib/openapi.json");
+rmSync(OUT_DIR, { force: true, recursive: true });
 const realTagNames = new Set(ctx.doc.tags.map((t) => t.name));
 let written = 0;
 
