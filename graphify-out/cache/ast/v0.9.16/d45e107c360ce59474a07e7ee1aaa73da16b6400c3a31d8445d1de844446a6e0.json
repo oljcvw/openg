@@ -1,0 +1,63 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_md",
+			"label": "events.md",
+			"file_type": "document",
+			"source_file": "docs/content/grindr-api/websocket/events.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_events",
+			"label": "Events",
+			"file_type": "document",
+			"source_file": "docs/content/grindr-api/websocket/events.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_ws_connection_established",
+			"label": "`ws.connection.established`",
+			"file_type": "document",
+			"source_file": "docs/content/grindr-api/websocket/events.md",
+			"source_location": "L5"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_ws_error",
+			"label": "`ws.error`",
+			"file_type": "document",
+			"source_file": "docs/content/grindr-api/websocket/events.md",
+			"source_location": "L11"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_md",
+			"target": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_events",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "docs/content/grindr-api/websocket/events.md",
+			"source_location": "L1",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_events",
+			"target": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_ws_connection_established",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "docs/content/grindr-api/websocket/events.md",
+			"source_location": "L5",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_events",
+			"target": "users_andrew_zzapps_open_grind_docs_content_grindr_api_websocket_events_ws_error",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "docs/content/grindr-api/websocket/events.md",
+			"source_location": "L11",
+			"weight": 1.0
+		}
+	],
+	"input_tokens": 0,
+	"output_tokens": 0
+}

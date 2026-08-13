@@ -1,0 +1,28 @@
+{
+	"nodes": [
+		{
+			"id": "content_governance_canonical_governance_redirect",
+			"label": "Canonical Governance Redirect",
+			"file_type": "document",
+			"source_file": "docs/content/governance.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "content_governance_canonical_governance_redirect",
+			"target": "governance_open_grind_governance",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/governance.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

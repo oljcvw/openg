@@ -1,0 +1,190 @@
+{
+	"nodes": [
+		{
+			"id": "phonescreenshots_6_location_picker_screen",
+			"label": "Location Picker Screen",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_6_madrid_map",
+			"label": "Madrid Map",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_6_selected_location_pin",
+			"label": "Selected Location Pin",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_6_place_search",
+			"label": "Place Search",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_6_current_location_control",
+			"label": "Current Location Control",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_6_map_zoom_controls",
+			"label": "Map Zoom Controls",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_6_save_location_action",
+			"label": "Save Location Action",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_6_openstreetmap",
+			"label": "OpenStreetMap",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "phonescreenshots_6_location_picker_screen",
+			"target": "phonescreenshots_6_madrid_map",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_6_location_picker_screen",
+			"target": "phonescreenshots_6_openstreetmap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_6_selected_location_pin",
+			"target": "phonescreenshots_6_madrid_map",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_6_place_search",
+			"target": "phonescreenshots_6_selected_location_pin",
+			"relation": "shares_data_with",
+			"confidence": "INFERRED",
+			"confidence_score": 0.85,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_6_current_location_control",
+			"target": "phonescreenshots_6_selected_location_pin",
+			"relation": "shares_data_with",
+			"confidence": "INFERRED",
+			"confidence_score": 0.85,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_6_map_zoom_controls",
+			"target": "phonescreenshots_6_madrid_map",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_6_save_location_action",
+			"target": "phonescreenshots_6_selected_location_pin",
+			"relation": "shares_data_with",
+			"confidence": "INFERRED",
+			"confidence_score": 0.85,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_6_madrid_map",
+			"target": "phonescreenshots_6_openstreetmap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "phonescreenshots_6_location_selection_flow",
+			"label": "Location Selection Flow",
+			"nodes": [
+				"phonescreenshots_6_place_search",
+				"phonescreenshots_6_current_location_control",
+				"phonescreenshots_6_selected_location_pin",
+				"phonescreenshots_6_save_location_action"
+			],
+			"relation": "participate_in",
+			"confidence": "INFERRED",
+			"confidence_score": 0.85,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/6.jpeg"
+		}
+	]
+}

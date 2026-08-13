@@ -1,0 +1,88 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_md",
+			"label": "README.md",
+			"file_type": "document",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_grindr_google_oauth_webextension",
+			"label": "Grindr Google OAuth WebExtension",
+			"file_type": "document",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_install",
+			"label": "Install",
+			"file_type": "document",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L11"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_usage",
+			"label": "Usage",
+			"file_type": "document",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L24"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_license",
+			"label": "License",
+			"file_type": "document",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L48"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_md",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_grindr_google_oauth_webextension",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L1",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_grindr_google_oauth_webextension",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_install",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L11",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_grindr_google_oauth_webextension",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_usage",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L24",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_grindr_google_oauth_webextension",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_license",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L48",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_readme_md",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_license_md",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/README.md",
+			"source_location": "L50",
+			"weight": 1.0
+		}
+	],
+	"input_tokens": 0,
+	"output_tokens": 0
+}

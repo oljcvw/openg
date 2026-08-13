@@ -1,0 +1,434 @@
+{
+	"nodes": [
+		{
+			"id": "content_index_open_grind",
+			"label": "Open Grind",
+			"file_type": "document",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_vitepress_home_page_schema",
+			"label": "VitePress Default Theme Home Page",
+			"file_type": "concept",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_unofficial_grindr_client",
+			"label": "Unofficial Grindr Client",
+			"file_type": "concept",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_grindr",
+			"label": "Grindr",
+			"file_type": "concept",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_unlocked_grid",
+			"label": "Unlocked Grid",
+			"file_type": "concept",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_location_spoofing",
+			"label": "Location Spoofing",
+			"file_type": "concept",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_openstreetmap",
+			"label": "OpenStreetMap",
+			"file_type": "concept",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_zero_ads",
+			"label": "Zero Ads",
+			"file_type": "concept",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_cross_platform_support",
+			"label": "Cross-Platform Support",
+			"file_type": "concept",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_privacy_by_default",
+			"label": "Privacy by Default",
+			"file_type": "rationale",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "Open Grind is positioned to collect no analytics or user data and to include no trackers."
+		},
+		{
+			"id": "content_index_security_as_foundation",
+			"label": "Security as Foundation",
+			"file_type": "rationale",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "Human review, audits, supply-chain security, and end-to-end testing are presented as foundational product practices."
+		},
+		{
+			"id": "content_index_download_guide",
+			"label": "Download Guide",
+			"file_type": "document",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_source_code_repository",
+			"label": "Open Grind Source Code Repository",
+			"file_type": "concept",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_app_screenshots",
+			"label": "Open Grind App Screenshots",
+			"file_type": "image",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_index_partial_platform_support",
+			"label": "Partial Platform Support Qualification",
+			"file_type": "rationale",
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "iOS, Windows, and Linux are described as technically supported but not yet tested or available as stable builds."
+		}
+	],
+	"edges": [
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_vitepress_home_page_schema",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_unofficial_grindr_client",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_unofficial_grindr_client",
+			"target": "content_index_grindr",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_unlocked_grid",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_location_spoofing",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_location_spoofing",
+			"target": "content_index_openstreetmap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_zero_ads",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_cross_platform_support",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_privacy_by_default",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_security_as_foundation",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_download_guide",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_source_code_repository",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_open_grind",
+			"target": "content_index_app_screenshots",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_partial_platform_support",
+			"target": "content_index_cross_platform_support",
+			"relation": "rationale_for",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_unlocked_grid",
+			"target": "en_us_full_description_unlocked_grid",
+			"relation": "semantically_similar_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_location_spoofing",
+			"target": "en_us_full_description_location_spoofing",
+			"relation": "semantically_similar_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_openstreetmap",
+			"target": "en_us_full_description_openstreetmap",
+			"relation": "semantically_similar_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_zero_ads",
+			"target": "en_us_full_description_zero_ads",
+			"relation": "semantically_similar_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_privacy_by_default",
+			"target": "en_us_full_description_privacy_by_default",
+			"relation": "semantically_similar_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_security_as_foundation",
+			"target": "en_us_full_description_security_as_foundation",
+			"relation": "semantically_similar_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_index_unofficial_grindr_client",
+			"target": "en_us_full_description_grindr_queer_social_network",
+			"relation": "conceptually_related_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "open_grind_product_identity",
+			"label": "Open Grind Product Identity",
+			"nodes": [
+				"content_index_open_grind",
+				"en_us_full_description_open_grind",
+				"en_us_short_description_open_grind",
+				"en_us_title_open_grind",
+				"src_app_sveltekit_document_shell"
+			],
+			"relation": "form",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md"
+		},
+		{
+			"id": "storefront_documentation_feature_parity",
+			"label": "Storefront and Documentation Feature Parity",
+			"nodes": [
+				"content_index_unlocked_grid",
+				"content_index_location_spoofing",
+				"content_index_zero_ads",
+				"content_index_privacy_by_default",
+				"content_index_security_as_foundation",
+				"en_us_full_description_unlocked_grid",
+				"en_us_full_description_location_spoofing",
+				"en_us_full_description_zero_ads",
+				"en_us_full_description_privacy_by_default",
+				"en_us_full_description_security_as_foundation"
+			],
+			"relation": "form",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md"
+		},
+		{
+			"id": "privacy_centered_positioning",
+			"label": "Privacy-Centered Product Positioning",
+			"nodes": [
+				"content_index_privacy_by_default",
+				"en_us_full_description_privacy_by_default",
+				"en_us_short_description_open_grind"
+			],
+			"relation": "participate_in",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "docs/content/index.md"
+		}
+	]
+}

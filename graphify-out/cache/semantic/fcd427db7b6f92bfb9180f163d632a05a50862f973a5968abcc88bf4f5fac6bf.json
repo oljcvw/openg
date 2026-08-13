@@ -1,0 +1,96 @@
+{
+	"nodes": [
+		{
+			"id": "images_icon_open_grind_app_icon",
+			"label": "Open Grind App Icon",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/icon.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "images_icon_butterfly_emblem",
+			"label": "Butterfly Emblem",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/icon.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "images_icon_amber_silhouette",
+			"label": "Amber Silhouette",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/icon.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "images_icon_bilateral_symmetry",
+			"label": "Bilateral Symmetry",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/icon.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "images_icon_open_grind_app_icon",
+			"target": "images_icon_butterfly_emblem",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/icon.png",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "images_icon_butterfly_emblem",
+			"target": "images_icon_amber_silhouette",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/icon.png",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "images_icon_butterfly_emblem",
+			"target": "images_icon_bilateral_symmetry",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/icon.png",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "images_icon_butterfly_visual_identity",
+			"label": "Butterfly Visual Identity",
+			"nodes": [
+				"images_icon_open_grind_app_icon",
+				"images_icon_butterfly_emblem",
+				"images_icon_amber_silhouette",
+				"images_icon_bilateral_symmetry"
+			],
+			"relation": "form",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/icon.png"
+		}
+	]
+}

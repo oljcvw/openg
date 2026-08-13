@@ -1,0 +1,604 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"label": "headers.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_user_agent",
+			"label": "build_user_agent()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L18"
+		},
+		{
+			"id": "deviceinfo",
+			"label": "DeviceInfo",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "string",
+			"label": "String",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_device_info_header",
+			"label": "build_device_info_header()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L29"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders",
+			"label": "GrindrHeaders",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L53"
+		},
+		{
+			"id": "vec",
+			"label": "Vec",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "headername",
+			"label": "HeaderName",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "headervalue",
+			"label": "HeaderValue",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"label": ".build()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L60"
+		},
+		{
+			"id": "option",
+			"label": "Option",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "result",
+			"label": "Result",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "self",
+			"label": "Self",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "grindrerror",
+			"label": "GrindrError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_invalid_header",
+			"label": "invalid_header()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L117"
+		},
+		{
+			"id": "e",
+			"label": "E",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/grindr/src/headers.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_test_device",
+			"label": "test_device()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L125"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_user_agent_format",
+			"label": "user_agent_format()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L142"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_device_info_header_format",
+			"label": "device_info_header_format()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L152"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_without_auth",
+			"label": "headers_order_without_auth()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L161"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_with_auth_and_roles",
+			"label": "headers_order_with_auth_and_roles()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L182"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "header",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L1",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "deviceinfo",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L3",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "grindrerror",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L4",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_user_agent",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L18",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_user_agent",
+			"target": "deviceinfo",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L18",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_user_agent",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L18",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_device_info_header",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L29",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_device_info_header",
+			"target": "deviceinfo",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L29",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_device_info_header",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L29",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L53",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L55",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders",
+			"target": "headername",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L55",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders",
+			"target": "headervalue",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L55",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L60",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"target": "deviceinfo",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L60",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L60",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L60",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L60",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L60",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L60",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_invalid_header",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L117",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_invalid_header",
+			"target": "e",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L117",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_invalid_header",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L117",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "super",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L123",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_test_device",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L125",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_test_device",
+			"target": "deviceinfo",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L125",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_user_agent_format",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L142",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_device_info_header_format",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L152",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_without_auth",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L161",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_with_auth_and_roles",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L182",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_device_info_header",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L89",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_user_agent_format",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_test_device",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L143",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_user_agent_format",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_user_agent",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L144",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_device_info_header_format",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_test_device",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L153",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_without_auth",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_test_device",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L162",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_without_auth",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_user_agent",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L163",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_without_auth",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L164",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_with_auth_and_roles",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_test_device",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L183",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_with_auth_and_roles",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_build_user_agent",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L184",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_with_auth_and_roles",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L185",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L71"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L77"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L83"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L89"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_grindrheaders_build",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L98"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_without_auth",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L166"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_src_headers_headers_order_with_auth_and_roles",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/grindr/src/headers.rs",
+			"source_location": "L193"
+		}
+	]
+}

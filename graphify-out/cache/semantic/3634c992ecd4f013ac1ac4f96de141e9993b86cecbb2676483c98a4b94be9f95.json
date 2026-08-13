@@ -1,0 +1,92 @@
+{
+	"nodes": [
+		{
+			"id": "grindr_api_api_authorization_session_id_authorization",
+			"label": "Session ID Authorization",
+			"file_type": "document",
+			"source_file": "docs/content/grindr-api/api-authorization.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "grindr_api_api_authorization_session_id_jwt",
+			"label": "Short-Lived Session ID JWT",
+			"file_type": "concept",
+			"source_file": "docs/content/grindr-api/api-authorization.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "grindr_api_api_authorization_auth_token_refresh",
+			"label": "Auth Token Session Refresh",
+			"file_type": "concept",
+			"source_file": "docs/content/grindr-api/api-authorization.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "grindr_api_api_authorization_session_cache",
+			"label": "Session ID Cache",
+			"file_type": "rationale",
+			"source_file": "docs/content/grindr-api/api-authorization.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "Session IDs should be cached until expiry or invalidation to avoid unnecessary sign-in calls and rate limits."
+		}
+	],
+	"edges": [
+		{
+			"source": "grindr_api_api_authorization_session_id_authorization",
+			"target": "grindr_api_api_authorization_session_id_jwt",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/api-authorization.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "grindr_api_api_authorization_session_id_authorization",
+			"target": "grindr_api_api_authorization_auth_token_refresh",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/api-authorization.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "grindr_api_api_authorization_session_cache",
+			"target": "grindr_api_api_authorization_session_id_authorization",
+			"relation": "rationale_for",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/api-authorization.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "grindr_api_api_authorization_auth_token_refresh",
+			"target": "grindr_api_api_authorization_session_id_jwt",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/api-authorization.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

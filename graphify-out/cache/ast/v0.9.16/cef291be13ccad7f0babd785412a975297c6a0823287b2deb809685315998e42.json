@@ -1,0 +1,73 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_kt",
+			"label": "RealtimeMonitorInitialization.kt",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/realtime/RealtimeMonitorInitialization.kt",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_realtimemonitorinitialization",
+			"label": "RealtimeMonitorInitialization",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/realtime/RealtimeMonitorInitialization.kt",
+			"source_location": "L3",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_realtimemonitorinitialization_runonce",
+			"label": ".runOnce()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/realtime/RealtimeMonitorInitialization.kt",
+			"source_location": "L6",
+			"_callable": true
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_realtimemonitorinitialization",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/realtime/RealtimeMonitorInitialization.kt",
+			"source_location": "L3",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_realtimemonitorinitialization",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_realtimemonitorinitialization_runonce",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/realtime/RealtimeMonitorInitialization.kt",
+			"source_location": "L6",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_realtimemonitorinitialization_runonce",
+			"callee": "synchronized",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/realtime/RealtimeMonitorInitialization.kt",
+			"source_location": "L7",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_realtimemonitorinitialization_runonce",
+			"callee": "registration",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/realtime/RealtimeMonitorInitialization.kt",
+			"source_location": "L13",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_realtime_realtimemonitorinitialization_realtimemonitorinitialization_runonce",
+			"callee": "synchronized",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/realtime/RealtimeMonitorInitialization.kt",
+			"source_location": "L15",
+			"receiver": null
+		}
+	]
+}

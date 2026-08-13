@@ -1,0 +1,39 @@
+{
+	"nodes": [
+		{
+			"id": "icons_square150x150logo_open_grind_logo",
+			"label": "Open Grind Logo",
+			"file_type": "image",
+			"source_file": "src-tauri/icons/Square150x150Logo.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "icons_square150x150logo_stylized_butterfly_emblem",
+			"label": "Stylized Butterfly Emblem",
+			"file_type": "concept",
+			"source_file": "src-tauri/icons/Square150x150Logo.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "icons_square150x150logo_open_grind_logo",
+			"target": "icons_square150x150logo_stylized_butterfly_emblem",
+			"relation": "implements",
+			"confidence": "INFERRED",
+			"confidence_score": 0.85,
+			"source_file": "src-tauri/icons/Square150x150Logo.png",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

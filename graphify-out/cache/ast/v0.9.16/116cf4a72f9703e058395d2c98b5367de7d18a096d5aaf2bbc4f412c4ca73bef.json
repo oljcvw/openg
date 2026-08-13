@@ -1,0 +1,48 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_ci_setup_build_sh",
+			"label": "setup-build.sh",
+			"file_type": "code",
+			"source_file": "ci/setup-build.sh",
+			"source_location": "L1",
+			"metadata": { "language": "bash", "kind": "file" }
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_ci_setup_build_sh__entry",
+			"label": "setup-build.sh script",
+			"file_type": "code",
+			"source_file": "ci/setup-build.sh",
+			"source_location": "L1",
+			"metadata": { "language": "bash", "kind": "bash_entrypoint" }
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_ci_setup_build_debian_frontend",
+			"label": "DEBIAN_FRONTEND",
+			"file_type": "code",
+			"source_file": "ci/setup-build.sh",
+			"source_location": "L3",
+			"metadata": { "language": "bash", "kind": "code" }
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_ci_setup_build_sh",
+			"target": "users_andrew_zzapps_open_grind_ci_setup_build_sh__entry",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "ci/setup-build.sh",
+			"source_location": "L1",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_ci_setup_build_sh",
+			"target": "users_andrew_zzapps_open_grind_ci_setup_build_debian_frontend",
+			"relation": "defines",
+			"confidence": "EXTRACTED",
+			"source_file": "ci/setup-build.sh",
+			"source_location": "L3",
+			"weight": 1.0
+		}
+	]
+}

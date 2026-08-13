@@ -1,0 +1,1412 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"label": "rest.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rawresponse",
+			"label": "RawResponse",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L16"
+		},
+		{
+			"id": "vec",
+			"label": "Vec",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestpayload",
+			"label": "RequestPayload",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L23"
+		},
+		{
+			"id": "string",
+			"label": "String",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "option",
+			"label": "Option",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"label": "RequestCancellations",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L40"
+		},
+		{
+			"id": "mutex",
+			"label": "Mutex",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "hashmap",
+			"label": "HashMap",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "cancellationtoken",
+			"label": "CancellationToken",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "instant",
+			"label": "Instant",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"label": ".register()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L46"
+		},
+		{
+			"id": "result",
+			"label": "Result",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "apperror",
+			"label": "AppError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_finish",
+			"label": ".finish()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L76"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"label": ".cancel()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L80"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_cancellations",
+			"label": "request_cancellations()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L107"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_valid_request_id",
+			"label": "valid_request_id()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L111"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest",
+			"label": "ActiveRequest",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L119"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest_begin",
+			"label": ".begin()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L122"
+		},
+		{
+			"id": "self",
+			"label": "Self",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "drop",
+			"label": "Drop",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest_drop",
+			"label": ".drop()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L130"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_active_foreground_requests",
+			"label": "active_foreground_requests()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L135"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_segment",
+			"label": "diagnostic_segment()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L139"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"label": "diagnostic_route()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L185"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_error_kind",
+			"label": "error_kind()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L216"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_cancel_request",
+			"label": "cancel_request()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L232"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"label": "request()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L239"
+		},
+		{
+			"id": "state",
+			"label": "State",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "appstate",
+			"label": "AppState",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/rest.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"label": "request_registered()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L260"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_routes_remove_identifiers_and_query_values",
+			"label": "diagnostic_routes_remove_identifiers_and_query_values()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L381"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_routes_preserve_only_safe_structure",
+			"label": "diagnostic_routes_preserve_only_safe_structure()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L396"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_identifiers_are_opaque_and_bounded",
+			"label": "request_identifiers_are_opaque_and_bounded()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L421"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_cancellation_before_registration_is_retained_once",
+			"label": "cancellation_before_registration_is_retained_once()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L430"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "base64",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L1",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "serde",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L2",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "hashmap",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L3",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "fromstr",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L4",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "atomic",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L5",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "oncelock",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L6",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "time",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L7",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "mutex",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L8",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "cancellationtoken",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L9",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "runtime",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L11",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "apperror",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L12",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "appstate",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L13",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rawresponse",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L16",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rawresponse",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L19",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestpayload",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L23",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestpayload",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L25",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestpayload",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L26",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestpayload",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L27",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestpayload",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L30",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestpayload",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L30",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L40",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "mutex",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "hashmap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "cancellationtoken",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "mutex",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L42",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "hashmap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L42",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L42",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "instant",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L42",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L46",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L46",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"target": "cancellationtoken",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L46",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L46",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_finish",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L76",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L80",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_cancellations",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L107",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_cancellations",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L107",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_valid_request_id",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L111",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L119",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest_begin",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L122",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest_begin",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L122",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest",
+			"target": "drop",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L129",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest_drop",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L130",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_active_foreground_requests",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L135",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_segment",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L139",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L185",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L185",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_error_kind",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L216",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_error_kind",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L216",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_cancel_request",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L232",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_cancel_request",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L232",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L239",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "state",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L239",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "appstate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L239",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L239",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L239",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L239",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L239",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L260",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"target": "state",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L260",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"target": "appstate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L260",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestpayload",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L260",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"target": "cancellationtoken",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L260",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L260",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L260",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L260",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "super",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L378",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_routes_remove_identifiers_and_query_values",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L381",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_routes_preserve_only_safe_structure",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L396",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_identifiers_are_opaque_and_bounded",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L421",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_cancellation_before_registration_is_retained_once",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L430",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_valid_request_id",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L50",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L71",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_valid_request_id",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L81",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_cancel_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L233",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_cancel_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_cancellations",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L233",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L251",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_cancellations",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L251",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L255",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L256",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L266",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest_begin",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L268",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_cancellation_before_registration_is_retained_once",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L434",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_cancellation_before_registration_is_retained_once",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L436",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"callee": "contains_key",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L58"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"callee": "retain",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L67"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"callee": "duration_since",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L68"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_register",
+			"callee": "is_some",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L70"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"callee": "cloned",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L84"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"callee": "cancel",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L85"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"callee": "retain",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L90"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"callee": "duration_since",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L91"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_requestcancellations_cancel",
+			"callee": "min_by_key",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L94"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_cancellations",
+			"callee": "get_or_init",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L108"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_valid_request_id",
+			"callee": "is_ascii_hexdigit",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L116"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest_begin",
+			"callee": "fetch_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L124"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_activerequest_drop",
+			"callee": "fetch_sub",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L131"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_active_foreground_requests",
+			"callee": "load",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L136"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_segment",
+			"callee": "is_some_and",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L141"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_segment",
+			"callee": "strip_prefix",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L141"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_segment",
+			"callee": "is_ascii_digit",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L143"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "unwrap_or",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L186"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "split_once",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L186"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "join",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L187"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "split",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L187"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "split",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L192"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "map_or",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L194"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "split_once",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L194"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "sort_unstable",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L207"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "dedup",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L208"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "push_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L211"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_diagnostic_route",
+			"callee": "join",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L211"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L243"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"callee": "decode",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L243"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L248"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "fetch_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L265"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "map_or",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L267"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "as_ref",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L267"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L279"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L288"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "retry_policy",
+			"is_member_call": false,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L295"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "request_class",
+			"is_member_call": false,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L296"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "runtime",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L297"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "client",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L298"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "request_raw_classified_cancellable",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L302"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "request_authenticated_raw",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L314"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "as_millis",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L341"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "elapsed",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L341"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L370"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_rest_request_registered",
+			"callee": "encode",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/rest.rs",
+			"source_location": "L373"
+		}
+	]
+}

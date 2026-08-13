@@ -1,0 +1,17 @@
+{
+	"nodes": [
+		{
+			"id": "icons_square142x142logo_square_142x142_logo",
+			"label": "Square 142x142 Logo with Symmetrical Golden Emblem on Black",
+			"file_type": "image",
+			"source_file": "src-tauri/icons/Square142x142Logo.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [],
+	"hyperedges": []
+}

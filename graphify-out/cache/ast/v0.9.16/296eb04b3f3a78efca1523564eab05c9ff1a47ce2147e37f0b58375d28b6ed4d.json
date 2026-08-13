@@ -1,0 +1,2001 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"label": "notifications.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings",
+			"label": "NotificationSettings",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L31"
+		},
+		{
+			"id": "string",
+			"label": "String",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "option",
+			"label": "Option",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings_unsupported",
+			"label": ".unsupported()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L44"
+		},
+		{
+			"id": "self",
+			"label": "Self",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_setnotificationsettings",
+			"label": "SetNotificationSettings",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L60"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_androidnotifications",
+			"label": "AndroidNotifications",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L68"
+		},
+		{
+			"id": "pluginhandle",
+			"label": "PluginHandle",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "wry",
+			"label": "Wry",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_plugin",
+			"label": "plugin()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L72"
+		},
+		{
+			"id": "tauriplugin",
+			"label": "TauriPlugin",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_get_settings",
+			"label": "notification_get_settings()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L89"
+		},
+		{
+			"id": "apphandle",
+			"label": "AppHandle",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "result",
+			"label": "Result",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "apperror",
+			"label": "AppError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_set_settings",
+			"label": "notification_set_settings()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L104"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_test",
+			"label": "notification_test()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L129"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_sync",
+			"label": "notification_sync()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L147"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationscheduleinput",
+			"label": "NotificationScheduleInput",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L178"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_cancel",
+			"label": "notification_cancel()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L183"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_clearnotificationaccount",
+			"label": "ClearNotificationAccount",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L200"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_clear_account",
+			"label": "notification_clear_account()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L205"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"label": "run_mobile()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L225"
+		},
+		{
+			"id": "i",
+			"label": "I",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "o",
+			"label": "O",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollmessage",
+			"label": "PollMessage",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L248"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_polltap",
+			"label": "PollTap",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L259"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollresponse",
+			"label": "PollResponse",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L268"
+		},
+		{
+			"id": "vec",
+			"label": "Vec",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "pollfailurecode",
+			"label": "PollFailureCode",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollfailurecode",
+			"label": "PollFailureCode",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L284"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollhttpdisposition",
+			"label": "PollHttpDisposition",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L302"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"label": "parse_messages()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L310"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"label": "parse_taps()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L354"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"label": "value_u64()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L379"
+		},
+		{
+			"id": "value",
+			"label": "Value",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_error_kind",
+			"label": "notification_error_kind()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L386"
+		},
+		{
+			"id": "grindrerror",
+			"label": "GrindrError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_classify_poll_http_response",
+			"label": "classify_poll_http_response()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L400"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"label": "poll_notifications()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L420"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_persist_client_state",
+			"label": "persist_client_state()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L744"
+		},
+		{
+			"id": "grindrclient",
+			"label": "GrindrClient",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"label": "Java_org_opengrind_notifications_NotificationBridge_nativePoll()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L766"
+		},
+		{
+			"id": "jnienv",
+			"label": "JNIEnv",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "jclass",
+			"label": "JClass",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "jboolean",
+			"label": "jboolean",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "jstring",
+			"label": "jstring",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/notifications.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parses_only_unmuted_unread_messages_without_requiring_preview_text",
+			"label": "parses_only_unmuted_unread_messages_without_requiring_preview_text()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L796"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parses_tap_identity_without_requiring_a_display_name",
+			"label": "parses_tap_identity_without_requiring_a_display_name()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L833"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_classifies_raw_notification_statuses_before_body_parsing",
+			"label": "classifies_raw_notification_statuses_before_body_parsing()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L860"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_hostile_server_body_never_enters_worker_response",
+			"label": "hostile_server_body_never_enters_worker_response()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L876"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "serde",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L1",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "value",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L3",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "panic",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L6",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "fromstr",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L8",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "objects",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L11",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "sys",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L13",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "jnienv",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L15",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "pluginhandle",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L17",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "tauri",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L19",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "runtime",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L22",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "apperror",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L23",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "storage",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L25",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L31",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L37",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L38",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L39",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L39",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings_unsupported",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L44",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings_unsupported",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L44",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_setnotificationsettings",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L60",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_androidnotifications",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L68",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_androidnotifications",
+			"target": "pluginhandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L69",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_androidnotifications",
+			"target": "wry",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L69",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_plugin",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L72",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_plugin",
+			"target": "tauriplugin",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L72",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_plugin",
+			"target": "wry",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L72",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_get_settings",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L89",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_get_settings",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L89",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_get_settings",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L89",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_get_settings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L89",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_get_settings",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L89",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_set_settings",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L104",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_set_settings",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L104",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_set_settings",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L104",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_set_settings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L104",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_set_settings",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L104",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_test",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L129",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_test",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L129",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_test",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L129",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_test",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L129",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_sync",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L147",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_sync",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L147",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_sync",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L147",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_sync",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L147",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationscheduleinput",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L178",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_cancel",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L183",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_cancel",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L183",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_cancel",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L183",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_cancel",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L183",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_clearnotificationaccount",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L200",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_clearnotificationaccount",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L201",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_clear_account",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L205",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_clear_account",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L205",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_clear_account",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L205",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_clear_account",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L205",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L225",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L225",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"target": "i",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L225",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L225",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"target": "o",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L225",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L225",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollmessage",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L248",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollmessage",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L249",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollmessage",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L250",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollmessage",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L251",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollmessage",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L251",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_polltap",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L259",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_polltap",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L261",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_polltap",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L261",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollresponse",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L268",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollresponse",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L270",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollresponse",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L271",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollresponse",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollmessage",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L271",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollresponse",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L272",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollresponse",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_polltap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L272",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollresponse",
+			"target": "pollfailurecode",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L277",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollfailurecode",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L284",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollhttpdisposition",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L302",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L310",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L310",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L310",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollmessage",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L310",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L310",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L354",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L354",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L354",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_polltap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L354",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L354",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L379",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"target": "value",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L379",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L379",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_error_kind",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L386",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_error_kind",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L386",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_classify_poll_http_response",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L400",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_classify_poll_http_response",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollhttpdisposition",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L400",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L420",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_pollresponse",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L420",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_persist_client_state",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L744",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_persist_client_state",
+			"target": "grindrclient",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L744",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L766",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"target": "jnienv",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L766",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"target": "jclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L766",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"target": "jboolean",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L766",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"target": "jboolean",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L766",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"target": "jstring",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L766",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "super",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L793",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parses_only_unmuted_unread_messages_without_requiring_preview_text",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L796",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parses_tap_identity_without_requiring_a_display_name",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L833",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_classifies_raw_notification_statuses_before_body_parsing",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L860",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_hostile_server_body_never_enters_worker_response",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L876",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_get_settings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L94",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_get_settings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings_unsupported",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L99",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_set_settings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L119",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_set_settings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notificationsettings_unsupported",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L124",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_test",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L132",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_sync",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L160",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_cancel",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L188",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_clear_account",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L214",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L325",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L366",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_classify_poll_http_response",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_notification_error_kind",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L415",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_persist_client_state",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L543",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_classify_poll_http_response",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L571",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L604",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L717",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L774",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parses_only_unmuted_unread_messages_without_requiring_preview_text",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L797",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parses_tap_identity_without_requiring_a_display_name",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L834",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_hostile_server_body_never_enters_worker_response",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_classify_poll_http_response",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L878",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_plugin",
+			"callee": "setup",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L73"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_plugin",
+			"callee": "register_android_plugin",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L77"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_plugin",
+			"callee": "manage",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L81"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L234"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_run_mobile",
+			"callee": "run_mobile_plugin_async",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L234"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L311"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "ok_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L313"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L313"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "filter_map",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L318"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "unwrap_or",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L322"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L322"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L330"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "unwrap_or",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L334"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L334"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "trim",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L337"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L340"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L340"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_messages",
+			"callee": "trim",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L344"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L355"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"callee": "ok_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L357"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L357"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"callee": "filter_map",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L362"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L367"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_parse_taps",
+			"callee": "trim",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L370"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"callee": "or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L380"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"callee": "as_u64",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L380"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L382"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_value_u64",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L382"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "enable_all",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L433"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "block_on",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L444"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "account_storage_lock",
+			"is_member_call": false,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L444"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "block_on",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L485"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "client",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L495"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "restore_signing_key",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L501"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "request_raw_classified",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L508"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "request_authenticated_raw",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L517"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "request_raw_classified",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L618"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_poll_notifications",
+			"callee": "request_authenticated_raw",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L627"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_persist_client_state",
+			"callee": "as_ref",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L745"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_persist_client_state",
+			"callee": "borrow",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L745"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_persist_client_state",
+			"callee": "session_receiver",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L745"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_persist_client_state",
+			"callee": "borrow",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L755"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_persist_client_state",
+			"callee": "signing_key_receiver",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L755"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L773"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"callee": "catch_unwind",
+			"is_member_call": false,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L773"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"callee": "AssertUnwindSafe",
+			"is_member_call": false,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L773"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L779"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"callee": "unwrap_or",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L786"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_java_org_opengrind_notifications_notificationbridge_nativepoll",
+			"callee": "new_string",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L786"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_notifications_hostile_server_body_never_enters_worker_response",
+			"callee": "as_bytes",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/notifications.rs",
+			"source_location": "L878"
+		}
+	]
+}

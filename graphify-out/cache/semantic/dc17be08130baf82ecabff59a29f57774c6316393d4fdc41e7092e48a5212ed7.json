@@ -1,0 +1,179 @@
+{
+	"nodes": [
+		{
+			"id": "building_building_open_grind",
+			"label": "Building Open Grind",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "building_docker_android_build",
+			"label": "Docker Android Build",
+			"file_type": "concept",
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "building_nix_reproducible_build",
+			"label": "Nix Reproducible Build",
+			"file_type": "concept",
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "building_manual_development_build",
+			"label": "Manual Development Build",
+			"file_type": "concept",
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "building_platform_credential_storage",
+			"label": "Platform Credential Storage",
+			"file_type": "concept",
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "building_android_signing",
+			"label": "Android APK Signing",
+			"file_type": "concept",
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "building_release_verification",
+			"label": "Published Release Verification",
+			"file_type": "concept",
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "building_building_open_grind",
+			"target": "building_docker_android_build",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "building_building_open_grind",
+			"target": "building_nix_reproducible_build",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "building_building_open_grind",
+			"target": "building_manual_development_build",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "building_building_open_grind",
+			"target": "building_platform_credential_storage",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "building_building_open_grind",
+			"target": "building_android_signing",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "building_building_open_grind",
+			"target": "building_release_verification",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "building_docker_android_build",
+			"target": "building_nix_reproducible_build",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "building_release_verification",
+			"target": "keys_release_minisign_key",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "BUILDING.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "reproducible_android_release_chain",
+			"label": "Reproducible Android Release Chain",
+			"nodes": [
+				"workflows_build_reproducible_build_workflow",
+				"building_nix_reproducible_build",
+				"building_release_verification",
+				"fdroid_org_opengrind_reproducible_fdroid_build"
+			],
+			"relation": "participate_in",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "BUILDING.md"
+		}
+	]
+}

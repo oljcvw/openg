@@ -1,0 +1,170 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_kt",
+			"label": "RealtimeMonitorInitializationTest.kt",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest",
+			"label": "RealtimeMonitorInitializationTest",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L7",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"label": ".`registration failure permits initialization retry`()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L8",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_successful_initialization_remains_idempotent",
+			"label": ".`successful initialization remains idempotent`()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L20",
+			"_callable": true
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L7",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L8",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_successful_initialization_remains_idempotent",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L20",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"callee": "RealtimeMonitorInitialization",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L10",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"callee": "assertTrue",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L12",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"callee": "begin",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L12",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"callee": "assertFalse",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L13",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"callee": "begin",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L13",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"callee": "failed",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L15",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"callee": "assertTrue",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L17",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_registration_failure_permits_initialization_retry",
+			"callee": "begin",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L17",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_successful_initialization_remains_idempotent",
+			"callee": "RealtimeMonitorInitialization",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L22",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_successful_initialization_remains_idempotent",
+			"callee": "assertTrue",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L24",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_successful_initialization_remains_idempotent",
+			"callee": "begin",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L24",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_successful_initialization_remains_idempotent",
+			"callee": "assertFalse",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L25",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_realtime_realtimemonitorinitializationtest_realtimemonitorinitializationtest_successful_initialization_remains_idempotent",
+			"callee": "begin",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/realtime/RealtimeMonitorInitializationTest.kt",
+			"source_location": "L25",
+			"receiver": null
+		}
+	]
+}

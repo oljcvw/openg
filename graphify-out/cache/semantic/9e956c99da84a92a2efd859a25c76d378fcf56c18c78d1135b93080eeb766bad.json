@@ -1,0 +1,39 @@
+{
+	"nodes": [
+		{
+			"id": "icons_square44x44logo_square_44x44_logo",
+			"label": "Square 44x44 Logo",
+			"file_type": "image",
+			"source_file": "src-tauri/icons/Square44x44Logo.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "icons_square44x44logo_yellow_mask_brand_mark",
+			"label": "Yellow Mask Brand Mark",
+			"file_type": "concept",
+			"source_file": "src-tauri/icons/Square44x44Logo.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "icons_square44x44logo_square_44x44_logo",
+			"target": "icons_square44x44logo_yellow_mask_brand_mark",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/icons/Square44x44Logo.png",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

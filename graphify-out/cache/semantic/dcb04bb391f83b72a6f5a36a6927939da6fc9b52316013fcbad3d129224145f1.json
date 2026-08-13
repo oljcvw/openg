@@ -1,0 +1,60 @@
+{
+	"nodes": [
+		{
+			"id": "ios_appicon_20x20_2x_1_app_icon_artwork",
+			"label": "App Icon Artwork",
+			"file_type": "image",
+			"source_file": "src-tauri/icons/ios/AppIcon-20x20@2x-1.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "ios_appicon_20x20_2x_1_yellow_winged_emblem",
+			"label": "Yellow Winged Emblem",
+			"file_type": "concept",
+			"source_file": "src-tauri/icons/ios/AppIcon-20x20@2x-1.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "ios_appicon_20x20_2x_1_black_yellow_palette",
+			"label": "Black and Yellow Palette",
+			"file_type": "concept",
+			"source_file": "src-tauri/icons/ios/AppIcon-20x20@2x-1.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "ios_appicon_20x20_2x_1_app_icon_artwork",
+			"target": "ios_appicon_20x20_2x_1_yellow_winged_emblem",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/icons/ios/AppIcon-20x20@2x-1.png",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "ios_appicon_20x20_2x_1_app_icon_artwork",
+			"target": "ios_appicon_20x20_2x_1_black_yellow_palette",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/icons/ios/AppIcon-20x20@2x-1.png",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

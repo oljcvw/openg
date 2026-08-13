@@ -1,0 +1,500 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_error_rs",
+			"label": "error.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"label": "BanInfo",
+			"file_type": "code",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L7"
+		},
+		{
+			"id": "string",
+			"label": "String",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/error.rs"
+		},
+		{
+			"id": "option",
+			"label": "Option",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/error.rs"
+		},
+		{
+			"id": "from",
+			"label": "From",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/error.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo_from",
+			"label": ".from()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L17"
+		},
+		{
+			"id": "self",
+			"label": "Self",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/error.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"label": "AppError",
+			"file_type": "code",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L38"
+		},
+		{
+			"id": "display",
+			"label": "Display",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/error.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_fmt",
+			"label": ".fmt()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L61"
+		},
+		{
+			"id": "formatter",
+			"label": "Formatter",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/error.rs"
+		},
+		{
+			"id": "result",
+			"label": "Result",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/error.rs"
+		},
+		{
+			"id": "error",
+			"label": "Error",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/error.rs"
+		},
+		{
+			"id": "grindrerror",
+			"label": "GrindrError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/error.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_from",
+			"label": ".from()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L92"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_error_simulated_ban_response_maps_to_banned_app_error",
+			"label": "simulated_ban_response_maps_to_banned_app_error()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L115"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_error_simulated_rate_limit_maps_to_rate_limited",
+			"label": "simulated_rate_limit_maps_to_rate_limited()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L131"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_error_cloudflare_block_maps_to_request_blocked",
+			"label": "cloudflare_block_maps_to_request_blocked()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L138"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_rs",
+			"target": "fmt",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L1",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_rs",
+			"target": "serialize",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L3",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L7",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L8",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L10",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L11",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L11",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L12",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L12",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L13",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"target": "from",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L16",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo_from",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L17",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo_from",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L17",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo_from",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L17",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L38",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L39",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L40",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L43",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L47",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_baninfo",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L49",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "display",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L60",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_fmt",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L61",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_fmt",
+			"target": "formatter",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L61",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_fmt",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L61",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "error",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L89",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "from",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L91",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L91",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_from",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L92",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_from",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L92",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_from",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L92",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_rs",
+			"target": "super",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L112",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_simulated_ban_response_maps_to_banned_app_error",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L115",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_simulated_rate_limit_maps_to_rate_limited",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L131",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_cloudflare_block_maps_to_request_blocked",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L138",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_simulated_ban_response_maps_to_banned_app_error",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_from",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L120",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_simulated_rate_limit_maps_to_rate_limited",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_from",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L133",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_error_cloudflare_block_maps_to_request_blocked",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_error_apperror_from",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/error.rs",
+			"source_location": "L141",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": []
+}

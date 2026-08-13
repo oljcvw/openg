@@ -1,0 +1,546 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"label": "manifest.json",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_manifest_version",
+			"label": "manifest_version",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L2"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_name",
+			"label": "name",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L3"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_homepage_url",
+			"label": "homepage_url",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L4"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_version",
+			"label": "version",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L5"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_description",
+			"label": "description",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L6"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings",
+			"label": "browser_specific_settings",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L7"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings_gecko",
+			"label": "gecko",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L8"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_id",
+			"label": "id",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L9"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_strict_min_version",
+			"label": "strict_min_version",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L10"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_data_collection_permissions",
+			"label": "data_collection_permissions",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L11"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_data_collection_permissions_required",
+			"label": "required",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L12"
+		},
+		{
+			"id": "ref_none",
+			"label": "none",
+			"file_type": "concept",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L12"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_data_collection_permissions_optional",
+			"label": "optional",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L15"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings_gecko_android",
+			"label": "gecko_android",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L18"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_android_strict_min_version",
+			"label": "strict_min_version",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L19"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons",
+			"label": "icons",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L22"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons_16",
+			"label": "16",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L23"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons_32",
+			"label": "32",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L24"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons_64",
+			"label": "64",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L25"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons_128",
+			"label": "128",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L26"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_content_security_policy",
+			"label": "content_security_policy",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L28"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_permissions",
+			"label": "permissions",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L29"
+		},
+		{
+			"id": "ref_storage",
+			"label": "storage",
+			"file_type": "concept",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L29"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_action",
+			"label": "browser_action",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L32"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_action_default_title",
+			"label": "default_title",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L33"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_background",
+			"label": "background",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L35"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_background_scripts",
+			"label": "scripts",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L36"
+		},
+		{
+			"id": "ref_shared_background_js",
+			"label": "shared/background.js",
+			"file_type": "concept",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L36"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_background_persistent",
+			"label": "persistent",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L39"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_content_scripts",
+			"label": "content_scripts",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L41"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_web_accessible_resources",
+			"label": "web_accessible_resources",
+			"file_type": "code",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L56"
+		},
+		{
+			"id": "ref_shared_gis_core_js",
+			"label": "shared/gis-core.js",
+			"file_type": "concept",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L56"
+		},
+		{
+			"id": "ref_shared_page_runner_js",
+			"label": "shared/page-runner.js",
+			"file_type": "concept",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L56"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_manifest_version",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L2",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_name",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L3",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_homepage_url",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L4",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_version",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L5",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_description",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L6",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L7",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings_gecko",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L8",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings_gecko",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_id",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L9",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings_gecko",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_strict_min_version",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L10",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings_gecko",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_data_collection_permissions",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L11",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_data_collection_permissions",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_data_collection_permissions_required",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L12",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_data_collection_permissions_required",
+			"target": "ref_none",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L12",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_data_collection_permissions",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_data_collection_permissions_optional",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L15",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings_gecko_android",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L18",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_specific_settings_gecko_android",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_gecko_android_strict_min_version",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L19",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L22",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons_16",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L23",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons_32",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L24",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons_64",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L25",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_icons_128",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L26",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_content_security_policy",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L28",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_permissions",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L29",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_permissions",
+			"target": "ref_storage",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L29",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_action",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L32",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_action",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_browser_action_default_title",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L33",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_background",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L35",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_background",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_background_scripts",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L36",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_background_scripts",
+			"target": "ref_shared_background_js",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L36",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_background",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_background_persistent",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L39",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_content_scripts",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L41",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_web_accessible_resources",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L56",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_web_accessible_resources",
+			"target": "ref_shared_gis_core_js",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L56",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_vendor_grindr_google_oauth_webextension_firefox_manifest_web_accessible_resources",
+			"target": "ref_shared_page_runner_js",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/vendor/grindr-google-oauth-webextension/firefox/manifest.json",
+			"source_location": "L56",
+			"weight": 1.0,
+			"context": "import"
+		}
+	]
+}

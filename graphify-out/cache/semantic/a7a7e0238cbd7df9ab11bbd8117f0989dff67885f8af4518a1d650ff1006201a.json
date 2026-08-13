@@ -1,0 +1,92 @@
+{
+	"nodes": [
+		{
+			"id": "workflows_check_pull_request_checks",
+			"label": "Pull Request Checks Workflow",
+			"file_type": "code",
+			"source_file": ".forgejo/workflows/check.yml",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "workflows_check_credential_free_execution",
+			"label": "Credential-Free Pull Request Execution",
+			"file_type": "rationale",
+			"source_file": ".forgejo/workflows/check.yml",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "Untrusted pull-request code is executed without privileged credentials, while cache credentials are restricted to read-only access."
+		},
+		{
+			"id": "workflows_check_exact_head_verification",
+			"label": "Exact Pull Request Head Verification",
+			"file_type": "concept",
+			"source_file": ".forgejo/workflows/check.yml",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "workflows_check_quality_gate",
+			"label": "Lint Type Unit and Rust Quality Gate",
+			"file_type": "concept",
+			"source_file": ".forgejo/workflows/check.yml",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "workflows_check_pull_request_checks",
+			"target": "workflows_check_credential_free_execution",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": ".forgejo/workflows/check.yml",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "workflows_check_pull_request_checks",
+			"target": "workflows_check_exact_head_verification",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": ".forgejo/workflows/check.yml",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "workflows_check_pull_request_checks",
+			"target": "workflows_check_quality_gate",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": ".forgejo/workflows/check.yml",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "workflows_check_quality_gate",
+			"target": "contributing_ci_parity_checks",
+			"relation": "semantically_similar_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": ".forgejo/workflows/check.yml",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

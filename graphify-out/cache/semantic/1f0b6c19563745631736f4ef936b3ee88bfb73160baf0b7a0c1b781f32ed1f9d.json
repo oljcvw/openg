@@ -1,0 +1,134 @@
+{
+	"nodes": [
+		{
+			"id": "contributing_contributing_to_open_grind",
+			"label": "Contributing to Open Grind",
+			"file_type": "document",
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contributing_cross_platform_tauri_architecture",
+			"label": "Cross-Platform Tauri Architecture",
+			"file_type": "concept",
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contributing_project_ecosystem",
+			"label": "Open Grind Project Ecosystem",
+			"file_type": "concept",
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contributing_openapi_source_of_truth",
+			"label": "OpenAPI Source of Truth",
+			"file_type": "rationale",
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "API reference documentation is generated from the OpenAPI specification, so research contributions must update that canonical specification."
+		},
+		{
+			"id": "contributing_ci_parity_checks",
+			"label": "Local CI-Parity Checks",
+			"file_type": "concept",
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contributing_signed_commits",
+			"label": "Signed Contribution Commits",
+			"file_type": "concept",
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "contributing_contributing_to_open_grind",
+			"target": "code_of_conduct_contributor_covenant",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contributing_contributing_to_open_grind",
+			"target": "contributing_cross_platform_tauri_architecture",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contributing_contributing_to_open_grind",
+			"target": "contributing_project_ecosystem",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contributing_contributing_to_open_grind",
+			"target": "contributing_openapi_source_of_truth",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contributing_contributing_to_open_grind",
+			"target": "contributing_ci_parity_checks",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contributing_contributing_to_open_grind",
+			"target": "contributing_signed_commits",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "CONTRIBUTING.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

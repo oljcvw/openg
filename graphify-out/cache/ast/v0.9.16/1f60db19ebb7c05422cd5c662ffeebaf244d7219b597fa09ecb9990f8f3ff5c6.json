@@ -1,0 +1,963 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"label": "blake3_reference.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"label": "g()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L52"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_round",
+			"label": "round()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L63"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_permute",
+			"label": "permute()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L76"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_compress",
+			"label": "compress()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L84"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_first_8_words",
+			"label": "first_8_words()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L132"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_words_from_little_endian_bytes",
+			"label": "words_from_little_endian_bytes()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L136"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output",
+			"label": "Output",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L146"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_chaining_value",
+			"label": ".chaining_value()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L155"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_root_output_bytes",
+			"label": ".root_output_bytes()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L165"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate",
+			"label": "ChunkState",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L182"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_new",
+			"label": ".new()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L192"
+		},
+		{
+			"id": "self",
+			"label": "Self",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_len",
+			"label": ".len()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L203"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_start_flag",
+			"label": ".start_flag()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L207"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_update",
+			"label": ".update()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L215"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_output",
+			"label": ".output()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L243"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_output",
+			"label": "parent_output()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L256"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_cv",
+			"label": "parent_cv()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L274"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"label": "Hasher",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L284"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new_internal",
+			"label": ".new_internal()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L293"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new",
+			"label": ".new()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L304"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_push_stack",
+			"label": ".push_stack()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L308"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_pop_stack",
+			"label": ".pop_stack()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L313"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_add_chunk_chaining_value",
+			"label": ".add_chunk_chaining_value()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L319"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_update",
+			"label": ".update()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L335"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_finalize",
+			"label": ".finalize()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L355"
+		},
+		{
+			"id": "default",
+			"label": "Default",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_default",
+			"label": ".default()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L375"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "min",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L33",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "tryinto",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L34",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L52",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_round",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L63",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_permute",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L76",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_compress",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L84",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_first_8_words",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L132",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_words_from_little_endian_bytes",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L136",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L146",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_chaining_value",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L155",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_root_output_bytes",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L165",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L182",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_new",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L192",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_new",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L192",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_len",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L203",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_start_flag",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L207",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_update",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L215",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_output",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L243",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_output",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L243",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_output",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L256",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_output",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L256",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_cv",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L274",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L284",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L285",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new_internal",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L293",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new_internal",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L293",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L304",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L304",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_push_stack",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L308",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_pop_stack",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L313",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_add_chunk_chaining_value",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L319",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_update",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L335",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_finalize",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L355",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "default",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L374",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_default",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L375",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_default",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L375",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_round",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L65",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_compress",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_permute",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L112",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_chaining_value",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_first_8_words",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L156",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_chaining_value",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_compress",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L156",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_root_output_bytes",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_compress",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L167",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_update",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_words_from_little_endian_bytes",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L221",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_update",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_first_8_words",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L222",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_update",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_compress",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L222",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_update",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_start_flag",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L227",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_output",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_words_from_little_endian_bytes",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L245",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_output",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_start_flag",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L251",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_cv",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_chaining_value",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L280",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_cv",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_output",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L280",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new_internal",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L295",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new_internal",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L305",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_add_chunk_chaining_value",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_cv",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L328",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_add_chunk_chaining_value",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_pop_stack",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L328",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_add_chunk_chaining_value",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_push_stack",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L331",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_update",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_chaining_value",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L340",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_update",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_output",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L340",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_update",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_add_chunk_chaining_value",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L342",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_update",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L343",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_finalize",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_output",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L359",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_finalize",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_output",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L363",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_finalize",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_chaining_value",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L365",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_finalize",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_root_output_bytes",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L370",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_default",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L376",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "wrapping_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L53"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "wrapping_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L53"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "rotate_right",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L54"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "wrapping_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L55"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "rotate_right",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L56"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "wrapping_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L57"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "wrapping_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L57"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "rotate_right",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L58"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "wrapping_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L59"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_g",
+			"callee": "rotate_right",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L60"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_first_8_words",
+			"callee": "try_into",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L133"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_words_from_little_endian_bytes",
+			"callee": "chunks_exact",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L138"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_words_from_little_endian_bytes",
+			"callee": "try_into",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L139"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_root_output_bytes",
+			"callee": "chunks_mut",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L166"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_root_output_bytes",
+			"callee": "chunks_mut",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L175"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_root_output_bytes",
+			"callee": "copy_from_slice",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L176"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_output_root_output_bytes",
+			"callee": "to_le_bytes",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L176"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_chunkstate_update",
+			"callee": "copy_from_slice",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L237"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_output",
+			"callee": "copy_from_slice",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L263"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_parent_output",
+			"callee": "copy_from_slice",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L264"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_blake3_reference_hasher_update",
+			"callee": "update",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/blake3_reference.rs",
+			"source_location": "L349"
+		}
+	]
+}

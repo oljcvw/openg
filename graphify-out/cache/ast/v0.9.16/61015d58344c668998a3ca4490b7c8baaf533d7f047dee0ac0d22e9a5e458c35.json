@@ -1,0 +1,4070 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"label": "runtime.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig",
+			"label": "ApiRuntimeConfig",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L19"
+		},
+		{
+			"id": "default",
+			"label": "Default",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_default",
+			"label": ".default()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L28"
+		},
+		{
+			"id": "self",
+			"label": "Self",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_validate",
+			"label": ".validate()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L40"
+		},
+		{
+			"id": "result",
+			"label": "Result",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"label": "ApiRuntime",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L68"
+		},
+		{
+			"id": "grindrclient",
+			"label": "GrindrClient",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "arc",
+			"label": "Arc",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "requestrecovery",
+			"label": "RequestRecovery",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"label": "RetryPolicy",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L75"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"label": "RequestClass",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L82"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationstate",
+			"label": "MitigationState",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L92"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationreason",
+			"label": "MitigationReason",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L102"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apimitigationevent",
+			"label": "ApiMitigationEvent",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L109"
+		},
+		{
+			"id": "string",
+			"label": "String",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "option",
+			"label": "Option",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationeventsink",
+			"label": "MitigationEventSink",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L122"
+		},
+		{
+			"id": "send",
+			"label": "Send",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "sync",
+			"label": "Sync",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f",
+			"label": "F",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L126"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f_emit",
+			"label": ".emit()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L130"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"label": "RuntimeError",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L136"
+		},
+		{
+			"id": "grindrerror",
+			"label": "GrindrError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitoutcome",
+			"label": "CircuitOutcome",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L143"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"label": "CircuitState",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L151"
+		},
+		{
+			"id": "vecdeque",
+			"label": "VecDeque",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "instant",
+			"label": "Instant",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_prioritystate",
+			"label": "PriorityState",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L162"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"label": "RequestRecovery",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L168"
+		},
+		{
+			"id": "rwlock",
+			"label": "RwLock",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "mutex",
+			"label": "Mutex",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "semaphore",
+			"label": "Semaphore",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "notify",
+			"label": "Notify",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "atomicusize",
+			"label": "AtomicUsize",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "atomicu64",
+			"label": "AtomicU64",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestcontext",
+			"label": "RequestContext",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L183"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_admission",
+			"label": "Admission",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L189"
+		},
+		{
+			"id": "protectionscope",
+			"label": "ProtectionScope",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_protectionscope",
+			"label": "ProtectionScope",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L195"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestadmission",
+			"label": "RequestAdmission",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L200"
+		},
+		{
+			"id": "semaphorepermit",
+			"label": "SemaphorePermit",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_install",
+			"label": ".install()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L206"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get",
+			"label": ".get()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L210"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"label": ".get_or_try_init()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L214"
+		},
+		{
+			"id": "deviceinfo",
+			"label": "DeviceInfo",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "session",
+			"label": "Session",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"label": ".new()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L225"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_set_event_sink",
+			"label": ".set_event_sink()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L245"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_client",
+			"label": ".client()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L253"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_id",
+			"label": ".id()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L257"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_configure",
+			"label": ".configure()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L261"
+		},
+		{
+			"id": "apperror",
+			"label": "AppError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request",
+			"label": ".request()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L278"
+		},
+		{
+			"id": "t",
+			"label": "T",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"label": ".request_classified()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L296"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"label": ".request_raw_classified()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L318"
+		},
+		{
+			"id": "rawresponse",
+			"label": "RawResponse",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"label": ".request_raw_classified_cancellable()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L339"
+		},
+		{
+			"id": "cancellationtoken",
+			"label": "CancellationToken",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"label": ".request_classified_inner()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362"
+		},
+		{
+			"id": "c",
+			"label": "C",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"label": ".configure()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L407"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"label": ".emit()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L421"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"label": ".admit()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L453"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"label": ".finish()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L586"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_class_permit",
+			"label": ".class_permit()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L740"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"label": ".enter()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L767"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"label": ".enter_priority()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L791"
+		},
+		{
+			"id": "priorityrequest",
+			"label": "PriorityRequest",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest",
+			"label": "QueuedRequest",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L849"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"label": ".finish()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L855"
+		},
+		{
+			"id": "drop",
+			"label": "Drop",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_drop",
+			"label": ".drop()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L864"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter",
+			"label": "ForegroundWaiter",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L869"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter_drop",
+			"label": ".drop()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L875"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest",
+			"label": "PriorityRequest",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L890"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"label": ".drop()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L896"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_raw_outcome",
+			"label": "raw_outcome()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L912"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_default_outcome",
+			"label": "default_outcome()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L921"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_status_outcome",
+			"label": "status_outcome()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L930"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_error_outcome",
+			"label": "error_outcome()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L938"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_at_ms",
+			"label": "retry_at_ms()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L957"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_system_time_ms",
+			"label": "system_time_ms()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L961"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_policy",
+			"label": "retry_policy()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L968"
+		},
+		{
+			"id": "method",
+			"label": "Method",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/runtime.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_request_class",
+			"label": "request_class()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L981"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_api_runtime_configure",
+			"label": "api_runtime_configure()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L995"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"label": "test_recovery()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1016"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"label": "context()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1032"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_status_contract_matches_reference_client",
+			"label": "circuit_status_contract_matches_reference_client()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1040"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_opens_at_twenty_samples_and_fifty_percent_failures",
+			"label": "circuit_opens_at_twenty_samples_and_fifty_percent_failures()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1051"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtime_configuration_validates_bounds_and_prunes_history",
+			"label": "runtime_configuration_validates_bounds_and_prunes_history()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1082"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_protection_block_does_not_enter_circuit_window",
+			"label": "protection_block_does_not_enter_circuit_window()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1115"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_non_profile_protection_block_starts_global_cooldown",
+			"label": "non_profile_protection_block_starts_global_cooldown()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1143"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mutation_waits_for_safe_read_after_global_protection_cooldown",
+			"label": "mutation_waits_for_safe_read_after_global_protection_cooldown()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1174"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_dropped_queue_waiter_restores_queue_count",
+			"label": "dropped_queue_waiter_restores_queue_count()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1220"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queued_request_rechecks_circuit_after_global_permit",
+			"label": "queued_request_rechecks_circuit_after_global_permit()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1241"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_rejection_does_not_latch_protection_probe",
+			"label": "circuit_rejection_does_not_latch_protection_probe()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1287"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_background_waits_until_foreground_finishes",
+			"label": "background_waits_until_foreground_finishes()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1323"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_request_classes_use_method_and_route_without_query_values",
+			"label": "request_classes_use_method_and_route_without_query_values()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1344"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigation_event_has_stable_schema",
+			"label": "mitigation_event_has_stable_schema()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1363"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "vecdeque",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "future",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L2",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "atomic",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L3",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "sync",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L4",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "time",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L5",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "serde",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L7",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "sync",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L8",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "cancellationtoken",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L9",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "apperror",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L15",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L19",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig",
+			"target": "default",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L27",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_default",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L28",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_default",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L28",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_validate",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L40",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_validate",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L40",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_validate",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L40",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L68",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "grindrclient",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L69",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "arc",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L70",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "requestrecovery",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L70",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L75",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L82",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationstate",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L92",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationreason",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L102",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apimitigationevent",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L109",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apimitigationevent",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationstate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L111",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apimitigationevent",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationreason",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L112",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apimitigationevent",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L113",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apimitigationevent",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L114",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apimitigationevent",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L116",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationeventsink",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L122",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationeventsink",
+			"target": "send",
+			"relation": "inherits",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L122",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationeventsink",
+			"target": "sync",
+			"relation": "inherits",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L122",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationeventsink",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L126",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f_emit",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L130",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f_emit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apimitigationevent",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L130",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L136",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L137",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitoutcome",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L143",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L151",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"target": "vecdeque",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L152",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L153",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"target": "instant",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L153",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L155",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"target": "instant",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L155",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L157",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"target": "instant",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L157",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_prioritystate",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L162",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L168",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "rwlock",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L169",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L169",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "mutex",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L170",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitstate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L170",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "semaphore",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L171",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "semaphore",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L172",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "semaphore",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L173",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "semaphore",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L174",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "mutex",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L175",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_prioritystate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L175",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "notify",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L176",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "atomicusize",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L177",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "rwlock",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L178",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L178",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "arc",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L178",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationeventsink",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L178",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "atomicu64",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L179",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestcontext",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L183",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestcontext",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L184",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestcontext",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L185",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_admission",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L189",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_admission",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L191",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_admission",
+			"target": "protectionscope",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L191",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_protectionscope",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L195",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestadmission",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L200",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestadmission",
+			"target": "semaphorepermit",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L201",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestadmission",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_admission",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L202",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_install",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L206",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_install",
+			"target": "grindrclient",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L206",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_install",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L206",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L210",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L210",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L210",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L214",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"target": "deviceinfo",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L214",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L214",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"target": "session",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L214",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L214",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L214",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L214",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L225",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"target": "grindrclient",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L225",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L225",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_set_event_sink",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L245",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_set_event_sink",
+			"target": "arc",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L245",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_set_event_sink",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationeventsink",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L245",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_client",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L253",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_client",
+			"target": "grindrclient",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L253",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_id",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L257",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_configure",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L261",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_configure",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L261",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_configure",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L261",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_configure",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L261",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L278",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L278",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L278",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L278",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request",
+			"target": "t",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L278",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L278",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L296",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L296",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L296",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L296",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L296",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"target": "t",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L296",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L296",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L318",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L318",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L318",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L318",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L318",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"target": "rawresponse",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L318",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L318",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L339",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L339",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L339",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"target": "cancellationtoken",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L339",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L339",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L339",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"target": "rawresponse",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L339",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L339",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"target": "cancellationtoken",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_f",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"target": "c",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"target": "t",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L362",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L407",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L407",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L421",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationstate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L421",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigationreason",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L421",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestcontext",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L421",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L421",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L453",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L453",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L453",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestcontext",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L453",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L453",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_admission",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L453",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L453",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L586",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_admission",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L586",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitoutcome",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L586",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestcontext",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L586",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_class_permit",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L740",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_class_permit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L740",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_class_permit",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L740",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_class_permit",
+			"target": "semaphorepermit",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L740",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L767",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L767",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L767",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestcontext",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L767",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L767",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestadmission",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L767",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtimeerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L767",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L791",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L791",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"target": "priorityrequest",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L791",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L849",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest",
+			"target": "atomicusize",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L850",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L855",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest",
+			"target": "drop",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L863",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_drop",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L864",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L869",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L870",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter",
+			"target": "drop",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L874",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter_drop",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L875",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L890",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L891",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest",
+			"target": "drop",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L895",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L896",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_raw_outcome",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L912",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_raw_outcome",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L912",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_raw_outcome",
+			"target": "rawresponse",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L912",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_raw_outcome",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L912",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_raw_outcome",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitoutcome",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L912",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_default_outcome",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L921",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_default_outcome",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L921",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_default_outcome",
+			"target": "t",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L921",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_default_outcome",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L921",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_default_outcome",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitoutcome",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L921",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_status_outcome",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L930",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_status_outcome",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitoutcome",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L930",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_error_outcome",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L938",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_error_outcome",
+			"target": "grindrerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L938",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_error_outcome",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuitoutcome",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L938",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_at_ms",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L957",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_at_ms",
+			"target": "instant",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L957",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_at_ms",
+			"target": "instant",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L957",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_system_time_ms",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L961",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_policy",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L968",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_policy",
+			"target": "method",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L968",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_policy",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retrypolicy",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L968",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_request_class",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L981",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_request_class",
+			"target": "method",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L981",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_request_class",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L981",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_api_runtime_configure",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L995",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_api_runtime_configure",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L995",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_api_runtime_configure",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L995",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "super",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1014",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1016",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1016",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1032",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestclass",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1032",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestcontext",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1032",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_status_contract_matches_reference_client",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1040",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_opens_at_twenty_samples_and_fifty_percent_failures",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1051",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtime_configuration_validates_bounds_and_prunes_history",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1082",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_protection_block_does_not_enter_circuit_window",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1115",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_non_profile_protection_block_starts_global_cooldown",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1143",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mutation_waits_for_safe_read_after_global_protection_cooldown",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1174",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_dropped_queue_waiter_restores_queue_count",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1220",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queued_request_rechecks_circuit_after_global_permit",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1241",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_rejection_does_not_latch_protection_probe",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1287",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_background_waits_until_foreground_finishes",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1323",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_request_classes_use_method_and_route_without_query_values",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1344",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mitigation_event_has_stable_schema",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1363",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_install",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L207",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L218",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L221",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get_or_try_init",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_install",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L222",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_default",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L229",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_configure",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_validate",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L262",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_configure",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L266",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L292",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L307",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L311",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L329",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L333",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_raw_classified_cancellable",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L351",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L401",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_at_ms",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L467",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L468",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L469",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_system_time_ms",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L482",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L693",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_at_ms",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L697",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L783",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L784",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_drop",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L865",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter_drop",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L885",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_raw_outcome",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_status_outcome",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L916",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_raw_outcome",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_error_outcome",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L917",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_default_outcome",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_error_outcome",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L926",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_at_ms",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_system_time_ms",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L958",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_request_class",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_policy",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L987",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_api_runtime_configure",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_get",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1002",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_api_runtime_configure",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1003",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1018",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_default",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1018",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_opens_at_twenty_samples_and_fifty_percent_failures",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1052",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_opens_at_twenty_samples_and_fifty_percent_failures",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1053",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_opens_at_twenty_samples_and_fifty_percent_failures",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1060",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtime_configuration_validates_bounds_and_prunes_history",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1083",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtime_configuration_validates_bounds_and_prunes_history",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntimeconfig_validate",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1088",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtime_configuration_validates_bounds_and_prunes_history",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1097",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_protection_block_does_not_enter_circuit_window",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1116",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_protection_block_does_not_enter_circuit_window",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1117",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_protection_block_does_not_enter_circuit_window",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1118",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_protection_block_does_not_enter_circuit_window",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1133",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_non_profile_protection_block_starts_global_cooldown",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1144",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_non_profile_protection_block_starts_global_cooldown",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1145",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_non_profile_protection_block_starts_global_cooldown",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1146",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mutation_waits_for_safe_read_after_global_protection_cooldown",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1175",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mutation_waits_for_safe_read_after_global_protection_cooldown",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1176",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mutation_waits_for_safe_read_after_global_protection_cooldown",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1177",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_mutation_waits_for_safe_read_after_global_protection_cooldown",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1200",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_dropped_queue_waiter_restores_queue_count",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1221",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_dropped_queue_waiter_restores_queue_count",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1227",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_dropped_queue_waiter_restores_queue_count",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1228",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_dropped_queue_waiter_restores_queue_count",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1237",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queued_request_rechecks_circuit_after_global_permit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1242",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queued_request_rechecks_circuit_after_global_permit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1243",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queued_request_rechecks_circuit_after_global_permit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1244",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queued_request_rechecks_circuit_after_global_permit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1251",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queued_request_rechecks_circuit_after_global_permit",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1271",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_rejection_does_not_latch_protection_probe",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1288",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_rejection_does_not_latch_protection_probe",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_context",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1289",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_rejection_does_not_latch_protection_probe",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1311",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_circuit_rejection_does_not_latch_protection_probe",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1319",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_background_waits_until_foreground_finishes",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_test_recovery",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1324",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_background_waits_until_foreground_finishes",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1326",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_background_waits_until_foreground_finishes",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1333",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_install",
+			"callee": "get_or_init",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L207"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_new",
+			"callee": "fetch_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L241"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_configure",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L262"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"callee": "classify",
+			"is_member_call": false,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L400"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_apiruntime_request_classified_inner",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L402"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L408"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L411"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L412"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L415"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_configure",
+			"callee": "pop_front",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L417"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"callee": "fetch_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L430"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"callee": "saturating_sub",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L438"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"callee": "available_permits",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L439"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"callee": "load",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L440"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"callee": "as_ref",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L443"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_emit",
+			"callee": "emit",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L449"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L460"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_admit",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L463"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L593"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L596"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L602"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L605"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"callee": "clear",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L663"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"callee": "push_back",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L673"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"callee": "pop_front",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L675"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_finish",
+			"callee": "count",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L678"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_class_permit",
+			"callee": "acquire",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L746"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_class_permit",
+			"callee": "acquire",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L752"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_class_permit",
+			"callee": "acquire",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L758"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"callee": "fetch_add",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L773"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter",
+			"callee": "acquire",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L778"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"callee": "notified",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L794"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L796"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L799"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L817"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L820"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"callee": "notified",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L828"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L830"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_requestrecovery_enter_priority",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L833"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queuedrequest_finish",
+			"callee": "fetch_sub",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L858"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter_drop",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L879"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter_drop",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L883"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_foregroundwaiter_drop",
+			"callee": "notify_waiters",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L886"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L897"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L901"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"callee": "drop",
+			"is_member_call": false,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L907"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_priorityrequest_drop",
+			"callee": "notify_waiters",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L908"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_at_ms",
+			"callee": "as_millis",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L958"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_at_ms",
+			"callee": "saturating_duration_since",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L958"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_system_time_ms",
+			"callee": "as_millis",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L962"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_system_time_ms",
+			"callee": "unwrap_or_default",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L962"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_system_time_ms",
+			"callee": "duration_since",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L962"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_policy",
+			"callee": "map_or",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L969"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_retry_policy",
+			"callee": "split_once",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L969"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_request_class",
+			"callee": "map_or",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L982"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_request_class",
+			"callee": "split_once",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L982"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_api_runtime_configure",
+			"callee": "ok_or",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1002"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_runtime_configuration_validates_bounds_and_prunes_history",
+			"callee": "extend",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1086"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_dropped_queue_waiter_restores_queue_count",
+			"callee": "acquire_many",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1222"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queued_request_rechecks_circuit_after_global_permit",
+			"callee": "acquire_many",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1245"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_runtime_queued_request_rechecks_circuit_after_global_permit",
+			"callee": "store",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/runtime.rs",
+			"source_location": "L1258"
+		}
+	]
+}

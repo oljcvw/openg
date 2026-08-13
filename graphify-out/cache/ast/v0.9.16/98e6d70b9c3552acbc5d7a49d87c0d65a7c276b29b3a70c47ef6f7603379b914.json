@@ -1,0 +1,2041 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"label": "embedded_assets.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"label": "EmbeddedAssetsError",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L31"
+		},
+		{
+			"id": "pathbuf",
+			"label": "PathBuf",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "error",
+			"label": "Error",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"label": "EmbeddedAssets",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L78"
+		},
+		{
+			"id": "hashmap",
+			"label": "HashMap",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "assetkey",
+			"label": "AssetKey",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "csphashes",
+			"label": "CspHashes",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"label": "EmbeddedAssetsInput",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L83"
+		},
+		{
+			"id": "vec",
+			"label": "Vec",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "from",
+			"label": "From",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput_from",
+			"label": ".from()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L86"
+		},
+		{
+			"id": "self",
+			"label": "Self",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets",
+			"label": "RawEmbeddedAssets",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L98"
+		},
+		{
+			"id": "direntry",
+			"label": "DirEntry",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"label": ".new()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L105"
+		},
+		{
+			"id": "assetoptions",
+			"label": "AssetOptions",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "result",
+			"label": "Result",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"label": "CspHashes",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L157"
+		},
+		{
+			"id": "string",
+			"label": "String",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"label": ".add_if_applicable()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L171"
+		},
+		{
+			"id": "disabledcspmodificationkind",
+			"label": "DisabledCspModificationKind",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"label": "AssetOptions",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L204"
+		},
+		{
+			"id": "patternkind",
+			"label": "PatternKind",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_new",
+			"label": ".new()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L215"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_with_csp",
+			"label": ".with_csp()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L228"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_freeze_prototype",
+			"label": ".freeze_prototype()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L235"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_dangerous_disable_asset_csp_modification",
+			"label": ".dangerous_disable_asset_csp_modification()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L241"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"label": ".new()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254"
+		},
+		{
+			"id": "into",
+			"label": "Into",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "fnmut",
+			"label": "FnMut",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "path",
+			"label": "Path",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compression_settings",
+			"label": ".compression_settings()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L290"
+		},
+		{
+			"id": "brotliencoderparams",
+			"label": "BrotliEncoderParams",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"label": ".compress_file()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306"
+		},
+		{
+			"id": "asset",
+			"label": "Asset",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "totokens",
+			"label": "ToTokens",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"label": ".to_tokens()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L392"
+		},
+		{
+			"id": "tokenstream",
+			"label": "TokenStream",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_ensure_out_dir",
+			"label": "ensure_out_dir()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L446"
+		},
+		{
+			"id": "embeddedassetsresult",
+			"label": "EmbeddedAssetsResult",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/embedded_assets.rs"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "engine",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L5",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "tokenstream",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L6",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "quote",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L7",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "sha2",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L8",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "std",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L9",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "patternkind",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L14",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "tauri_utils",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L15",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "error",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L16",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "walkdir",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L17",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "brotliencoderparams",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L20",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L31",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L34",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "error",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L35",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L40",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "error",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "error",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L45",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L48",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L48",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L51",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L51",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L55",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "error",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L56",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"target": "error",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L63",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L78",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "hashmap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L79",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "assetkey",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L79",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L79",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L79",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "csphashes",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L80",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L83",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L83",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L83",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"target": "from",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L85",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L85",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput_from",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L86",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput_from",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L86",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput_from",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L86",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"target": "from",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L91",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L91",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L91",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput_from",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L92",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput_from",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L92",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput_from",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L92",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput_from",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L92",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L98",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L99",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L99",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets",
+			"target": "direntry",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L99",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets",
+			"target": "csphashes",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L100",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L105",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L105",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"target": "assetoptions",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L105",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L105",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L105",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L105",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L157",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L159",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L159",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"target": "hashmap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L161",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L161",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L161",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L161",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L163",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L163",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L171",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"target": "direntry",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L171",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"target": "disabledcspmodificationkind",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L171",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L171",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L171",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L204",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"target": "patternkind",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L206",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"target": "disabledcspmodificationkind",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L208",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L210",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_new",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L215",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_new",
+			"target": "patternkind",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L215",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_new",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L215",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_with_csp",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L228",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_with_csp",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L228",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_freeze_prototype",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L235",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_freeze_prototype",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L235",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_dangerous_disable_asset_csp_modification",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L241",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_dangerous_disable_asset_csp_modification",
+			"target": "disabledcspmodificationkind",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L241",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions_dangerous_disable_asset_csp_modification",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L241",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "into",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_assetoptions",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "fnmut",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "assetkey",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "path",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L254",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compression_settings",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L290",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compression_settings",
+			"target": "brotliencoderparams",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L290",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "path",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "path",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "fnmut",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "assetkey",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "path",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "asset",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetserror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L306",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "totokens",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L391",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L392",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"target": "tokenstream",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L392",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_ensure_out_dir",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L446",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_ensure_out_dir",
+			"target": "embeddedassetsresult",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L446",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_ensure_out_dir",
+			"target": "pathbuf",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L446",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassetsinput_from",
+			"target": "self",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L87",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L121",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L134",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L181",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L279",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L376",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compression_settings",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L378",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L394",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "filter_map",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L108"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "flat_map",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L108"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "into_iter",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L108"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "is_dir",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L112"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "to_path_buf",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L115"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "parent",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L115"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "into_iter",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L121"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "contents_first",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L121"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "follow_links",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L121"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "is_dir",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L130"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_rawembeddedassets_new",
+			"callee": "file_type",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L130"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"callee": "path",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L176"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L179"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"callee": "extension",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L179"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"callee": "to_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L179"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"callee": "can_modify",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L180"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"callee": "update",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L182"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L183"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"callee": "to_path_buf",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L186"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_csphashes_add_if_applicable",
+			"callee": "finalize",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L190"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"callee": "try_fold",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L272"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"callee": "into_iter",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L272"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_new",
+			"callee": "path",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L279"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L317"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L323"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "strip_prefix",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L323"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L335"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L335"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L338"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "canonicalize",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L338"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "join",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L339"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L342"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L345"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L348"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "extension",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L348"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "to_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L348"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "join",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L349"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "join",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L351"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "exists",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L355"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L358"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L366"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "write_all",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L366"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_compress_file",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L378"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "sort_by",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L396"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "cmp",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L396"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "as_ref",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L396"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "as_ref",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L398"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "display",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L399"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "display",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L400"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "append_all",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L403"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "sort",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L411"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L413"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "append_all",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L414"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "sort",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L418"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L420"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "append_all",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L421"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "sort_by_key",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L426"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L426"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L428"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L431"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "append_all",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L432"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "append_all",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L434"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_embeddedassets_to_tokens",
+			"callee": "append_all",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L438"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_ensure_out_dir",
+			"callee": "and_then",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L447"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_ensure_out_dir",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L447"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_ensure_out_dir",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L450"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_ensure_out_dir",
+			"callee": "canonicalize",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L450"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_embedded_assets_ensure_out_dir",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/embedded_assets.rs",
+			"source_location": "L453"
+		}
+	]
+}

@@ -1,0 +1,127 @@
+{
+	"nodes": [
+		{
+			"id": "logo_app_icon_open_grind_app_icon",
+			"label": "Open Grind App Icon",
+			"file_type": "image",
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "logo_app_icon_six_segment_symmetric_emblem",
+			"label": "Six-Segment Symmetric Emblem",
+			"file_type": "concept",
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "logo_app_icon_amber_orange_visual_identity",
+			"label": "Amber Orange Visual Identity",
+			"file_type": "concept",
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "logo_app_icon_mask_like_silhouette",
+			"label": "Mask-Like Silhouette",
+			"file_type": "concept",
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "logo_app_icon_negative_space_composition",
+			"label": "Negative-Space Composition",
+			"file_type": "concept",
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "logo_app_icon_open_grind_app_icon",
+			"target": "logo_app_icon_six_segment_symmetric_emblem",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "logo_app_icon_open_grind_app_icon",
+			"target": "logo_app_icon_amber_orange_visual_identity",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "logo_app_icon_open_grind_app_icon",
+			"target": "logo_app_icon_negative_space_composition",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "logo_app_icon_six_segment_symmetric_emblem",
+			"target": "logo_app_icon_mask_like_silhouette",
+			"relation": "conceptually_related_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.75,
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "logo_app_icon_six_segment_symmetric_emblem",
+			"target": "logo_app_icon_negative_space_composition",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/logo/app-icon.svg",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "logo_app_icon_visual_system",
+			"label": "Open Grind App Icon Visual System",
+			"nodes": [
+				"logo_app_icon_open_grind_app_icon",
+				"logo_app_icon_six_segment_symmetric_emblem",
+				"logo_app_icon_amber_orange_visual_identity",
+				"logo_app_icon_negative_space_composition"
+			],
+			"relation": "form",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/logo/app-icon.svg"
+		}
+	]
+}

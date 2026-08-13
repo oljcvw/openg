@@ -1,0 +1,669 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_rs",
+			"label": "image.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_iconformat",
+			"label": "IconFormat",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L14"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"label": "CachedIcon",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L22"
+		},
+		{
+			"id": "cached",
+			"label": "Cached",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/image.rs"
+		},
+		{
+			"id": "tokenstream",
+			"label": "TokenStream",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/image.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"label": ".new()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L29"
+		},
+		{
+			"id": "path",
+			"label": "Path",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/image.rs"
+		},
+		{
+			"id": "embeddedassetsresult",
+			"label": "EmbeddedAssetsResult",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/image.rs"
+		},
+		{
+			"id": "self",
+			"label": "Self",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/image.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_raw",
+			"label": ".new_raw()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L41"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"label": ".new_ico()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L51"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"label": ".new_png()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L75"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_open",
+			"label": ".open()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L101"
+		},
+		{
+			"id": "vec",
+			"label": "Vec",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/image.rs"
+		},
+		{
+			"id": "totokens",
+			"label": "ToTokens",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/patches/tauri-codegen/src/image.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_to_tokens",
+			"label": ".to_tokens()",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L107"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_rs",
+			"target": "crate",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L5",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_rs",
+			"target": "tokenstream",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L9",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_rs",
+			"target": "quote",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L10",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_rs",
+			"target": "std",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L11",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_iconformat",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L14",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L22",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "cached",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L23",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_iconformat",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L24",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "tokenstream",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L25",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L29",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"target": "tokenstream",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L29",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"target": "path",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L29",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"target": "embeddedassetsresult",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L29",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L29",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_raw",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L41",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_raw",
+			"target": "tokenstream",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_raw",
+			"target": "path",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_raw",
+			"target": "embeddedassetsresult",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_raw",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L51",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"target": "tokenstream",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L51",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"target": "path",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L51",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"target": "embeddedassetsresult",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L51",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L51",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L75",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"target": "tokenstream",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L75",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"target": "path",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L75",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"target": "embeddedassetsresult",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L75",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"target": "self",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L75",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_open",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L101",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_open",
+			"target": "path",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L101",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_open",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L101",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "totokens",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L106",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_to_tokens",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L107",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_to_tokens",
+			"target": "tokenstream",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L107",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L31",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L32",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L54",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L77",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"callee": "as_deref",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L30"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"callee": "extension",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L30"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"callee": "unwrap_or_default",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L34"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new",
+			"callee": "to_path_buf",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L35"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L54"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"callee": "entries",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L57"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"callee": "to_vec",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L58"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"callee": "rgba_data",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L58"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L58"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"callee": "decode",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L58"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"callee": "width",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L68"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_ico",
+			"callee": "height",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L69"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L78"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"callee": "read_info",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L78"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"callee": "output_color_type",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L82"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"callee": "output_buffer_size",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L86"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"callee": "next_row",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L87"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"callee": "extend",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L88"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"callee": "data",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L88"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"callee": "info",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L95"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_new_png",
+			"callee": "info",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L96"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_open",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L102"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_image_cachedicon_to_tokens",
+			"callee": "append_all",
+			"is_member_call": true,
+			"source_file": "src-tauri/patches/tauri-codegen/src/image.rs",
+			"source_location": "L111"
+		}
+	]
+}

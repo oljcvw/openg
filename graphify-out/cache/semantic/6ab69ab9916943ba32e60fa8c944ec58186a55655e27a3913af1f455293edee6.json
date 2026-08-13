@@ -1,0 +1,17 @@
+{
+	"nodes": [
+		{
+			"id": "system_index_system_reference",
+			"label": "System API Reference",
+			"file_type": "document",
+			"source_file": "docs/content/grindr-api/system/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [],
+	"hyperedges": []
+}

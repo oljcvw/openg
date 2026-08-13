@@ -1,0 +1,84 @@
+{
+	"nodes": [
+		{
+			"id": "ios_appicon_76x76_1x_grindr_mask_app_icon",
+			"label": "Grindr Mask App Icon",
+			"file_type": "image",
+			"source_file": "src-tauri/icons/ios/AppIcon-76x76@1x.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "ios_appicon_76x76_1x_stylized_yellow_mask",
+			"label": "Stylized Yellow Mask",
+			"file_type": "concept",
+			"source_file": "src-tauri/icons/ios/AppIcon-76x76@1x.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "ios_appicon_76x76_1x_black_yellow_palette",
+			"label": "Black and Yellow Palette",
+			"file_type": "concept",
+			"source_file": "src-tauri/icons/ios/AppIcon-76x76@1x.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "ios_appicon_76x76_1x_grindr_mask_app_icon",
+			"target": "ios_appicon_76x76_1x_stylized_yellow_mask",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/icons/ios/AppIcon-76x76@1x.png",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "ios_appicon_76x76_1x_grindr_mask_app_icon",
+			"target": "ios_appicon_76x76_1x_black_yellow_palette",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/icons/ios/AppIcon-76x76@1x.png",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "ios_appicon_76x76_1x_stylized_yellow_mask",
+			"target": "ios_appicon_76x76_1x_black_yellow_palette",
+			"relation": "conceptually_related_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.85,
+			"source_file": "src-tauri/icons/ios/AppIcon-76x76@1x.png",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "ios_appicon_76x76_1x_visual_identity",
+			"label": "Mask Icon Visual Identity",
+			"nodes": [
+				"ios_appicon_76x76_1x_grindr_mask_app_icon",
+				"ios_appicon_76x76_1x_stylized_yellow_mask",
+				"ios_appicon_76x76_1x_black_yellow_palette"
+			],
+			"relation": "form",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/icons/ios/AppIcon-76x76@1x.png"
+		}
+	]
+}

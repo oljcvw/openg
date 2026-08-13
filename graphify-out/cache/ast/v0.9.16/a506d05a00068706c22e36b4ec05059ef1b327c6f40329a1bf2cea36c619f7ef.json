@@ -1,0 +1,344 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_md",
+			"label": "README.md",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"label": "grindr.rs",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_features",
+			"label": "Features",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L12"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_installation",
+			"label": "Installation",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L22"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_versioning",
+			"label": "Versioning",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L31"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_quick_start",
+			"label": "Quick start",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L35"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_sessions_device_identity",
+			"label": "Sessions & device identity",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L63"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_websocket",
+			"label": "WebSocket",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L81"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_api_reference",
+			"label": "API reference",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L110"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindrclient",
+			"label": "`GrindrClient`",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L114"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_setup_and_device_identity",
+			"label": "Setup and device identity",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L118"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_authentication",
+			"label": "Authentication",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L127"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_requests",
+			"label": "Requests",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L142"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_media_uploads",
+			"label": "Media uploads",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L152"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_realtime_websocket",
+			"label": "Realtime websocket",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L164"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_watching_session_state",
+			"label": "Watching session state",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L173"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_types",
+			"label": "Types",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L180"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_low_level_helpers",
+			"label": "Low-level helpers",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L220"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_examples",
+			"label": "Examples",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L230"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_minimum_supported_rust_version",
+			"label": "Minimum supported Rust version",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L246"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_license",
+			"label": "License",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L250"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_md",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L1",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_features",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L12",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_installation",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L22",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_installation",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_versioning",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L31",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_quick_start",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L35",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_sessions_device_identity",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L63",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_websocket",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L81",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_api_reference",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L110",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_api_reference",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindrclient",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L114",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindrclient",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_setup_and_device_identity",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L118",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindrclient",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_authentication",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L127",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindrclient",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_requests",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L142",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindrclient",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_media_uploads",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L152",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindrclient",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_realtime_websocket",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L164",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindrclient",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_watching_session_state",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L173",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_api_reference",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_types",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L180",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_api_reference",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_low_level_helpers",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L220",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_examples",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L230",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_minimum_supported_rust_version",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L246",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_grindr_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_license",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L250",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_readme_md",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_patches_grindr_license_md",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/patches/grindr/README.md",
+			"source_location": "L252",
+			"weight": 1.0
+		}
+	],
+	"input_tokens": 0,
+	"output_tokens": 0
+}

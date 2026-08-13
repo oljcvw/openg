@@ -1,0 +1,74 @@
+{
+	"nodes": [
+		{
+			"id": "contrib_88x31_promotional_badge",
+			"label": "Grind Now Promotional Badge",
+			"file_type": "image",
+			"source_file": "contrib/88x31.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_88x31_grind_now_text",
+			"label": "GRIND NOW! Call-to-Action Text",
+			"file_type": "concept",
+			"source_file": "contrib/88x31.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_88x31_yellow_mask_emblem",
+			"label": "Yellow Mask Emblem",
+			"file_type": "concept",
+			"source_file": "contrib/88x31.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "contrib_88x31_promotional_badge",
+			"target": "contrib_88x31_grind_now_text",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/88x31.png",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_88x31_promotional_badge",
+			"target": "contrib_88x31_yellow_mask_emblem",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/88x31.png",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "contrib_88x31_badge_composition",
+			"label": "Grind Now Badge Composition",
+			"nodes": [
+				"contrib_88x31_promotional_badge",
+				"contrib_88x31_grind_now_text",
+				"contrib_88x31_yellow_mask_emblem"
+			],
+			"relation": "form",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/88x31.png"
+		}
+	]
+}

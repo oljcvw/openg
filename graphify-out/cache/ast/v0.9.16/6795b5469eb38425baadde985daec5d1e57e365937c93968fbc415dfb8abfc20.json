@@ -1,0 +1,13 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_patches_tauri_codegen_src_vendor_mod_rs",
+			"label": "mod.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/tauri-codegen/src/vendor/mod.rs",
+			"source_location": "L1"
+		}
+	],
+	"edges": [],
+	"raw_calls": []
+}

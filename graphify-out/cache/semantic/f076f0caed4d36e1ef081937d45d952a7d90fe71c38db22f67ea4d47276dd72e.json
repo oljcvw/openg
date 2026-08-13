@@ -1,0 +1,48 @@
+{
+	"nodes": [
+		{
+			"id": "websocket_index_websocket",
+			"label": "Grindr WebSocket API",
+			"file_type": "document",
+			"source_file": "docs/content/grindr-api/websocket/index.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "websocket_index_websocket",
+			"target": "grindr_api_security_headers_security_headers",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_index_websocket",
+			"target": "websocket_events_connection_established",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/index.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_index_websocket",
+			"target": "websocket_commands_websocket_commands",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/index.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

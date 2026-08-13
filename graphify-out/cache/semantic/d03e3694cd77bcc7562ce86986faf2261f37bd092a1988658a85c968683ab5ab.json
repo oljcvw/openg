@@ -1,0 +1,117 @@
+{
+	"nodes": [
+		{
+			"id": "keys_open_grind_keys",
+			"label": "Open Grind Keys",
+			"file_type": "document",
+			"source_file": "KEYS.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "keys_governance_pgp_key",
+			"label": "Governance PGP Key",
+			"file_type": "concept",
+			"source_file": "KEYS.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "keys_release_minisign_key",
+			"label": "Release Minisign Key",
+			"file_type": "concept",
+			"source_file": "KEYS.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "keys_android_signing_fingerprint",
+			"label": "Android Signing Fingerprint",
+			"file_type": "concept",
+			"source_file": "KEYS.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "keys_open_grind_keys",
+			"target": "keys_governance_pgp_key",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "KEYS.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "keys_open_grind_keys",
+			"target": "keys_release_minisign_key",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "KEYS.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "keys_open_grind_keys",
+			"target": "keys_android_signing_fingerprint",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "KEYS.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "keys_open_grind_keys",
+			"target": "security_security_policy",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "KEYS.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "keys_open_grind_keys",
+			"target": "governance_decision_making_authority",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "KEYS.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "release_trust_chain",
+			"label": "Release Trust Chain",
+			"nodes": [
+				"keys_governance_pgp_key",
+				"keys_release_minisign_key",
+				"keys_android_signing_fingerprint",
+				"security_supply_chain_security",
+				"building_release_verification"
+			],
+			"relation": "participate_in",
+			"confidence": "INFERRED",
+			"confidence_score": 0.95,
+			"source_file": "KEYS.md"
+		}
+	]
+}

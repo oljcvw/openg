@@ -1,0 +1,212 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_json",
+			"label": "mobile.json",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_schema",
+			"label": "$schema",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L2"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_identifier",
+			"label": "identifier",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L3"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_windows",
+			"label": "windows",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L4"
+		},
+		{
+			"id": "ref_main",
+			"label": "main",
+			"file_type": "concept",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L4"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_platforms",
+			"label": "platforms",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L7"
+		},
+		{
+			"id": "ref_ios",
+			"label": "iOS",
+			"file_type": "concept",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L7"
+		},
+		{
+			"id": "ref_android",
+			"label": "android",
+			"file_type": "concept",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L7"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_permissions",
+			"label": "permissions",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11"
+		},
+		{
+			"id": "ref_geolocation_allow_check_permissions",
+			"label": "geolocation:allow-check-permissions",
+			"file_type": "concept",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11"
+		},
+		{
+			"id": "ref_geolocation_allow_request_permissions",
+			"label": "geolocation:allow-request-permissions",
+			"file_type": "concept",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11"
+		},
+		{
+			"id": "ref_geolocation_allow_get_current_position",
+			"label": "geolocation:allow-get-current-position",
+			"file_type": "concept",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11"
+		},
+		{
+			"id": "ref_geolocation_allow_watch_position",
+			"label": "geolocation:allow-watch-position",
+			"file_type": "concept",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_schema",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L2",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_identifier",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L3",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_windows",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L4",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_windows",
+			"target": "ref_main",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L4",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_platforms",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L7",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_platforms",
+			"target": "ref_ios",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L7",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_platforms",
+			"target": "ref_android",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L7",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_permissions",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_permissions",
+			"target": "ref_geolocation_allow_check_permissions",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_permissions",
+			"target": "ref_geolocation_allow_request_permissions",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_permissions",
+			"target": "ref_geolocation_allow_get_current_position",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_mobile_permissions",
+			"target": "ref_geolocation_allow_watch_position",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/mobile.json",
+			"source_location": "L11",
+			"weight": 1.0,
+			"context": "import"
+		}
+	]
+}

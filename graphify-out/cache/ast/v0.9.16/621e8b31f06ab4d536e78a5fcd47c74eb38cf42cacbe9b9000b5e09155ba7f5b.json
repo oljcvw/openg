@@ -1,0 +1,127 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_json",
+			"label": "google-oauth.json",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_schema",
+			"label": "$schema",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L2"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_identifier",
+			"label": "identifier",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L3"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_description",
+			"label": "description",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L4"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_windows",
+			"label": "windows",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L5"
+		},
+		{
+			"id": "ref_google_oauth",
+			"label": "google-oauth",
+			"file_type": "concept",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L5"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_permissions",
+			"label": "permissions",
+			"file_type": "code",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L8"
+		},
+		{
+			"id": "ref_core_default",
+			"label": "core:default",
+			"file_type": "concept",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L8"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_schema",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L2",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_identifier",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L3",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_description",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L4",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_windows",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L5",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_windows",
+			"target": "ref_google_oauth",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L5",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_json",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_permissions",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L8",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_capabilities_google_oauth_permissions",
+			"target": "ref_core_default",
+			"relation": "extends",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/capabilities/google-oauth.json",
+			"source_location": "L8",
+			"weight": 1.0,
+			"context": "import"
+		}
+	]
+}

@@ -1,0 +1,40 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_docs_content_guides_download_md",
+			"label": "download.md",
+			"file_type": "document",
+			"source_file": "docs/content/guides/download.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_docs_content_guides_download_download_open_grind_https_git_opengrind_org_open_grind_open_grind_releases_install",
+			"label": "[**Download Open Grind**](https://git.opengrind.org/open-grind/open-grind/releases#install)",
+			"file_type": "document",
+			"source_file": "docs/content/guides/download.md",
+			"source_location": "L6"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_docs_content_guides_download_md",
+			"target": "users_andrew_zzapps_open_grind_docs_content_guides_download_download_open_grind_https_git_opengrind_org_open_grind_open_grind_releases_install",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "docs/content/guides/download.md",
+			"source_location": "L6",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_docs_content_guides_download_md",
+			"target": "guides_sign_in_with_google_md",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "docs/content/guides/download.md",
+			"source_location": "L14",
+			"weight": 1.0
+		}
+	],
+	"input_tokens": 0,
+	"output_tokens": 0
+}

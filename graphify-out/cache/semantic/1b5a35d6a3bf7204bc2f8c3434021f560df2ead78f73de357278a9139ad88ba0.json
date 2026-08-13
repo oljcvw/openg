@@ -1,0 +1,205 @@
+{
+	"nodes": [
+		{
+			"id": "websocket_notification_event_notification_event",
+			"label": "WebSocket Notification Event",
+			"file_type": "document",
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "websocket_notification_event_message_sent",
+			"label": "chat.v1.message_sent Event",
+			"file_type": "concept",
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "websocket_notification_event_refresh_dynamic",
+			"label": "chat.v1.refresh_dynamic Event",
+			"file_type": "concept",
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "websocket_notification_event_conversation_delete",
+			"label": "chat.v1.conversation.delete Event",
+			"file_type": "concept",
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "websocket_notification_event_conversation_read",
+			"label": "chat.v1.conversation_read Event",
+			"file_type": "concept",
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "websocket_notification_event_typing_status",
+			"label": "chat.v1.typing_status Event",
+			"file_type": "concept",
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "websocket_notification_event_cache_bomb_inbox",
+			"label": "chat.v1.cache_bomb.inbox Event",
+			"file_type": "concept",
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "websocket_notification_event_new_view_received",
+			"label": "viewed_me.v1.new_view_received Event",
+			"file_type": "concept",
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "websocket_notification_event_message_sent",
+			"target": "websocket_notification_event_notification_event",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_message_sent",
+			"target": "messaging_index_messaging_reference",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_refresh_dynamic",
+			"target": "websocket_notification_event_notification_event",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_refresh_dynamic",
+			"target": "messaging_index_messaging_reference",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_conversation_delete",
+			"target": "websocket_notification_event_notification_event",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_conversation_delete",
+			"target": "messaging_index_messaging_reference",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_conversation_read",
+			"target": "websocket_notification_event_notification_event",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_conversation_read",
+			"target": "commerce_index_commerce_reference",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_typing_status",
+			"target": "websocket_notification_event_notification_event",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_cache_bomb_inbox",
+			"target": "websocket_notification_event_notification_event",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "websocket_notification_event_new_view_received",
+			"target": "websocket_notification_event_notification_event",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/grindr-api/websocket/notification-event.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

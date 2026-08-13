@@ -1,0 +1,306 @@
+{
+	"nodes": [
+		{
+			"id": "phonescreenshots_4_profile_filter_interface",
+			"label": "Profile Filter Interface",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_favorites_filter_disabled",
+			"label": "Favorites Filter Disabled",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_online_filter_enabled",
+			"label": "Online Filter Enabled",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_right_now_filter_disabled",
+			"label": "Right Now Filter Disabled",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_age_filter_27_years_and_over",
+			"label": "Age Filter 27 Years and Over",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_gender_filter_disabled",
+			"label": "Gender Filter Disabled",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_gender_filter_options",
+			"label": "Gender Filter Options",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_position_filter_versatile",
+			"label": "Position Filter Versatile",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_position_filter_options",
+			"label": "Position Filter Options",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_photos_filter_disabled",
+			"label": "Photos Filter Disabled",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_photo_availability_options",
+			"label": "Photo Availability Options",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_tags_filter_fitness",
+			"label": "Tags Filter Fitness",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_interest_tag_options",
+			"label": "Interest Tag Options",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_4_apply_filters_action",
+			"label": "Apply Filters Action",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "phonescreenshots_4_profile_filter_interface",
+			"target": "phonescreenshots_4_favorites_filter_disabled",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_profile_filter_interface",
+			"target": "phonescreenshots_4_online_filter_enabled",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_profile_filter_interface",
+			"target": "phonescreenshots_4_right_now_filter_disabled",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_profile_filter_interface",
+			"target": "phonescreenshots_4_age_filter_27_years_and_over",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_profile_filter_interface",
+			"target": "phonescreenshots_4_gender_filter_disabled",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_gender_filter_disabled",
+			"target": "phonescreenshots_4_gender_filter_options",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_profile_filter_interface",
+			"target": "phonescreenshots_4_position_filter_versatile",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_position_filter_versatile",
+			"target": "phonescreenshots_4_position_filter_options",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_profile_filter_interface",
+			"target": "phonescreenshots_4_photos_filter_disabled",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_photos_filter_disabled",
+			"target": "phonescreenshots_4_photo_availability_options",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_profile_filter_interface",
+			"target": "phonescreenshots_4_tags_filter_fitness",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_tags_filter_fitness",
+			"target": "phonescreenshots_4_interest_tag_options",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_4_profile_filter_interface",
+			"target": "phonescreenshots_4_apply_filters_action",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "phonescreenshots_4_active_profile_filter_configuration",
+			"label": "Active Profile Filter Configuration",
+			"nodes": [
+				"phonescreenshots_4_online_filter_enabled",
+				"phonescreenshots_4_age_filter_27_years_and_over",
+				"phonescreenshots_4_position_filter_versatile",
+				"phonescreenshots_4_tags_filter_fitness"
+			],
+			"relation": "form",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/4.jpeg"
+		}
+	]
+}

@@ -1,0 +1,135 @@
+{
+	"nodes": [
+		{
+			"id": "patches_readme_vendored_cargo_patches",
+			"label": "Vendored Cargo Patches",
+			"file_type": "document",
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "patches_readme_tauri_codegen",
+			"label": "Vendored tauri-codegen",
+			"file_type": "concept",
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "patches_readme_vendor_tauri_codegen_command",
+			"label": "bun vendor:tauri-codegen",
+			"file_type": "code",
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "patches_readme_patch_file_source",
+			"label": "tauri-codegen Patch File Source of Truth",
+			"file_type": "rationale",
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "The generated tauri-codegen directory must not be edited directly; changes belong in the patch file before regeneration."
+		},
+		{
+			"id": "patches_readme_tauri_pull_request_15777",
+			"label": "Tauri Pull Request 15777",
+			"file_type": "concept",
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "patches_readme_temporary_vendoring",
+			"label": "Temporary tauri-codegen Vendoring",
+			"file_type": "rationale",
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "The vendored tauri-codegen patch should be removed after upstream Tauri pull request 15777 is merged."
+		}
+	],
+	"edges": [
+		{
+			"source": "patches_readme_vendored_cargo_patches",
+			"target": "patches_readme_tauri_codegen",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "patches_readme_vendor_tauri_codegen_command",
+			"target": "patches_readme_tauri_codegen",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "patches_readme_patch_file_source",
+			"target": "patches_readme_tauri_codegen",
+			"relation": "rationale_for",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "patches_readme_tauri_codegen",
+			"target": "patches_readme_tauri_pull_request_15777",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "patches_readme_temporary_vendoring",
+			"target": "patches_readme_tauri_codegen",
+			"relation": "rationale_for",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "patches_readme_temporary_vendoring",
+			"target": "patches_readme_tauri_pull_request_15777",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "src-tauri/patches/README.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

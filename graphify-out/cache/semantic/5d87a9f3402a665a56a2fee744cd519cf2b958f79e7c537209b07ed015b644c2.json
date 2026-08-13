@@ -1,0 +1,262 @@
+{
+	"nodes": [
+		{
+			"id": "guides_sign_in_with_google_google_oauth",
+			"label": "Google OAuth in Open Grind",
+			"file_type": "document",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "guides_sign_in_with_google_android_companion_app",
+			"label": "Open Grind Google OAuth Companion App",
+			"file_type": "concept",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "guides_sign_in_with_google_manual_token_paste",
+			"label": "Manual Google OAuth Token Paste",
+			"file_type": "concept",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "guides_sign_in_with_google_oauth_webextension",
+			"label": "Grindr Google OAuth WebExtension",
+			"file_type": "concept",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "guides_sign_in_with_google_native_gis_constraint",
+			"label": "Native Google Identity Services Constraint",
+			"file_type": "rationale",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "guides_sign_in_with_google_droidguard_constraint",
+			"label": "DroidGuard Attestation Constraint",
+			"file_type": "rationale",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "guides_sign_in_with_google_android_webview_constraint",
+			"label": "Android WebView X-Requested-With Constraint",
+			"file_type": "rationale",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "guides_sign_in_with_google_bundled_webview_tradeoff",
+			"label": "Bundled WebView Size and Build Tradeoff",
+			"file_type": "rationale",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "guides_sign_in_with_google_geckoview_companion_architecture",
+			"label": "GeckoView Companion Architecture",
+			"file_type": "concept",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "guides_sign_in_with_google_same_jks_intent",
+			"label": "Same-JKS Programmatic Intent Trust",
+			"file_type": "concept",
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "guides_sign_in_with_google_android_companion_app",
+			"target": "guides_sign_in_with_google_google_oauth",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_manual_token_paste",
+			"target": "guides_sign_in_with_google_google_oauth",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_oauth_webextension",
+			"target": "guides_sign_in_with_google_google_oauth",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_android_companion_app",
+			"target": "guides_sign_in_with_google_manual_token_paste",
+			"relation": "shares_data_with",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_oauth_webextension",
+			"target": "guides_sign_in_with_google_manual_token_paste",
+			"relation": "shares_data_with",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_android_companion_app",
+			"target": "guides_sign_in_with_google_oauth_webextension",
+			"relation": "semantically_similar_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.85,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_native_gis_constraint",
+			"target": "guides_sign_in_with_google_android_companion_app",
+			"relation": "rationale_for",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_droidguard_constraint",
+			"target": "guides_sign_in_with_google_oauth_webextension",
+			"relation": "rationale_for",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_android_webview_constraint",
+			"target": "guides_sign_in_with_google_oauth_webextension",
+			"relation": "rationale_for",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_bundled_webview_tradeoff",
+			"target": "guides_sign_in_with_google_android_companion_app",
+			"relation": "rationale_for",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_geckoview_companion_architecture",
+			"target": "guides_sign_in_with_google_android_companion_app",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_geckoview_companion_architecture",
+			"target": "guides_sign_in_with_google_oauth_webextension",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "guides_sign_in_with_google_same_jks_intent",
+			"target": "guides_sign_in_with_google_android_companion_app",
+			"relation": "conceptually_related_to",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "android_google_oauth_workarounds",
+			"label": "Android Google OAuth Workarounds",
+			"nodes": [
+				"guides_sign_in_with_google_android_companion_app",
+				"guides_sign_in_with_google_manual_token_paste",
+				"guides_sign_in_with_google_oauth_webextension",
+				"guides_sign_in_with_google_geckoview_companion_architecture"
+			],
+			"relation": "implement",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/guides/sign-in-with-google.md"
+		}
+	]
+}

@@ -1,0 +1,31 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_ci_rust_env_sh",
+			"label": "rust-env.sh",
+			"file_type": "code",
+			"source_file": "ci/rust-env.sh",
+			"source_location": "L1",
+			"metadata": { "language": "bash", "kind": "file" }
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_ci_rust_env_sh__entry",
+			"label": "rust-env.sh script",
+			"file_type": "code",
+			"source_file": "ci/rust-env.sh",
+			"source_location": "L1",
+			"metadata": { "language": "bash", "kind": "bash_entrypoint" }
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_ci_rust_env_sh",
+			"target": "users_andrew_zzapps_open_grind_ci_rust_env_sh__entry",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "ci/rust-env.sh",
+			"source_location": "L1",
+			"weight": 1.0
+		}
+	]
+}

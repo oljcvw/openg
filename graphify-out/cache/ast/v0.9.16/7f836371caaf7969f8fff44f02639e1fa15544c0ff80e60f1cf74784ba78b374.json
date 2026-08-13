@@ -1,0 +1,744 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"label": "media_capture.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_camerapermissionstatus",
+			"label": "CameraPermissionStatus",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L12"
+		},
+		{
+			"id": "string",
+			"label": "String",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_capture.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedphoto",
+			"label": "CapturedPhoto",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L18"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_nativeshortvideo",
+			"label": "NativeShortVideo",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L30"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_nativeshortvideobytes",
+			"label": "NativeShortVideoBytes",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L43"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedshortvideo",
+			"label": "CapturedShortVideo",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L49"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_androidmediacapture",
+			"label": "AndroidMediaCapture",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L62"
+		},
+		{
+			"id": "pluginhandle",
+			"label": "PluginHandle",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_capture.rs"
+		},
+		{
+			"id": "wry",
+			"label": "Wry",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_capture.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_plugin",
+			"label": "plugin()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L66"
+		},
+		{
+			"id": "tauriplugin",
+			"label": "TauriPlugin",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_capture.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_photo",
+			"label": "media_capture_photo()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L83"
+		},
+		{
+			"id": "apphandle",
+			"label": "AppHandle",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_capture.rs"
+		},
+		{
+			"id": "result",
+			"label": "Result",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_capture.rs"
+		},
+		{
+			"id": "apperror",
+			"label": "AppError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_capture.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_short_video",
+			"label": "media_capture_short_video()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L99"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_ensure_camera_permission",
+			"label": "ensure_camera_permission()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L133"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"label": "run_mobile()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L152"
+		},
+		{
+			"id": "i",
+			"label": "I",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_capture.rs"
+		},
+		{
+			"id": "o",
+			"label": "O",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_capture.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_unsupported_error",
+			"label": "unsupported_error()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L173"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "serde",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L1",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "pluginhandle",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L4",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "tauri",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L6",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "apperror",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L8",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_camerapermissionstatus",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L12",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_camerapermissionstatus",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L13",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedphoto",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L18",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedphoto",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L19",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedphoto",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L20",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedphoto",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L21",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_nativeshortvideo",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L30",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_nativeshortvideo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L31",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_nativeshortvideo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L32",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_nativeshortvideobytes",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L43",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_nativeshortvideobytes",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L44",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedshortvideo",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L49",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedshortvideo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L50",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedshortvideo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L51",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedshortvideo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L52",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedshortvideo",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L53",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_androidmediacapture",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L62",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_androidmediacapture",
+			"target": "pluginhandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L63",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_androidmediacapture",
+			"target": "wry",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L63",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_plugin",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L66",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_plugin",
+			"target": "tauriplugin",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L66",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_plugin",
+			"target": "wry",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L66",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_photo",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L83",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_photo",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L83",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_photo",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L83",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_photo",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedphoto",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L83",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_photo",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L83",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_short_video",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L99",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_short_video",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L99",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_short_video",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L99",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_short_video",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_capturedshortvideo",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L99",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_short_video",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L99",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_ensure_camera_permission",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L133",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_ensure_camera_permission",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L133",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_ensure_camera_permission",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L133",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_ensure_camera_permission",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L133",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L152",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"target": "apphandle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L152",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"target": "i",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L152",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L152",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"target": "o",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L152",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L152",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_unsupported_error",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L173",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_unsupported_error",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L173",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_photo",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_ensure_camera_permission",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L88",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_photo",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L89",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_photo",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_unsupported_error",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L94",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_short_video",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_ensure_camera_permission",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L104",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_short_video",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L106",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_media_capture_short_video",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_unsupported_error",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L128",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_ensure_camera_permission",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L137",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_plugin",
+			"callee": "setup",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L67"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_plugin",
+			"callee": "register_android_plugin",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L71"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_plugin",
+			"callee": "manage",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L75"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L161"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_capture_run_mobile",
+			"callee": "run_mobile_plugin_async",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_capture.rs",
+			"source_location": "L161"
+		}
+	]
+}

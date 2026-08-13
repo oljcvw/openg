@@ -1,0 +1,83 @@
+{
+	"nodes": [
+		{
+			"id": "content_license_mit_license",
+			"label": "MIT License",
+			"file_type": "document",
+			"source_file": "docs/content/license.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_license_open_grind_governance",
+			"label": "Open Grind Governance",
+			"file_type": "concept",
+			"source_file": "docs/content/license.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "content_license_permission_grant",
+			"label": "Permissive Software Grant",
+			"file_type": "rationale",
+			"source_file": "docs/content/license.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "Recipients may use, copy, modify, merge, publish, distribute, sublicense, and sell the software provided the notice is retained."
+		},
+		{
+			"id": "content_license_warranty_disclaimer",
+			"label": "Warranty and Liability Disclaimer",
+			"file_type": "rationale",
+			"source_file": "docs/content/license.md",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "The software is supplied as-is without warranties, and authors or copyright holders disclaim liability."
+		}
+	],
+	"edges": [
+		{
+			"source": "content_license_mit_license",
+			"target": "content_license_open_grind_governance",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/license.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_license_mit_license",
+			"target": "content_license_permission_grant",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/license.md",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "content_license_mit_license",
+			"target": "content_license_warranty_disclaimer",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "docs/content/license.md",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

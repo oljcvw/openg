@@ -1,0 +1,269 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_kt",
+			"label": "NotificationBridgeTest.kt",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest",
+			"label": "NotificationBridgeTest",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L8",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_deferred_poll_result",
+			"label": ".`parses deferred poll result`()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L9",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_retains_only_allowlisted_failure_code_for_logcat",
+			"label": ".`retains only allowlisted failure code for logcat`()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L17",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_rejects_hostile_native_failure_text",
+			"label": ".`rejects hostile native failure text`()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L27",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_keeps_reflection_parsed_plugin_arguments_in_minified_builds",
+			"label": ".`keeps reflection parsed plugin arguments in minified builds`()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L37",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_minimal_poll_result_without_retaining_credentials",
+			"label": ".`parses minimal poll result without retaining credentials`()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L51",
+			"_callable": true
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L8",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_deferred_poll_result",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L9",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_retains_only_allowlisted_failure_code_for_logcat",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L17",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_rejects_hostile_native_failure_text",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L27",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_keeps_reflection_parsed_plugin_arguments_in_minified_builds",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L37",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_minimal_poll_result_without_retaining_credentials",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L51",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_deferred_poll_result",
+			"callee": "assertEquals",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L11",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_deferred_poll_result",
+			"callee": "parse",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L13",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_retains_only_allowlisted_failure_code_for_logcat",
+			"callee": "assertEquals",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L19",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_retains_only_allowlisted_failure_code_for_logcat",
+			"callee": "Failed",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L20",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_retains_only_allowlisted_failure_code_for_logcat",
+			"callee": "parse",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L21",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_rejects_hostile_native_failure_text",
+			"callee": "assertEquals",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L29",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_rejects_hostile_native_failure_text",
+			"callee": "Failed",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L30",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_rejects_hostile_native_failure_text",
+			"callee": "parse",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L31",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_keeps_reflection_parsed_plugin_arguments_in_minified_builds",
+			"callee": "assertTrue",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L39",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_keeps_reflection_parsed_plugin_arguments_in_minified_builds",
+			"callee": "isAnnotationPresent",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L40",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_keeps_reflection_parsed_plugin_arguments_in_minified_builds",
+			"callee": "assertTrue",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L44",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_keeps_reflection_parsed_plugin_arguments_in_minified_builds",
+			"callee": "isAnnotationPresent",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L45",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_minimal_poll_result_without_retaining_credentials",
+			"callee": "parse",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L53",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_minimal_poll_result_without_retaining_credentials",
+			"callee": "trimIndent",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L54",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_minimal_poll_result_without_retaining_credentials",
+			"callee": "assertEquals",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L74",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_minimal_poll_result_without_retaining_credentials",
+			"callee": "assertEquals",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L75",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_minimal_poll_result_without_retaining_credentials",
+			"callee": "single",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L75",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_minimal_poll_result_without_retaining_credentials",
+			"callee": "assertEquals",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L76",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_test_java_org_opengrind_notifications_notificationbridgetest_notificationbridgetest_parses_minimal_poll_result_without_retaining_credentials",
+			"callee": "single",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/test/java/org/opengrind/notifications/NotificationBridgeTest.kt",
+			"source_location": "L76",
+			"receiver": null
+		}
+	]
+}

@@ -1,0 +1,253 @@
+{
+	"nodes": [
+		{
+			"id": "contrib_app_screenshots_3x2_open_grind_android_interface",
+			"label": "Open Grind Android Interface",
+			"file_type": "image",
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_app_screenshots_3x2_browse_grid",
+			"label": "Nearby Profile Browse Grid",
+			"file_type": "image",
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_app_screenshots_3x2_chat_conversation",
+			"label": "Direct Chat Conversation",
+			"file_type": "image",
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_app_screenshots_3x2_expiring_media",
+			"label": "Expiring Chat Media",
+			"file_type": "image",
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_app_screenshots_3x2_interest_activity_list",
+			"label": "Interest Activity List",
+			"file_type": "image",
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_app_screenshots_3x2_discovery_filters",
+			"label": "Discovery Filters",
+			"file_type": "image",
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_app_screenshots_3x2_user_profile",
+			"label": "User Profile Detail",
+			"file_type": "image",
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_app_screenshots_3x2_location_picker",
+			"label": "Map Location Picker",
+			"file_type": "image",
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "contrib_app_screenshots_3x2_primary_navigation",
+			"label": "Primary Bottom Navigation",
+			"file_type": "image",
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "contrib_app_screenshots_3x2_open_grind_android_interface",
+			"target": "contrib_app_screenshots_3x2_browse_grid",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_open_grind_android_interface",
+			"target": "contrib_app_screenshots_3x2_chat_conversation",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_open_grind_android_interface",
+			"target": "contrib_app_screenshots_3x2_interest_activity_list",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_open_grind_android_interface",
+			"target": "contrib_app_screenshots_3x2_discovery_filters",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_open_grind_android_interface",
+			"target": "contrib_app_screenshots_3x2_user_profile",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_open_grind_android_interface",
+			"target": "contrib_app_screenshots_3x2_location_picker",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_chat_conversation",
+			"target": "contrib_app_screenshots_3x2_expiring_media",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_browse_grid",
+			"target": "contrib_app_screenshots_3x2_discovery_filters",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_user_profile",
+			"target": "contrib_app_screenshots_3x2_location_picker",
+			"relation": "conceptually_related_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.85,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_primary_navigation",
+			"target": "contrib_app_screenshots_3x2_browse_grid",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_primary_navigation",
+			"target": "contrib_app_screenshots_3x2_interest_activity_list",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_primary_navigation",
+			"target": "contrib_app_screenshots_3x2_chat_conversation",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "contrib_app_screenshots_3x2_primary_navigation",
+			"target": "contrib_app_screenshots_3x2_user_profile",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "open_grind_mobile_experience",
+			"label": "Open Grind Mobile Experience",
+			"nodes": [
+				"contrib_app_screenshots_3x2_browse_grid",
+				"contrib_app_screenshots_3x2_chat_conversation",
+				"contrib_app_screenshots_3x2_interest_activity_list",
+				"contrib_app_screenshots_3x2_discovery_filters",
+				"contrib_app_screenshots_3x2_user_profile",
+				"contrib_app_screenshots_3x2_location_picker"
+			],
+			"relation": "form",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/app-screenshots-3x2.webp"
+		}
+	]
+}

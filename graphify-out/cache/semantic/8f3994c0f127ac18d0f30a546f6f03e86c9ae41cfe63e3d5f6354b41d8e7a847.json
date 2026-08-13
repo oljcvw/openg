@@ -1,0 +1,39 @@
+{
+	"nodes": [
+		{
+			"id": "icons_square30x30logo_stylized_cat_face_logo",
+			"label": "Stylized Yellow Cat Face Logo",
+			"file_type": "image",
+			"source_file": "src-tauri/icons/Square30x30Logo.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "icons_square30x30logo_feline_mask_motif",
+			"label": "Feline Mask Motif",
+			"file_type": "concept",
+			"source_file": "src-tauri/icons/Square30x30Logo.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "icons_square30x30logo_stylized_cat_face_logo",
+			"target": "icons_square30x30logo_feline_mask_motif",
+			"relation": "conceptually_related_to",
+			"confidence": "INFERRED",
+			"confidence_score": 0.85,
+			"source_file": "src-tauri/icons/Square30x30Logo.png",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

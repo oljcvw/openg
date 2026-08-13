@@ -1,0 +1,856 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"label": "media_upload.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_mediauploadresponse",
+			"label": "MediaUploadResponse",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L11"
+		},
+		{
+			"id": "string",
+			"label": "String",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_upload.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_albummediauploadresponse",
+			"label": "AlbumMediaUploadResponse",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L19"
+		},
+		{
+			"id": "option",
+			"label": "Option",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_upload.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_multipart_boundary",
+			"label": "multipart_boundary()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L28"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"label": "album_multipart_body()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L41"
+		},
+		{
+			"id": "vec",
+			"label": "Vec",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_upload.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"label": "upload_chat_media()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64"
+		},
+		{
+			"id": "state",
+			"label": "State",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_upload.rs"
+		},
+		{
+			"id": "appstate",
+			"label": "AppState",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_upload.rs"
+		},
+		{
+			"id": "result",
+			"label": "Result",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_upload.rs"
+		},
+		{
+			"id": "apperror",
+			"label": "AppError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_upload.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"label": "upload_expiring_chat_video()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L118"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"label": "upload_album_media()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L169"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_runtime_error",
+			"label": "runtime_error()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L237"
+		},
+		{
+			"id": "runtimeerror",
+			"label": "RuntimeError",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/media_upload.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_contains_one_content_part_and_exact_bytes",
+			"label": "album_multipart_contains_one_content_part_and_exact_bytes()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L252"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_boundary_never_occurs_in_file_bytes",
+			"label": "album_multipart_boundary_never_occurs_in_file_bytes()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L270"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "base64",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L1",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "serde",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L2",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "apperror",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L4",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "appstate",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L5",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_mediauploadresponse",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L11",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_mediauploadresponse",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L13",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_mediauploadresponse",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L14",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_albummediauploadresponse",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L19",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_albummediauploadresponse",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L21",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_albummediauploadresponse",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L21",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_multipart_boundary",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L28",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_multipart_boundary",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L28",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L41",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"target": "vec",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"target": "state",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"target": "appstate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_mediauploadresponse",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L64",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L118",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"target": "state",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L118",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"target": "appstate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L118",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L118",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L118",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_mediauploadresponse",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L118",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L118",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L169",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"target": "state",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L169",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"target": "appstate",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L169",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L169",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L169",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"target": "result",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L169",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_albummediauploadresponse",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L169",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L169",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_runtime_error",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L237",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_runtime_error",
+			"target": "runtimeerror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L237",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_runtime_error",
+			"target": "apperror",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L237",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "super",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L249",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_contains_one_content_part_and_exact_bytes",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L252",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_boundary_never_occurs_in_file_bytes",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L270",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_multipart_boundary",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L46",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L199",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_contains_one_content_part_and_exact_bytes",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L254",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_boundary_never_occurs_in_file_bytes",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L272",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_multipart_boundary",
+			"callee": "windows",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L31"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_multipart_boundary",
+			"callee": "as_bytes",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L33"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"callee": "extend_from_slice",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L53"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"callee": "as_bytes",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L53"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"callee": "extend_from_slice",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L54"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"callee": "extend_from_slice",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L55"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_album_multipart_body",
+			"callee": "as_bytes",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L55"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L74"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"callee": "decode",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L74"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"callee": "is_some_and",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L77"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"callee": "ok_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L84"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"callee": "client",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L86"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L87"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"callee": "request",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L87"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_chat_media",
+			"callee": "upload_chat_media",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L93"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L131"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"callee": "decode",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L131"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"callee": "ok_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L141"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"callee": "client",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L143"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L144"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"callee": "request",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L144"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_expiring_chat_video",
+			"callee": "upload_expiring_chat_video",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L149"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"callee": "as_str",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L181"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L187"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"callee": "decode",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L187"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"callee": "ok_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L203"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"callee": "client",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L205"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L206"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"callee": "request",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L206"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"callee": "request_authenticated_bytes",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L213"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_media_upload_upload_album_media",
+			"callee": "map_err",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/media_upload.rs",
+			"source_location": "L232"
+		}
+	]
+}

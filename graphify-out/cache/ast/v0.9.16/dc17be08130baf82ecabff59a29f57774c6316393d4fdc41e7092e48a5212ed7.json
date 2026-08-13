@@ -1,0 +1,321 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_building_md",
+			"label": "BUILDING.md",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"label": "Building Open Grind",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_build_with_docker_easiest",
+			"label": "Build with Docker (easiest)",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L27"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_clean_up_docker",
+			"label": "Clean-up Docker",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L48"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_build_with_nix_builds_everywhere",
+			"label": "Build with Nix (builds everywhere)",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L55"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_build_manually_advanced",
+			"label": "Build manually (advanced)",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L72"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_credential_storage",
+			"label": "Credential storage",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L101"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_signing",
+			"label": "Signing",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L117"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_sign_build_with_docker",
+			"label": "Sign & build with Docker",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L143"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_sign_build_with_nix",
+			"label": "Sign & build with Nix",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L154"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_sign_build_manually",
+			"label": "Sign & build manually",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L163"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_trusting_the_build_environment",
+			"label": "Trusting the build environment",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L173"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_verifying_nix_and_flake_lock",
+			"label": "Verifying Nix and flake.lock",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L177"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_verifying_the_gradle_wrapper_jar",
+			"label": "Verifying the Gradle wrapper jar",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L190"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_verifying_a_published_release",
+			"label": "Verifying a published release",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L200"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_reproducible_ci_release",
+			"label": "Reproducible CI release",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L252"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_reproducibility",
+			"label": "Reproducibility",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L256"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_refreshing_the_lock",
+			"label": "Refreshing the lock",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L281"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_building_cargo_js_hygiene",
+			"label": "Cargo / JS hygiene",
+			"file_type": "document",
+			"source_file": "BUILDING.md",
+			"source_location": "L287"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_building_md",
+			"target": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L1",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"target": "users_andrew_zzapps_open_grind_building_build_with_docker_easiest",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L27",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_build_with_docker_easiest",
+			"target": "users_andrew_zzapps_open_grind_building_clean_up_docker",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L48",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"target": "users_andrew_zzapps_open_grind_building_build_with_nix_builds_everywhere",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L55",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_md",
+			"target": "users_andrew_zzapps_open_grind_envrc_md",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L70",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"target": "users_andrew_zzapps_open_grind_building_build_manually_advanced",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L72",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"target": "users_andrew_zzapps_open_grind_building_credential_storage",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L101",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"target": "users_andrew_zzapps_open_grind_building_signing",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L117",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_signing",
+			"target": "users_andrew_zzapps_open_grind_building_sign_build_with_docker",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L143",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_signing",
+			"target": "users_andrew_zzapps_open_grind_building_sign_build_with_nix",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L154",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_signing",
+			"target": "users_andrew_zzapps_open_grind_building_sign_build_manually",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L163",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"target": "users_andrew_zzapps_open_grind_building_trusting_the_build_environment",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L173",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_trusting_the_build_environment",
+			"target": "users_andrew_zzapps_open_grind_building_verifying_nix_and_flake_lock",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L177",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_trusting_the_build_environment",
+			"target": "users_andrew_zzapps_open_grind_building_verifying_the_gradle_wrapper_jar",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L190",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"target": "users_andrew_zzapps_open_grind_building_verifying_a_published_release",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L200",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"target": "users_andrew_zzapps_open_grind_building_reproducible_ci_release",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L252",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_md",
+			"target": "users_andrew_zzapps_open_grind_ci_md",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L254",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_building_open_grind",
+			"target": "users_andrew_zzapps_open_grind_building_reproducibility",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L256",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_reproducibility",
+			"target": "users_andrew_zzapps_open_grind_building_refreshing_the_lock",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L281",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_building_reproducibility",
+			"target": "users_andrew_zzapps_open_grind_building_cargo_js_hygiene",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "BUILDING.md",
+			"source_location": "L287",
+			"weight": 1.0
+		}
+	],
+	"input_tokens": 0,
+	"output_tokens": 0
+}

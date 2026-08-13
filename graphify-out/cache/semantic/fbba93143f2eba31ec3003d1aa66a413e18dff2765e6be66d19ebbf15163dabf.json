@@ -1,0 +1,39 @@
+{
+	"nodes": [
+		{
+			"id": "logo_open_grind_180px_open_grind_logo",
+			"label": "Open Grind Logo",
+			"file_type": "image",
+			"source_file": "contrib/logo/open-grind-180px.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "logo_open_grind_180px_orange_mask_emblem",
+			"label": "Orange Mask Emblem",
+			"file_type": "concept",
+			"source_file": "contrib/logo/open-grind-180px.png",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "logo_open_grind_180px_open_grind_logo",
+			"target": "logo_open_grind_180px_orange_mask_emblem",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "contrib/logo/open-grind-180px.png",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

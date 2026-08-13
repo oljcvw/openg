@@ -1,0 +1,138 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_security_md",
+			"label": "SECURITY.md",
+			"file_type": "document",
+			"source_file": "SECURITY.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_security_security_policy",
+			"label": "Security Policy",
+			"file_type": "document",
+			"source_file": "SECURITY.md",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_security_supported_versions",
+			"label": "Supported versions",
+			"file_type": "document",
+			"source_file": "SECURITY.md",
+			"source_location": "L5"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_security_reporting_a_vulnerability",
+			"label": "Reporting a vulnerability",
+			"file_type": "document",
+			"source_file": "SECURITY.md",
+			"source_location": "L9"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_security_what_to_expect",
+			"label": "What to expect",
+			"file_type": "document",
+			"source_file": "SECURITY.md",
+			"source_location": "L18"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_security_scope",
+			"label": "Scope",
+			"file_type": "document",
+			"source_file": "SECURITY.md",
+			"source_location": "L22"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_security_safe_harbor",
+			"label": "Safe harbor",
+			"file_type": "document",
+			"source_file": "SECURITY.md",
+			"source_location": "L44"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_security_md",
+			"target": "users_andrew_zzapps_open_grind_security_security_policy",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "SECURITY.md",
+			"source_location": "L1",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_security_security_policy",
+			"target": "users_andrew_zzapps_open_grind_security_supported_versions",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "SECURITY.md",
+			"source_location": "L5",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_security_security_policy",
+			"target": "users_andrew_zzapps_open_grind_security_reporting_a_vulnerability",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "SECURITY.md",
+			"source_location": "L9",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_security_md",
+			"target": "users_andrew_zzapps_open_grind_keys_md",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "SECURITY.md",
+			"source_location": "L13",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_security_md",
+			"target": "users_andrew_zzapps_open_grind_governance_md",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "SECURITY.md",
+			"source_location": "L14",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_security_security_policy",
+			"target": "users_andrew_zzapps_open_grind_security_what_to_expect",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "SECURITY.md",
+			"source_location": "L18",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_security_security_policy",
+			"target": "users_andrew_zzapps_open_grind_security_scope",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "SECURITY.md",
+			"source_location": "L22",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_security_md",
+			"target": "users_andrew_zzapps_open_grind_building_md",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "SECURITY.md",
+			"source_location": "L27",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_security_security_policy",
+			"target": "users_andrew_zzapps_open_grind_security_safe_harbor",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "SECURITY.md",
+			"source_location": "L44",
+			"weight": 1.0
+		}
+	],
+	"input_tokens": 0,
+	"output_tokens": 0
+}

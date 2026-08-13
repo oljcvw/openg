@@ -1,0 +1,202 @@
+{
+	"nodes": [
+		{
+			"id": "phonescreenshots_3_interest_feed_screen",
+			"label": "Interest Feed Screen",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_3_views_and_taps_summary",
+			"label": "Views and Taps Summary",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_3_profile_interest_cards",
+			"label": "Profile Interest Cards",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_3_profile_distance",
+			"label": "Profile Distance",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_3_last_seen_time",
+			"label": "Last Seen Time",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_3_online_status",
+			"label": "Online Status",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_3_interest_reaction_badges",
+			"label": "Interest Reaction Badges",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_3_bottom_navigation",
+			"label": "Bottom Navigation",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "phonescreenshots_3_active_interest_tab",
+			"label": "Active Interest Tab",
+			"file_type": "image",
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		}
+	],
+	"edges": [
+		{
+			"source": "phonescreenshots_3_interest_feed_screen",
+			"target": "phonescreenshots_3_views_and_taps_summary",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_3_interest_feed_screen",
+			"target": "phonescreenshots_3_profile_interest_cards",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_3_profile_interest_cards",
+			"target": "phonescreenshots_3_profile_distance",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_3_profile_interest_cards",
+			"target": "phonescreenshots_3_last_seen_time",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_3_profile_interest_cards",
+			"target": "phonescreenshots_3_online_status",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_3_profile_interest_cards",
+			"target": "phonescreenshots_3_interest_reaction_badges",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_3_interest_feed_screen",
+			"target": "phonescreenshots_3_bottom_navigation",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "phonescreenshots_3_bottom_navigation",
+			"target": "phonescreenshots_3_active_interest_tab",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": [
+		{
+			"id": "phonescreenshots_3_profile_card_context",
+			"label": "Profile Card Context",
+			"nodes": [
+				"phonescreenshots_3_profile_interest_cards",
+				"phonescreenshots_3_profile_distance",
+				"phonescreenshots_3_last_seen_time",
+				"phonescreenshots_3_online_status",
+				"phonescreenshots_3_interest_reaction_badges"
+			],
+			"relation": "form",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpeg"
+		}
+	]
+}

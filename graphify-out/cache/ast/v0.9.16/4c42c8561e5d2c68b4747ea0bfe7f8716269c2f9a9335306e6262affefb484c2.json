@@ -1,0 +1,259 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_kt",
+			"label": "AndroidApiIdentity.kt",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity",
+			"label": "AndroidApiIdentity",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L10",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"label": ".snapshot()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L12",
+			"_callable": true
+		},
+		{
+			"id": "context",
+			"label": "Context",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L10",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L12",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"target": "context",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L12",
+			"weight": 1.0,
+			"context": "parameter_type"
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "maxOf",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L19",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "minOf",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L20",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "also",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L22",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "MemoryInfo",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L22",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "getMemoryInfo",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L23",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "getSystemService",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L23",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "buildString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L25",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "append",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L26",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "isNotBlank",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L27",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "append",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L28",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "append",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L29",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "toString",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "put",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "put",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "put",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "put",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "put",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "put",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "put",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "put",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "JSONObject",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "toString",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L38",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "getDefault",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L39",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_androidapiidentity_androidapiidentity_snapshot",
+			"callee": "toLanguageTag",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/AndroidApiIdentity.kt",
+			"source_location": "L41",
+			"receiver": null
+		}
+	]
+}

@@ -1,0 +1,886 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_kt",
+			"label": "NotificationsPlugin.kt",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"label": "NotificationsPlugin",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L17",
+			"_callable": true
+		},
+		{
+			"id": "plugin",
+			"label": "Plugin",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_getsettings",
+			"label": ".getSettings()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L29",
+			"_callable": true
+		},
+		{
+			"id": "invoke",
+			"label": "Invoke",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"label": ".setSettings()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L35",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"label": ".permissionResult()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L46",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_testnotification",
+			"label": ".testNotification()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L53",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"label": ".syncSchedule()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L62",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_cancelschedule",
+			"label": ".cancelSchedule()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L74",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_clearaccount",
+			"label": ".clearAccount()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L80",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"label": ".applySettings()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L91",
+			"_callable": true
+		},
+		{
+			"id": "storednotificationsettings",
+			"label": "StoredNotificationSettings",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"label": ".settingsJson()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L101",
+			"_callable": true
+		},
+		{
+			"id": "jsobject",
+			"label": "JSObject",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_needspermission",
+			"label": ".needsPermission()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L115",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_haspermission",
+			"label": ".hasPermission()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L118",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_settingsargs",
+			"label": "SettingsArgs",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L125",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_settingsargs_stored",
+			"label": ".stored()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L132",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_scheduleargs",
+			"label": "ScheduleArgs",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L140",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_accountargs",
+			"label": "AccountArgs",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L145",
+			"_callable": true
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L17",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "plugin",
+			"relation": "inherits",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L17",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_getsettings",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L29",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_getsettings",
+			"target": "invoke",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L29",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L35",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"target": "invoke",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L35",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L46",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"target": "invoke",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L46",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_testnotification",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L53",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_testnotification",
+			"target": "invoke",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L53",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L62",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"target": "invoke",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L62",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_cancelschedule",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L74",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_cancelschedule",
+			"target": "invoke",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L74",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_clearaccount",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L80",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_clearaccount",
+			"target": "invoke",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L80",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L91",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"target": "storednotificationsettings",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L91",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L101",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"target": "jsobject",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L101",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_needspermission",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L115",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_haspermission",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L118",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_settingsargs",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L125",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_settingsargs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_settingsargs_stored",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L132",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_scheduleargs",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L140",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_accountargs",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L145",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_getsettings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L32",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_settingsargs_stored",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L37",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_needspermission",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L38",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L42",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L43",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_settingsargs_stored",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L48",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L49",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_haspermission",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L49",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L50",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_haspermission",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L66",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_haspermission",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L94",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"target": "jsobject",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L103",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_haspermission",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L109",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_settingsargs_stored",
+			"target": "storednotificationsettings",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L132",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_getsettings",
+			"callee": "createChannel",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L31",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_getsettings",
+			"callee": "resolve",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L32",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"callee": "parseArgs",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L37",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"callee": "requestPermissionForAlias",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L39",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_setsettings",
+			"callee": "resolve",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L43",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"callee": "parseArgs",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L48",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"callee": "copy",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L49",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_permissionresult",
+			"callee": "resolve",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L50",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_testnotification",
+			"callee": "showTest",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L55",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_testnotification",
+			"callee": "reject",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L56",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_testnotification",
+			"callee": "resolve",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L59",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"callee": "parseArgs",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L64",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"callee": "savePollIntervalMinutes",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L65",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"callee": "settings",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L66",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"callee": "schedule",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L67",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"callee": "pollIntervalMinutes",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L67",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"callee": "cancel",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L69",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_syncschedule",
+			"callee": "resolve",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L71",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_cancelschedule",
+			"callee": "cancel",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L76",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_cancelschedule",
+			"callee": "resolve",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L77",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_clearaccount",
+			"callee": "parseArgs",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L82",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_clearaccount",
+			"callee": "resolve",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L85",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_clearaccount",
+			"callee": "reject",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L87",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"callee": "save",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L92",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"callee": "createChannel",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L93",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"callee": "schedule",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L95",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"callee": "pollIntervalMinutes",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L95",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_applysettings",
+			"callee": "cancel",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L97",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "settings",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L102",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L103",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "put",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L104",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "put",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L105",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "put",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L106",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "put",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L107",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "put",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L108",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "put",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L109",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "put",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L110",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "lastSuccessfulCheck",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L110",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "put",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L111",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_settingsjson",
+			"callee": "lastError",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L111",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_notifications_notificationsplugin_notificationsplugin_haspermission",
+			"callee": "checkSelfPermission",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/notifications/NotificationsPlugin.kt",
+			"source_location": "L120",
+			"receiver": null
+		}
+	]
+}

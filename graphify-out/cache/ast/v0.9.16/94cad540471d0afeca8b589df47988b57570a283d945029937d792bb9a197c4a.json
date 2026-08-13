@@ -1,0 +1,805 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"label": "diagnostics.rs",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaelementkind",
+			"label": "MediaElementKind",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L10"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaelementkind_as_str",
+			"label": ".as_str()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L17"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_medialoadoutcome",
+			"label": "MediaLoadOutcome",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L28"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_medialoadoutcome_as_str",
+			"label": ".as_str()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L34"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediasurface",
+			"label": "MediaSurface",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L44"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediasurface_as_str",
+			"label": ".as_str()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L54"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginobservation",
+			"label": "MediaOriginObservation",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L68"
+		},
+		{
+			"id": "string",
+			"label": "String",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/diagnostics.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnosticlevel",
+			"label": "ClientDiagnosticLevel",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L77"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnosticlevel_as_str",
+			"label": ".as_str()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L84"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnostic",
+			"label": "ClientDiagnostic",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L95"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginkey",
+			"label": "MediaOriginKey",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L103"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"label": "canonical_https_origin()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L113"
+		},
+		{
+			"id": "option",
+			"label": "Option",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/src/api/diagnostics.rs"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_media_origin",
+			"label": "report_media_origin()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L134"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_label",
+			"label": "sanitized_label()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L162"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"label": "sanitized_message()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L171"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_client_diagnostic",
+			"label": "report_client_diagnostic()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L217"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_accepts_canonical_https_origins",
+			"label": "accepts_canonical_https_origins()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L260"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rejects_values_that_could_expose_private_url_data",
+			"label": "rejects_values_that_could_expose_private_url_data()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L272"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_accepts_only_bounded_diagnostic_labels",
+			"label": "accepts_only_bounded_diagnostic_labels()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L287"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_bounds_and_flattens_diagnostic_messages",
+			"label": "bounds_and_flattens_diagnostic_messages()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L295"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_redacts_urls_credentials_and_identifiers_from_diagnostics",
+			"label": "redacts_urls_credentials_and_identifiers_from_diagnostics()",
+			"file_type": "code",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L303"
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "hashset",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L1",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "sync",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L2",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "deserialize",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L4",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaelementkind",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L10",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaelementkind",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaelementkind_as_str",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L17",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_medialoadoutcome",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L28",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_medialoadoutcome",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_medialoadoutcome_as_str",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L34",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediasurface",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L44",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediasurface",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediasurface_as_str",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L54",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginobservation",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L68",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginobservation",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L69",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginobservation",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaelementkind",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L70",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginobservation",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_medialoadoutcome",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L71",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginobservation",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediasurface",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L72",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnosticlevel",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L77",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnosticlevel",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnosticlevel_as_str",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L84",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnostic",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L95",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnostic",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L96",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnostic",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L97",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnostic",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L98",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnostic",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnosticlevel",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L99",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginkey",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L103",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginkey",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L104",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginkey",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaelementkind",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L105",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginkey",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_medialoadoutcome",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L106",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginkey",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediasurface",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L107",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L113",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L113",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L113",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_media_origin",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L134",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_media_origin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_mediaoriginobservation",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L134",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_label",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L162",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_label",
+			"target": "option",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L162",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L171",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"target": "string",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L171",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_client_diagnostic",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L217",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_client_diagnostic",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_clientdiagnostic",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L217",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "super",
+			"relation": "imports_from",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L257",
+			"weight": 1.0,
+			"context": "import"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_accepts_canonical_https_origins",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L260",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rejects_values_that_could_expose_private_url_data",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L272",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_accepts_only_bounded_diagnostic_labels",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L287",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_bounds_and_flattens_diagnostic_messages",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L295",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_rs",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_redacts_urls_credentials_and_identifiers_from_diagnostics",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L303",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_media_origin",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L135",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_client_diagnostic",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_label",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L218",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_client_diagnostic",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L226",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_bounds_and_flattens_diagnostic_messages",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L297",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_redacts_urls_credentials_and_identifiers_from_diagnostics",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L304",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "scheme",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L115"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "username",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L116"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "is_some",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L117"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "password",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L117"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "path",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L118"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "is_some",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L119"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "query",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L119"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "is_some",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L120"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "fragment",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L120"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "ascii_serialization",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L124"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "origin",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L124"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_canonical_https_origin",
+			"callee": "then_some",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L125"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_media_origin",
+			"callee": "unwrap_or_else",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L145"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_media_origin",
+			"callee": "get_or_init",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L145"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_report_media_origin",
+			"callee": "into_inner",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L148"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_label",
+			"callee": "then_some",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L163"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_label",
+			"callee": "is_ascii_alphanumeric",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L166"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"callee": "join",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L172"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"callee": "split_whitespace",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L172"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"callee": "to_ascii_lowercase",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L175"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"callee": "is_ascii_hexdigit",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L187"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"callee": "chars",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L199"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"callee": "is_ascii_control",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L203"
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_src_api_diagnostics_sanitized_message",
+			"callee": "is_ascii",
+			"is_member_call": true,
+			"source_file": "src-tauri/src/api/diagnostics.rs",
+			"source_location": "L205"
+		}
+	]
+}

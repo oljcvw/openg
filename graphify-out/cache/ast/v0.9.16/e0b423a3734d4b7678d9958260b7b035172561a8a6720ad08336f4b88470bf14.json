@@ -1,0 +1,1971 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_kt",
+			"label": "ShortVideoCaptureActivity.kt",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"label": "ShortVideoCaptureActivity",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L38",
+			"_callable": true
+		},
+		{
+			"id": "appcompatactivity",
+			"label": "AppCompatActivity",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "previewview",
+			"label": "PreviewView",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "materialbutton",
+			"label": "MaterialButton",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "textview",
+			"label": "TextView",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "processcameraprovider",
+			"label": "ProcessCameraProvider",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "camera",
+			"label": "Camera",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "videocapture",
+			"label": "VideoCapture",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "recorder",
+			"label": "Recorder",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "recording",
+			"label": "Recording",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oncreate",
+			"label": ".onCreate()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L67",
+			"_callable": true
+		},
+		{
+			"id": "bundle",
+			"label": "Bundle",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"label": ".buildContentView()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L79",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_controlbutton",
+			"label": ".controlButton()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L122",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_weightedcontrolparams",
+			"label": ".weightedControlParams()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L128",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"label": ".bindCamera()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L131",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"label": ".bindUseCases()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L143",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_togglerecording",
+			"label": ".toggleRecording()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L158",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"label": ".startRecording()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L162",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_stoprecording",
+			"label": ".stopRecording()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L189",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"label": ".finalizeRecording()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L194",
+			"_callable": true
+		},
+		{
+			"id": "videorecordevent",
+			"label": "VideoRecordEvent",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_switchcamera",
+			"label": ".switchCamera()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L220",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_toggletorch",
+			"label": ".toggleTorch()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L226",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_togglemute",
+			"label": ".toggleMute()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L231",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_setconfigurationcontrolsenabled",
+			"label": ".setConfigurationControlsEnabled()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L237",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_cancelcapture",
+			"label": ".cancelCapture()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L243",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finishcancelled",
+			"label": ".finishCancelled()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L248",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_selectorfor",
+			"label": ".selectorFor()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L254",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oppositelens",
+			"label": ".oppositeLens()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L255",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_formatremaining",
+			"label": ".formatRemaining()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L261",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_dp",
+			"label": ".dp()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L266",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_onbackpressed",
+			"label": ".onBackPressed()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L268",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_ondestroy",
+			"label": ".onDestroy()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L272",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideometadata",
+			"label": "ShortVideoMetadata",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L295",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"label": "read()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L302",
+			"_callable": true
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L38",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "appcompatactivity",
+			"relation": "inherits",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L38",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "previewview",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L39",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "materialbutton",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L40",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "materialbutton",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L41",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "materialbutton",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L42",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "materialbutton",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L43",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "textview",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L44",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "processcameraprovider",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L45",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "camera",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L46",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "videocapture",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L47",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "recorder",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L47",
+			"weight": 1.0,
+			"context": "generic_arg"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "recording",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L48",
+			"weight": 1.0,
+			"context": "field"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oncreate",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L67",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oncreate",
+			"target": "bundle",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L67",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L79",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_controlbutton",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L122",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_weightedcontrolparams",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L128",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L131",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L143",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"target": "processcameraprovider",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L143",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_togglerecording",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L158",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L162",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_stoprecording",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L189",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L194",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"target": "videorecordevent",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L194",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_switchcamera",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L220",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_toggletorch",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L226",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_togglemute",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L231",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_setconfigurationcontrolsenabled",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L237",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_cancelcapture",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L243",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finishcancelled",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L248",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_selectorfor",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L254",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oppositelens",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L255",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_formatremaining",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L261",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_dp",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L266",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_onbackpressed",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L268",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_ondestroy",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L272",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideometadata",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L295",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L302",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideometadata",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L302",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oncreate",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finishcancelled",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L72",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oncreate",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L75",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oncreate",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L76",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "previewview",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L80",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "textview",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L84",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_dp",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L87",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_formatremaining",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L88",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_controlbutton",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L90",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_togglerecording",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L90",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_switchcamera",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L91",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_toggletorch",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L94",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_togglemute",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L97",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_cancelcapture",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L100",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_weightedcontrolparams",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L108",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_controlbutton",
+			"target": "materialbutton",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L122",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_weightedcontrolparams",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_dp",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L129",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_selectorfor",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L136",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L139",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_selectorfor",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L152",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oppositelens",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L155",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_togglerecording",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L159",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_togglerecording",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_stoprecording",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L159",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_setconfigurationcontrolsenabled",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L180",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L184",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_setconfigurationcontrolsenabled",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L200",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finishcancelled",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L204",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L207",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_switchcamera",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oppositelens",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L222",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_setconfigurationcontrolsenabled",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_selectorfor",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L239",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_setconfigurationcontrolsenabled",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oppositelens",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L239",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_cancelcapture",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_stoprecording",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L245",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_cancelcapture",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finishcancelled",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L245",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_onbackpressed",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_cancelcapture",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L269",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideometadata",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L306",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_oncreate",
+			"callee": "checkSelfPermission",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L69",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L80",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L84",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "setTextColor",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L85",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "setPadding",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L87",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L90",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L91",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L92",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L94",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L95",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L97",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L98",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L100",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L101",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L104",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "LinearLayout",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L104",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "setPadding",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L107",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "addView",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L108",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "addView",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L109",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "addView",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L110",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "addView",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L111",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "addView",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L112",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "setContentView",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L114",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L114",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "FrameLayout",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L114",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "setBackgroundColor",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L115",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "addView",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L116",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "LayoutParams",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L116",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "addView",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L117",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "LayoutParams",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L117",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "addView",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L118",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_buildcontentview",
+			"callee": "LayoutParams",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L118",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_controlbutton",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L122",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_controlbutton",
+			"callee": "setOnClickListener",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L125",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_controlbutton",
+			"callee": "action",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L125",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_weightedcontrolparams",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L129",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_weightedcontrolparams",
+			"callee": "LayoutParams",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L129",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"callee": "getInstance",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L132",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"callee": "addListener",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L133",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"callee": "get",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L134",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"callee": "hasCamera",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L136",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindcamera",
+			"callee": "getMainExecutor",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L140",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "also",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L144",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "build",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L144",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "Builder",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L144",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "build",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L147",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "setQualitySelector",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L147",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "Builder",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L147",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "from",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L148",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "withOutput",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L150",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "unbindAll",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L151",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "bindToLifecycle",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L152",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "hasFlashUnit",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L154",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_bindusecases",
+			"callee": "hasCamera",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L155",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "toString",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L164",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "randomUUID",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L164",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L165",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "prepareRecording",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L167",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "build",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L167",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "Builder",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L167",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "checkSelfPermission",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L168",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "withAudioEnabled",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L170",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "start",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L174",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "getMainExecutor",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L174",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "elapsedRealtime",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L177",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "mute",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L178",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L179",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "postDelayed",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L181",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_startrecording",
+			"callee": "post",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L182",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_stoprecording",
+			"callee": "removeCallbacks",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L190",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_stoprecording",
+			"callee": "stop",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L191",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "removeCallbacks",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L195",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "removeCallbacks",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L196",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L199",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "hasError",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L202",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "length",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L202",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "delete",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L203",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "setResult",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L208",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L208",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "Intent",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L208",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "putExtra",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L209",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "putExtra",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L210",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "putExtra",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L211",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "coerceAtMost",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L211",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "putExtra",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L212",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "length",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L212",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "putExtra",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L213",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "putExtra",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L214",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "putExtra",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L215",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finalizerecording",
+			"callee": "finish",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L217",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_switchcamera",
+			"callee": "let",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L223",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_toggletorch",
+			"callee": "enableTorch",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L228",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_togglemute",
+			"callee": "mute",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L233",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_setconfigurationcontrolsenabled",
+			"callee": "hasCamera",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L239",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_setconfigurationcontrolsenabled",
+			"callee": "hasFlashUnit",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L240",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finishcancelled",
+			"callee": "delete",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L249",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finishcancelled",
+			"callee": "setResult",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L250",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_finishcancelled",
+			"callee": "finish",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L251",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_selectorfor",
+			"callee": "build",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L254",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_selectorfor",
+			"callee": "requireLensFacing",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L254",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_selectorfor",
+			"callee": "Builder",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L254",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_formatremaining",
+			"callee": "coerceAtLeast",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L262",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_formatremaining",
+			"callee": "padStart",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L263",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_formatremaining",
+			"callee": "toString",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L263",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_dp",
+			"callee": "toInt",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L266",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_ondestroy",
+			"callee": "removeCallbacksAndMessages",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L273",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_shortvideocaptureactivity_ondestroy",
+			"callee": "stop",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L276",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "MediaMetadataRetriever",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L303",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "setDataSource",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L305",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "toLongOrNull",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L307",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "extractMetadata",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L307",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "toMillis",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L308",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "toIntOrNull",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L309",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "extractMetadata",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L309",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "toIntOrNull",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L311",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "extractMetadata",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L311",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "extractMetadata",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L313",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_shortvideocaptureactivity_read",
+			"callee": "release",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/ShortVideoCaptureActivity.kt",
+			"source_location": "L316",
+			"receiver": null
+		}
+	]
+}

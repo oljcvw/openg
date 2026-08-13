@@ -1,0 +1,167 @@
+{
+	"nodes": [
+		{
+			"id": "en_us_full_description_open_grind",
+			"label": "Open Grind Android Store Description",
+			"file_type": "document",
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "en_us_full_description_grindr_queer_social_network",
+			"label": "Grindr Queer Social Network",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "en_us_full_description_unlocked_grid",
+			"label": "Unlocked Grid",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "en_us_full_description_location_spoofing",
+			"label": "Location Spoofing",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "en_us_full_description_openstreetmap",
+			"label": "OpenStreetMap",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "en_us_full_description_zero_ads",
+			"label": "Zero Ads",
+			"file_type": "concept",
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null
+		},
+		{
+			"id": "en_us_full_description_privacy_by_default",
+			"label": "Privacy by Default",
+			"file_type": "rationale",
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "The store description says Open Grind has no analytics, no trackers, and no developer data collection."
+		},
+		{
+			"id": "en_us_full_description_security_as_foundation",
+			"label": "Security as Foundation",
+			"file_type": "rationale",
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"source_url": null,
+			"captured_at": null,
+			"author": null,
+			"contributor": null,
+			"rationale": "The store description emphasizes human review, audit, supply-chain security, and end-to-end testing."
+		}
+	],
+	"edges": [
+		{
+			"source": "en_us_full_description_open_grind",
+			"target": "en_us_full_description_grindr_queer_social_network",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "en_us_full_description_open_grind",
+			"target": "en_us_full_description_unlocked_grid",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "en_us_full_description_open_grind",
+			"target": "en_us_full_description_location_spoofing",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "en_us_full_description_location_spoofing",
+			"target": "en_us_full_description_openstreetmap",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "en_us_full_description_open_grind",
+			"target": "en_us_full_description_zero_ads",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "en_us_full_description_open_grind",
+			"target": "en_us_full_description_privacy_by_default",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"weight": 1.0
+		},
+		{
+			"source": "en_us_full_description_open_grind",
+			"target": "en_us_full_description_security_as_foundation",
+			"relation": "implements",
+			"confidence": "EXTRACTED",
+			"confidence_score": 1.0,
+			"source_file": "fastlane/metadata/android/en-US/full_description.txt",
+			"source_location": null,
+			"weight": 1.0
+		}
+	],
+	"hyperedges": []
+}

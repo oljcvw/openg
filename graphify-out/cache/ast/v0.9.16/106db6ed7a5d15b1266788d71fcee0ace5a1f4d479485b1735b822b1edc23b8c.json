@@ -1,0 +1,502 @@
+{
+	"nodes": [
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_kt",
+			"label": "VideoCallForegroundService.kt",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L1"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice",
+			"label": "VideoCallForegroundService",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L16",
+			"_callable": true
+		},
+		{
+			"id": "service",
+			"label": "Service",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_oncreate",
+			"label": ".onCreate()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L17",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_onstartcommand",
+			"label": ".onStartCommand()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L22",
+			"_callable": true
+		},
+		{
+			"id": "intent",
+			"label": "Intent",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_onbind",
+			"label": ".onBind()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L27",
+			"_callable": true
+		},
+		{
+			"id": "ibinder",
+			"label": "IBinder",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"label": ".notification()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L29",
+			"_callable": true
+		},
+		{
+			"id": "notification",
+			"label": "Notification",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"label": ".createChannel()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L48",
+			"_callable": true
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_start",
+			"label": "start()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L66",
+			"_callable": true
+		},
+		{
+			"id": "context",
+			"label": "Context",
+			"file_type": "code",
+			"source_file": "",
+			"source_location": "",
+			"origin_file": "/Users/andrew/zzApps/open-grind/src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt"
+		},
+		{
+			"id": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_stop",
+			"label": "stop()",
+			"file_type": "code",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L70",
+			"_callable": true
+		}
+	],
+	"edges": [
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L16",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice",
+			"target": "service",
+			"relation": "inherits",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L16",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_oncreate",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L17",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_onstartcommand",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L22",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_onstartcommand",
+			"target": "intent",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L22",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_onbind",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L27",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_onbind",
+			"target": "intent",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L27",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_onbind",
+			"target": "ibinder",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L27",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L29",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"target": "notification",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L29",
+			"weight": 1.0,
+			"context": "return_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"relation": "method",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L48",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_start",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L66",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_start",
+			"target": "context",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L66",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_kt",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_stop",
+			"relation": "contains",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L70",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_stop",
+			"target": "context",
+			"relation": "references",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L70",
+			"weight": 1.0,
+			"context": "parameter_type"
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_oncreate",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L19",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_onstartcommand",
+			"target": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L23",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"target": "intent",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L33",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_start",
+			"target": "intent",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L67",
+			"weight": 1.0
+		},
+		{
+			"source": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_stop",
+			"target": "intent",
+			"relation": "calls",
+			"context": "call",
+			"confidence": "EXTRACTED",
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L71",
+			"weight": 1.0
+		}
+	],
+	"raw_calls": [
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_onstartcommand",
+			"callee": "startForeground",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L23",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "getActivity",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L30",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "addFlags",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L33",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "build",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "setOnlyAlertOnce",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "setOngoing",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "setPriority",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "setCategory",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "setContentIntent",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "setContentText",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "setContentTitle",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "setSmallIcon",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "Builder",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L36",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L38",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_notification",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L39",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"callee": "getSystemService",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L49",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"callee": "createNotificationChannel",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L50",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"callee": "apply",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L51",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"callee": "NotificationChannel",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L51",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L53",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"callee": "getString",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L56",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_videocallforegroundservice_createchannel",
+			"callee": "setSound",
+			"is_member_call": false,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L57",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_start",
+			"callee": "startForegroundService",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L67",
+			"receiver": null
+		},
+		{
+			"caller_nid": "users_andrew_zzapps_open_grind_src_tauri_gen_android_app_src_main_java_org_opengrind_media_videocallforegroundservice_stop",
+			"callee": "stopService",
+			"is_member_call": true,
+			"source_file": "src-tauri/gen/android/app/src/main/java/org/opengrind/media/VideoCallForegroundService.kt",
+			"source_location": "L71",
+			"receiver": null
+		}
+	]
+}
