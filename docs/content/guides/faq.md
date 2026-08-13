@@ -20,7 +20,7 @@ Donations are optional, won't grant any privileges, and **there is no single gov
 
 ### \> What about other apps such as Free Grind and GrindrX?
 
-Neither are affiliated/verified/endorsed by Open Grind. Never trust APKs downloaded from unofficial sources. Any third-party clients put your personal sensitive information at risk, which is why Open Grind strives to be 100% transparent and has [reproducible builds](https://git.opengrind.org/open-grind/open-grind/src/branch/android-init/BUILDING.md).
+Neither are affiliated/verified/endorsed by Open Grind. Never trust APKs downloaded from unofficial sources. Any third-party clients put your personal sensitive information at risk, which is why Open Grind strives to be 100% transparent and has [reproducible builds](https://git.opengrind.org/open-grind/open-grind/src/branch/main/BUILDING.md).
 
 ### \> How many users does Open Grind have?
 
@@ -35,7 +35,7 @@ The only indirect counters are:
    - Number of registered users on git.opengrind.org (**IP addresses are not stored**)
    - Keep in mind these platforms do not collect or store any personally identifiable data about users
 
-**As of July 8, 2026, the estimated number of users is ~25000 based on the downloads counter.**
+These indirect counters cannot establish how many people actively use Open Grind.
 
 ## Open Grind features
 
@@ -49,7 +49,7 @@ Open Grind is completely free, open source and transparent: no ads, no purchases
 
 ### \> Is Open Grind a new platform? Is Open Grind similar to Grindr Web? What's MVP?
 
-Grindr Web is a client application, it's what allows you to access Grindr, i.e. its interface. Open Grind is a client application too. MVP is just a version type, so there will be: MVP, Early Alpha Test, Early Beta Test, Release Candidate, then version numbers: v1.0, v1.1, v1.2-rc etc. Unfortunately there is no way to make Open Grind work for web browsers right now, so it's limited to native platform (installable Android apk, for example). Open Grind has first class support for desktop platforms.
+Grindr Web is a client application, and Open Grind is a separate client application. Open Grind is a native Tauri app rather than a separately distributed browser product. Android has the established reproducible release pipeline. iOS and iPadOS have project-owned build and release-preparation paths, while signed distribution and device acceptance remain candidate-specific gates. See [Platform support](/guides/platform-support).
 
 There's also the **[Grindr Web Unlock](https://git.opengrind.org/open-grind/grindr-web-unlock) project**, available for all browsers, that puts best efforts to remove soft client-side paywalls on web.grindr.com, but does have some known issues and limitations, such as not being able to see conversations and messages history.
 
@@ -65,7 +65,7 @@ Yes, it's built-in. You must explicitly choose a location before you can use Ope
 
 ### \> Does Open Grind bypass bans?
 
-There are no features that aim specifically at bypassing account bans in Open Grind. However, some Open Grind features indirectly assist in this, such as random device id and zero trackers to link multiple accounts to single person.
+Open Grind does not provide or support ban-evasion features. Use the service's official appeal or support process.
 
 ### \> How to create an account?
 
@@ -91,11 +91,11 @@ If you know any Rust developers, please link them to https://git.opengrind.org/o
 
 ### \> What are the community rules for discussion chat rooms?
 
-See [CODE\_OF\_CONDUCT.md](https://git.opengrind.org/open-grind/open-grind/src/branch/main/CODE_OF_CONDUCT.md)
+See [CODE_OF_CONDUCT.md](https://git.opengrind.org/open-grind/open-grind/src/branch/main/CODE_OF_CONDUCT.md)
 
 ### \> Is it possible to customize colors of the UI?
 
-It's planned, but currently no UI/UX work has been done. If you're an advanced technical user, you could replace CSS variables and build the project for yourself.
+Open Grind does not currently provide a custom color-theme editor. App Settings includes a higher-contrast option and layout-density controls. Advanced contributors can change the shared design tokens and build from source.
 
 ## Common issues & other questions
 
@@ -103,16 +103,12 @@ It's planned, but currently no UI/UX work has been done. If you're an advanced t
 
 That's how items are returned from API, specifically the first ten are "open" and then there's only profileId, which a client can fetch in bulk. UX improvements are planned for this issue but not in the works yet.
 
-### \> What version number works?
-
-As of July 2026, the confirmed working version for API is `26.9.1.163471`. If you don't know what that means, just use the latest Open Grind version.
-
 ### \> Is GrindrPlus Discord server gone?
 
 Yes, it's been confirmed that it's been deleted. In recent weeks, the server was mostly off topic anyway. Any intel regarding Grindr API is welcome in #dev:opengrind.org.
 
 ### \> How to verify a certain build is safe and trusted?
 
-Releases are signed with [minisign](https://jedisct1.github.io/minisign/) and ship a detached `.minisig`. The release key, and the governance PGP key that signs for it, are in [KEYS.md](https://git.opengrind.org/open-grind/open-grind/src/branch/main/KEYS.md).
+Published Android releases are signed with [minisign](https://jedisct1.github.io/minisign/) and ship a detached `.minisig`. The release key, and the governance PGP key that signs for it, are in [KEYS.md](https://git.opengrind.org/open-grind/open-grind/src/branch/main/KEYS.md). Check each release entry for exact artifact and verification evidence; do not infer equivalent evidence for iOS or desktop builds.
 
 You can also [reproduce the build](https://git.opengrind.org/open-grind/open-grind/src/branch/main/BUILDING.md#verifying-a-published-release) to check it came from this source.

@@ -7,9 +7,18 @@ next: false
 
 Starting with v0.1.0-beta.2 it's possible to authenticate if your account in Grindr was created with Google.
 
-## Windows, Linux, macOS, iOS
+## iOS and iPadOS
 
-Just download the app and tap "Sign in with Google" on the login screen.
+Open Grind uses manual OAuth-token entry on iPhone and iPad. Obtain the token
+with the documented WebExtension on a supported browser or another supported
+device, transfer it securely, open **Sign in with Google**, paste it, and tap
+**Sign in**. Treat the token as a credential and never share it.
+
+## macOS, Windows, and Linux
+
+Tap **Sign in with Google** on the login screen. The app opens an isolated helper
+WebView for the web OAuth flow. Source support does not itself prove a published
+desktop artifact; see [Platform support](/guides/platform-support).
 
 ## Android
 
@@ -46,7 +55,7 @@ Due to platform limitations enforced by Google, it's not possible to log in via 
 
 This section answers some questions on why the decision to release a separate companion app for Android was made. It's intended for technical experts who have some knowledge of mobile development and are familiar with the OAuth protocol.
 
-*Full discussion: https://git.opengrind.org/open-grind/open-grind/issues/27*
+_Full discussion: https://git.opengrind.org/open-grind/open-grind/issues/27_
 
 #### Why not the native Google OAuth flow?
 
@@ -62,11 +71,12 @@ MicroG itself does not allow spoofing, as it's a drop-in that works via the same
 
 #### Can we authenticate user with Google OAuth without native flow?
 
-Yes, that's how web.grindr.com works. The entire authentication is web flow, meaning it's supposed to run in browsers, without requiring any device attestation tokens, so it's possible to run it on any platform, even in emulators. Web flow is launched from web.grindr.com with `responseType=postMessage` and the resulting code is posted by GIS JavaScript with `web.grindr.com` origin, so only pages with web.grindr.com origin can receive the callback. Additionally, browsers (even embedded ones) prevent actions such as opening new tabs without user gesture, which is why a tap is needed on the launch page. 
+Yes, that's how web.grindr.com works. The entire authentication is web flow, meaning it's supposed to run in browsers, without requiring any device attestation tokens, so it's possible to run it on any platform, even in emulators. Web flow is launched from web.grindr.com with `responseType=postMessage` and the resulting code is posted by GIS JavaScript with `web.grindr.com` origin, so only pages with web.grindr.com origin can receive the callback. Additionally, browsers (even embedded ones) prevent actions such as opening new tabs without user gesture, which is why a tap is needed on the launch page.
 
 However, there's another problem: Google OAuth Web Flow page checks aggressively for any signs of rendering the login page in embedded windows (including system WebViews, which is what Tauri uses under the hood of Open Grind UI), and while changing User-Agent and removing Sec- headers is possible for both WebKit-based WebViews (WKWebView for macOS & iOS, WebKitGTK for Linux) and Chromium-based WebViews (WebView2 for Windows, Chromium for Android), **Android's Chromium WebView specifically adds a special X-Requested-With header that's impossible to remove.** This has been pushed by Google specifically for "fraud/abuse detection" (i.e. to detect Android WebView in their services, such as the OAuth page). In 2023 it was announced Google starts a trial to allow developers to opt-out of sending this header, **but in 2025 the decision was reversed and X-Requested-With is now sent on all Android system's Chromium WebView requests with no option to disable it,** which is exactly what triggers Google OAuth page "security checks" and rejects attempts to sign in.
 
-**All other platforms work just fine by rendering Google's OAuth page directly in platform's native WebView,** so it's only an issue on Android.
+Desktop targets render Google's OAuth page in a helper WebView. iOS and iPadOS
+use manual token entry. Android uses the companion-app intent or manual entry.
 
 #### Can we bundle a different WebView for Android?
 
@@ -92,4 +102,4 @@ The whole app is basically a headless browser powered by [GeckoView](https://moz
 
 Also, the app features a programmatic intent, which allows the Open Grind app to call this app and get the token back automatically without copy-pasting. For security, this only works if both apps are signed by the same JKS.
 
-If you're an *advanced user* and prefer to avoid installing an unnecessary app, consider using the browser extension directly and copy-pasting the token into Open Grind app.
+If you're an _advanced user_ and prefer to avoid installing an unnecessary app, consider using the browser extension directly and copy-pasting the token into Open Grind app.

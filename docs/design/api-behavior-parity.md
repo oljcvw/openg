@@ -150,23 +150,23 @@ Android may run the job later because of battery, network, or system scheduling.
 Defaults are recommended. Settings can make the app slower or more conservative,
 but server-facing parity caps prevent more aggressive values.
 
-| Setting | Default | Range | Effect |
-| --- | ---: | ---: | --- |
-| Profile resolution batch size | 30 | 1-30 | Maximum IDs in one profile-resolution request |
-| Profile batch collection window | 16 ms | 0-1,000 ms | Local coalescing delay before profile resolution |
-| Profile cache size | 500 | 100-2,000 | Fresh profile records retained for the active account |
-| Conversation search concurrency | 3 | 1-6 | Cached conversations read and indexed together |
-| Album-share discovery concurrency | 3 | 1-8 | Per-album recipient-share lookups run together |
-| API request timeout | 35,000 ms | 5,000-120,000 ms | Subscriber wait before native cancellation |
-| Realtime sync throttle | 2,000 ms | 2,000-30,000 ms | Minimum spacing between coalesced reconciliation passes |
-| Place search cache size | 20 | 1-100 | Recent explicit searches retained in memory |
-| Album preload concurrency | 3 | 1-8 | Detached media inspections run concurrently |
-| Notification polling interval | 15 min | 15-1,440 min | Requested Android periodic check interval |
-| Circuit history window | 50 | 20-100 | Recent outcomes retained by native recovery |
-| Circuit minimum samples | 20 | 5-20 | Samples required before opening the circuit |
-| Circuit failure threshold | 50% | 25-50% | Failure ratio that opens the circuit |
-| Circuit pause duration | 30,000 ms | 30,000-300,000 ms | Pause after circuit opening |
-| Protection cooldown | 30,000 ms | 30,000-300,000 ms | Endpoint pause for blocked profile enrichment or global pause for other protection blocks |
+| Setting                           |   Default |             Range | Effect                                                                                    |
+| --------------------------------- | --------: | ----------------: | ----------------------------------------------------------------------------------------- |
+| Profile resolution batch size     |        30 |              1-30 | Maximum IDs in one profile-resolution request                                             |
+| Profile batch collection window   |     16 ms |        0-1,000 ms | Local coalescing delay before profile resolution                                          |
+| Profile cache size                |       500 |         100-2,000 | Fresh profile records retained for the active account                                     |
+| Conversation search concurrency   |         3 |               1-6 | Cached conversations read and indexed together                                            |
+| Album-share discovery concurrency |         3 |               1-8 | Per-album recipient-share lookups run together                                            |
+| API request timeout               | 35,000 ms |  5,000-120,000 ms | Subscriber wait before native cancellation                                                |
+| Realtime sync throttle            |  2,000 ms |   2,000-30,000 ms | Minimum spacing between coalesced reconciliation passes                                   |
+| Place search cache size           |        20 |             1-100 | Recent explicit searches retained in memory                                               |
+| Album preload concurrency         |         3 |               1-8 | Detached media inspections run concurrently                                               |
+| Notification polling interval     |    15 min |      15-1,440 min | Requested Android periodic check interval                                                 |
+| Circuit history window            |        50 |            20-100 | Recent outcomes retained by native recovery                                               |
+| Circuit minimum samples           |        20 |              5-20 | Samples required before opening the circuit                                               |
+| Circuit failure threshold         |       50% |            25-50% | Failure ratio that opens the circuit                                                      |
+| Circuit pause duration            | 30,000 ms | 30,000-300,000 ms | Pause after circuit opening                                                               |
+| Protection cooldown               | 30,000 ms | 30,000-300,000 ms | Endpoint pause for blocked profile enrichment or global pause for other protection blocks |
 
 Global concurrency, per-class serialization, foreground priority, cancellation
 bounds, explicit place-search submission, WebSocket cadence, and notification

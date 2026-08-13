@@ -13,4 +13,3 @@ Connection established. Sent by server automatically as soon as the WebSocket is
 Response to a command, generic error.
 
 - `message` — e.g. `"Could not convert frame to command"`
-

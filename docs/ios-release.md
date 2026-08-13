@@ -18,17 +18,17 @@ an earlier state does not imply any later state.
 
 ## State model
 
-| State | Required evidence |
-| --- | --- |
-| Simulator build | Fresh `arm64-sim/Open Grind.app`; install and launch on both iPhone and iPad simulators |
-| Device compilation | Fresh arm64 iPhoneOS app/IPA with `MinimumOSVersion=17.5`; unsigned output is not installable |
-| Archive-ready | Fresh release `.xcarchive` with correct bundle ID, versions, device family, usage strings, embedded frameworks, and no release-link errors |
-| Signed | App and every nested framework pass `codesign --verify --deep --strict`; archive records Apple Distribution identity and team |
-| TestFlight-ready | Signed IPA exported using `release-testing`, with matching App Store provisioning and unique build number |
-| Uploaded | Transport receipt identifies exact uploaded bundle ID, version, build, and artifact digest |
-| Internal TestFlight accepted | Apple processing succeeds and authorized internal testers can install exact build on iPhone and iPad |
-| App Store-ready | Technical archive plus completed privacy, encryption, third-party SDK, account, content, and review-material gates below |
-| Submitted/approved/released | Separate external decisions; never inferred from archive or TestFlight success |
+| State                        | Required evidence                                                                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Simulator build              | Fresh `arm64-sim/Open Grind.app`; install and launch on both iPhone and iPad simulators                                                    |
+| Device compilation           | Fresh arm64 iPhoneOS app/IPA with `MinimumOSVersion=17.5`; unsigned output is not installable                                              |
+| Archive-ready                | Fresh release `.xcarchive` with correct bundle ID, versions, device family, usage strings, embedded frameworks, and no release-link errors |
+| Signed                       | App and every nested framework pass `codesign --verify --deep --strict`; archive records Apple Distribution identity and team              |
+| TestFlight-ready             | Signed IPA exported using `release-testing`, with matching App Store provisioning and unique build number                                  |
+| Uploaded                     | Transport receipt identifies exact uploaded bundle ID, version, build, and artifact digest                                                 |
+| Internal TestFlight accepted | Apple processing succeeds and authorized internal testers can install exact build on iPhone and iPad                                       |
+| App Store-ready              | Technical archive plus completed privacy, encryption, third-party SDK, account, content, and review-material gates below                   |
+| Submitted/approved/released  | Separate external decisions; never inferred from archive or TestFlight success                                                             |
 
 ## Canonical build path
 
@@ -160,19 +160,19 @@ unexpected writable secret, personal test data, or private log artifact.
 Run against exact signed candidate on at least one iPhone and one iPad. Include an
 iOS/iPadOS 17.5 or later device or runtime.
 
-| Area | Required outcome |
-| --- | --- |
-| Install/launch | Installs and cold-launches; foreground/background/terminate/relaunch preserve correct session state |
-| Authentication | Supported login, logout, expiry/refresh, failed login, and account switch behave without cross-account state |
-| Keychain/privacy | Session, device identity, media signing key, and cache keys persist/revoke as designed; no plaintext secret fallback |
-| Messaging/albums/account | Send/receive, reconnect, pagination, albums, profile/account edits, block/unblock, logout, and destructive confirmation paths match shared contracts |
-| Location | Purpose prompt occurs only on user action; allow/deny/restricted paths remain usable and scoped |
-| Photo/video | Allow/deny camera and microphone; capture, cancel, retake, short-video cache, upload, cleanup, and account switching work |
-| Voice | Record, cancel, stop, playback/upload, denied permission, and cleanup work; app background silently cancels native recording, while an audio-session interruption cancels it and reports `recording-error` |
-| Video calls | Incoming/outgoing, camera/mic permissions, join/leave, token renewal, remote departure, and network errors work with configured Agora ID; moving iOS to background ends the call as `app-backgrounded`, and an audio-session interruption ends it as `audio-interrupted`, with camera/engine cleanup |
-| Notifications | Authorization states, local display, tap routing, badge/cleanup, foreground behavior, and best-effort refresh work without remote-push claim |
-| Network/lifecycle | Offline starts fail closed; offline/online transitions reconnect; suspend/resume avoids duplicate workers and stale-account delivery |
-| iPad UI | Portrait/landscape, sheets/popovers, keyboard, camera, call layout, and media viewers remain usable without clipping or phone-only assumptions |
+| Area                     | Required outcome                                                                                                                                                                                                                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Install/launch           | Installs and cold-launches; foreground/background/terminate/relaunch preserve correct session state                                                                                                                                                                                                  |
+| Authentication           | Supported login, logout, expiry/refresh, failed login, and account switch behave without cross-account state                                                                                                                                                                                         |
+| Keychain/privacy         | Session, device identity, media signing key, and cache keys persist/revoke as designed; no plaintext secret fallback                                                                                                                                                                                 |
+| Messaging/albums/account | Send/receive, reconnect, pagination, albums, profile/account edits, block/unblock, logout, and destructive confirmation paths match shared contracts                                                                                                                                                 |
+| Location                 | Purpose prompt occurs only on user action; allow/deny/restricted paths remain usable and scoped                                                                                                                                                                                                      |
+| Photo/video              | Allow/deny camera and microphone; capture, cancel, retake, short-video cache, upload, cleanup, and account switching work                                                                                                                                                                            |
+| Voice                    | Record, cancel, stop, playback/upload, denied permission, and cleanup work; app background silently cancels native recording, while an audio-session interruption cancels it and reports `recording-error`                                                                                           |
+| Video calls              | Incoming/outgoing, camera/mic permissions, join/leave, token renewal, remote departure, and network errors work with configured Agora ID; moving iOS to background ends the call as `app-backgrounded`, and an audio-session interruption ends it as `audio-interrupted`, with camera/engine cleanup |
+| Notifications            | Authorization states, local display, tap routing, badge/cleanup, foreground behavior, and best-effort refresh work without remote-push claim                                                                                                                                                         |
+| Network/lifecycle        | Offline starts fail closed; offline/online transitions reconnect; suspend/resume avoids duplicate workers and stale-account delivery                                                                                                                                                                 |
+| iPad UI                  | Portrait/landscape, sheets/popovers, keyboard, camera, call layout, and media viewers remain usable without clipping or phone-only assumptions                                                                                                                                                       |
 
 Use accounts and devices owned by tester. Redact profile IDs, messages, media,
 location, tokens, and device identifiers from retained evidence.
@@ -188,12 +188,12 @@ policy, branding, service, and privacy representations.
 release binary. Re-run audit whenever native code, Rust dependencies, Xcode, or
 embedded SDKs change.
 
-| Category | Reason | Current app-owned use |
-| --- | --- | --- |
-| File timestamp | `C617.1` | Update/read metadata for encrypted media-cache files inside app container |
-| System boot time | `35F9.1` | Measure elapsed voice-recording time and drive timer behavior |
-| Disk space | `E174.1` | Check available local capacity before storing album-preset media and return observable insufficient-space behavior |
-| User defaults | `CA92.1` | Persist app-only notification and best-effort refresh preferences |
+| Category         | Reason   | Current app-owned use                                                                                              |
+| ---------------- | -------- | ------------------------------------------------------------------------------------------------------------------ |
+| File timestamp   | `C617.1` | Update/read metadata for encrypted media-cache files inside app container                                          |
+| System boot time | `35F9.1` | Measure elapsed voice-recording time and drive timer behavior                                                      |
+| Disk space       | `E174.1` | Check available local capacity before storing album-preset media and return observable insufficient-space behavior |
+| User defaults    | `CA92.1` | Persist app-only notification and best-effort refresh preferences                                                  |
 
 Agora ships its own framework privacy manifest. App manifest must not be used to
 cover undeclared required-reason access inside another dynamic framework.

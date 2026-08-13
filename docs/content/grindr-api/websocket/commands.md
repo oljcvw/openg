@@ -41,4 +41,3 @@ chat.v1.message.send
 [Response](#websocket-command-response):
 
 See: [HTTP API -> Send a message to a conversation](/grindr-api/messaging/messages#send-a-message-to-a-conversation)
-

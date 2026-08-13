@@ -98,17 +98,17 @@ This design does not include:
 
 The notification feature branch already contains reusable local infrastructure:
 
-| Existing component | Current responsibility | Reuse decision |
-| --- | --- | --- |
-| `NotificationScheduler` | Schedules the 15-minute periodic REST check | Keep as fallback |
-| `NotificationWorker` | Polls messages/taps and applies foreground suppression | Keep; do not turn it into a push worker |
-| `NotificationBridge` | Calls authenticated Rust polling logic through JNI | Extend with separate token/ack functions only after API verification |
-| `NotificationPreferences` | Stores enable/category/preview settings and watermarks | Extend with a bounded push dedupe store |
-| `NotificationDecider` | Converts polling results to local notifications | Reuse presentation primitives; do not feed raw push data into it |
-| `NotificationNotifier` | Creates the Android channel and safe `PendingIntent` | Reuse |
-| `NotificationRoute` | Allowlists notification destinations | Reuse and extend only for a real route requirement |
-| `NotificationsPlugin` | Exposes settings and Android permission commands to Tauri | Reuse |
-| `MainActivity` | Consumes an allowlisted notification route | Reuse |
+| Existing component        | Current responsibility                                    | Reuse decision                                                       |
+| ------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------- |
+| `NotificationScheduler`   | Schedules the 15-minute periodic REST check               | Keep as fallback                                                     |
+| `NotificationWorker`      | Polls messages/taps and applies foreground suppression    | Keep; do not turn it into a push worker                              |
+| `NotificationBridge`      | Calls authenticated Rust polling logic through JNI        | Extend with separate token/ack functions only after API verification |
+| `NotificationPreferences` | Stores enable/category/preview settings and watermarks    | Extend with a bounded push dedupe store                              |
+| `NotificationDecider`     | Converts polling results to local notifications           | Reuse presentation primitives; do not feed raw push data into it     |
+| `NotificationNotifier`    | Creates the Android channel and safe `PendingIntent`      | Reuse                                                                |
+| `NotificationRoute`       | Allowlists notification destinations                      | Reuse and extend only for a real route requirement                   |
+| `NotificationsPlugin`     | Exposes settings and Android permission commands to Tauri | Reuse                                                                |
+| `MainActivity`            | Consumes an allowlisted notification route                | Reuse                                                                |
 
 Push should be added beside polling, not hidden inside the polling implementation. This keeps
 retry semantics, observability, and failure behavior unambiguous.
@@ -195,12 +195,12 @@ hard encoded-size check should reject an event before enqueue if that invariant 
 
 The initial parser allowlist is exact:
 
-| Provider `notificationType` | Required nested field | Canonical kind | Destination | User setting |
-| --- | --- | --- | --- | --- |
-| `chat-platform` | JSON object in `message` | `MESSAGE` or `ALBUM` based on message type | Safe conversation route, otherwise `/chat` | Messages |
-| `offline-tap-sent-event-v1` | JSON object in `tap` | `TAP` | `/interest/taps` | Taps |
-| `offline-tap-sent-event-v2` | JSON object in `tap` | `TAP` | `/interest/taps` | Taps |
-| `fresh-albums` | Bounded JSON object in `payload` | `ALBUM` | `/chat` unless a verified conversation ID exists | Messages |
+| Provider `notificationType` | Required nested field            | Canonical kind                             | Destination                                      | User setting |
+| --------------------------- | -------------------------------- | ------------------------------------------ | ------------------------------------------------ | ------------ |
+| `chat-platform`             | JSON object in `message`         | `MESSAGE` or `ALBUM` based on message type | Safe conversation route, otherwise `/chat`       | Messages     |
+| `offline-tap-sent-event-v1` | JSON object in `tap`             | `TAP`                                      | `/interest/taps`                                 | Taps         |
+| `offline-tap-sent-event-v2` | JSON object in `tap`             | `TAP`                                      | `/interest/taps`                                 | Taps         |
+| `fresh-albums`              | Bounded JSON object in `payload` | `ALBUM`                                    | `/chat` unless a verified conversation ID exists | Messages     |
 
 Album message-type matching should initially recognize the verified album variants only.
 Album content, media references, and access tokens must not be retained in the canonical
@@ -430,11 +430,11 @@ path. Delayed work from one account must never render after another account sign
 
 Privacy defaults remain unchanged:
 
-| Kind | Previews disabled | Previews enabled |
-| --- | --- | --- |
-| Message | Title `New message`; body `Open Grind` | Sender name when available; bounded message text or `Open Grind message` |
-| Tap | Title `New tap`; body `Open Grind` | Title `New tap`; body `<name> tapped you` when available |
-| Album | Title `New album activity`; body `Open Grind` | `<name> shared an album` when available; never show album content |
+| Kind    | Previews disabled                             | Previews enabled                                                         |
+| ------- | --------------------------------------------- | ------------------------------------------------------------------------ |
+| Message | Title `New message`; body `Open Grind`        | Sender name when available; bounded message text or `Open Grind message` |
+| Tap     | Title `New tap`; body `Open Grind`            | Title `New tap`; body `<name> tapped you` when available                 |
+| Album   | Title `New album activity`; body `Open Grind` | `<name> shared an album` when available; never show album content        |
 
 Additional rules:
 
@@ -528,21 +528,21 @@ causes another banner.
 
 ## 15. Failure and retry behavior
 
-| Failure | User-visible behavior | Retry |
-| --- | --- | --- |
-| Unknown/marketing payload | None | No |
-| Malformed/oversized payload | None | No |
-| Expired event | None | No |
-| Duplicate event | None | No |
-| Account binding mismatch | None | No display or acknowledgement |
-| Notifications disabled | None | No |
-| Category disabled | None | No |
-| Foreground app | In-app path only | No OS retry |
-| Android permission denied | None | No display retry |
-| Notification manager error | No duplicate display attempt unless the failure is proven transient | Bounded |
-| Token registration network failure | Existing polling continues | Bounded backoff |
-| Acknowledgement network failure | Notification remains deduplicated | Separate bounded backoff |
-| Provider unavailable | Existing polling continues | Provider-controlled plus polling fallback |
+| Failure                            | User-visible behavior                                               | Retry                                     |
+| ---------------------------------- | ------------------------------------------------------------------- | ----------------------------------------- |
+| Unknown/marketing payload          | None                                                                | No                                        |
+| Malformed/oversized payload        | None                                                                | No                                        |
+| Expired event                      | None                                                                | No                                        |
+| Duplicate event                    | None                                                                | No                                        |
+| Account binding mismatch           | None                                                                | No display or acknowledgement             |
+| Notifications disabled             | None                                                                | No                                        |
+| Category disabled                  | None                                                                | No                                        |
+| Foreground app                     | In-app path only                                                    | No OS retry                               |
+| Android permission denied          | None                                                                | No display retry                          |
+| Notification manager error         | No duplicate display attempt unless the failure is proven transient | Bounded                                   |
+| Token registration network failure | Existing polling continues                                          | Bounded backoff                           |
+| Acknowledgement network failure    | Notification remains deduplicated                                   | Separate bounded backoff                  |
+| Provider unavailable               | Existing polling continues                                          | Provider-controlled plus polling fallback |
 
 WorkManager retries must have a maximum useful lifetime derived from event expiry. There is no
 value in displaying a stale message notification days later.
@@ -565,20 +565,20 @@ Diagnostics should be locally useful and privacy-safe:
 
 Threats and controls:
 
-| Threat | Control |
-| --- | --- |
-| Remote marketing payload rendered as trusted notification | Exact type allowlist; no generic title/body path |
-| Deep-link injection | Locally generated allowlisted routes only |
-| WorkManager data injection/corruption | Revalidate canonical event on worker entry |
-| Notification replay | Unique work name plus account-scoped bounded dedupe store |
-| Cross-account notification | Bind registration, event handling, dedupe, and ack to current account |
-| Push then polling duplicate | Shared domain identity reconciliation plus baseline-only refresh |
-| Sensitive lock-screen disclosure | Previews disabled by default; no album media |
-| Token disclosure | Native secure handling; no WebView or logging exposure |
-| Oversized payload/resource exhaustion | Provider, nested JSON, canonical size, and field bounds |
-| Stale event display | TTL/expiry check before presentation |
-| Unauthorized project reuse | Open Grind-owned configuration and sender authorization only |
-| Duplicate display after ack failure | Local dedupe committed independently of ack |
+| Threat                                                    | Control                                                               |
+| --------------------------------------------------------- | --------------------------------------------------------------------- |
+| Remote marketing payload rendered as trusted notification | Exact type allowlist; no generic title/body path                      |
+| Deep-link injection                                       | Locally generated allowlisted routes only                             |
+| WorkManager data injection/corruption                     | Revalidate canonical event on worker entry                            |
+| Notification replay                                       | Unique work name plus account-scoped bounded dedupe store             |
+| Cross-account notification                                | Bind registration, event handling, dedupe, and ack to current account |
+| Push then polling duplicate                               | Shared domain identity reconciliation plus baseline-only refresh      |
+| Sensitive lock-screen disclosure                          | Previews disabled by default; no album media                          |
+| Token disclosure                                          | Native secure handling; no WebView or logging exposure                |
+| Oversized payload/resource exhaustion                     | Provider, nested JSON, canonical size, and field bounds               |
+| Stale event display                                       | TTL/expiry check before presentation                                  |
+| Unauthorized project reuse                                | Open Grind-owned configuration and sender authorization only          |
+| Duplicate display after ack failure                       | Local dedupe committed independently of ack                           |
 
 Before enabling live push, perform a focused review of Android exported components, intent
 filters, token storage, JNI/native boundaries, account switching, log statements, dependency
@@ -629,25 +629,25 @@ proposal to reduce or remove polling is a separate decision.
 
 No files in this table are implemented by this design document.
 
-| File | Change |
-| --- | --- |
-| `.../notifications/PushNotificationEvent.kt` | Canonical bounded event and serialization |
-| `.../notifications/PushNotificationPayloadParser.kt` | Strict user-content allowlist and normalization |
-| `.../notifications/PushNotificationPolicy.kt` | Pure display/suppression decision |
-| `.../notifications/PushNotificationIngress.kt` | Unique one-shot WorkManager handoff |
-| `.../notifications/PushNotificationWorker.kt` | Process-safe policy and display execution |
-| `.../notifications/NotificationReconciliation.kt` | Shared push/poll identity and bounded suppression state |
-| `.../notifications/NotificationAccountBindingBridge.kt` | Native account-binding comparison |
-| `.../notifications/PushTokenRegistrationWorker.kt` | Token lifecycle after API verification |
-| `.../notifications/OpenGrindMessagingService.kt` | Thin provider adapter after sender authorization |
-| `NotificationPreferences.kt` | Account-scoped bounded push dedupe state |
-| `NotificationDecider.kt` | Filter candidates already reconciled from push |
-| `NotificationNotifier.kt` | Reuse; only add stable per-event IDs if needed |
-| `NotificationRoute.kt` | Reuse; add no remote-controlled routes |
-| `AndroidManifest.xml` | Provider service declaration after provider approval |
-| `app/build.gradle.kts` | Compatible provider dependency after provider approval |
-| Rust notification API module | Verified token registration and acknowledgement commands |
-| Notification settings UI | Explain immediate push versus periodic fallback readiness |
+| File                                                    | Change                                                    |
+| ------------------------------------------------------- | --------------------------------------------------------- |
+| `.../notifications/PushNotificationEvent.kt`            | Canonical bounded event and serialization                 |
+| `.../notifications/PushNotificationPayloadParser.kt`    | Strict user-content allowlist and normalization           |
+| `.../notifications/PushNotificationPolicy.kt`           | Pure display/suppression decision                         |
+| `.../notifications/PushNotificationIngress.kt`          | Unique one-shot WorkManager handoff                       |
+| `.../notifications/PushNotificationWorker.kt`           | Process-safe policy and display execution                 |
+| `.../notifications/NotificationReconciliation.kt`       | Shared push/poll identity and bounded suppression state   |
+| `.../notifications/NotificationAccountBindingBridge.kt` | Native account-binding comparison                         |
+| `.../notifications/PushTokenRegistrationWorker.kt`      | Token lifecycle after API verification                    |
+| `.../notifications/OpenGrindMessagingService.kt`        | Thin provider adapter after sender authorization          |
+| `NotificationPreferences.kt`                            | Account-scoped bounded push dedupe state                  |
+| `NotificationDecider.kt`                                | Filter candidates already reconciled from push            |
+| `NotificationNotifier.kt`                               | Reuse; only add stable per-event IDs if needed            |
+| `NotificationRoute.kt`                                  | Reuse; add no remote-controlled routes                    |
+| `AndroidManifest.xml`                                   | Provider service declaration after provider approval      |
+| `app/build.gradle.kts`                                  | Compatible provider dependency after provider approval    |
+| Rust notification API module                            | Verified token registration and acknowledgement commands  |
+| Notification settings UI                                | Explain immediate push versus periodic fallback readiness |
 
 ## 20. Test plan
 
@@ -760,18 +760,18 @@ configuration, or proprietary project setup into Open Grind.
 
 The inspected artifact was:
 
-| Property | Observed value |
-| --- | --- |
-| Android package | `com.grindrapp.android` |
-| App version | `26.12.0` |
-| Version code | `169415` |
-| Minimum Android SDK | 32 |
-| Target Android SDK | 35 |
-| Base APK SHA-256 | `c1a4684c51424389c7a7471a261cc4e4250f50225eac5b602855df58b2c17079` |
-| ARM64 split SHA-256 | `4b40a5f8379898861affc4aa7e0ddd893249795bb9f0278c83eb8cd1637857b5` |
-| XHDPI split SHA-256 | `5944e7302e4e9c6854cbaa7044a88f77a905dc88700a75236e325b918cf51a2a` |
-| Analysis method | APK manifest/resource decoding, Java decompilation, and targeted smali corroboration |
-| Dynamic delivery capture | Not performed for this appendix |
+| Property                 | Observed value                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| Android package          | `com.grindrapp.android`                                                              |
+| App version              | `26.12.0`                                                                            |
+| Version code             | `169415`                                                                             |
+| Minimum Android SDK      | 32                                                                                   |
+| Target Android SDK       | 35                                                                                   |
+| Base APK SHA-256         | `c1a4684c51424389c7a7471a261cc4e4250f50225eac5b602855df58b2c17079`                   |
+| ARM64 split SHA-256      | `4b40a5f8379898861affc4aa7e0ddd893249795bb9f0278c83eb8cd1637857b5`                   |
+| XHDPI split SHA-256      | `5944e7302e4e9c6854cbaa7044a88f77a905dc88700a75236e325b918cf51a2a`                   |
+| Analysis method          | APK manifest/resource decoding, Java decompilation, and targeted smali corroboration |
+| Dynamic delivery capture | Not performed for this appendix                                                      |
 
 The package identity was also re-read from the connected device during the appendix evidence
 pass. No notification payload, account token, FCM token, Firebase project value, API key,
@@ -976,13 +976,13 @@ rather than treating arbitrary versions as V1.
 The readable V1 dispatcher contains the following relevant families. **Confirmed static for
 the keys and handler routing; nested business behavior is partly a strong static inference.**
 
-| Outer type | Relevant outer data | Observed handling | Open Grind decision |
-| --- | --- | --- | --- |
-| `chat-platform` | `message`; optional `senderDisplayName`, `senderProfileImageMediaHash`, and `senderExpiringAlbumDuration` | Deserialize the nested message, process/store it, then evaluate a chat notification | Support only after mapping to a bounded canonical message event |
-| `offline-tap-sent-event-v1` | `tap` | Deserialize and store a received tap, then evaluate a tap notification | Support as a canonical tap event |
-| `offline-tap-sent-event-v2` | `tap` | Routes to the same received-tap handling family | Support as a canonical tap event |
-| `fresh-albums` | `payload` and `notificationId` | Deserialize album-activity metadata, attach the notification ID, map to the generic display model | Support only album-activity metadata, never album media or access credentials |
-| `PUSH_EVENT` | `pushEvent` | Dispatches a mixed collection of session, trial, subscription, and other events | Reject wholesale unless an independently reviewed noncommercial subtype is explicitly allowlisted |
+| Outer type                  | Relevant outer data                                                                                       | Observed handling                                                                                 | Open Grind decision                                                                               |
+| --------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `chat-platform`             | `message`; optional `senderDisplayName`, `senderProfileImageMediaHash`, and `senderExpiringAlbumDuration` | Deserialize the nested message, process/store it, then evaluate a chat notification               | Support only after mapping to a bounded canonical message event                                   |
+| `offline-tap-sent-event-v1` | `tap`                                                                                                     | Deserialize and store a received tap, then evaluate a tap notification                            | Support as a canonical tap event                                                                  |
+| `offline-tap-sent-event-v2` | `tap`                                                                                                     | Routes to the same received-tap handling family                                                   | Support as a canonical tap event                                                                  |
+| `fresh-albums`              | `payload` and `notificationId`                                                                            | Deserialize album-activity metadata, attach the notification ID, map to the generic display model | Support only album-activity metadata, never album media or access credentials                     |
+| `PUSH_EVENT`                | `pushEvent`                                                                                               | Dispatches a mixed collection of session, trial, subscription, and other events                   | Reject wholesale unless an independently reviewed noncommercial subtype is explicitly allowlisted |
 
 The `message`, `tap`, and album `payload` values are strings containing nested JSON rather
 than already-expanded WorkManager objects. The chat handler stores/processes the message
@@ -1003,18 +1003,18 @@ The V2 data-map model exposes these fields. **Confirmed static.** Required/optio
 below reflects the decompiled model's nullability and constructor shape, not a proven server
 schema guarantee.
 
-| Field | Observed role |
-| --- | --- |
-| `version` | Payload protocol version |
-| `notificationId` | Upstream notification identity and acknowledgement key |
-| `senderId` | Optional sending-profile identity |
-| `title` / `titleArgs` / `translateTitle` | Literal or locally translated notification title |
-| `body` / `bodyArgs` / `translateBody` | Literal or locally translated notification body |
-| `action` | App deep link or control action |
-| `imageUrl` | Optional image reference |
-| `channel` | Requested Android notification channel |
-| `timestamp` | Event time used for presentation |
-| `quickReply` | Whether the mapped notification may expose a reply action |
+| Field                                    | Observed role                                             |
+| ---------------------------------------- | --------------------------------------------------------- |
+| `version`                                | Payload protocol version                                  |
+| `notificationId`                         | Upstream notification identity and acknowledgement key    |
+| `senderId`                               | Optional sending-profile identity                         |
+| `title` / `titleArgs` / `translateTitle` | Literal or locally translated notification title          |
+| `body` / `bodyArgs` / `translateBody`    | Literal or locally translated notification body           |
+| `action`                                 | App deep link or control action                           |
+| `imageUrl`                               | Optional image reference                                  |
+| `channel`                                | Requested Android notification channel                    |
+| `timestamp`                              | Event time used for presentation                          |
+| `quickReply`                             | Whether the mapped notification may expose a reply action |
 
 The mapper does not accept an arbitrary Android channel or arbitrary action. It checks the
 channel against an internal channel set and requires a Grindr-scheme deep link before building
@@ -1202,23 +1202,23 @@ delivery end to end.
 
 Only the following noncommercial behavioral structure should cross into Open Grind's design:
 
-| Reference behavior | Open Grind clean-room equivalent |
-| --- | --- |
-| Firebase callback receives a data map | Thin provider adapter receives bytes/map and immediately invokes a strict parser |
-| One-shot WorkManager handoff | Unique immediate work carrying only a bounded canonical event, not the raw provider map |
-| Logged-in guard | Native account-binding guard checked again inside the worker |
-| V1/V2 dispatch | Explicit supported-version parser; reject missing/unknown explicit versions according to a documented compatibility rule |
-| Chat/tap/album handlers | Three exact domain-event allowlist entries |
-| Generic server title/body/action | Rejected; derive local wording and allowlisted routes from canonical fields |
-| Notification ID | Stable local dedupe identity with an optional separately stored acknowledgement key |
-| `PUSH`/`WEBSOCKET` acknowledgement source | Transport enum passed only to a verified authenticated acknowledgement client |
-| Clear/unsend control actions | Independently specified, authenticated cancellation events if Open Grind later proves a real need |
-| Channel manager | Open Grind-owned stable channels with private defaults and Android system controls |
-| Quiet hours/snooze/foreground suppression | Pure policy evaluated immediately before display |
-| Profile image in notification | Omitted by default; no remote media fetch in the notification path |
-| Quick reply | Deferred until reply authentication, lock-screen privacy, and failure behavior are designed and tested |
-| Raw payload/token logs | Prohibited |
-| Braze, AppsFlyer, ads, commercial events, analytics | Omitted entirely |
+| Reference behavior                                  | Open Grind clean-room equivalent                                                                                         |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Firebase callback receives a data map               | Thin provider adapter receives bytes/map and immediately invokes a strict parser                                         |
+| One-shot WorkManager handoff                        | Unique immediate work carrying only a bounded canonical event, not the raw provider map                                  |
+| Logged-in guard                                     | Native account-binding guard checked again inside the worker                                                             |
+| V1/V2 dispatch                                      | Explicit supported-version parser; reject missing/unknown explicit versions according to a documented compatibility rule |
+| Chat/tap/album handlers                             | Three exact domain-event allowlist entries                                                                               |
+| Generic server title/body/action                    | Rejected; derive local wording and allowlisted routes from canonical fields                                              |
+| Notification ID                                     | Stable local dedupe identity with an optional separately stored acknowledgement key                                      |
+| `PUSH`/`WEBSOCKET` acknowledgement source           | Transport enum passed only to a verified authenticated acknowledgement client                                            |
+| Clear/unsend control actions                        | Independently specified, authenticated cancellation events if Open Grind later proves a real need                        |
+| Channel manager                                     | Open Grind-owned stable channels with private defaults and Android system controls                                       |
+| Quiet hours/snooze/foreground suppression           | Pure policy evaluated immediately before display                                                                         |
+| Profile image in notification                       | Omitted by default; no remote media fetch in the notification path                                                       |
+| Quick reply                                         | Deferred until reply authentication, lock-screen privacy, and failure behavior are designed and tested                   |
+| Raw payload/token logs                              | Prohibited                                                                                                               |
+| Braze, AppsFlyer, ads, commercial events, analytics | Omitted entirely                                                                                                         |
 
 The resulting Open Grind implementation should reproduce the user benefit—timely private
 message, tap, and album-activity notifications—without reproducing Grindr's proprietary code,

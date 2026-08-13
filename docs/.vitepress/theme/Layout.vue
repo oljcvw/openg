@@ -30,7 +30,7 @@ provide("toggle-appearance", async () => {
 			easing: "ease",
 			fill: "forwards",
 			pseudoElement: `::view-transition-${isDark.value ? "old" : "new"}(root)`,
-		}
+		},
 	);
 
 	if (switchEl instanceof HTMLElement) switchEl.style.visibility = "visible";

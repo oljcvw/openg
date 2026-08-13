@@ -31,6 +31,8 @@ export default defineConfig({
 
 		nav: [
 			{ text: "Home", link: "/" },
+			{ text: "User guide", link: "/guides/" },
+			{ text: "Developer guide", link: "/development/" },
 			{ text: "Grindr API", link: "/grindr-api" },
 		],
 
@@ -41,14 +43,43 @@ export default defineConfig({
 		sidebar: {
 			"/guides/": [
 				{
-					text: "User guides",
+					text: "User guide",
 					items: [
+						{ text: "Start here", link: "/guides/" },
 						{ text: "Download", link: "/guides/download" },
 						{
 							text: "Sign in with Google",
 							link: "/guides/sign-in-with-google",
 						},
+						{ text: "Using Open Grind", link: "/guides/using-open-grind" },
+						{
+							text: "Account, privacy, and settings",
+							link: "/guides/account-privacy-settings",
+						},
+						{
+							text: "Platform support",
+							link: "/guides/platform-support",
+						},
+						{
+							text: "Troubleshooting",
+							link: "/guides/troubleshooting",
+						},
 						{ text: "FAQ", link: "/guides/faq" },
+					],
+				},
+			],
+			"/development/": [
+				{
+					text: "Developer guide",
+					items: [
+						{ text: "Overview", link: "/development/" },
+						{ text: "Tauri architecture", link: "/development/architecture" },
+						{ text: "Platform tracks", link: "/development/platform-tracks" },
+						{
+							text: "iOS development and release",
+							link: "/development/ios-release",
+						},
+						{ text: "Development workflow", link: "/development/workflow" },
 					],
 				},
 			],

@@ -9,14 +9,14 @@ All notifications include the following fields:
 
 Message received, sent, unsent, or got a reaction.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — [Message](/grindr-api/messaging/messages#message)
 
 ## `chat.v1.refresh_dynamic`
 
 Album shared, unshared, expiration settings changed or viewed.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — object
   - `conversationId` — [Conversation ID](/grindr-api/messaging/conversations#conversation-id)
   - `messageType` — [Message Type](/grindr-api/messaging/messages#message-type)
@@ -25,7 +25,7 @@ Album shared, unshared, expiration settings changed or viewed.
 
 Tap received or sent.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — object
   - `timestamp`
   - `senderId`
@@ -39,7 +39,7 @@ Tap received or sent.
 
 Conversation deleted, e.g. when another profile blocked you. Also fires for unblock events.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — object
   - `conversationIds` — array of [Conversation ID](/grindr-api/messaging/conversations#conversation-id)
 
@@ -47,7 +47,7 @@ Conversation deleted, e.g. when another profile blocked you. Also fires for unbl
 
 Display read receipt. Sent to all chat participants including yourself reading from another device, check `profileId` to distinguish. Only sent if user has a paid subscription or [entitlement for read states](/grindr-api/commerce/rewarded-ads). `lastReadTimestamp` still returns correct value, usable for polling.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — object
   - `conversationId` — [Conversation ID](/grindr-api/messaging/conversations#conversation-id)
   - `profileId` — id of the participant who performed the read, sent as a string
@@ -57,14 +57,14 @@ Display read receipt. Sent to all chat participants including yourself reading f
 
 Message deleted.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — WIP
 
 ## `chat.v1.conversation.update`
 
 Conversation metadata changed.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — object
   - `conversationIds` — array of [Conversation ID](/grindr-api/messaging/conversations#conversation-id)
 
@@ -72,7 +72,7 @@ Conversation metadata changed.
 
 Typing indicator changed.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — object
   - `conversationId` — [Conversation ID](/grindr-api/messaging/conversations#conversation-id)
   - `profileId` — id of the participant whose typing status changed
@@ -82,7 +82,7 @@ Typing indicator changed.
 
 Signals the client to refresh its inbox.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — WIP
 
 ## `notification.undelivered`
@@ -93,11 +93,10 @@ WIP
 
 New view received, e.g. when another profile views your profile.
 
-- *everything from [Notification Event](#notification-event)*
+- _everything from [Notification Event](#notification-event)_
 - `payload` — object
   - `viewedCount` — total number of profiles that viewed you, including the most recent one
   - `mostRecent` — object
     - `profileId` — ID of the profile that viewed
     - `photoHash` — hash of the profile photo, if available
     - `timestamp` — unix timestamp in milliseconds of the view
-

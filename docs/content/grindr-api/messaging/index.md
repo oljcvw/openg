@@ -6,5 +6,4 @@ import { grindrApiReferenceMessaging as subpages } from '$lib'
 
 See also: [WebSocket](/grindr-api/websocket/index#websocket)
 
-
 <Subpages :items="subpages" />

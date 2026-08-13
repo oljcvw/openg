@@ -61,6 +61,11 @@ Projects reference:
 [src-tauri/](./src-tauri/) — backend built with Rust
 [docs](./docs/) — Open Grind guides and Grindr API docs
 
+Documentation contributors should start with
+[docs/README.md](./docs/README.md). It documents the isolated docs toolchain,
+canonical sources, local preview, and the same cleanliness/build check enforced
+in pull-request CI.
+
 API Authorization, security headers and transport layer are handled by Rust lib; this way the token can be stored securely without ever being exposed to frontend.
 
 All research efforts contributing to [docs](./docs) are highly valued and appreciated! Search for "WIP" in [OpenAPI spec file](./docs/lib/openapi.json) to find out which areas of the API haven't been reverse engineered yet. OpenAPI is the source of truth for API reference documentation, which is generated from it automatically. If you want to contribute to documentation, please update OpenAPI spec file manually or using a GUI editor.
