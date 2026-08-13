@@ -2,14 +2,28 @@
   "features" : [
     "refractivity"
   ],
-  "fill" : {
-    "linear-gradient" : [
-      "display-p3:0.01800,0.04000,0.09000,1.00000",
-      "display-p3:0.07000,0.26000,0.52000,1.00000"
-    ]
-  },
+  "fill-specializations" : [
+    {
+      "value" : {
+        "linear-gradient" : [
+          "extended-gray:0.00000,1.00000",
+          "display-p3:0.09551,0.22389,0.41526,1.00000"
+        ]
+      }
+    },
+    {
+      "idiom" : "square",
+      "value" : {
+        "linear-gradient" : [
+          "extended-gray:0.00000,1.00000",
+          "extended-srgb:0.00000,0.53333,1.00000,1.00000"
+        ]
+      }
+    }
+  ],
   "groups" : [
     {
+      "blend-mode" : "lighten",
       "hidden" : false,
       "layers" : [
         {
@@ -30,12 +44,12 @@
       "lighting" : "individual",
       "name" : "Brow",
       "refractivity" : {
-        "depth" : 0.5,
+        "depth" : 1,
         "enabled" : true,
-        "strength" : 0.72
+        "strength" : 0.9523828125
       },
       "shadow" : {
-        "kind" : "neutral",
+        "kind" : "layer-color",
         "opacity" : 0.4
       },
       "specular" : true,
@@ -45,6 +59,7 @@
       }
     },
     {
+      "blend-mode" : "normal",
       "hidden" : false,
       "layers" : [
         {
@@ -65,12 +80,12 @@
       "lighting" : "individual",
       "name" : "Jaw",
       "refractivity" : {
-        "depth" : 0.35,
+        "depth" : 0.0610546875,
         "enabled" : true,
-        "strength" : 0.65
+        "strength" : 1
       },
       "shadow" : {
-        "kind" : "neutral",
+        "kind" : "layer-color",
         "opacity" : 0.3
       },
       "specular" : true,
@@ -80,6 +95,8 @@
       }
     },
     {
+      "blend-mode" : "hard-light",
+      "blur-material" : null,
       "hidden" : false,
       "layers" : [
         {
@@ -100,12 +117,12 @@
       "lighting" : "individual",
       "name" : "Cheeks",
       "refractivity" : {
-        "depth" : 0.2,
+        "depth" : 0.3926171875,
         "enabled" : true,
-        "strength" : 0.55
+        "strength" : 0.635703125
       },
       "shadow" : {
-        "kind" : "neutral",
+        "kind" : "layer-color",
         "opacity" : 0.2
       },
       "specular" : true,
