@@ -15,6 +15,7 @@
 		"cleanup": "bun run scripts/cleanup-openapi.ts",
 		"deploy": "bun run build && bun gh-pages -d .vitepress/dist",
 		"generate": "bun run scripts/generate-docs.ts && prettier --write lib/index.ts",
+		"generate:apk-index": "bun run scripts/generate-apk-endpoint-index.ts",
 		"lint:markdown": "markdownlint-cli2",
 		"lint:markdown:staged": "markdownlint-cli2 --no-globs",
 		"format:check": "prettier --check .",
