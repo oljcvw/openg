@@ -22,13 +22,13 @@ you to a separate platform manual.
 
 ## Platform status at a glance
 
-| Platform | What users should expect                                                                                                                                                                                                    |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Android  | Complete, documented release path. Native notifications, camera capture, voice recording, video calls, system back handling, and Android file picking are implemented.                                                      |
-| iOS      | Native capture, voice, calls, periodic notifications, device location, and Keychain storage are implemented for iPhone and iPad. Build/test workflows exist; signed TestFlight and App Store release remain separate gates. |
-| macOS    | Shared desktop application source exists. Local development defaults to file-backed credentials; distributed builds must opt into the Keychain feature. No complete project-owned release path is documented.               |
-| Windows  | Shared desktop source, WebView2 floor checks, and Credential Manager integration exist. No complete project-owned release path is documented.                                                                               |
-| Linux    | Shared desktop source, WebKitGTK floor checks, and Secret Service integration exist, with a protected file fallback. No complete project-owned release path is documented.                                                  |
+| Platform | What users should expect                                                                                                                                                                                                                                       |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Android  | Complete, documented release path. Native notifications, camera capture, voice recording, video calls, system back handling, and Android file picking are implemented.                                                                                         |
+| iOS      | Native capture, voice, calls, periodic notifications, device location, and Keychain storage are implemented for iPhone and iPad; device validation remains pending. Build/test workflows exist; signed TestFlight and App Store release remain separate gates. |
+| macOS    | Shared desktop application source exists. Local development defaults to file-backed credentials; distributed builds must opt into the Keychain feature. No complete project-owned release path is documented.                                                  |
+| Windows  | Shared desktop source, WebView2 floor checks, and Credential Manager integration exist. No complete project-owned release path is documented.                                                                                                                  |
+| Linux    | Shared desktop source, WebKitGTK floor checks, and Secret Service integration exist, with a protected file fallback. No complete project-owned release path is documented.                                                                                     |
 
 See [Platform support](/guides/platform-support) for feature-level differences.
 

@@ -35,7 +35,7 @@ features:
 
 <hr />
 
-Android has established reproducible release pipeline. iOS and iPadOS have
+Android has an established reproducible release pipeline. iOS and iPadOS have
 project-owned native implementation, build, test, signing, and
 TestFlight-preparation paths, but no signed distribution or device acceptance is
 claimed without candidate-specific evidence. Desktop targets remain shared

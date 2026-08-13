@@ -11,10 +11,12 @@
 		"audit:queries": "bun run scripts/audit-queries.ts",
 		"build": "bun run generate && bun run build:site",
 		"build:site": "vitepress build",
-		"check": "bun run format:check && bun run validate && bun run generate && bun run audit:openapi && bun run audit:coverage && bun run audit:queries && bun run audit:links && bun run build:site && git diff --exit-code -- lib/index.ts",
+		"check": "bun run format:check && bun run lint:markdown && bun run validate && bun run generate && bun run audit:openapi && bun run audit:coverage && bun run audit:queries && bun run audit:links && bun run build:site && git diff --exit-code -- lib/index.ts",
 		"cleanup": "bun run scripts/cleanup-openapi.ts",
 		"deploy": "bun run build && bun gh-pages -d .vitepress/dist",
 		"generate": "bun run scripts/generate-docs.ts && prettier --write lib/index.ts",
+		"lint:markdown": "markdownlint-cli2",
+		"lint:markdown:staged": "markdownlint-cli2 --no-globs",
 		"format:check": "prettier --check .",
 		"preview": "vitepress preview",
 		"start": "bun run generate && vitepress dev",
@@ -23,6 +25,7 @@
 	"devDependencies": {
 		"@types/bun": "latest",
 		"gh-pages": "^6.3.0",
+		"markdownlint-cli2": "^0.23.2",
 		"prettier": "^3.8.4",
 		"vitepress": "^2.0.0-alpha.17"
 	},

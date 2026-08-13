@@ -1,0 +1,8 @@
+{
+	"config": {
+		"default": false,
+		"MD042": true,
+	},
+	"globs": ["**/*.md"],
+	"ignores": ["content/generated/**", "node_modules/**"],
+}

@@ -49,13 +49,13 @@ be retried instead of disappearing silently.
 
 ### Capture and call availability
 
-| Action                        | Android                     | iOS and iPadOS                         | macOS, Windows, Linux                       |
-| ----------------------------- | --------------------------- | -------------------------------------- | ------------------------------------------- |
-| Pick existing media           | Android system picker       | Tauri/Apple file dialog                | Desktop file dialog                         |
-| Take a photo                  | Available                   | Implemented; device validation pending | Not available                               |
-| Record a short expiring video | Available, up to 15 seconds | Implemented; up to 15 seconds          | Not available                               |
-| Record a voice message        | Available                   | Implemented                            | Record unavailable; received audio can play |
-| Start or receive a video call | Available                   | Implemented; requires Agora ID         | Not available                               |
+| Action                        | Android                     | iOS and iPadOS                                     | macOS, Windows, Linux                       |
+| ----------------------------- | --------------------------- | -------------------------------------------------- | ------------------------------------------- |
+| Pick existing media           | Android system picker       | Tauri/Apple file dialog                            | Desktop file dialog                         |
+| Take a photo                  | Available                   | Implemented; device validation pending             | Not available                               |
+| Record a short expiring video | Available, up to 15 seconds | Implemented; validation pending; up to 15 seconds  | Not available                               |
+| Record a voice message        | Available                   | Implemented; validation pending                    | Record unavailable; received audio can play |
+| Start or receive a video call | Available                   | Implemented; validation pending; requires Agora ID | Not available                               |
 
 Android and iOS short videos can be sent view-once or with one replay. Availability of
 received media still depends on the sender, expiry, server access, and whether a

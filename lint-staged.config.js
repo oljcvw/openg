@@ -5,6 +5,7 @@ export default {
 		"eslint --fix --no-warn-ignored",
 	],
 	"*.{json,md,yml,yaml,css,html}": "prettier --write",
+	"docs/**/*.md": "bun run --cwd docs lint:markdown:staged --",
 	"*.sh": "shellcheck",
 	"*.rs": (files) => [
 		// Not in rustfmt.toml: `cargo fmt` needs mod-following to reach the whole crate

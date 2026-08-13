@@ -23,8 +23,9 @@ failed sends remain visible. If failures persist, restart the app once.
 ## Camera, microphone, calls, or notifications are unavailable
 
 Camera capture, microphone recording, video calls, and notifications are
-implemented on Android, iOS, and iPadOS. Check system permission first. On
-Android, also check WebView version and battery optimization. On iOS and iPadOS,
+implemented on Android. They are implemented on iOS and iPadOS with device
+validation pending. Check system permission first. On Android, also check WebView
+version and battery optimization. On iOS and iPadOS,
 periodic notification checks may be deferred, voice recording is canceled in
 background, and an active video call ends when the app enters background. Media
 already on the device can still be selected without camera capture.
