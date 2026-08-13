@@ -17,8 +17,12 @@ device, transfer it securely, open **Sign in with Google**, paste it, and tap
 ## macOS, Windows, and Linux
 
 Tap **Sign in with Google** on the login screen. The app opens an isolated helper
-WebView for the web OAuth flow. Source support does not itself prove a published
-desktop artifact; see [Platform support](/guides/platform-support).
+WebView for the web OAuth flow. This describes the current implementation, but
+[Google's OAuth policy](https://developers.google.com/identity/protocols/oauth2/policies#secure-browsers)
+disallows embedded user-agents, so Google may reject the flow. If that happens,
+use the manual token option with the documented WebExtension. Source support
+does not itself prove a published desktop artifact; see
+[Platform support](/guides/platform-support).
 
 ## Android
 
@@ -73,7 +77,13 @@ MicroG itself does not allow spoofing, as it's a drop-in that works via the same
 
 Yes, that's how web.grindr.com works. The entire authentication is web flow, meaning it's supposed to run in browsers, without requiring any device attestation tokens, so it's possible to run it on any platform, even in emulators. Web flow is launched from web.grindr.com with `responseType=postMessage` and the resulting code is posted by GIS JavaScript with `web.grindr.com` origin, so only pages with web.grindr.com origin can receive the callback. Additionally, browsers (even embedded ones) prevent actions such as opening new tabs without user gesture, which is why a tap is needed on the launch page.
 
-However, there's another problem: Google OAuth Web Flow page checks aggressively for any signs of rendering the login page in embedded windows (including system WebViews, which is what Tauri uses under the hood of Open Grind UI), and while changing User-Agent and removing Sec- headers is possible for both WebKit-based WebViews (WKWebView for macOS & iOS, WebKitGTK for Linux) and Chromium-based WebViews (WebView2 for Windows, Chromium for Android), **Android's Chromium WebView specifically adds a special X-Requested-With header that's impossible to remove.** This has been pushed by Google specifically for "fraud/abuse detection" (i.e. to detect Android WebView in their services, such as the OAuth page). In 2023 it was announced Google starts a trial to allow developers to opt-out of sending this header, **but in 2025 the decision was reversed and X-Requested-With is now sent on all Android system's Chromium WebView requests with no option to disable it,** which is exactly what triggers Google OAuth page "security checks" and rejects attempts to sign in.
+However, Google's OAuth flow rejects embedded user-agents, including system
+WebViews. Android WebView again sends `X-Requested-With` by default. AndroidX's
+deprecated origin allow-list no longer changes that behavior; the
+[current Android API reference](<https://developer.android.com/reference/androidx/webkit/WebSettingsCompat#setRequestedWithHeaderOriginAllowList(android.webkit.WebSettings,java.util.Set%3Cjava.lang.String%3E)>)
+states that the origin trial ended and the API no longer does anything. The
+companion app therefore uses GeckoView and a browser extension rather than the
+Open Grind Android WebView.
 
 Desktop targets render Google's OAuth page in a helper WebView. iOS and iPadOS
 use manual token entry. Android uses the companion-app intent or manual entry.

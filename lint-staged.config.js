@@ -4,7 +4,7 @@ export default {
 		"prettier --write",
 		"eslint --fix --no-warn-ignored",
 	],
-	"*.{json,md,yml,yaml,css,html}": "prettier --write",
+	"*.{json,jsonc,md,yml,yaml,css,html}": "prettier --write",
 	"docs/**/*.md": "bun run --cwd docs lint:markdown:staged --",
 	"*.sh": "shellcheck",
 	"*.rs": (files) => [

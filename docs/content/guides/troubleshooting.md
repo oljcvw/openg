@@ -48,5 +48,6 @@ no longer needed.
 Record Open Grind version, platform and OS version, what you expected, what
 happened, and minimal reproduction steps. Never post tokens, session data,
 profile IDs, messages, photos, precise coordinates, or private log lines. Use
-the public issue tracker for ordinary bugs. Follow the project's security policy
-for vulnerabilities; do not open a public vulnerability report.
+the public issue tracker for ordinary bugs. For vulnerabilities, follow the
+[private reporting instructions](https://git.opengrind.org/open-grind/open-grind/src/branch/main/SECURITY.md#reporting-a-vulnerability);
+do not open a public vulnerability report.

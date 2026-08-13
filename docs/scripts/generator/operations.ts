@@ -33,7 +33,7 @@ function humanizeOperationId(opId: string): string {
 }
 
 export function operationSummary(op: Op["op"]): string {
-	return op.summary ?? humanizeOperationId(op.operationId);
+	return op.summary?.trim() || humanizeOperationId(op.operationId);
 }
 
 function resolveParam(ctx: Context, p: ParameterOrRef): Parameter | undefined {

@@ -129,7 +129,7 @@ End-to-end tests are a separate tier:
 `bun ci` also installs a pre-commit hook (husky + lint-staged) that runs over staged files only:
 
 - `*.{js,mjs,ts,svelte}` — Prettier, then ESLint with `--fix`
-- `*.{json,yml,yaml,css,html}` — Prettier
+- `*.{json,jsonc,yml,yaml,css,html}` — Prettier
 - `*.md` — Prettier; documentation Markdown also runs markdownlint
 - `*.sh` — ShellCheck
 - `*.rs` — `rustfmt`, then `cargo clippy` over the whole crate
