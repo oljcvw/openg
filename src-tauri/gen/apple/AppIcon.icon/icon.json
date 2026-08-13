@@ -3,7 +3,10 @@
     "refractivity"
   ],
   "fill" : {
-    "solid" : "display-p3:0.00000,0.00000,0.00000,1.00000"
+    "linear-gradient" : [
+      "display-p3:0.01800,0.04000,0.09000,1.00000",
+      "display-p3:0.07000,0.26000,0.52000,1.00000"
+    ]
   },
   "groups" : [
     {
@@ -20,9 +23,30 @@
           "fill" : "none",
           "glass" : true,
           "hidden" : false,
-          "image-name" : "02-middle-left.svg",
-          "name" : "Middle Left"
-        },
+          "image-name" : "04-upper-right.svg",
+          "name" : "Upper Right"
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Brow",
+      "refractivity" : {
+        "depth" : 0.5,
+        "enabled" : true,
+        "strength" : 0.72
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.4
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.08
+      }
+    },
+    {
+      "hidden" : false,
+      "layers" : [
         {
           "fill" : "none",
           "glass" : true,
@@ -34,26 +58,12 @@
           "fill" : "none",
           "glass" : true,
           "hidden" : false,
-          "image-name" : "04-upper-right.svg",
-          "name" : "Upper Right"
-        },
-        {
-          "fill" : "none",
-          "glass" : true,
-          "hidden" : false,
-          "image-name" : "05-middle-right.svg",
-          "name" : "Middle Right"
-        },
-        {
-          "fill" : "none",
-          "glass" : true,
-          "hidden" : false,
           "image-name" : "06-lower-right.svg",
           "name" : "Lower Right"
         }
       ],
       "lighting" : "individual",
-      "name" : "Mask Pieces",
+      "name" : "Jaw",
       "refractivity" : {
         "depth" : 0.35,
         "enabled" : true,
@@ -61,12 +71,47 @@
       },
       "shadow" : {
         "kind" : "neutral",
-        "opacity" : 0.35
+        "opacity" : 0.3
       },
       "specular" : true,
       "translucency" : {
         "enabled" : true,
-        "value" : 0.12
+        "value" : 0.11
+      }
+    },
+    {
+      "hidden" : false,
+      "layers" : [
+        {
+          "fill" : "none",
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "02-middle-left.svg",
+          "name" : "Middle Left"
+        },
+        {
+          "fill" : "none",
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "05-middle-right.svg",
+          "name" : "Middle Right"
+        }
+      ],
+      "lighting" : "individual",
+      "name" : "Cheeks",
+      "refractivity" : {
+        "depth" : 0.2,
+        "enabled" : true,
+        "strength" : 0.55
+      },
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.2
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.14
       }
     }
   ],
