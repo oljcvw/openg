@@ -77,7 +77,7 @@ const isDev =
 if (!isDev) {
 	fail(
 		`${configVersion} has no -dev prerelease. After tagging a release, bump straight to the ` +
-			`next version with -dev (e.g. 0.1.0-beta.7-dev) so main never claims to be a published ` +
+			`next version with -dev (e.g. 0.1.0-beta.8-dev) so main never claims to be a published ` +
 			`release. Release builds run this with --release.`,
 	);
 }

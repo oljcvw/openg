@@ -179,7 +179,7 @@ and authorized team are explicit; setting them is an authority decision, not a
 generic build prerequisite.
 
 Open Grind targets iPhone and iPad with iOS/iPadOS 17.5 or newer. A beta package
-version such as `0.1.0-beta.7-dev` is normalized to Apple's three-integer
+version such as `0.1.0-beta.8-dev` is normalized to Apple's three-integer
 marketing version `0.1.0`; `CFBundleVersion` is the independently increasing
 build number. See [iOS release preparation](docs/ios-release.md) for signing,
 artifact verification, TestFlight, CI, and compliance gates.
