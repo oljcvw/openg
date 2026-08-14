@@ -2,9 +2,10 @@
 	import { showErrorToast } from "$lib/api/error";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
 	import { Button } from "$lib/components/ui/button";
-	import { profileLocationCoordinator } from "$lib/location/profile-location";
 	import {
 		cancelProfileLocationWifiWarning,
+		closeProfileLocationWifiWarning,
+		continueAfterAndroidWifiDisabled,
 		currentWifiWarningState,
 		markWifiSettingsOpened,
 		profileLocationWifiWarning,
@@ -27,13 +28,13 @@
 			openWifiControls();
 			return;
 		}
-		if (state.intent === null) return;
-
 		setWifiWarningBusy(true);
 		try {
-			const outcome = await profileLocationCoordinator.stageForAndroidRestart(
-				state.intent,
-			);
+			const outcome = await continueAfterAndroidWifiDisabled(state.intent);
+			if (outcome.kind === "applied") {
+				closeProfileLocationWifiWarning();
+				return;
+			}
 			if (outcome.kind === "stagedForRestart") {
 				restartAndroidApp();
 				return;
@@ -45,7 +46,7 @@
 		} catch (error) {
 			console.error(error);
 			showErrorToast({
-				label: "Failed to stage location after Wi-Fi disconnect",
+				label: "Failed to resume after Wi-Fi disconnect",
 				error,
 			});
 		} finally {
@@ -91,8 +92,7 @@
 					disabled={$profileLocationWifiWarning.busy}
 					onclick={() => void continueAndroid()}
 				>
-					{$profileLocationWifiWarning.settingsOpened &&
-					$profileLocationWifiWarning.intent !== null
+					{$profileLocationWifiWarning.settingsOpened
 						? "Verify Wi-Fi is off and continue"
 						: "Continue and turn off Wi-Fi"}
 				</Button>

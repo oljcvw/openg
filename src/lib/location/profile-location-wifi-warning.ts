@@ -58,6 +58,14 @@ export async function requestProfileLocation(
 	return outcome;
 }
 
+export function continueAfterAndroidWifiDisabled(
+	intent: ActionableProfileLocationIntent | null,
+): Promise<ProfileLocationOutcome> {
+	return intent === null
+		? profileLocationCoordinator.bootstrap()
+		: profileLocationCoordinator.stageForAndroidRestart(intent);
+}
+
 export function markWifiSettingsOpened(): void {
 	profileLocationWifiWarning.update((state) => ({
 		...state,
