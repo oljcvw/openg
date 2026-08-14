@@ -7,11 +7,11 @@
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import { nearestScrollableAncestor } from "$lib/components/feedback/refresh/scroll-chain";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
 	import {
 		responsiveGridColumnCount,
 		toGridRows,
 	} from "$lib/components/virtual/virtual-grid";
-	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
 	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { registerRootActivationRefresh } from "$lib/navigation/app-navigation";
 	import {

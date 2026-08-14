@@ -63,11 +63,11 @@
 	import { Button } from "$lib/components/ui/button";
 	import * as Drawer from "$lib/components/ui/drawer";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
 	import {
 		responsiveGridColumnCount,
 		toGridRows,
 	} from "$lib/components/virtual/virtual-grid";
-	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
 	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { openReceivedAlbumDetail } from "$lib/navigation/app-navigation";
 	import { videoCallController } from "$lib/video-call/controller";

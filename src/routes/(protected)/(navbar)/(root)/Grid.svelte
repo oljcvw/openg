@@ -4,11 +4,11 @@
 	import { getGridColumnsSnapshot } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { nearestScrollableAncestor } from "$lib/components/feedback/refresh/scroll-chain";
+	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
 	import {
 		responsiveGridColumnCount,
 		toGridRows,
 	} from "$lib/components/virtual/virtual-grid";
-	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
 	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import {
