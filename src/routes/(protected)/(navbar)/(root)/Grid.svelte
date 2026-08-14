@@ -8,16 +8,16 @@
 		responsiveGridColumnCount,
 		toGridRows,
 	} from "$lib/components/virtual/virtual-grid";
-	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
+	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { gridState } from "$lib/grid/grid-state.svelte";
-	import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 	import {
 		captureScrollAnchor,
 		captureScrollNeighborhood,
 		restoreVirtualScrollAnchor,
 		type SurfaceScrollPosition,
 	} from "$lib/navigation/navigation-memory";
+	import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 	import type { GridProfile } from "$lib/grid/grid";
 	import EmptyGrid from "./EmptyGrid.svelte";
 	import GridProfileMiniCard from "./GridProfileMiniCard.svelte";
@@ -206,7 +206,7 @@
 			neighborhood,
 			logicalItemKeys: gridProfiles.map((item) => String(item.id)),
 			toVirtualIndex: (itemIndex) => Math.floor(itemIndex / columnCount),
-			scrollToIndex: (index) => collection!.scrollToIndex(index),
+			scrollToIndex: (index) => collection.scrollToIndex(index),
 		});
 		reportClientDiagnostic({
 			category: "browse_layout",

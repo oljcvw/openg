@@ -11,8 +11,8 @@
 		responsiveGridColumnCount,
 		toGridRows,
 	} from "$lib/components/virtual/virtual-grid";
-	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
+	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { registerRootActivationRefresh } from "$lib/navigation/app-navigation";
 	import {
 		captureScrollAnchor,

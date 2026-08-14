@@ -56,7 +56,7 @@
 		const currentOverscan = overscan;
 		const currentGap = gap;
 		const currentScrollMargin = scrollMargin;
-		measurementKey;
+		void measurementKey;
 		untrack(() =>
 			$virtualizer.setOptions({
 				count: snapshot.length,

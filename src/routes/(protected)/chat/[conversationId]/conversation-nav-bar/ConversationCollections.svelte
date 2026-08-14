@@ -67,8 +67,8 @@
 		responsiveGridColumnCount,
 		toGridRows,
 	} from "$lib/components/virtual/virtual-grid";
-	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
+	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
 	import { openReceivedAlbumDetail } from "$lib/navigation/app-navigation";
 	import { videoCallController } from "$lib/video-call/controller";
 	import type { SharedAlbum } from "$lib/model/messaging/albums";
