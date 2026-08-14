@@ -29,12 +29,15 @@
 	} = $props();
 
 	const gridColumns = $derived(getGridColumnsSnapshot());
+	type GridColumns = ReturnType<typeof getGridColumnsSnapshot>;
 	let gridRoot: HTMLDivElement | null = $state(null);
 	let collection: {
 		scrollToIndex(index: number): Promise<void>;
 		remeasure(): Promise<void>;
 	} | null = $state(null);
 	let gridWidth = $state(0);
+	let requestedGridWidth = 0;
+	let appliedGridColumns: GridColumns = $state(getGridColumnsSnapshot());
 	let layoutGeneration = 0;
 	let layoutTask = Promise.resolve();
 	let layoutActive = true;
@@ -48,7 +51,7 @@
 			: null,
 	);
 	const columnCount = $derived(
-		responsiveGridColumnCount(gridWidth, gridColumns),
+		responsiveGridColumnCount(gridWidth, appliedGridColumns),
 	);
 	const gridProfiles = $derived.by(() => {
 		const byId = new Map<number, GridProfile>();
@@ -160,7 +163,20 @@
 
 	function observeWidth(node: HTMLDivElement) {
 		return observeElementWidth(node, (width) => {
-			layoutTask = layoutTask.then(() => applyGridWidth(width)).catch(() => {
+			requestedGridWidth = width;
+			queueGridLayout(width, gridColumns);
+		});
+	}
+
+	$effect(() => {
+		const requestedGridColumns = gridColumns;
+		untrack(() => queueGridLayout(requestedGridWidth, requestedGridColumns));
+	});
+
+	function queueGridLayout(width: number, columns: GridColumns): void {
+		layoutTask = layoutTask
+			.then(() => applyGridLayout(width, columns))
+			.catch(() => {
 				reportClientDiagnostic({
 					category: "browse_layout",
 					component: "grid",
@@ -168,11 +184,17 @@
 					level: "error",
 				});
 			});
-		});
 	}
 
-	async function applyGridWidth(width: number): Promise<void> {
-		if (!layoutActive || width === gridWidth) return;
+	async function applyGridLayout(
+		width: number,
+		columns: GridColumns,
+	): Promise<void> {
+		if (
+			!layoutActive ||
+			(width === gridWidth && columns === appliedGridColumns)
+		)
+			return;
 		const generation = ++layoutGeneration;
 		const startedAt = performance.now();
 		reportClientDiagnostic({
@@ -190,14 +212,16 @@
 				? captureScrollNeighborhood(activeContainer, anchor.itemKey)
 				: null;
 		gridWidth = width;
+		appliedGridColumns = columns;
 		await tick();
 		if (generation !== layoutGeneration) return;
-		await collection?.remeasure();
+		const activeCollection = collection;
+		await activeCollection?.remeasure();
 		if (
 			generation !== layoutGeneration ||
 			!activeContainer ||
 			!anchor ||
-			!collection
+			!activeCollection
 		)
 			return reportLayoutCompletion(startedAt, true);
 		const result = await restoreVirtualScrollAnchor({
@@ -206,7 +230,7 @@
 			neighborhood,
 			logicalItemKeys: gridProfiles.map((item) => String(item.id)),
 			toVirtualIndex: (itemIndex) => Math.floor(itemIndex / columnCount),
-			scrollToIndex: (index) => collection.scrollToIndex(index),
+			scrollToIndex: (index) => activeCollection.scrollToIndex(index),
 		});
 		reportClientDiagnostic({
 			category: "browse_layout",
@@ -219,7 +243,8 @@
 
 	function reportLayoutCompletion(startedAt: number, settled: boolean): void {
 		const duration = performance.now() - startedAt;
-		const bucket = duration <= 100 ? "fast" : duration <= 368 ? "moderate" : "slow";
+		const bucket =
+			duration <= 100 ? "fast" : duration <= 368 ? "moderate" : "slow";
 		reportClientDiagnostic({
 			category: "browse_layout",
 			component: "grid",

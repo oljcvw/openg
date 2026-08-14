@@ -94,6 +94,21 @@ function queryKey(query: z.infer<typeof cascadeV4QuerySchema>): string {
 	);
 }
 
+function normalizePersistedGridAccount(
+	value: unknown,
+): Record<string, CachedGrid> {
+	const parsed = z.record(z.string(), cachedGridSchema).parse(value);
+	const normalized: Record<string, CachedGrid> = {};
+	for (const entry of Object.values(parsed)) {
+		const key = queryKey(entry.query);
+		const existing = normalized[key];
+		if (!existing || entry.updatedAt > existing.updatedAt) {
+			normalized[key] = entry;
+		}
+	}
+	return normalized;
+}
+
 async function migrateLegacyCache(): Promise<void> {
 	if (migration) return await migration;
 	migration = (async () => {
@@ -118,7 +133,7 @@ async function getAccountCache(
 	await migrateLegacyCache();
 	return (
 		(await readCacheEntry(Number(owner), "grid", "grids", (value) =>
-			z.record(z.string(), cachedGridSchema).parse(value),
+			normalizePersistedGridAccount(value),
 		)) ?? {}
 	);
 }
