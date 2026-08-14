@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { addListener, callMethod, ios, navigate, unregister } = vi.hoisted(() => ({
-	addListener: vi.fn(),
-	callMethod: vi.fn(),
-	ios: { value: false },
-	navigate: vi.fn(),
-	unregister: vi.fn(),
-}));
+const { addListener, callMethod, ios, navigate, unregister } = vi.hoisted(
+	() => ({
+		addListener: vi.fn(),
+		callMethod: vi.fn(),
+		ios: { value: false },
+		navigate: vi.fn(),
+		unregister: vi.fn(),
+	}),
+);
 
 vi.mock("@tauri-apps/api/core", () => ({ addPluginListener: addListener }));
 vi.mock("$lib/api", () => ({ callMethod }));
@@ -49,6 +51,23 @@ describe("iOS notification route listener", () => {
 
 		expect(navigate).toHaveBeenCalledOnce();
 		expect(navigate).toHaveBeenCalledWith("/chat/abc");
+	});
+
+	it("contains asynchronous navigation failures", async () => {
+		ios.value = true;
+		const error = vi
+			.spyOn(console, "error")
+			.mockImplementation(() => undefined);
+		navigate.mockRejectedValueOnce(new Error("navigation failed"));
+		installIosNotificationRouteListener(navigate);
+		await vi.waitFor(() => expect(callMethod).toHaveBeenCalledOnce());
+		addListener.mock.calls[0]![2]({ route: "/chat/abc", accountId: "42" });
+
+		await vi.waitFor(() =>
+			expect(error).toHaveBeenCalledWith(
+				"Failed to navigate notification route",
+			),
+		);
 	});
 
 	it("unregisters a listener that resolves after teardown", async () => {

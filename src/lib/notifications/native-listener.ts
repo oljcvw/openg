@@ -24,7 +24,9 @@ export function installIosNotificationRouteListener(
 		const now = Date.now();
 		if (lastRoute?.key === key && now - lastRoute.handledAt < 2_000) return;
 		lastRoute = { key, handledAt: now };
-		void navigate(accepted.route);
+		void Promise.resolve()
+			.then(() => navigate(accepted.route))
+			.catch(() => console.error("Failed to navigate notification route"));
 	};
 	const registration = addPluginListener(
 		"open-grind-notifications",
