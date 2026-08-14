@@ -48,7 +48,8 @@
 		"iOS": {
 			"bundleVersion": "1070",
 			"developmentTeam": "LWB94HQ8S4",
-			"minimumSystemVersion": "17.5"
+			"minimumSystemVersion": "17.5",
+			"template": "src-tauri/ios/project.yml.hbs"
 		},
 		"android": {
 			"autoIncrementVersionCode": false,

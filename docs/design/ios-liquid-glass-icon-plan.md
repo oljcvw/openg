@@ -32,8 +32,8 @@ generated Xcode Apple project
 
 **Files:**
 
-- Inspect: `src-tauri/gen/apple/AppIcon.icon/icon.json`
-- Preserve: `src-tauri/gen/apple/AppIcon.icon/Assets/*.svg`
+- Inspect: `src-tauri/ios/AppIcon.icon/icon.json`
+- Preserve: `src-tauri/ios/AppIcon.icon/Assets/*.svg`
 - Reference: `docs/design/ios-liquid-glass-icon.md`
 
 **Interfaces:**
@@ -44,12 +44,12 @@ generated Xcode Apple project
 - [ ] **Step 1: Confirm exact working-tree ownership**
 
   Run `git status --short --branch` and
-  `git diff -- src-tauri/gen/apple/AppIcon.icon`. Record that gradient change is
+  `git diff -- src-tauri/ios/AppIcon.icon`. Record that gradient change is
   user-authored and must not be discarded.
 
 - [ ] **Step 2: Create recoverable package copy outside repository**
 
-  Copy `src-tauri/gen/apple/AppIcon.icon` to a uniquely named directory under
+  Copy `src-tauri/ios/AppIcon.icon` to a uniquely named directory under
   `/tmp`. Hash source and copy `icon.json`; require matching SHA-256 values before
   changing Icon Composer state.
 
@@ -64,9 +64,9 @@ generated Xcode Apple project
 **Files:**
 
 - Modify through Icon Composer:
-  `src-tauri/gen/apple/AppIcon.icon/icon.json`
+  `src-tauri/ios/AppIcon.icon/icon.json`
 - Preserve unchanged:
-  `src-tauri/gen/apple/AppIcon.icon/Assets/01-upper-left.svg`
+  `src-tauri/ios/AppIcon.icon/Assets/01-upper-left.svg`
   through `06-lower-right.svg`
 
 **Interfaces:**
@@ -101,7 +101,7 @@ generated Xcode Apple project
 **Files:**
 
 - Modify through Icon Composer:
-  `src-tauri/gen/apple/AppIcon.icon/icon.json`
+  `src-tauri/ios/AppIcon.icon/icon.json`
 
 **Interfaces:**
 
@@ -117,11 +117,11 @@ generated Xcode Apple project
 
   Start with these tuning values, then refine through preview:
 
-  | Group | Depth | Refraction strength | Neutral shadow | Translucency |
-  |---|---:|---:|---:|---:|
-  | Cheeks | 20% | 55% | 20% | 14% |
-  | Jaw | 35% | 65% | 30% | 11% |
-  | Brow | 50% | 72% | 40% | 8% |
+  | Group  | Depth | Refraction strength | Neutral shadow | Translucency |
+  | ------ | ----: | ------------------: | -------------: | -----------: |
+  | Cheeks |   20% |                 55% |            20% |          14% |
+  | Jaw    |   35% |                 65% |            30% |          11% |
+  | Brow   |   50% |                 72% |            40% |           8% |
 
 - [ ] **Step 3: Compare bounded gradient variants**
 
@@ -145,9 +145,9 @@ generated Xcode Apple project
 
 **Files:**
 
-- Validate: `src-tauri/gen/apple/AppIcon.icon/icon.json`
-- Validate: `src-tauri/gen/apple/AppIcon.icon/Assets/*.svg`
-- Validate wiring: `src-tauri/gen/apple/project.yml`
+- Validate: `src-tauri/ios/AppIcon.icon/icon.json`
+- Validate: `src-tauri/ios/AppIcon.icon/Assets/*.svg`
+- Validate wiring: `src-tauri/ios/project.yml.hbs`
 - Validate wiring: `src-tauri/gen/apple/open-grind.xcodeproj/project.pbxproj`
 
 **Interfaces:**
@@ -182,7 +182,7 @@ generated Xcode Apple project
 
 **Files:**
 
-- Review: `src-tauri/gen/apple/AppIcon.icon/icon.json`
+- Review: `src-tauri/ios/AppIcon.icon/icon.json`
 - Review: `docs/design/ios-liquid-glass-icon.md`
 - Review: `docs/design/ios-liquid-glass-icon-plan.md`
 

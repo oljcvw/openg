@@ -85,7 +85,9 @@ nix run .#build-android -- --unsigned apk # reproducibility inspection only
 ```
 
 > [!WARNING]
-> `bun run tauri android init --ci` is only for creating a missing Android project. It regenerates committed Android scaffold and launcher resources, so do not run it before routine development or builds. If initialization is necessary, review the generated diff and run `bun run gen:icons` afterward to restore the canonical Open Grind icons.
+> `src-tauri/gen/` is disposable output. Use `bun run android:prepare` to recreate
+> Android project from canonical `src-tauri/android/` inputs. Do not edit generated
+> Gradle, Kotlin, resource, or Xcode files.
 
 Prerequisites (match the pinned versions where you can — see the [Reproducibility](#reproducibility) table):
 
@@ -106,6 +108,7 @@ export NDK_HOME="$ANDROID_HOME/ndk/29.0.14206865"
 
 ```bash
 bun install
+bun run android:prepare
 bun run tauri android build --apk
 ```
 
@@ -200,10 +203,10 @@ grep -A3 '"nixpkgs"' flake.lock # note the "rev" value
 
 ### Verifying the Gradle wrapper jar
 
-The wrapper jar at `src-tauri/gen/android/gradle/wrapper/gradle-wrapper.jar` is committed and pinned to Gradle 8.14.5.
+The canonical wrapper jar at `src-tauri/android/gradle/wrapper/gradle-wrapper.jar` is committed and pinned to Gradle 8.14.5.
 
 ```bash
-shasum -a 256 src-tauri/gen/android/gradle/wrapper/gradle-wrapper.jar
+shasum -a 256 src-tauri/android/gradle/wrapper/gradle-wrapper.jar
 ```
 
 Compare against [Gradle's published checksums](https://gradle.org/release-checksums/) for 8.14.5 (`7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172`).
@@ -274,13 +277,13 @@ Every input that affects the output bytes is pinned in exactly one place:
 | nixpkgs                                 | `flake.lock`                                                     |
 | Rust toolchain                          | `rust-toolchain.toml`                                            |
 | JDK                                     | `flake.nix` (`jdk21_headless`)                                   |
-| Android compileSdk / minSdk / targetSdk | `src-tauri/gen/android/gradle.properties`                        |
-| Android build-tools                     | `src-tauri/gen/android/gradle.properties`                        |
-| Android NDK                             | `src-tauri/gen/android/gradle.properties`                        |
-| Android CMake                           | `src-tauri/gen/android/gradle.properties`                        |
-| Android Gradle Plugin                   | `src-tauri/gen/android/build.gradle.kts`                         |
-| Gradle distribution                     | `src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties` |
-| Kotlin                                  | `src-tauri/gen/android/build.gradle.kts`                         |
+| Android compileSdk / minSdk / targetSdk | `src-tauri/android/gradle.properties`                            |
+| Android build-tools                     | `src-tauri/android/gradle.properties`                            |
+| Android NDK                             | `src-tauri/android/gradle.properties`                            |
+| Android CMake                           | `src-tauri/android/gradle.properties`                            |
+| Android Gradle Plugin                   | `src-tauri/android/build.gradle.kts`                             |
+| Gradle distribution                     | `src-tauri/android/gradle/wrapper/gradle-wrapper.properties`     |
+| Kotlin                                  | `src-tauri/android/build.gradle.kts`                             |
 | Bun                                     | nixpkgs pin (via `flake.lock`)                                   |
 | Node.js (runs `vite build`)             | nixpkgs pin (via `flake.lock`)                                   |
 | Tauri CLI                               | `package.json` / `bun.lock`                                      |

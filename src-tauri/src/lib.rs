@@ -18,7 +18,7 @@ use tauri::Emitter;
 ))]
 use tauri::Manager;
 
-// Mirrors MIN_SUPPORTED_WEBVIEW_MAJOR in gen/android/app/build.gradle.kts and the
+// Mirrors MIN_SUPPORTED_WEBVIEW_MAJOR in android/app/build.gradle.kts and the
 // CSS feature floor in src/app.html (Tailwind v4: Chromium 111 / WebKitGTK 2.42 /
 // Safari 16.4). Keep in sync.
 #[cfg(target_os = "windows")]

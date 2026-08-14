@@ -18,7 +18,7 @@ rm -f "$RES"/mipmap-*dpi/ic_launcher.png \
 rmdir "$RES"/mipmap-mdpi "$RES"/mipmap-hdpi "$RES"/mipmap-xhdpi \
       "$RES"/mipmap-xxhdpi "$RES"/mipmap-xxxhdpi "$RES"/drawable-v24 2>/dev/null || true
 
-mkdir -p "$RES/drawable"
+mkdir -p "$RES/drawable" "$RES/mipmap-anydpi-v26" "$RES/values"
 
 # Foreground vector
 bun scripts/svg-to-android-vector.ts \
@@ -50,3 +50,5 @@ cat > "$RES/values/ic_launcher_background.xml" <<'XML'
 XML
 
 cp contrib/logo/icon.icns src-tauri/icons/icon.icns
+mkdir -p fastlane/metadata/android/en-US/images
+cp src-tauri/icons/icon.png fastlane/metadata/android/en-US/images/icon.png

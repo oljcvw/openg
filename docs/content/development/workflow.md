@@ -27,10 +27,9 @@ an exact APK, selected device, permissions, and device-bound evidence.
 
 ## Android construction
 
-Use the committed Android project for routine development. Do not run
-`tauri android init` unless the project is genuinely missing; initialization can
-replace reviewed native resources. Generate canonical icons after intentional
-regeneration.
+Edit canonical Android inputs under `src-tauri/android`. `bun run dev:android`
+and Nix build wrappers recreate ignored `src-tauri/gen/android` before invoking
+Tauri. Generated target files are never review authority.
 
 Canonical Android builds always enter the pinned Nix environment. Release builds
 require signing configuration and verify the resulting signature:
@@ -117,8 +116,9 @@ bun run --cwd docs audit:links
 bun run --cwd docs build
 ```
 
-The build regenerates API Markdown and `docs/lib/index.ts`; inspect the resulting
-diff. Screenshots must use controlled/demo data unless native behavior is the
+The build regenerates ignored API Markdown, sidebar, OpenAPI copy, and public
+screenshot copies from their canonical sources. Screenshots must use
+controlled/demo data unless native behavior is the
 claim. Never capture personal profiles, messages, photos, tokens, or coordinates.
 
 ## Contribution and release boundaries

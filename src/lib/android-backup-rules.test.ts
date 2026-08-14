@@ -2,10 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const resources = join(
-	process.cwd(),
-	"src-tauri/gen/android/app/src/main/res/xml",
-);
+const resources = join(process.cwd(), "src-tauri/android/app/src/main/res/xml");
 const sensitivePaths = [
 	"album-cache-v1/",
 	"direct-media-cache-v1/",

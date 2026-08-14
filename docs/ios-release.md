@@ -85,6 +85,7 @@ Before signed build, verify without printing private key material:
 
 ```sh
 security find-identity -v -p codesigning
+bun run ios:prepare
 xcodebuild -project src-tauri/gen/apple/open-grind.xcodeproj \
   -scheme open-grind_iOS -showBuildSettings | \
   grep -E 'DEVELOPMENT_TEAM|PRODUCT_BUNDLE_IDENTIFIER|CODE_SIGN_STYLE'

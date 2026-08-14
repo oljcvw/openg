@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
-import { grindrApiReference } from "../lib";
+import { grindrApiReference } from "../.generated/sidebar";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({

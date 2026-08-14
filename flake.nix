@@ -39,7 +39,7 @@
           # Parsed from gradle.properties so versions live in exactly one place.
           gradleProperties =
             let
-              raw = builtins.readFile ./src-tauri/gen/android/gradle.properties;
+              raw = builtins.readFile ./src-tauri/android/gradle.properties;
               lines = pkgs.lib.splitString "\n" raw;
               isPair = l: !(pkgs.lib.hasPrefix "#" l) && (builtins.match ".+=.+" l != null);
               toPair =
@@ -66,7 +66,7 @@
           # Certificates, profiles, and keystores remain external.
           agoraAppId =
             let
-              lines = pkgs.lib.splitString "\n" (builtins.readFile ./src-tauri/gen/apple/project.yml);
+              lines = pkgs.lib.splitString "\n" (builtins.readFile ./src-tauri/ios/project.yml.hbs);
               setting = builtins.head (
                 builtins.filter (line: pkgs.lib.hasInfix "OPEN_GRIND_AGORA_APP_ID:" line) lines
               );
@@ -194,8 +194,6 @@
               export CFLAGS="''${CFLAGS:-} $prefixMaps"
               export CXXFLAGS="''${CXXFLAGS:-} $prefixMaps"
 
-              KEYSTORE_DEST="$ROOT/src-tauri/gen/android/keystore.properties"
-
               TARGET="apk"
               DEBUG_BUILD=0
               UNSIGNED_BUILD=0
@@ -245,6 +243,8 @@
               fi
 
               bun ci
+              bun run android:prepare
+              KEYSTORE_DEST="$ROOT/src-tauri/gen/android/keystore.properties"
               build_args=(--"$TARGET")
               if [ "$DEBUG_BUILD" -eq 1 ]; then build_args+=(--debug); fi
               # OPEN_GRIND_ANDROID_ABI=aarch64 builds one ABI instead of universal.
@@ -338,10 +338,6 @@
 
               root="''${OPEN_GRIND_ROOT:-$PWD}"
               cd "$root"
-              if [ ! -f src-tauri/gen/apple/project.yml ]; then
-                echo "Missing generated Apple project; run 'bun run tauri ios init --ci --skip-targets-install'." >&2
-                exit 1
-              fi
               submodule_status="$(git submodule status --recursive)"
               if [ -z "$submodule_status" ] || printf '%s\n' "$submodule_status" | grep -Eq '^[-+U]'; then
                 echo "Git submodules are not initialized at their pinned revisions." >&2
@@ -375,6 +371,7 @@
 
               export NODE_OPTIONS="''${NODE_OPTIONS:---max-old-space-size=4096}"
               bun ci
+              bun run ios:prepare
 
               echo "Building iOS with Xcode at: $developer_dir"
               bun run tauri ios build "$@"
@@ -426,6 +423,8 @@
               cd "$root"
               export NODE_OPTIONS="''${NODE_OPTIONS:---max-old-space-size=4096}"
               bun ci
+              bun run gen:icons
+              bun run vendor:tauri-codegen
               if [ "$debug_build" -eq 1 ]; then
                 bun run tauri build --bundles app "$@"
               else
@@ -465,6 +464,9 @@
               fi
 
               root="''${OPEN_GRIND_ROOT:-$PWD}"
+              cd "$root"
+              bun ci
+              bun run ios:prepare
               project="$root/src-tauri/gen/apple/open-grind.xcodeproj"
               if [ ! -d "$project" ]; then
                 echo "Missing generated Apple project: $project" >&2

@@ -5,7 +5,8 @@ boundaries, not as duplicate application stacks.
 
 ## Android native track
 
-`src-tauri/gen/android` is committed project source. Its Kotlin layer provides:
+`src-tauri/android` is committed canonical project source. Builds recreate the
+ignored `src-tauri/gen/android` target from it. Its Kotlin layer provides:
 
 - Android Storage Access Framework media selection;
 - companion-app Google OAuth;
@@ -20,8 +21,9 @@ Android has the mature reproducible APK, CI, signing, and F-Droid release path.
 
 ## iOS and iPadOS native track
 
-`src-tauri/gen/apple` is a committed Xcode project for iPhone and iPad.
-`src-tauri/ios` contains Swift Package adapters for:
+`src-tauri/gen/apple` is a disposable Xcode project for iPhone and iPad.
+`src-tauri/ios` contains its canonical XcodeGen template, tests, icon source,
+and Swift Package adapters for:
 
 - camera photos and short videos;
 - voice recording;

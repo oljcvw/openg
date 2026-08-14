@@ -73,9 +73,9 @@ checks.
 
 ## Native mobile adapters
 
-Android adapters live in committed Gradle/Kotlin project
-`src-tauri/gen/android`. iOS adapters live in committed Xcode project
-`src-tauri/gen/apple` and Swift Package `src-tauri/ios`. Both mobile tracks
+Android adapters live in canonical Gradle/Kotlin project
+`src-tauri/android`. iOS adapters and XcodeGen inputs live in `src-tauri/ios`.
+Builds recreate ignored platform projects under `src-tauri/gen`. Both mobile tracks
 connect to shared Rust commands for capture, voice, calls, notifications, and
 realtime lifecycle. Operating-system permission, background, media, and UI
 contracts remain native. Keep platform logic at these boundaries instead of

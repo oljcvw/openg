@@ -1,7 +1,8 @@
 # iOS development and release
 
-Open Grind includes a committed iPhone and iPad project targeting iOS and
-iPadOS 17.5 or newer. Shared Tauri/Svelte/Rust application is paired with Swift
+Open Grind generates its disposable iPhone and iPad Xcode project from canonical
+inputs under `src-tauri/ios`, targeting iOS and iPadOS 17.5 or newer. Shared
+Tauri/Svelte/Rust application is paired with Swift
 adapters for camera and short video, voice recording, Agora calls, periodic
 notifications, connectivity observation, and Keychain storage.
 

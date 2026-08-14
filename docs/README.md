@@ -46,11 +46,11 @@ That command performs, in order:
 3. Deterministic API-reference and sidebar generation.
 4. OpenAPI coverage, operation, query, and internal-link audits.
 5. Full VitePress client/server build and page rendering.
-6. A Git diff check proving tracked generated sidebar output is current.
+6. A VitePress build using freshly generated, ignored derived inputs.
 
 Generated API Markdown is ignored under `content/generated/`; generation removes
 the directory first so deleted or moved API pages cannot survive as stale build
-input. `lib/index.ts` is tracked because VitePress imports its generated sidebar.
+input. VitePress imports the ignored generated sidebar from `.generated/`.
 
 ## Source ownership
 
@@ -59,7 +59,7 @@ input. `lib/index.ts` is tracked because VitePress imports its generated sidebar
 | User and developer guides                       | `content/`                                              |
 | Grindr API contract                             | `lib/openapi.json`                                      |
 | Generated API pages                             | `content/generated/` — never edit directly              |
-| Generated API sidebar                           | `lib/index.ts` — update by running generation           |
+| Generated API sidebar                           | `.generated/sidebar.ts` — never edit directly           |
 | Site navigation and theme                       | `.vitepress/`                                           |
 | Generator and audits                            | `scripts/`                                              |
 | Product screenshots and logos                   | `../contrib/` with public links under `content/public/` |

@@ -9,6 +9,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KEYSTORE_DEST="$ROOT/src-tauri/gen/android/keystore.properties"
 
+cd "$ROOT"
+bun run android:prepare
+
 if [ -n "${OPEN_GRIND_KEYSTORE_PROPERTIES:-}" ]; then
   cp "$OPEN_GRIND_KEYSTORE_PROPERTIES" "$KEYSTORE_DEST"
   trap 'rm -f "$KEYSTORE_DEST"' EXIT
