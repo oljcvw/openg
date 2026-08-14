@@ -37,4 +37,25 @@ describe("VirtualCollection", () => {
 			expect(mounted.length).toBeLessThanOrEqual(20);
 		});
 	});
+
+	it("remeasures cached row topology when the measurement key changes", async () => {
+		const view = render(VirtualCollectionHarness, {
+			count: 100,
+			estimateSize: 80,
+			measurementKey: 4,
+		});
+		await waitFor(() =>
+			expect(view.container.querySelector(".relative")?.getAttribute("style")).toContain(
+				"8000px",
+			),
+		);
+
+		await view.rerender({ count: 100, estimateSize: 40, measurementKey: 8 });
+
+		await waitFor(() =>
+			expect(view.container.querySelector(".relative")?.getAttribute("style")).toContain(
+				"4000px",
+			),
+		);
+	});
 });

@@ -1,7 +1,15 @@
 <script lang="ts">
 	import VirtualCollection from "./VirtualCollection.svelte";
 
-	let { count = 1_000 }: { count?: number } = $props();
+	let {
+		count = 1_000,
+		estimateSize = 80,
+		measurementKey = 0,
+	}: {
+		count?: number;
+		estimateSize?: number;
+		measurementKey?: string | number;
+	} = $props();
 	let viewport: HTMLDivElement | null = $state(null);
 	const items = $derived(
 		Array.from({ length: count }, (_, index) => ({ id: index + 1 })),
@@ -17,7 +25,8 @@
 		{items}
 		scrollElement={viewport}
 		getKey={(item) => item.id}
-		estimateSize={80}
+		{estimateSize}
+		{measurementKey}
 	>
 		{#snippet children(item)}
 			<div data-fixture-item={item.id}>{item.id}</div>

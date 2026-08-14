@@ -103,8 +103,8 @@ async function loadManifest(): Promise<CacheManifest> {
 	}
 	try {
 		manifest = parseCacheManifest(decode(await readAppDataFile(MANIFEST_PATH)));
-	} catch (error) {
-		console.error("Cache manifest hydration failed", error);
+	} catch {
+		console.error("Cache manifest hydration failed");
 		manifest = parseCacheManifest({});
 	}
 	return manifest;
@@ -177,8 +177,8 @@ export async function readCacheEntry<T>(
 		let parsed: T;
 		try {
 			parsed = parse(decode(await readAppDataFile(entry.path)));
-		} catch (error) {
-			console.error("Cache entry hydration failed", error);
+		} catch {
+			console.error("Cache entry hydration failed");
 			await removeAppDataFile(entry.path);
 			delete value.entries[id];
 			await persistManifest(value);
@@ -216,8 +216,8 @@ export async function listCacheEntries<T>(
 			if (entry.accountId !== accountId || entry.kind !== kind) continue;
 			try {
 				results.push(parse(decode(await readAppDataFile(entry.path))));
-			} catch (error) {
-				console.error("Cache entry hydration failed", error);
+			} catch {
+				console.error("Cache entry hydration failed");
 				await removeAppDataFile(entry.path);
 				delete value.entries[id];
 				manifestChanged = true;
@@ -260,8 +260,8 @@ export async function listCacheEntryPage<T>(
 					key: entry.key,
 					value: parse(decode(await readAppDataFile(entry.path))),
 				});
-			} catch (error) {
-				console.error("Cache entry hydration failed", error);
+			} catch {
+				console.error("Cache entry hydration failed");
 				await removeAppDataFile(entry.path);
 				delete value.entries[id];
 				manifestChanged = true;
@@ -389,8 +389,8 @@ export async function getCacheUsage(): Promise<CacheUsage> {
 
 export function subscribeCacheUsage(
 	listener: (usage: CacheUsage) => void,
-	onError: (error: unknown) => void = (error) =>
-		console.error("Cache usage hydration failed", error),
+	onError: (error: unknown) => void = () =>
+		console.error("Cache usage hydration failed"),
 ): () => void {
 	listeners.add(listener);
 	void getCacheUsage().then(listener).catch(onError);

@@ -14,6 +14,7 @@
 		estimateSize,
 		overscan = 4,
 		gap = 0,
+		measurementKey = 0,
 		children,
 		class: className = "",
 	}: {
@@ -23,12 +24,15 @@
 		estimateSize: number | ((index: number) => number);
 		overscan?: number;
 		gap?: number;
+		measurementKey?: string | number;
 		children: Snippet<[T, number]>;
 		class?: string;
 	} = $props();
 
 	let root: HTMLDivElement | null = $state(null);
 	let scrollMargin = $state(0);
+	let measuredKey: string | number | undefined = $state(undefined);
+	let hasMeasuredKey = false;
 	const virtualizer = createVirtualizer<HTMLElement, HTMLDivElement>({
 		count: 0,
 		getScrollElement: () => scrollElement,
@@ -36,6 +40,7 @@
 		overscan: 4,
 		gap: 0,
 		initialRect: { width: 0, height: 640 },
+		useAnimationFrameWithResizeObserver: true,
 	});
 	function itemAt(collection: readonly T[], index: number): T {
 		const item = collection[index];
@@ -51,6 +56,7 @@
 		const currentOverscan = overscan;
 		const currentGap = gap;
 		const currentScrollMargin = scrollMargin;
+		measurementKey;
 		untrack(() =>
 			$virtualizer.setOptions({
 				count: snapshot.length,
@@ -65,8 +71,29 @@
 				overscan: currentOverscan,
 				gap: currentGap,
 				scrollMargin: currentScrollMargin,
+				useAnimationFrameWithResizeObserver: true,
 			}),
 		);
+	});
+
+	export async function remeasure(): Promise<void> {
+		$virtualizer.setOptions({ getScrollElement: () => scrollElement });
+		$virtualizer.measure();
+		await tick();
+		$virtualizer.measure();
+		await tick();
+	}
+
+	$effect(() => {
+		const nextKey = measurementKey;
+		if (!hasMeasuredKey) {
+			hasMeasuredKey = true;
+			measuredKey = nextKey;
+			return;
+		}
+		if (nextKey === measuredKey) return;
+		measuredKey = nextKey;
+		untrack(() => void remeasure());
 	});
 
 	$effect(() => {

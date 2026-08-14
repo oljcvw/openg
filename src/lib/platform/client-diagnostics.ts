@@ -49,7 +49,13 @@ export type ViewerDiagnostic = {
 
 const recentUserErrors = new Map<string, number>();
 
-function diagnosticCode(error: unknown): string {
+export function diagnosticCode(error: unknown): string {
+	const message =
+		error instanceof Error ? error.message : typeof error === "string" ? error : "";
+	if (/ResizeObserver loop limit exceeded/i.test(message))
+		return "resize_observer_limit";
+	if (/ResizeObserver loop completed with undelivered notifications/i.test(message))
+		return "resize_observer_undelivered";
 	if (error === undefined || error === null) return "empty_rejection";
 	if (error && typeof error === "object" && "kind" in error) {
 		const kind = String(error.kind).replaceAll(/[^a-z0-9_-]/gi, "_");
@@ -61,6 +67,7 @@ function diagnosticCode(error: unknown): string {
 }
 
 function shouldPresentUnexpectedError(error: unknown): boolean {
+	if (diagnosticCode(error).startsWith("resize_observer_")) return false;
 	if (error === undefined || error === null) return false;
 	return error instanceof Error || typeof error !== "object" || "kind" in error;
 }
@@ -97,7 +104,7 @@ export function observeBackgroundTask(
 	diagnostic: BackgroundTaskDiagnostic,
 ): void {
 	void task.catch(() => {
-		reportClientDiagnostic({
+	reportClientDiagnostic({
 			category: diagnostic.category,
 			component: diagnostic.component,
 			code: diagnostic.code,
@@ -112,7 +119,7 @@ function showUnexpectedError(error: unknown, source: string): void {
 	const now = Date.now();
 	if (now - (recentUserErrors.get(key) ?? 0) < 10_000) return;
 	recentUserErrors.set(key, now);
-	reportClientDiagnostic({
+		reportClientDiagnostic({
 		category: "unexpected_error",
 		component: source,
 		code,
@@ -127,7 +134,22 @@ function showUnexpectedError(error: unknown, source: string): void {
 
 export function registerGlobalErrorReporting(): () => void {
 	const onError = (event: ErrorEvent) => {
-		showUnexpectedError(event.error ?? event.message, "window_error");
+		const basename = event.filename
+			? event.filename
+					.split(/[\\/]/)
+					.at(-1)
+					?.split(/[?#]/, 1)[0]
+					?.replaceAll(/[^a-z0-9._-]/gi, "_")
+					.slice(0, 48)
+			: undefined;
+		const position = [event.lineno, event.colno]
+			.filter((value) => Number.isInteger(value) && value >= 0 && value <= 999999)
+			.join(":");
+		const source = ["window_error", basename, position]
+			.filter(Boolean)
+			.join(":")
+			.slice(0, 96);
+		showUnexpectedError(event.error ?? event.message, source);
 	};
 	const onUnhandledRejection = (event: PromiseRejectionEvent) => {
 		showUnexpectedError(event.reason, "unhandled_rejection");

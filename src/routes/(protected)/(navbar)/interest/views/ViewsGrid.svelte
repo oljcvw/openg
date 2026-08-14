@@ -12,6 +12,7 @@
 		toGridRows,
 	} from "$lib/components/virtual/virtual-grid";
 	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
+	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
 	import { registerRootActivationRefresh } from "$lib/navigation/app-navigation";
 	import {
 		captureScrollAnchor,
@@ -100,13 +101,7 @@
 	}
 
 	function observeWidth(node: HTMLDivElement) {
-		const update = () => {
-			gridWidth = node.getBoundingClientRect().width || node.clientWidth;
-		};
-		update();
-		const observer = new ResizeObserver(update);
-		observer.observe(node);
-		return { destroy: () => observer.disconnect() };
+		return observeElementWidth(node, (width) => (gridWidth = width));
 	}
 </script>
 
@@ -143,6 +138,7 @@
 						scrollElement={container}
 						getKey={(row) => row.map((entry) => entry.key).join(":")}
 						estimateSize={estimatedRowSize}
+						measurementKey={columnCount}
 						gap={2}
 					>
 						{#snippet children(row)}

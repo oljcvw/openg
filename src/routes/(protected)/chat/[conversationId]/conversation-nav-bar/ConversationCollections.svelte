@@ -68,6 +68,7 @@
 		toGridRows,
 	} from "$lib/components/virtual/virtual-grid";
 	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
+	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
 	import { openReceivedAlbumDetail } from "$lib/navigation/app-navigation";
 	import { videoCallController } from "$lib/video-call/controller";
 	import type { SharedAlbum } from "$lib/model/messaging/albums";
@@ -324,13 +325,7 @@
 		node: HTMLDivElement,
 		setWidth: (width: number) => void,
 	) {
-		const update = () =>
-			setWidth(node.getBoundingClientRect().width || node.clientWidth);
-		update();
-		if (typeof ResizeObserver === "undefined") return {};
-		const observer = new ResizeObserver(update);
-		observer.observe(node);
-		return { destroy: () => observer.disconnect() };
+		return observeElementWidth(node, setWidth);
 	}
 
 	function observeLoadMore(node: HTMLElement, load: () => void) {
@@ -950,6 +945,7 @@
 							176,
 							currentAlbumGridWidth / currentAlbumColumns + 64,
 						)}
+						measurementKey={currentAlbumColumns}
 						gap={12}
 					>
 						{#snippet children(row)}
@@ -1037,6 +1033,7 @@
 						scrollElement={albumScroller}
 						getKey={(row) => row.map(cachedAlbumKey).join("|")}
 						estimateSize={76}
+						measurementKey={cachedAlbumColumns}
 						gap={12}
 					>
 						{#snippet children(row)}
@@ -1149,6 +1146,7 @@
 						scrollElement={mediaScroller}
 						getKey={(row) => row.map((entry) => entry.messageId).join("|")}
 						estimateSize={Math.max(112, mediaGridWidth / mediaColumns)}
+						measurementKey={mediaColumns}
 						gap={4}
 					>
 						{#snippet children(row)}

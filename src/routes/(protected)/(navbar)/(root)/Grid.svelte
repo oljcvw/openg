@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { untrack } from "svelte";
+	import { onDestroy, tick, untrack } from "svelte";
 
 	import { getGridColumnsSnapshot } from "$lib/app-data/preferences.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
@@ -9,8 +9,12 @@
 		toGridRows,
 	} from "$lib/components/virtual/virtual-grid";
 	import VirtualCollection from "$lib/components/virtual/VirtualCollection.svelte";
+	import { observeElementWidth } from "$lib/components/virtual/element-width-observer";
 	import { gridState } from "$lib/grid/grid-state.svelte";
+	import { reportClientDiagnostic } from "$lib/platform/client-diagnostics";
 	import {
+		captureScrollAnchor,
+		captureScrollNeighborhood,
 		restoreVirtualScrollAnchor,
 		type SurfaceScrollPosition,
 	} from "$lib/navigation/navigation-memory";
@@ -26,9 +30,18 @@
 
 	const gridColumns = $derived(getGridColumnsSnapshot());
 	let gridRoot: HTMLDivElement | null = $state(null);
-	let collection: { scrollToIndex(index: number): Promise<void> } | null =
-		$state(null);
+	let collection: {
+		scrollToIndex(index: number): Promise<void>;
+		remeasure(): Promise<void>;
+	} | null = $state(null);
 	let gridWidth = $state(0);
+	let layoutGeneration = 0;
+	let layoutTask = Promise.resolve();
+	let layoutActive = true;
+	onDestroy(() => {
+		layoutActive = false;
+		layoutGeneration += 1;
+	});
 	const scrollElement = $derived(
 		gridRoot
 			? (nearestScrollableAncestor(gridRoot) as HTMLDivElement | null)
@@ -55,6 +68,30 @@
 	$effect.pre(() => {
 		const activeGeohash = geohash;
 		untrack(() => gridState.load(activeGeohash));
+	});
+
+	$effect(() => {
+		const reportVisibility = () =>
+			reportClientDiagnostic({
+				category: "browse_lifecycle",
+				component: "grid",
+				code: document.hidden ? "visibility_hidden" : "visibility_visible",
+				level: "info",
+			});
+		const reportOrientation = () =>
+			reportClientDiagnostic({
+				category: "browse_layout",
+				component: "grid",
+				code: "orientation_changed",
+				level: "info",
+			});
+		document.addEventListener("visibilitychange", reportVisibility);
+		window.addEventListener("orientationchange", reportOrientation);
+		reportVisibility();
+		return () => {
+			document.removeEventListener("visibilitychange", reportVisibility);
+			window.removeEventListener("orientationchange", reportOrientation);
+		};
 	});
 
 	function observePageTrigger(node: HTMLElement, params: { enabled: boolean }) {
@@ -122,13 +159,73 @@
 	}
 
 	function observeWidth(node: HTMLDivElement) {
-		const update = () => {
-			gridWidth = node.getBoundingClientRect().width || node.clientWidth;
-		};
-		update();
-		const observer = new ResizeObserver(update);
-		observer.observe(node);
-		return { destroy: () => observer.disconnect() };
+		return observeElementWidth(node, (width) => {
+			layoutTask = layoutTask.then(() => applyGridWidth(width)).catch(() => {
+				reportClientDiagnostic({
+					category: "browse_layout",
+					component: "grid",
+					code: "layout_failed",
+					level: "error",
+				});
+			});
+		});
+	}
+
+	async function applyGridWidth(width: number): Promise<void> {
+		if (!layoutActive || width === gridWidth) return;
+		const generation = ++layoutGeneration;
+		const startedAt = performance.now();
+		reportClientDiagnostic({
+			category: "browse_layout",
+			component: "grid",
+			code: "layout_start",
+			level: "info",
+		});
+		const activeContainer = scrollElement;
+		const anchor = activeContainer
+			? captureScrollAnchor(activeContainer)
+			: null;
+		const neighborhood =
+			activeContainer && anchor
+				? captureScrollNeighborhood(activeContainer, anchor.itemKey)
+				: null;
+		gridWidth = width;
+		await tick();
+		if (generation !== layoutGeneration) return;
+		await collection?.remeasure();
+		if (
+			generation !== layoutGeneration ||
+			!activeContainer ||
+			!anchor ||
+			!collection
+		)
+			return reportLayoutCompletion(startedAt, true);
+		const result = await restoreVirtualScrollAnchor({
+			container: activeContainer,
+			anchor,
+			neighborhood,
+			logicalItemKeys: gridProfiles.map((item) => String(item.id)),
+			toVirtualIndex: (itemIndex) => Math.floor(itemIndex / columnCount),
+			scrollToIndex: (index) => collection!.scrollToIndex(index),
+		});
+		reportClientDiagnostic({
+			category: "browse_layout",
+			component: "grid",
+			code: result.itemKey ? "anchor_restored" : "anchor_failed",
+			level: result.itemKey ? "info" : "warning",
+		});
+		reportLayoutCompletion(startedAt, true);
+	}
+
+	function reportLayoutCompletion(startedAt: number, settled: boolean): void {
+		const duration = performance.now() - startedAt;
+		const bucket = duration <= 100 ? "fast" : duration <= 368 ? "moderate" : "slow";
+		reportClientDiagnostic({
+			category: "browse_layout",
+			component: "grid",
+			code: settled ? `layout_settled_${bucket}` : `layout_unsettled_${bucket}`,
+			level: settled ? "info" : "warning",
+		});
 	}
 
 	export async function restoreAnchor(
@@ -175,6 +272,7 @@
 				{scrollElement}
 				getKey={(row) => row.map((item) => item.id).join(":")}
 				estimateSize={estimatedRowSize}
+				measurementKey={columnCount}
 				gap={2}
 			>
 				{#snippet children(row, rowIndex)}

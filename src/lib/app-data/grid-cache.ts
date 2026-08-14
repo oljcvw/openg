@@ -41,8 +41,22 @@ export const cachedGridProfileSchema = z.discriminatedUnion("type", [
 	lazyGridProfileSchema,
 ]);
 
+export function normalizePersistedGridQuery(value: unknown): unknown {
+	if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+	return Object.fromEntries(
+		Object.entries(value).filter(
+			([, property]) => property !== undefined && property !== null,
+		),
+	);
+}
+
+const persistedGridQuerySchema = z.preprocess(
+	normalizePersistedGridQuery,
+	cascadeV4QuerySchema,
+);
+
 const cachedGridSchema = z.object({
-	query: cascadeV4QuerySchema,
+	query: persistedGridQuerySchema,
 	items: z.array(cachedGridProfileSchema),
 	nextPage: z.number().nullable(),
 	updatedAt: z.number().nonnegative(),
@@ -89,8 +103,8 @@ async function migrateLegacyCache(): Promise<void> {
 			for (const [accountId, grids] of Object.entries(legacy.accounts)) {
 				await writeCacheEntry(Number(accountId), "grid", "grids", grids);
 			}
-		} catch (error) {
-			console.error("Browse cache migration failed", error);
+		} catch {
+			console.error("Browse cache migration failed");
 			return;
 		}
 		await removeAppDataFile(FILE_NAME);
@@ -127,7 +141,10 @@ export async function writeCachedGrid(
 	const owner = ownerKey();
 	if (owner === null) return;
 	const account = await getAccountCache(owner);
-	account[queryKey(grid.query)] = { ...grid, updatedAt };
+	const query = cascadeV4QuerySchema.parse(
+		normalizePersistedGridQuery(grid.query),
+	);
+	account[queryKey(query)] = { ...grid, query, updatedAt };
 	for (const [key] of Object.entries(account)
 		.toSorted(([, left], [, right]) => right.updatedAt - left.updatedAt)
 		.slice(MAX_GRIDS_PER_ACCOUNT)) {

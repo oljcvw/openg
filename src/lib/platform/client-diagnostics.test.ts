@@ -70,6 +70,36 @@ describe("client diagnostics logcat preference", () => {
 		expect(toastErrorMock).not.toHaveBeenCalled();
 	});
 
+	it.each([
+		["ResizeObserver loop limit exceeded", "resize_observer_limit"],
+		[
+			"ResizeObserver loop completed with undelivered notifications.",
+			"resize_observer_undelivered",
+		],
+	])("classifies ResizeObserver warnings without a toast", (message, code) => {
+		settings.logErrorsToLogcat = true;
+		const release = registerGlobalErrorReporting();
+		window.dispatchEvent(
+			new ErrorEvent("error", {
+				message,
+				filename: "https://private.example/path/app.js?secret=query",
+				lineno: 12,
+				colno: 3,
+			}),
+		);
+		release();
+
+		expect(invokeMock).toHaveBeenCalledWith("report_client_diagnostic", {
+			diagnostic: {
+				category: "unexpected_error",
+				component: "window_error:app.js:12:3",
+				code,
+				level: "warning",
+			},
+		});
+		expect(toastErrorMock).not.toHaveBeenCalled();
+	});
+
 	it("does not send diagnostics while logcat logging is disabled", () => {
 		reportClientDiagnostic({
 			category: "presented_error",
