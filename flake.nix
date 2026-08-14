@@ -1,5 +1,5 @@
 {
-  description = "Open Grind — declarative Android and iOS build toolchains";
+  description = "Open Grind — declarative Android, iOS, and macOS build toolchains";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -61,6 +61,27 @@
 
           rustToolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
+          # Agora App IDs are public project identifiers, not credentials. Apple
+          # project source owns the value; every Nix wrapper exports that same value.
+          # Certificates, profiles, and keystores remain external.
+          agoraAppId =
+            let
+              lines = pkgs.lib.splitString "\n" (builtins.readFile ./src-tauri/gen/apple/project.yml);
+              setting = builtins.head (
+                builtins.filter (line: pkgs.lib.hasInfix "OPEN_GRIND_AGORA_APP_ID:" line) lines
+              );
+            in
+            pkgs.lib.last (pkgs.lib.splitString ": " setting);
+
+          agoraEnv = ''
+            export OPEN_GRIND_AGORA_APP_ID="${agoraAppId}"
+            if [ "''${#OPEN_GRIND_AGORA_APP_ID}" -ne 32 ] ||
+              printf '%s' "$OPEN_GRIND_AGORA_APP_ID" | grep -Eq '[^0-9a-fA-F]'; then
+              echo "flake.nix agoraAppId must contain exactly 32 hexadecimal characters." >&2
+              exit 1
+            fi
+          '';
+
           # Strip androidenv's 32-bit i686 deps (x86_64-linux only): realizing an
           # i686 drv calls personality(PER_LINUX32), which the arm64 kernel of
           # Docker Desktop's VM (Apple Silicon) rejects. Unused by APK builds.
@@ -118,12 +139,15 @@
             pkgs.libclang.lib
             pkgs.gnused # gradlew's arg-parsing needs sed
             pkgs.git # boring-sys2 patches BoringSSL with `git apply` on every build
+            pkgs.findutils
+            pkgs.gnugrep
           ]
           ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
             pkgs.libiconv
           ];
 
           buildEnv = {
+            OPEN_GRIND_AGORA_APP_ID = agoraAppId;
             JAVA_HOME = jdk.home;
             ANDROID_HOME = androidSdkRoot;
             ANDROID_SDK_ROOT = androidSdkRoot;
@@ -148,6 +172,7 @@
               set -euo pipefail
 
               ${envExports}
+              ${agoraEnv}
               export PATH="${buildToolsBin}:${cmakeBin}:$PATH"
               export NODE_OPTIONS="''${NODE_OPTIONS:---max-old-space-size=4096}"
 
@@ -171,6 +196,27 @@
 
               KEYSTORE_DEST="$ROOT/src-tauri/gen/android/keystore.properties"
 
+              TARGET="apk"
+              DEBUG_BUILD=0
+              UNSIGNED_BUILD=0
+              for argument in "$@"; do
+                case "$argument" in
+                  apk | aab) TARGET="$argument" ;;
+                  --debug) DEBUG_BUILD=1 ;;
+                  --unsigned) UNSIGNED_BUILD=1 ;;
+                  *) echo "Usage: nix run .#build-android -- [--debug|--unsigned] [apk|aab]" >&2; exit 2 ;;
+                esac
+              done
+
+              if [ "$DEBUG_BUILD" -eq 0 ] && [ "$UNSIGNED_BUILD" -eq 0 ] && [ -z "''${OPEN_GRIND_KEYSTORE_PROPERTIES:-}" ]; then
+                echo "Signed Android builds require OPEN_GRIND_KEYSTORE_PROPERTIES." >&2
+                exit 1
+              fi
+              if [ "$DEBUG_BUILD" -eq 0 ] && [ "$UNSIGNED_BUILD" -eq 0 ] && [ ! -f "$OPEN_GRIND_KEYSTORE_PROPERTIES" ]; then
+                echo "OPEN_GRIND_KEYSTORE_PROPERTIES is not a readable file: $OPEN_GRIND_KEYSTORE_PROPERTIES" >&2
+                exit 1
+              fi
+
               # Point AGP at the SDK's patchelf'd aapt2. Inject the machine-specific
               # /nix/store path through a dedicated Gradle user home rather than the
               # tracked gradle.properties: an EXIT trap is not crash-safe, and a leftover
@@ -187,48 +233,67 @@
                 # the ignored keystore.properties file appears or disappears. A stale
                 # unsigned configuration silently emits an unsigned APK during a signed
                 # build, so signed builds configure Gradle afresh.
-                if [ -n "''${OPEN_GRIND_KEYSTORE_PROPERTIES:-}" ]; then
-                  printf 'org.gradle.configuration-cache=false\n'
-                fi
+                printf 'org.gradle.configuration-cache=false\n'
               } > "$GRADLE_USER_HOME/gradle.properties"
 
               # OPEN_GRIND_KEYSTORE_PROPERTIES -> keystore.properties for signingConfig.
               # keystore.properties is gitignored; remove it on exit so the secret does
               # not linger in the working tree.
-              if [ -n "''${OPEN_GRIND_KEYSTORE_PROPERTIES:-}" ]; then
+              if [ "$DEBUG_BUILD" -eq 0 ] && [ "$UNSIGNED_BUILD" -eq 0 ]; then
                 cp "$OPEN_GRIND_KEYSTORE_PROPERTIES" "$KEYSTORE_DEST"
                 trap 'rm -f "$KEYSTORE_DEST"' EXIT
               fi
 
-              TARGET="''${1:-apk}"
-
               bun ci
+              build_args=(--"$TARGET")
+              if [ "$DEBUG_BUILD" -eq 1 ]; then build_args+=(--debug); fi
               # OPEN_GRIND_ANDROID_ABI=aarch64 builds one ABI instead of universal.
               if [ -n "''${OPEN_GRIND_ANDROID_ABI:-}" ]; then
-                bun run tauri android build --"$TARGET" --target "''${OPEN_GRIND_ANDROID_ABI}"
+                bun run tauri android build "''${build_args[@]}" --target "''${OPEN_GRIND_ANDROID_ABI}"
               else
-                bun run tauri android build --"$TARGET"
+                bun run tauri android build "''${build_args[@]}"
               fi
 
-              if [ -n "''${OPEN_GRIND_KEYSTORE_PROPERTIES:-}" ]; then sfx=""; else sfx="-unsigned"; fi
+              if [ "$DEBUG_BUILD" -eq 1 ]; then
+                echo "Produced Android debug artifact; no release-signing claim made."
+                exit 0
+              fi
+
               base="$ROOT/src-tauri/gen/android/app/build/outputs"
 
               echo
+              if [ "$UNSIGNED_BUILD" -eq 1 ]; then suffix="-unsigned"; else suffix=""; fi
               if [ "$TARGET" = "aab" ]; then
+                bundles="$(find "$base/bundle" -type f -name '*.aab' -print)"
+                if [ -z "$bundles" ]; then
+                  echo "Android build completed without a discoverable AAB." >&2
+                  exit 1
+                fi
+                if [ "$UNSIGNED_BUILD" -eq 0 ]; then
+                  while IFS= read -r bundle; do
+                    jarsigner -verify -strict "$bundle"
+                  done <<< "$bundles"
+                fi
                 echo "Produced app bundle(s) under: $base/bundle/"
               else
                 # Version-stamp the APK post-build (not in Gradle, which would desync
                 # Tauri's default-path lookup) so local/CI artifacts are identifiable.
                 reldir="$base/apk/universal/release"
-                src="$reldir/app-universal-release$sfx.apk"
+                src="$reldir/app-universal-release$suffix.apk"
                 version="$(sed -n 's/^tauri\.android\.versionName=//p' \
                   "$ROOT/src-tauri/gen/android/app/tauri.properties")"
-                apk="$reldir/open-grind-v$version$sfx.apk"
+                apk="$reldir/open-grind-v$version$suffix.apk"
                 if [ -f "$src" ]; then
                   mv -f "$src" "$apk"
+                  if [ "$UNSIGNED_BUILD" -eq 0 ]; then
+                    apksigner verify --verbose --print-certs "$apk"
+                  else
+                    echo "Produced unsigned Android verification artifact; no signing claim made."
+                  fi
                   printf 'Produced: %s (%s)\n' "$apk" "$(du -h "$apk" | cut -f1)"
                 else
-                  printf 'Produced: %s (expected, not found)\n' "$src"
+                  printf 'Expected Android artifact was not found: %s\n' "$src" >&2
+                  exit 1
                 fi
               fi
             '';
@@ -239,6 +304,8 @@
             pkgs.bun
             pkgs.nodejs_24
             pkgs.git
+            pkgs.findutils
+            pkgs.gnugrep
           ]
           ++ pkgs.lib.optionals pkgs.stdenv.isDarwin [
             pkgs.cocoapods
@@ -256,6 +323,8 @@
                 echo "The iOS build requires macOS and a host-installed Xcode." >&2
                 exit 1
               fi
+
+              ${agoraEnv}
 
               developer_dir="$(xcode-select -p)"
               if [ ! -x "$developer_dir/usr/bin/xcodebuild" ]; then
@@ -309,6 +378,68 @@
 
               echo "Building iOS with Xcode at: $developer_dir"
               bun run tauri ios build "$@"
+
+              if [ "$signed_build" -eq 0 ]; then
+                echo "Produced unsigned iOS debug/test artifact; no signing claim made."
+                exit 0
+              fi
+
+              build_root="$root/src-tauri/gen/apple/build"
+              app="$(find "$build_root" -type d -name 'Open Grind.app' -print | while IFS= read -r candidate; do printf '%s\t%s\n' "$(/usr/bin/stat -f '%m' "$candidate")" "$candidate"; done | sort -nr | head -n 1 | cut -f 2-)"
+              if [ -z "$app" ]; then
+                echo "Signed iOS build completed without a discoverable Open Grind.app." >&2
+                exit 1
+              fi
+              codesign --verify --deep --strict --verbose=2 "$app"
+            '';
+          };
+
+          buildMacosScript = pkgs.writeShellApplication {
+            name = "open-grind-build-macos";
+            runtimeInputs = iosToolchainInputs;
+            text = ''
+              set -euo pipefail
+
+              if [ "$(uname -s)" != "Darwin" ]; then
+                echo "The macOS build requires macOS and host Apple SDKs." >&2
+                exit 1
+              fi
+
+              ${agoraEnv}
+
+              debug_build=0
+              for argument in "$@"; do
+                if [ "$argument" = "--debug" ]; then debug_build=1; fi
+              done
+              if [ "$debug_build" -eq 1 ] && [ -z "''${APPLE_SIGNING_IDENTITY:-}" ]; then
+                export APPLE_SIGNING_IDENTITY="-"
+              elif [ -z "''${APPLE_SIGNING_IDENTITY:-}" ]; then
+                echo "Signed macOS release builds require APPLE_SIGNING_IDENTITY." >&2
+                exit 1
+              elif [ "$APPLE_SIGNING_IDENTITY" != "-" ] &&
+                ! security find-identity -v -p codesigning | grep -F -- "$APPLE_SIGNING_IDENTITY" >/dev/null; then
+                echo "APPLE_SIGNING_IDENTITY does not match a valid code-signing identity." >&2
+                exit 1
+              fi
+
+              root="''${OPEN_GRIND_ROOT:-$PWD}"
+              cd "$root"
+              export NODE_OPTIONS="''${NODE_OPTIONS:---max-old-space-size=4096}"
+              bun ci
+              if [ "$debug_build" -eq 1 ]; then
+                bun run tauri build --bundles app "$@"
+              else
+                bun run tauri build --bundles app --features keychain "$@"
+              fi
+
+              profile=release
+              if [ "$debug_build" -eq 1 ]; then profile=debug; fi
+              app="$(find "$root/src-tauri/target/$profile/bundle/macos" -maxdepth 1 -type d -name '*.app' -print | head -n 1)"
+              if [ -z "$app" ]; then
+                echo "Signed macOS build completed without a discoverable app bundle." >&2
+                exit 1
+              fi
+              codesign --verify --deep --strict --verbose=2 "$app"
             '';
           };
 
@@ -384,6 +515,7 @@
           }
           // pkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
             build-ios = buildIosScript;
+            build-macos = buildMacosScript;
             test-ios = testIosScript;
           };
 
@@ -401,6 +533,10 @@
             build-ios = {
               type = "app";
               program = "${buildIosScript}/bin/open-grind-build-ios";
+            };
+            build-macos = {
+              type = "app";
+              program = "${buildMacosScript}/bin/open-grind-build-macos";
             };
             test-ios = {
               type = "app";

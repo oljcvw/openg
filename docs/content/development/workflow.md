@@ -32,10 +32,15 @@ Use the committed Android project for routine development. Do not run
 replace reviewed native resources. Generate canonical icons after intentional
 regeneration.
 
-The reproducible Android path is:
+Canonical Android builds always enter the pinned Nix environment. Release builds
+require signing configuration and verify the resulting signature:
 
 ```sh
-nix run .#build-android
+OPEN_GRIND_KEYSTORE_PROPERTIES="$HOME/.config/open-grind/keystore.properties" \
+  nix run .#build-android -- apk
+
+# Unsigned debug output is allowed for development and testing.
+nix run .#build-android -- --debug apk
 ```
 
 `OPEN_GRIND_ANDROID_ABI` selects a diagnostic single-ABI build;
@@ -47,7 +52,7 @@ signing, and content verification.
 ## iOS and iPadOS construction
 
 iOS development requires macOS, host-installed Xcode, and repository Nix
-wrappers. Build an unsigned simulator app with:
+wrappers. Build an unsigned simulator app for development and testing with:
 
 ```sh
 nix --extra-experimental-features 'nix-command flakes' run .#build-ios
@@ -64,6 +69,24 @@ nix --extra-experimental-features 'nix-command flakes' run .#test-ios -- \
 Simulator compilation does not prove device installation, signing, TestFlight,
 or App Store acceptance. See [iOS development and release](/development/ios-release)
 for toolchain, signing, artifact, device-parity, privacy, and authority gates.
+
+## macOS construction
+
+Canonical macOS builds also use Nix. Debug builds use an ad-hoc signature when
+no identity is supplied; release builds require a valid Keychain identity:
+
+```sh
+nix run .#build-macos -- --debug
+
+APPLE_SIGNING_IDENTITY="Developer ID Application: Example (TEAMID)" \
+  nix run .#build-macos
+```
+
+All three build wrappers export the repository's canonical, public Agora App ID.
+Do not pass a different `OPEN_GRIND_AGORA_APP_ID` at invocation time; signing
+keys, certificates, provisioning profiles, and keystore passwords remain private
+host inputs. Direct `bun run tauri … build` commands are diagnostic only and are
+not canonical build evidence.
 
 ## Quality gates
 

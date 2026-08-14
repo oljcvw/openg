@@ -79,8 +79,10 @@ uses Web Wake Lock when available.
   signing/TestFlight-preparation workflows. No current durable signed IPA,
   physical-device acceptance, upload, TestFlight, App Review, or public-release
   receipt was found.
-- macOS, Windows, and Linux have shared source and runtime provisions but no
-  complete project-owned release automation was found.
+- macOS now has a Nix-owned signed app-bundle build and signature-verification
+  path. Notarization, installation, and runtime acceptance remain unverified.
+- Windows and Linux have shared source and runtime provisions but no complete
+  project-owned release automation was found.
 
 Never turn source, configuration, icons, or compilation into a release claim.
 Report source, build, packaged artifact, signing, device acceptance, publication,

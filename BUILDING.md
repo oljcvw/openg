@@ -1,6 +1,8 @@
 # Building Open Grind
 
-To get started, choose one of the methods below (Docker, Nix or manual) and follow its steps.
+Canonical Open Grind platform builds always use repository Nix wrappers. Docker
+is supported only as a host for same Nix-owned Android wrapper. Manual toolchain
+commands are diagnostic and cannot establish canonical build evidence.
 
 > [!NOTE]
 > Only Android release builds are tested as of June 23rd, 2026.
@@ -9,12 +11,12 @@ To get started, choose one of the methods below (Docker, Nix or manual) and foll
   - [Build with Docker (easiest)](#build-with-docker-easiest)
     - [Clean-up Docker](#clean-up-docker)
   - [Build with Nix (builds everywhere)](#build-with-nix-builds-everywhere)
-  - [Build manually (advanced)](#build-manually-advanced)
+  - [Build manually (diagnostic only)](#build-manually-diagnostic-only)
   - [Credential storage](#credential-storage)
   - [Signing](#signing)
     - [Sign \& build with Docker](#sign--build-with-docker)
     - [Sign \& build with Nix](#sign--build-with-nix)
-    - [Sign \& build manually](#sign--build-manually)
+    - [Manual signing is non-canonical](#manual-signing-is-non-canonical)
   - [Trusting the build environment](#trusting-the-build-environment)
     - [Verifying Nix and flake.lock](#verifying-nix-and-flakelock)
     - [Verifying the Gradle wrapper jar](#verifying-the-gradle-wrapper-jar)
@@ -41,9 +43,8 @@ Prerequisites:
 
 1. Install Docker on your host system and make sure to give it enough disk headroom (Settings &rarr; Resources &rarr; Disk): the toolchain is ~12 GB and its first realization needs ~15 GB of transient space.
 2. Build the thin image: `docker compose build`
-3. Build the apk: `docker compose run --rm build`
-4. Retrieve the apk from `src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<version>-unsigned.apk` on your host system
-5. Follow [Signing](#signing) steps to make the build installable on your Android device
+3. Build signed APK using command under [Sign & build with Docker](#sign--build-with-docker).
+4. Retrieve signed APK from `src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<version>.apk` on your host system.
 
 ### Clean-up Docker
 
@@ -60,8 +61,9 @@ Open Grind ships a [Nix flake](./flake.nix) that pins the entire Android toolcha
 - ~30 GB of disk space
 
 1. Install and configure Nix on your host system
-2. Run `nix run .#build-android`
-3. Retrieve the apk: `src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<version>-unsigned.apk` on your host system
+2. Configure Android signing as described below.
+3. Run `OPEN_GRIND_KEYSTORE_PROPERTIES=<path> nix run .#build-android -- apk`.
+4. Retrieve signed APK from `src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<version>.apk`.
 
 > [!NOTE]
 > First time you run `nix develop` or `nix run` in Open Grind's repository, Nix will download and setup about 3 GB environment, which might take some time, depending on your internet connection speed.
@@ -69,9 +71,18 @@ Open Grind ships a [Nix flake](./flake.nix) that pins the entire Android toolcha
 > [!NOTE]
 > If you use [direnv](https://direnv.net/), the bundled [.envrc](./.envrc) activates the dev shell automatically when you `cd` into the repository.
 
-## Build manually (advanced)
+## Build manually (diagnostic only)
 
-If you already have an Android toolchain (e.g. via Android Studio) and Rust installed, you can build against those directly. This reuses what is already on your machine instead of downloading the pinned ~12 GB toolchain, so it saves a lot of disk — at the cost of a build that is **not** guaranteed byte-for-byte identical to a release (your tool versions, paths, and timestamps differ). Use it for developing and testing patches; use Nix when you need to [reproduce a published release](#verifying-a-published-release).
+Direct toolchain commands may help diagnose local development failures, but they
+are not supported as canonical builds. Use Nix wrapper for every Android, iOS,
+or macOS build claim. Unsigned outputs remain acceptable for debug and tests.
+
+Canonical diagnostic variants remain inside Nix:
+
+```bash
+nix run .#build-android -- --debug apk
+nix run .#build-android -- --unsigned apk # reproducibility inspection only
+```
 
 > [!WARNING]
 > `bun run tauri android init --ci` is only for creating a missing Android project. It regenerates committed Android scaffold and launcher resources, so do not run it before routine development or builds. If initialization is necessary, review the generated diff and run `bun run gen:icons` afterward to restore the canonical Open Grind icons.
@@ -114,7 +125,8 @@ Two targets fall back to a file store: `credentials/` in the app data directory,
 > A macOS build that is distributed must be code-signed and built with the `keychain` feature, which swaps the file store for the Keychain:
 >
 > ```bash
-> bun run tauri build --features keychain
+> APPLE_SIGNING_IDENTITY="Developer ID Application: Example (TEAMID)" \
+>   nix run .#build-macos
 > ```
 
 ## Signing
@@ -163,15 +175,11 @@ OPEN_GRIND_KEYSTORE_PROPERTIES=/home/you/.config/open-grind/keystore.properties 
   nix run .#build-android
 ```
 
-### Sign & build manually
+### Manual signing is non-canonical
 
-`OPEN_GRIND_KEYSTORE_PROPERTIES` is a flake convenience and is ignored by a plain `tauri` build. Gradle reads `keystore.properties` from the Android project root, so place it there yourself (it is gitignored) before building:
-
-```bash
-cp ~/.config/open-grind/keystore.properties src-tauri/gen/android/keystore.properties
-bun run tauri android build --apk
-rm src-tauri/gen/android/keystore.properties   # optional: don't leave the password lying around
-```
+Do not use plain `tauri` builds as signed/reproducible evidence. Nix wrapper owns
+temporary keystore placement, canonical Agora configuration, and post-build
+signature verification.
 
 ## Trusting the build environment
 
@@ -216,7 +224,7 @@ nix develop
 
 # 1. Reproduce the unsigned APK locally
 git checkout v<tag>
-nix run .#build-android
+nix run .#build-android -- --unsigned apk
 LOCAL=src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<tag>-unsigned.apk
 
 # 2. Fetch the published signed APK and its signature, side by side

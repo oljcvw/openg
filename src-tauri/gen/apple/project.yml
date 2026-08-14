@@ -20,6 +20,7 @@ settingGroups:
   app:
     base:
       DEVELOPMENT_TEAM: LWB94HQ8S4
+      OPEN_GRIND_AGORA_APP_ID: fb9ba023bdf9430b8f75856a1bb011b9
       PRODUCT_NAME: Open Grind
       PRODUCT_BUNDLE_IDENTIFIER: doctor.andrewcox.opengrind
 targetTemplates:

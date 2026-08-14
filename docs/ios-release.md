@@ -45,10 +45,13 @@ nix --extra-experimental-features 'nix-command flakes' run .#build-ios -- \
   --target aarch64 --no-sign --archive-only --ci
 ```
 
-Default command intentionally produces unsigned debug simulator app. Arguments
-after `--` pass directly to `tauri ios build`. Build wrapper performs `bun ci`,
-checks selected Xcode and iPhoneOS SDK, verifies initialized submodules, and then
-runs frontend, Rust, SwiftPM, and Xcode build stages.
+Default command intentionally produces unsigned debug simulator app. Unsigned
+output is allowed only as development/test evidence. Arguments after `--` pass
+directly to `tauri ios build`. Build wrapper performs `bun ci`, checks selected
+Xcode and iPhoneOS SDK, verifies initialized submodules, exports canonical public
+Agora App ID, and then runs frontend, Rust, SwiftPM, and Xcode stages. Signed
+invocations require explicit Apple team/provisioning authority and finish with
+strict `codesign` verification.
 
 Run native contract tests on an installed simulator by UDID through the
 dedicated Nix wrapper:

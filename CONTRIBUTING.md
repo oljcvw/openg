@@ -149,7 +149,7 @@ repository root:
 ```sh
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
-# Default: unsigned debug simulator app.
+# Default: unsigned debug simulator app (development/test evidence only).
 nix --extra-experimental-features 'nix-command flakes' run .#build-ios
 
 # Unsigned debug device IPA: compilation/package proof, not installable.
@@ -183,6 +183,23 @@ version such as `0.1.0-beta.8-dev` is normalized to Apple's three-integer
 marketing version `0.1.0`; `CFBundleVersion` is the independently increasing
 build number. See [iOS release preparation](docs/ios-release.md) for signing,
 artifact verification, TestFlight, CI, and compliance gates.
+
+### macOS builds
+
+Use Nix wrapper for debug and release builds. It exports same canonical Agora
+App ID as mobile wrappers and verifies resulting app signature:
+
+```sh
+# Ad-hoc signed debug app.
+nix run .#build-macos -- --debug
+
+# Release app signed with valid Keychain identity.
+APPLE_SIGNING_IDENTITY="Developer ID Application: Example (TEAMID)" \
+  nix run .#build-macos
+```
+
+Direct `bun run tauri … build` commands are not canonical platform-build
+evidence. Unsigned output is acceptable only for debug and test work.
 
 ### Submitting your changes
 

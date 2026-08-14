@@ -28,8 +28,10 @@ val keystorePropertiesFile = rootProject.file("keystore.properties")
 val hasKeystore = keystorePropertiesFile.exists()
 val agoraAppId = providers.gradleProperty("OPEN_GRIND_AGORA_APP_ID")
     .orElse(providers.environmentVariable("OPEN_GRIND_AGORA_APP_ID"))
-    .orElse("fb9ba023bdf9430b8f75856a1bb011b9")
     .get()
+require(agoraAppId.matches(Regex("[0-9a-fA-F]{32}"))) {
+    "OPEN_GRIND_AGORA_APP_ID must contain exactly 32 hexadecimal characters"
+}
 val generatedWatermarkResDir = layout.buildDirectory.dir("generated/openGrindWatermark/res")
 val generatedWatermarkResPath = generatedWatermarkResDir.get().asFile
 val configuredWatermarkPath = providers.environmentVariable("OPEN_GRIND_CAPTURE_WATERMARK_ASSET")

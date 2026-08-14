@@ -7,7 +7,9 @@ notifications, connectivity observation, and Keychain storage.
 
 ## Build and test
 
-Builds use repository Nix wrappers plus host-installed Xcode:
+Builds use repository Nix wrappers plus host-installed Xcode. Default invocation
+is unsigned debug simulator evidence; signed candidate invocations require Apple
+team/provisioning authority and are verified after build:
 
 ```sh
 nix --extra-experimental-features 'nix-command flakes' run .#build-ios

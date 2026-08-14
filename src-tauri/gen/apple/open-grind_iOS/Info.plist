@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>doctor.andrewcox.opengrind.background-refresh</string>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
@@ -20,6 +24,25 @@
 	<string>1070</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Open Grind uses the camera when you choose to take a profile or chat photo, record a short video, or join a video call.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Open Grind uses your location only when you choose to set or refresh your profile location.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Open Grind uses the microphone when you choose to record a voice message or join a video call.</string>
+	<key>OpenGrindAgoraAppId</key>
+	<string>$(OPEN_GRIND_AGORA_APP_ID)</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
+		<key>UISceneConfigurations</key>
+		<dict/>
+	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -40,28 +63,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>OpenGrindAgoraAppId</key>
-	<string>$(OPEN_GRIND_AGORA_APP_ID)</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Open Grind uses the camera when you choose to take a profile or chat photo, record a short video, or join a video call.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Open Grind uses the microphone when you choose to record a voice message or join a video call.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Open Grind uses your location only when you choose to set or refresh your profile location.</string>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>doctor.andrewcox.opengrind.background-refresh</string>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>fetch</string>
-	</array>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<true/>
-		<key>UISceneConfigurations</key>
-		<dict/>
-	</dict>
 </dict>
 </plist>
