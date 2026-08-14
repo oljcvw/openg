@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { addListener, callMethod, ios, navigate, unregister } = vi.hoisted(
 	() => ({
@@ -34,6 +34,8 @@ describe("iOS notification route listener", () => {
 		callMethod.mockResolvedValue(null);
 	});
 
+	afterEach(() => vi.restoreAllMocks());
+
 	it("does not register or take a pending route on Android", () => {
 		const release = installIosNotificationRouteListener(navigate);
 		release();
@@ -45,12 +47,16 @@ describe("iOS notification route listener", () => {
 	it("owns foreground and pending iOS routes with duplicate suppression", async () => {
 		ios.value = true;
 		callMethod.mockResolvedValue({ route: "/chat/abc", accountId: "42" });
-		installIosNotificationRouteListener(navigate);
-		await vi.waitFor(() => expect(callMethod).toHaveBeenCalledOnce());
-		addListener.mock.calls[0]![2]({ route: "/chat/abc", accountId: "42" });
+		const release = installIosNotificationRouteListener(navigate);
+		try {
+			await vi.waitFor(() => expect(callMethod).toHaveBeenCalledOnce());
+			addListener.mock.calls[0]![2]({ route: "/chat/abc", accountId: "42" });
 
-		expect(navigate).toHaveBeenCalledOnce();
-		expect(navigate).toHaveBeenCalledWith("/chat/abc");
+			expect(navigate).toHaveBeenCalledOnce();
+			expect(navigate).toHaveBeenCalledWith("/chat/abc");
+		} finally {
+			release();
+		}
 	});
 
 	it("contains asynchronous navigation failures", async () => {
@@ -59,15 +65,19 @@ describe("iOS notification route listener", () => {
 			.spyOn(console, "error")
 			.mockImplementation(() => undefined);
 		navigate.mockRejectedValueOnce(new Error("navigation failed"));
-		installIosNotificationRouteListener(navigate);
-		await vi.waitFor(() => expect(callMethod).toHaveBeenCalledOnce());
-		addListener.mock.calls[0]![2]({ route: "/chat/abc", accountId: "42" });
+		const release = installIosNotificationRouteListener(navigate);
+		try {
+			await vi.waitFor(() => expect(callMethod).toHaveBeenCalledOnce());
+			addListener.mock.calls[0]![2]({ route: "/chat/abc", accountId: "42" });
 
-		await vi.waitFor(() =>
-			expect(error).toHaveBeenCalledWith(
-				"Failed to navigate notification route",
-			),
-		);
+			await vi.waitFor(() =>
+				expect(error).toHaveBeenCalledWith(
+					"Failed to navigate notification route",
+				),
+			);
+		} finally {
+			release();
+		}
 	});
 
 	it("unregisters a listener that resolves after teardown", async () => {
