@@ -26,6 +26,13 @@ declare global {
 		__AndroidScreen?: {
 			setStayAwake(enabled: boolean): void;
 		};
+		__AndroidWifi?: {
+			isConnected(): boolean;
+			isEnabled(): boolean;
+			openSettings(): void;
+			restartApp(): void;
+			setManualLocationActive(active: boolean): void;
+		};
 	}
 }
 

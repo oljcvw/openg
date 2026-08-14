@@ -190,6 +190,7 @@ const preferencesSchema = z
 		inboxRowDensity: inboxRowDensitySchema.default("comfortable"),
 		keepBottomNavigationBehindKeyboard: z.boolean().default(true),
 		keepUnavailableCachedAlbums: z.boolean().default(true),
+		manualLocationActive: z.boolean().default(false),
 		retainSharedChatMedia: z.boolean().default(true),
 		profileSwipeNavigation: z.boolean().optional(),
 		pendingProfileLocation: reportedProfileLocationSchema
@@ -214,6 +215,9 @@ const preferencesSchema = z
 		void showProfileNavigationButtons;
 		return {
 			...value,
+			manualLocationActive:
+				value.manualLocationActive ||
+				value.reportedProfileLocation?.source === "manual",
 			profileSwipeNavigation: value.profileSwipeNavigation ?? true,
 		};
 	});
@@ -315,6 +319,10 @@ export function getReportedProfileLocationSnapshot() {
 
 export function getPendingProfileLocationSnapshot() {
 	return preferencesSnapshot.pendingProfileLocation;
+}
+
+export function getManualLocationActiveSnapshot(): boolean {
+	return preferencesSnapshot.manualLocationActive;
 }
 
 export function getLocationActivitySnapshot(): LocationActivity {
@@ -485,6 +493,7 @@ async function resetToDefaults(): Promise<void> {
 const accountPreferenceKeys = [
 	"geohash",
 	"gridSearchFilters",
+	"manualLocationActive",
 	"pendingProfileLocation",
 	"reportedProfileLocation",
 	"rightNowFilters",

@@ -123,6 +123,9 @@ async fn account_request(
 			super::runtime::RuntimeError::Cancelled => {
 				AppError::RequestCancelled
 			}
+			super::runtime::RuntimeError::LocationWifiSafetyBlocked => {
+				AppError::LocationWifiSafetyBlocked
+			}
 		})?;
 	if (200..300).contains(&response.status) {
 		return Ok(());

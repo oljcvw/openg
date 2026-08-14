@@ -54,6 +54,7 @@ pub enum AppError {
 		retry_at_ms: u64,
 	},
 	RequestCancelled,
+	LocationWifiSafetyBlocked,
 	NotInitialized,
 }
 
@@ -79,6 +80,10 @@ impl fmt::Display for AppError {
 				write!(f, "Requests paused until {retry_at_ms}")
 			}
 			AppError::RequestCancelled => write!(f, "Request cancelled"),
+			AppError::LocationWifiSafetyBlocked => write!(
+				f,
+				"Grindr traffic is blocked while manual location and Wi-Fi safety conflict"
+			),
 			AppError::NotInitialized => {
 				write!(f, "GrindrClient not initialized")
 			}

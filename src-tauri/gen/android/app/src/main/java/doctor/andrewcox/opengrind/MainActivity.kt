@@ -2,7 +2,11 @@ package doctor.andrewcox.opengrind
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.wifi.WifiManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.ViewGroup
@@ -112,6 +116,51 @@ class MainActivity : TauriActivity() {
 			}
 		}
 	}
+
+	inner class WifiInterface {
+		@JavascriptInterface fun setManualLocationActive(active: Boolean) {
+			getSharedPreferences("location_wifi_safety", MODE_PRIVATE)
+				.edit()
+				.putBoolean("manual_location_active", active)
+				.apply()
+		}
+
+		@JavascriptInterface fun isConnected(): Boolean {
+			val manager = getSystemService(ConnectivityManager::class.java)
+			val network = manager.activeNetwork ?: return false
+			return manager.getNetworkCapabilities(network)
+				?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+		}
+
+		@JavascriptInterface fun isEnabled(): Boolean =
+			getSystemService(WifiManager::class.java).isWifiEnabled
+
+		@JavascriptInterface fun openSettings() {
+			runOnUiThread {
+				val action = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+					Settings.Panel.ACTION_WIFI
+				} else {
+					Settings.ACTION_WIFI_SETTINGS
+				}
+				try {
+					startActivity(Intent(action))
+				} catch (_: ActivityNotFoundException) {
+					startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
+				}
+			}
+		}
+
+		@JavascriptInterface fun restartApp() {
+			runOnUiThread {
+				val restartIntent = packageManager.getLaunchIntentForPackage(packageName)
+					?: throw IllegalStateException("App launch intent is unavailable")
+				restartIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+				startActivity(restartIntent)
+				finishAffinity()
+				Runtime.getRuntime().exit(0)
+			}
+		}
+	}
 	
 	override fun onCreate(savedInstanceState: Bundle?) {
 		enableEdgeToEdge()
@@ -159,6 +208,7 @@ class MainActivity : TauriActivity() {
 		webView.addJavascriptInterface(InsetsInterface(), "__AndroidInsets")
 		webView.addJavascriptInterface(BackInterface(), "__AndroidBack")
 		webView.addJavascriptInterface(ScreenInterface(), "__AndroidScreen")
+		webView.addJavascriptInterface(WifiInterface(), "__AndroidWifi")
 		openPendingNotificationRoute()
 		maybeWarnAboutWebView()
 	}

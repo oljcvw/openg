@@ -1,5 +1,6 @@
 import BackgroundTasks
 import Foundation
+import Network
 import Tauri
 import UIKit
 import UserNotifications
@@ -47,6 +48,13 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
   private let refreshIdentifier = "doctor.andrewcox.opengrind.background-refresh"
   private let pollQueue = DispatchQueue(label: "doctor.andrewcox.opengrind.notifications.poll", qos: .utility)
   private let routeLock = NSLock()
+  private let wifiMonitor = NWPathMonitor()
+  private let wifiMonitorQueue = DispatchQueue(
+    label: "doctor.andrewcox.opengrind.notifications.wifi-safety"
+  )
+  private let wifiStateLock = NSLock()
+  private var wifiKnown = false
+  private var wifiConnected = false
 
   override init() {
     super.init()
@@ -61,6 +69,17 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
       }
       self.handleRefresh(refresh)
     }
+    wifiMonitor.pathUpdateHandler = { [weak self] path in
+      guard let self else { return }
+      self.wifiStateLock.lock()
+      self.wifiKnown = true
+      self.wifiConnected = RealtimeNetworkContract.isWifi(
+        status: path.status,
+        usesWifi: path.usesInterfaceType(.wifi)
+      )
+      self.wifiStateLock.unlock()
+    }
+    wifiMonitor.start(queue: wifiMonitorQueue)
   }
 
   @objc func getSettings(_ invoke: Invoke) {
@@ -218,6 +237,7 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
     settings: NotificationDeliverySettings,
     isActive: Bool
   ) -> Bool {
+    if locationWifiSafetyBlocksPoll() { return true }
     guard let pointer = openGrindNotificationsPoll(
       settings.messages ? 1 : 0,
       settings.taps ? 1 : 0
@@ -253,6 +273,19 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
       recordFailure()
       return false
     }
+  }
+
+  private func locationWifiSafetyBlocksPoll() -> Bool {
+    let active = defaults.bool(forKey: "locationWifiSafety.manualLocationActive")
+    wifiStateLock.lock()
+    let known = wifiKnown
+    let connected = wifiConnected
+    wifiStateLock.unlock()
+    return RealtimeNetworkContract.blocksBackgroundTraffic(
+      manualLocationActive: active,
+      known: known,
+      wifiConnected: connected
+    )
   }
 
   private func process(
@@ -392,6 +425,10 @@ final class NotificationsPlugin: Plugin, UNUserNotificationCenterDelegate {
     defaults.set(accountId, forKey: "notifications.pendingRouteAccountId")
     routeLock.unlock()
     trigger("notification-route", data: ["route": route, "accountId": accountId])
+  }
+
+  deinit {
+    wifiMonitor.cancel()
   }
 }
 

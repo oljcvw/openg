@@ -114,9 +114,15 @@ pub async fn album_preset_import(
 	name: String,
 	items: Vec<AlbumPresetImportItem>,
 ) -> Result<AlbumPresetManifest, AppError> {
+	crate::api::location_wifi_safety::assert_grindr_traffic_allowed_for(
+		"<cdn>",
+	)?;
 	validate_account(&account_id)?;
 	let mut decoded = Vec::with_capacity(items.len());
 	for item in items {
+		crate::api::location_wifi_safety::assert_grindr_traffic_allowed_for(
+			"<cdn>",
+		)?;
 		let bytes = STANDARD
 			.decode(item.data)
 			.map_err(|_| preset_error("saved-set media encoding is invalid"))?;

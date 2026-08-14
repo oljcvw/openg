@@ -7,11 +7,8 @@
 	import { showErrorToast } from "$lib/api/error";
 	import { Button } from "$lib/components/ui/button";
 	import * as Empty from "$lib/components/ui/empty";
-	import {
-		browseThisArea,
-		setProfileLocation,
-		useCurrentDeviceLocation,
-	} from "$lib/location/profile-location";
+	import { browseThisArea } from "$lib/location/profile-location";
+	import { requestProfileLocation } from "$lib/location/profile-location-wifi-warning";
 	import type { LocationPoint } from "$lib/model/location";
 
 	let geoMapPickerOpen = $state(false);
@@ -22,7 +19,7 @@
 	async function handleDetectLocation() {
 		disabled = true;
 		try {
-			await useCurrentDeviceLocation();
+			await requestProfileLocation({ kind: "device" });
 		} catch (error) {
 			console.error(error);
 			showErrorToast({
@@ -53,11 +50,11 @@
 		);
 	const onSetProfile = (point: LocationPoint) =>
 		runLocationAction("Failed to set profile location", () =>
-			setProfileLocation(point),
+			requestProfileLocation({ kind: "manual", point }).then(() => undefined),
 		);
 	const onUseDeviceLocation = () =>
 		runLocationAction("Failed to use current device location", () =>
-			useCurrentDeviceLocation(),
+			requestProfileLocation({ kind: "device" }).then(() => undefined),
 		);
 </script>
 

@@ -137,6 +137,7 @@ pub enum RuntimeError {
 	Grindr(grindr::GrindrError),
 	Cooldown { retry_at_ms: u64 },
 	Cancelled,
+	LocationWifiSafetyBlocked,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -373,20 +374,34 @@ impl ApiRuntime {
 		Fut: Future<Output = Result<T, grindr::GrindrError>>,
 		C: Fn(&Result<T, grindr::GrindrError>) -> CircuitOutcome,
 	{
+		if crate::api::location_wifi_safety::assert_grindr_traffic_allowed_for(
+			route,
+		)
+		.is_err()
+		{
+			return Err(RuntimeError::LocationWifiSafetyBlocked);
+		}
+		let safety_cancellation =
+			crate::api::location_wifi_safety::traffic_cancellation_token_for(
+				route,
+			);
 		let context = RequestContext {
 			class,
 			route: route.to_owned(),
 		};
 		let _priority = tokio::select! {
 			_ = cancellation.cancelled() => return Err(RuntimeError::Cancelled),
+			_ = safety_cancellation.cancelled() => return Err(RuntimeError::LocationWifiSafetyBlocked),
 			priority = self.recovery.enter_priority(class) => priority,
 		};
 		let _class_permit = tokio::select! {
 			_ = cancellation.cancelled() => return Err(RuntimeError::Cancelled),
+			_ = safety_cancellation.cancelled() => return Err(RuntimeError::LocationWifiSafetyBlocked),
 			permit = self.recovery.class_permit(class) => permit,
 		};
 		let request_admission = tokio::select! {
 			_ = cancellation.cancelled() => return Err(RuntimeError::Cancelled),
+			_ = safety_cancellation.cancelled() => return Err(RuntimeError::LocationWifiSafetyBlocked),
 			admission = self.recovery.enter(policy, class, &context) => admission?,
 		};
 		let admission = request_admission.admission;
@@ -394,6 +409,10 @@ impl ApiRuntime {
 			_ = cancellation.cancelled() => {
 				self.recovery.finish(admission, CircuitOutcome::Ignored, &context);
 				return Err(RuntimeError::Cancelled);
+			}
+			_ = safety_cancellation.cancelled() => {
+				self.recovery.finish(admission, CircuitOutcome::Ignored, &context);
+				return Err(RuntimeError::LocationWifiSafetyBlocked);
 			}
 			result = operation() => result,
 		};

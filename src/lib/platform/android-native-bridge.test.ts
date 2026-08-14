@@ -9,7 +9,11 @@ import {
 import {
 	applyBackGestureHandler,
 	handleAndroidBackEvent,
+	isAndroidWifiConnected,
+	isAndroidWifiEnabled,
+	openAndroidWifiSettings,
 	registerAndroidBackButtonListener,
+	restartAndroidApp,
 } from "$lib/platform/android-native-bridge";
 import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
 
@@ -41,6 +45,27 @@ describe("Android native Back bridge", () => {
 		nativePlugin.listener = null;
 		delete window.__AndroidOnBackGesture;
 		delete window.__AndroidBack;
+		delete window.__AndroidWifi;
+	});
+
+	it("delegates Wi-Fi status, settings, and restart to Android", () => {
+		const openSettings = vi.fn();
+		const restartApp = vi.fn();
+		const setManualLocationActive = vi.fn();
+		window.__AndroidWifi = {
+			isConnected: () => true,
+			isEnabled: () => false,
+			openSettings,
+			restartApp,
+			setManualLocationActive,
+		};
+
+		expect(isAndroidWifiConnected()).toBe(true);
+		expect(isAndroidWifiEnabled()).toBe(false);
+		openAndroidWifiSettings();
+		restartAndroidApp();
+		expect(openSettings).toHaveBeenCalledOnce();
+		expect(restartApp).toHaveBeenCalledOnce();
 	});
 
 	it("selects one typed legacy layer while its adapter continues internally", () => {

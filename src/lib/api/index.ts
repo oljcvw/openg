@@ -211,6 +211,7 @@ export function asAppError(error: unknown) {
 				"RequestBlocked",
 				"RequestCooldown",
 				"RequestCancelled",
+				"LocationWifiSafetyBlocked",
 				"NotInitialized",
 				"SessionCleared",
 			]),
@@ -595,6 +596,15 @@ export async function fetchRest(
 				request: requestInfo,
 				response: null,
 				kind: "RequestCooldown",
+				cause: error,
+			});
+		}
+		if (appError?.kind === "LocationWifiSafetyBlocked") {
+			throw new ApiError({
+				message: "Grindr traffic is paused for mock-location Wi-Fi safety",
+				request: requestInfo,
+				response: null,
+				kind: "LocationWifiSafetyBlocked",
 				cause: error,
 			});
 		}

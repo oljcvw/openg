@@ -189,6 +189,9 @@ pub async fn album_cache_store(
 	content_type: String,
 	maximum_bytes: u64,
 ) -> Result<AlbumCacheStored, AppError> {
+	crate::api::location_wifi_safety::assert_grindr_traffic_allowed_for(
+		"<cdn>",
+	)?;
 	validate_identifier(&account_id)?;
 	ensure_active_account(&account_id)?;
 	validate_identifier(&owner_profile_id)?;

@@ -8,11 +8,8 @@
 		getLocationActivitySnapshot,
 	} from "$lib/app-data/preferences.svelte";
 	import { Button } from "$lib/components/ui/button";
-	import {
-		browseThisArea,
-		setProfileLocation,
-		useCurrentDeviceLocation,
-	} from "$lib/location/profile-location";
+	import { browseThisArea } from "$lib/location/profile-location";
+	import { requestProfileLocation } from "$lib/location/profile-location-wifi-warning";
 	import { decodeGeohash } from "$lib/model/geohash";
 	import type LocationChooser from "$lib/components/location-chooser/LocationChooser.svelte";
 	import type { LocationPoint } from "$lib/model/location";
@@ -62,11 +59,11 @@
 		);
 	const onSetProfile = (point: LocationPoint) =>
 		runLocationAction("Failed to set profile location", () =>
-			setProfileLocation(point),
+			requestProfileLocation({ kind: "manual", point }).then(() => undefined),
 		);
 	const onUseDeviceLocation = () =>
 		runLocationAction("Failed to use current device location", () =>
-			useCurrentDeviceLocation(),
+			requestProfileLocation({ kind: "device" }).then(() => undefined),
 		);
 
 	function openPicker() {

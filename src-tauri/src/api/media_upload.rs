@@ -231,6 +231,9 @@ fn runtime_error(error: super::runtime::RuntimeError) -> AppError {
 			AppError::RequestCooldown { retry_at_ms }
 		}
 		super::runtime::RuntimeError::Cancelled => AppError::RequestCancelled,
+		super::runtime::RuntimeError::LocationWifiSafetyBlocked => {
+			AppError::LocationWifiSafetyBlocked
+		}
 	}
 }
 

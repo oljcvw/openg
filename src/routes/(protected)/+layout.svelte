@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { platform } from "@tauri-apps/plugin-os";
 	import { afterNavigate, goto, replaceState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { onMount, untrack } from "svelte";
@@ -11,22 +12,40 @@
 	import { syncApiRuntimeSettings } from "$lib/api/runtime-settings";
 	import {
 		getDeveloperSettingsSnapshot,
+		getManualLocationActiveSnapshot,
+		getPendingProfileLocationSnapshot,
 		hydratePreferences,
 	} from "$lib/app-data/preferences.svelte";
 	import CommandCenter from "$lib/components/command-center/CommandCenter.svelte";
-	import { reconcilePendingProfileLocation } from "$lib/location/profile-location";
+	import ProfileLocationWifiWarning from "$lib/components/location/ProfileLocationWifiWarning.svelte";
+	import {
+		invalidateProfileLocationMutations,
+		profileLocationCoordinator,
+	} from "$lib/location/profile-location";
+	import {
+		closeProfileLocationWifiWarning,
+		showProfileLocationWifiWarning,
+	} from "$lib/location/profile-location-wifi-warning";
 	import {
 		type CurrentNavigationRuntime,
 		installCurrentNavigationCoordinator,
 		setSemanticRouteBackHandler,
 	} from "$lib/navigation/app-navigation";
 	import { installIosNotificationRouteListener } from "$lib/notifications/native-listener";
+	import {
+		isUnsafeWifiSnapshot,
+		listenForWifiSafetyChanges,
+		type WifiSafetySnapshot,
+	} from "$lib/platform/wifi-location-safety";
 	import VideoCallHost from "$lib/video-call/components/VideoCallHost.svelte";
 
 	let { children }: import("./$types").LayoutProps = $props();
 	let accountGeneration = $state(getAccountSessionSnapshot().generation);
 	let navigationRuntime: CurrentNavigationRuntime | null = null;
 	let routerReady = false;
+	let protectedReady = $state(false);
+	let bootstrapError = $state<unknown>(null);
+	let safetyInitialization: Promise<void> | null = null;
 
 	function synchronizeNavigationRuntime(
 		runtime: CurrentNavigationRuntime,
@@ -85,28 +104,97 @@
 		]);
 	}
 
+	function mobilePlatform(): "android" | "ios" {
+		return platform() === "ios" ? "ios" : "android";
+	}
+
+	function locationStateRequiresSafety(): boolean {
+		return (
+			getManualLocationActiveSnapshot() ||
+			getPendingProfileLocationSnapshot() !== null
+		);
+	}
+
+	async function initializeProtectedSafety(): Promise<void> {
+		if (safetyInitialization) return safetyInitialization;
+		safetyInitialization = (async () => {
+			protectedReady = false;
+			bootstrapError = null;
+			await hydratePreferences();
+			const outcome = await profileLocationCoordinator.bootstrap();
+			if (outcome.kind === "blockedByWifi") {
+				showProfileLocationWifiWarning(outcome.platform, null);
+				return;
+			}
+			await syncHydratedPreferences();
+			closeProfileLocationWifiWarning();
+			protectedReady = true;
+		})()
+			.catch((error) => {
+				bootstrapError = error;
+				console.error("Protected location-safety bootstrap failed", error);
+			})
+			.finally(() => {
+				safetyInitialization = null;
+			});
+		return safetyInitialization;
+	}
+
+	function handleWifiSafetyChange(snapshot: WifiSafetySnapshot): void {
+		if (isUnsafeWifiSnapshot(snapshot) && locationStateRequiresSafety()) {
+			protectedReady = false;
+			showProfileLocationWifiWarning(mobilePlatform(), null);
+			return;
+		}
+		if (!isUnsafeWifiSnapshot(snapshot) && !protectedReady) {
+			void initializeProtectedSafety();
+		}
+	}
+
 	onMount(() => {
 		const releaseNotificationListener = installIosNotificationRouteListener(
 			(route) => goto(route),
 		);
 		const releaseAccountGeneration = subscribeAccountGeneration(
 			(generation) => {
+				if (generation !== accountGeneration) {
+					invalidateProfileLocationMutations();
+					protectedReady = false;
+					queueMicrotask(() => void initializeProtectedSafety());
+				}
 				accountGeneration = generation;
 			},
 		);
-		void syncHydratedPreferences().catch((error) => {
-			console.error("Failed to sync hydrated preferences", error);
+		const wifiSafetyListener = listenForWifiSafetyChanges(
+			handleWifiSafetyChange,
+		).catch((error) => {
+			bootstrapError = error;
+			console.error("Failed to register Wi-Fi safety listener", error);
+			return null;
 		});
-		void reconcilePendingProfileLocation().catch((error) => {
-			console.error("Failed to reconcile pending profile location", error);
-		});
+		void initializeProtectedSafety();
 		return () => {
 			releaseNotificationListener();
 			releaseAccountGeneration();
+			void wifiSafetyListener.then((release) => release?.());
 		};
 	});
 </script>
 
-{@render children()}
-<CommandCenter />
-<VideoCallHost />
+{#if protectedReady}
+	{@render children()}
+	<CommandCenter />
+	<VideoCallHost />
+{:else}
+	<div class="flex min-h-svh items-center justify-center p-6 text-center">
+		<div class="max-w-md space-y-2">
+			<h1 class="text-lg font-semibold">Location safety check</h1>
+			<p class="text-sm text-muted-foreground">
+				{bootstrapError
+					? "Open Grind could not establish a safe network state. Grindr traffic remains paused."
+					: "Open Grind is waiting for a known non-Wi-Fi network before loading your account."}
+			</p>
+		</div>
+	</div>
+{/if}
+<ProfileLocationWifiWarning />

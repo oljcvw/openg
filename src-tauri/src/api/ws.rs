@@ -23,6 +23,7 @@ struct RealtimeInputs {
 	requested: bool,
 	foreground: bool,
 	network_available: bool,
+	location_wifi_safety_allowed: bool,
 }
 
 impl Default for RealtimeInputs {
@@ -36,6 +37,7 @@ impl Default for RealtimeInputs {
 					.load(Ordering::Acquire)
 					.then(|| EARLY_NETWORK_AVAILABLE.load(Ordering::Acquire)),
 			),
+			location_wifi_safety_allowed: true,
 		}
 	}
 }
@@ -46,7 +48,10 @@ fn initial_network_available(is_mobile: bool, observed: Option<bool>) -> bool {
 
 impl RealtimeInputs {
 	fn desired(&self) -> bool {
-		self.requested && self.foreground && self.network_available
+		self.requested
+			&& self.foreground
+			&& self.network_available
+			&& self.location_wifi_safety_allowed
 	}
 }
 
@@ -97,11 +102,22 @@ pub fn set_network_available(available: bool) {
 	});
 }
 
+pub fn set_location_wifi_safety_allowed(allowed: bool) {
+	update_realtime_inputs("location-wifi-safety", |inputs| {
+		inputs.location_wifi_safety_allowed = allowed;
+	});
+}
+
 pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 	tauri::plugin::Builder::new("open-grind-realtime-network")
 		.setup(|_app, _api| {
+			crate::api::location_wifi_safety::install(_app.clone());
 			#[cfg(target_os = "ios")]
-			_api.register_ios_plugin(init_plugin_open_grind_realtime_network)?;
+			{
+				_api.register_ios_plugin(
+					init_plugin_open_grind_realtime_network,
+				)?;
+			}
 			Ok(())
 		})
 		.build()
@@ -192,6 +208,25 @@ pub extern "system" fn Java_doctor_andrewcox_opengrind_realtime_RealtimeNetworkM
 	}
 }
 
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub extern "system" fn Java_doctor_andrewcox_opengrind_realtime_RealtimeNetworkMonitor_nativeSetWifiState(
+	_env: JNIEnv,
+	_class: JClass,
+	known: jboolean,
+	connected: jboolean,
+) {
+	let result = std::panic::catch_unwind(|| {
+		crate::api::location_wifi_safety::set_wifi_state(
+			known != 0,
+			connected != 0,
+		);
+	});
+	if result.is_err() {
+		tracing::error!("[location-wifi-safety] JNI Wi-Fi update panicked");
+	}
+}
+
 #[cfg(target_os = "ios")]
 #[no_mangle]
 pub extern "C" fn open_grind_set_network_available(available: u8) {
@@ -200,6 +235,20 @@ pub extern "C" fn open_grind_set_network_available(available: u8) {
 	});
 	if result.is_err() {
 		tracing::error!("[ws-lifecycle] iOS network update panicked");
+	}
+}
+
+#[cfg(target_os = "ios")]
+#[no_mangle]
+pub extern "C" fn open_grind_set_wifi_state(known: u8, connected: u8) {
+	let result = std::panic::catch_unwind(|| {
+		crate::api::location_wifi_safety::set_wifi_state(
+			known != 0,
+			connected != 0,
+		);
+	});
+	if result.is_err() {
+		tracing::error!("[location-wifi-safety] iOS Wi-Fi update panicked");
 	}
 }
 
@@ -366,6 +415,7 @@ mod tests {
 			requested: true,
 			foreground: true,
 			network_available: true,
+			location_wifi_safety_allowed: true,
 		};
 		assert!(inputs.desired());
 
@@ -373,6 +423,9 @@ mod tests {
 		assert!(!inputs.desired());
 		inputs.foreground = true;
 		inputs.network_available = false;
+		assert!(!inputs.desired());
+		inputs.network_available = true;
+		inputs.location_wifi_safety_allowed = false;
 		assert!(!inputs.desired());
 	}
 

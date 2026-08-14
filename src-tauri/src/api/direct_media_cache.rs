@@ -530,6 +530,9 @@ pub async fn direct_media_cache_store(
 	maximum_bytes: u64,
 	scope_token: String,
 ) -> Result<DirectMediaStored, AppError> {
+	crate::api::location_wifi_safety::assert_grindr_traffic_allowed_for(
+		"<cdn>",
+	)?;
 	validate_identity(
 		&account_id,
 		&conversation_id,

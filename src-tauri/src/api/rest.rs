@@ -227,6 +227,7 @@ fn error_kind(error: &AppError) -> &'static str {
 		AppError::RequestBlocked => "request_blocked",
 		AppError::RequestCooldown { .. } => "request_cooldown",
 		AppError::RequestCancelled => "request_cancelled",
+		AppError::LocationWifiSafetyBlocked => "location_wifi_safety_blocked",
 		AppError::NotInitialized => "not_initialized",
 	}
 }
@@ -328,6 +329,9 @@ async fn request_registered(
 					AppError::RequestCooldown { retry_at_ms }
 				}
 				RuntimeError::Cancelled => AppError::RequestCancelled,
+				RuntimeError::LocationWifiSafetyBlocked => {
+					AppError::LocationWifiSafetyBlocked
+				}
 			};
 			tracing::warn!(
 				request_id,

@@ -9,6 +9,7 @@ export const apiErrorKinds = [
 	"RequestBlocked",
 	"RequestCooldown",
 	"RequestCancelled",
+	"LocationWifiSafetyBlocked",
 	"RequestTimeout",
 	"NotInitialized",
 	"SessionCleared",
@@ -58,6 +59,7 @@ export class ApiError extends Error {
 		if (
 			this.kind === "RequestBlocked" ||
 			this.kind === "RequestCooldown" ||
+			this.kind === "LocationWifiSafetyBlocked" ||
 			this.kind === "RequestTimeout"
 		) {
 			return JSON.stringify(

@@ -601,6 +601,7 @@ fn poll_notifications(
 				}
 				Err(RuntimeError::Cooldown { .. })
 				| Err(RuntimeError::Cancelled)
+				| Err(RuntimeError::LocationWifiSafetyBlocked)
 				| Err(RuntimeError::Grindr(grindr::GrindrError::Blocked))
 				| Err(RuntimeError::Grindr(grindr::GrindrError::RateLimited)) => {
 					persist_client_state(client);
@@ -711,6 +712,7 @@ fn poll_notifications(
 				}
 				Err(RuntimeError::Cooldown { .. })
 				| Err(RuntimeError::Cancelled)
+				| Err(RuntimeError::LocationWifiSafetyBlocked)
 				| Err(RuntimeError::Grindr(grindr::GrindrError::Blocked))
 				| Err(RuntimeError::Grindr(grindr::GrindrError::RateLimited)) => {
 					persist_client_state(client);

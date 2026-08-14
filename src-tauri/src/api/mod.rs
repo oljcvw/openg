@@ -7,6 +7,7 @@ pub mod direct_media_cache;
 mod encrypted_media_store;
 pub mod google_oauth;
 pub mod identity;
+pub mod location_wifi_safety;
 pub mod media_capture;
 pub mod media_upload;
 pub mod notifications;

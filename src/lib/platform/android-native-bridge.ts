@@ -72,3 +72,23 @@ export async function registerAndroidBackButtonListener() {
 		void handleAndroidBackEvent();
 	});
 }
+
+export function isAndroidWifiConnected(): boolean {
+	return window.__AndroidWifi?.isConnected() === true;
+}
+
+export function isAndroidWifiEnabled(): boolean {
+	return window.__AndroidWifi?.isEnabled() !== false;
+}
+
+export function openAndroidWifiSettings(): void {
+	if (!window.__AndroidWifi)
+		throw new Error("Android Wi-Fi controls are unavailable");
+	window.__AndroidWifi.openSettings();
+}
+
+export function restartAndroidApp(): void {
+	if (!window.__AndroidWifi)
+		throw new Error("Android app restart is unavailable");
+	window.__AndroidWifi.restartApp();
+}

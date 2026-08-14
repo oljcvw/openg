@@ -1,11 +1,14 @@
 package doctor.andrewcox.opengrind.notifications
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import doctor.andrewcox.opengrind.logging.AppLog
+import doctor.andrewcox.opengrind.realtime.shouldBlockLocationWifiBackgroundTraffic
 
 class NotificationWorker(
 	appContext: Context,
@@ -21,6 +24,10 @@ class NotificationWorker(
 		}
 		if (isForeground()) {
 			AppLog.info(applicationContext, TAG, "poll skipped: app foreground")
+			return Result.success()
+		}
+		if (locationWifiSafetyBlocksPoll()) {
+			AppLog.info(applicationContext, TAG, "poll skipped: location Wi-Fi safety")
 			return Result.success()
 		}
 		val notifier = NotificationNotifier(applicationContext)
@@ -62,6 +69,22 @@ class NotificationWorker(
 	private fun isForeground(): Boolean =
 		ProcessLifecycleOwner.get().lifecycle.currentState
 			.isAtLeast(Lifecycle.State.STARTED)
+
+	private fun locationWifiSafetyBlocksPoll(): Boolean {
+		val active = applicationContext
+			.getSharedPreferences("location_wifi_safety", Context.MODE_PRIVATE)
+			.getBoolean("manual_location_active", false)
+		if (!active) return false
+		val manager = applicationContext.getSystemService(ConnectivityManager::class.java)
+		val network = manager.activeNetwork
+		val capabilities = network?.let(manager::getNetworkCapabilities)
+		return shouldBlockLocationWifiBackgroundTraffic(
+			manualLocationActive = true,
+			known = capabilities != null,
+			connected = capabilities
+				?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true,
+		)
+	}
 
 	private fun process(
 		result: PollResult.Success,
