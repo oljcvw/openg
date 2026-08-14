@@ -85,3 +85,4 @@ strip = "symbols"
 grindr = { path = "patches/grindr" }
 swift-rs = { git = "https://github.com/SteveSSL45/swift-rs.git", rev = "f80356b83a43e6203ab24a537446b45007984997" }
 tauri-codegen = { path = "patches/tauri-codegen" }
+wry = { path = "patches/wry" }
