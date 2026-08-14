@@ -12,6 +12,9 @@
 		"geolocation:allow-check-permissions",
 		"geolocation:allow-request-permissions",
 		"geolocation:allow-get-current-position",
-		"geolocation:allow-watch-position"
+		"geolocation:allow-watch-position",
+		"open-grind-voice-recorder:default",
+		"open-grind-video-call:default",
+		"open-grind-notifications:default"
 	]
 }

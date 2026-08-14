@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { addPluginListener } from "@tauri-apps/api/core";
 	import { afterNavigate, goto, replaceState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { onMount, untrack } from "svelte";
@@ -21,7 +20,7 @@
 		installCurrentNavigationCoordinator,
 		setSemanticRouteBackHandler,
 	} from "$lib/navigation/app-navigation";
-	import { acceptedNativeNotificationRoute } from "$lib/notifications/native-route";
+	import { installIosNotificationRouteListener } from "$lib/notifications/native-listener";
 	import VideoCallHost from "$lib/video-call/components/VideoCallHost.svelte";
 
 	let { children }: import("./$types").LayoutProps = $props();
@@ -87,47 +86,9 @@
 	}
 
 	onMount(() => {
-		let notificationListenerCancelled = false;
-		let lastNotificationRoute: { key: string; handledAt: number } | null = null;
-		function navigateNotification(payload: unknown): void {
-			const accepted = acceptedNativeNotificationRoute(
-				payload,
-				getAccountSessionSnapshot().accountId,
-			);
-			if (!accepted) return;
-			const key = `${accepted.accountId}:${accepted.route}`;
-			const now = Date.now();
-			if (
-				lastNotificationRoute?.key === key &&
-				now - lastNotificationRoute.handledAt < 2_000
-			)
-				return;
-			lastNotificationRoute = { key, handledAt: now };
-			void goto(accepted.route);
-		}
-		const notificationListener = addPluginListener(
-			"open-grind-notifications",
-			"notification-route",
-			navigateNotification,
-		)
-			.then(async (listener) => {
-				if (notificationListenerCancelled) {
-					await listener.unregister();
-					return null;
-				}
-				try {
-					navigateNotification(await callMethod("notification_take_route"));
-				} catch (error) {
-					await listener.unregister().catch(() => undefined);
-					console.error("Failed to initialize notification routing", error);
-					return null;
-				}
-				return listener;
-			})
-			.catch((error) => {
-				console.error("Failed to register notification routing", error);
-				return null;
-			});
+		const releaseNotificationListener = installIosNotificationRouteListener(
+			(route) => goto(route),
+		);
 		const releaseAccountGeneration = subscribeAccountGeneration(
 			(generation) => {
 				accountGeneration = generation;
@@ -140,10 +101,7 @@
 			console.error("Failed to reconcile pending profile location", error);
 		});
 		return () => {
-			notificationListenerCancelled = true;
-			void notificationListener
-				.then((listener) => listener?.unregister())
-				.catch(() => undefined);
+			releaseNotificationListener();
 			releaseAccountGeneration();
 		};
 	});

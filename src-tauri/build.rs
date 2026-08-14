@@ -2,15 +2,18 @@
 mod ios_build_support;
 
 fn main() {
+	let listener_plugin = || {
+		tauri_build::InlinedPlugin::new()
+			.commands(&["register_listener", "remove_listener"])
+			.default_permission(
+				tauri_build::DefaultPermissionRule::AllowAllCommands,
+			)
+	};
 	tauri_build::try_build(
-		tauri_build::Attributes::new().plugin(
-			"open-grind-voice-recorder",
-			tauri_build::InlinedPlugin::new()
-				.commands(&["register_listener", "remove_listener"])
-				.default_permission(
-					tauri_build::DefaultPermissionRule::AllowAllCommands,
-				),
-		),
+		tauri_build::Attributes::new()
+			.plugin("open-grind-voice-recorder", listener_plugin())
+			.plugin("open-grind-video-call", listener_plugin())
+			.plugin("open-grind-notifications", listener_plugin()),
 	)
 	.expect("failed to build Tauri application metadata");
 	tauri_plugin::Builder::new(&[])

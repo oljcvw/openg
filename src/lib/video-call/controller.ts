@@ -139,7 +139,10 @@ export class VideoCallController {
 		const channelId = this.#snapshot.channelId;
 		const unlisteners = this.#unlisteners;
 		this.#unlisteners = [];
-		for (const unlisten of await Promise.all(unlisteners)) unlisten();
+		const settledUnlisteners = await Promise.allSettled(unlisteners);
+		for (const result of settledUnlisteners) {
+			if (result.status === "fulfilled") result.value();
+		}
 		if (channelId !== null) {
 			await Promise.allSettled([this.bridge.stop(), this.api.leave(channelId)]);
 		}

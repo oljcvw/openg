@@ -28,7 +28,14 @@ function successfulSession(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-function setup(options: { nativeAvailable?: boolean } = {}) {
+function setup(
+	options: {
+		nativeAvailable?: boolean;
+		listenerRegistrations?: Promise<() => void>[];
+	} = {},
+) {
+	const nextRegistration = () =>
+		options.listenerRegistrations?.shift() ?? Promise.resolve(() => undefined);
 	let incomingHandler: ((call: IncomingVideoCall) => void) | null = null;
 	let endedHandler: ((call: VideoCallEnded) => void) | null = null;
 	let remoteJoinedHandler: (() => void) | null = null;
@@ -53,21 +60,21 @@ function setup(options: { nativeAvailable?: boolean } = {}) {
 		stop: vi.fn().mockResolvedValue(undefined),
 		onRemoteParticipantJoined: vi.fn((handler: () => void) => {
 			remoteJoinedHandler = handler;
-			return Promise.resolve(() => undefined);
+			return nextRegistration();
 		}),
 		onEnded: vi.fn((handler: () => void) => {
 			nativeEndedHandler = handler;
-			return Promise.resolve(() => undefined);
+			return nextRegistration();
 		}),
 	};
 	const events = {
 		onIncoming: vi.fn((handler: (call: IncomingVideoCall) => void) => {
 			incomingHandler = handler;
-			return Promise.resolve(() => undefined);
+			return nextRegistration();
 		}),
 		onEnded: vi.fn((handler: (call: VideoCallEnded) => void) => {
 			endedHandler = handler;
-			return Promise.resolve(() => undefined);
+			return nextRegistration();
 		}),
 	};
 	const controller = new VideoCallController(api, bridge, events);
@@ -300,5 +307,25 @@ describe("VideoCallController", () => {
 		expect(harness.bridge.stop).toHaveBeenCalledOnce();
 		expect(harness.api.leave).toHaveBeenCalledWith("channel");
 		expect(harness.controller.snapshot.phase).toBe("idle");
+	});
+
+	it("releases every successful late listener when a sibling registration fails", async () => {
+		const firstRelease = vi.fn();
+		const thirdRelease = vi.fn();
+		const fourthRelease = vi.fn();
+		const harness = setup({
+			listenerRegistrations: [
+				Promise.resolve(firstRelease),
+				Promise.reject(new Error("registration failed")),
+				Promise.resolve(thirdRelease),
+				Promise.resolve(fourthRelease),
+			],
+		});
+
+		await expect(harness.controller.destroy()).resolves.toBeUndefined();
+
+		expect(firstRelease).toHaveBeenCalledOnce();
+		expect(thirdRelease).toHaveBeenCalledOnce();
+		expect(fourthRelease).toHaveBeenCalledOnce();
 	});
 });
