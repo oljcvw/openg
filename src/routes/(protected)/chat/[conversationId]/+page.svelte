@@ -20,6 +20,7 @@
 
 	const conversations = getConversations();
 	const conversationId = $derived(page.params.conversationId as string);
+	const targetMessageId = $derived(page.url.searchParams.get("messageId"));
 	const ourProfileId = $derived(data.ourProfileId);
 
 	let conversationState = $state(
@@ -63,7 +64,7 @@
 
 <ChatNavBar />
 <Card.Content class="relative flex min-h-0 flex-1 flex-col p-0">
-	<ConversationMessages {composerHeight} />
+	<ConversationMessages {composerHeight} {targetMessageId} />
 	<MessageComposer
 		conversationId={conversationState.conversationId}
 		onSend={(drafts: MessageDraft[]) => conversationState.send(drafts)}

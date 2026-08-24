@@ -2,6 +2,7 @@
 	import { tick, untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
+	import { loadMessageTarget } from "$lib/chat/load-message-target";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import { Spinner } from "$lib/components/ui/spinner";
 	import { getConversationState } from "../conversation-state.svelte";
@@ -11,7 +12,10 @@
 	import MessagesListSkeleton from "./MessagesListSkeleton.svelte";
 	import ScrollToBottomButton from "./ScrollToBottomButton.svelte";
 
-	let { composerHeight }: { composerHeight: number } = $props();
+	let {
+		composerHeight,
+		targetMessageId = null,
+	}: { composerHeight: number; targetMessageId?: string | null } = $props();
 
 	const conversationState = $derived(getConversationState()());
 
@@ -103,6 +107,7 @@
 
 	let scrollDone = false;
 	let lastFirstId = "";
+	let targetCenterPadding = $state(0);
 
 	$effect(resetForNewConversation);
 
@@ -111,6 +116,7 @@
 		untrack(() => {
 			scrollDone = false;
 			lastFirstId = "";
+			targetCenterPadding = 0;
 			atFloor = true;
 			seenMessageIds.clear();
 			endScrollingToRest();
@@ -120,10 +126,69 @@
 	$effect(scrollToRestWhenLoaded);
 
 	function scrollToRestWhenLoaded(): void {
-		if (!conversationState.loading && !scrollDone && container) {
+		if (
+			!conversationState.loading &&
+			!scrollDone &&
+			container &&
+			targetMessageId === null
+		) {
 			scrollDone = true;
 			void scrollToRest("instant");
 		}
+	}
+
+	let targetGeneration = 0;
+
+	$effect(scrollToTargetMessage);
+
+	function scrollToTargetMessage(): void | (() => void) {
+		const state = conversationState;
+		const messageId = targetMessageId;
+		const el = container;
+		const loading = state.loading;
+		targetGeneration += 1;
+		if (!messageId) {
+			targetCenterPadding = 0;
+			return;
+		}
+		if (!el || loading) return;
+
+		const generation = targetGeneration;
+		const isCurrent = () =>
+			generation === targetGeneration &&
+			conversationState === state &&
+			targetMessageId === messageId;
+		scrollDone = true;
+		void untrack(() =>
+			loadMessageTarget({
+				messageId,
+				hasMessage: (id) =>
+					state.messages.some((message) => message.messageId === id),
+				pageKey: () => state.pageKey,
+				loading: () => state.loadingMore,
+				loadMore: () => state.loadMore(),
+				isCurrent,
+			}),
+		).then(async (found) => {
+			if (!isCurrent()) return;
+			if (!found) {
+				targetCenterPadding = 0;
+				await scrollToRest("instant");
+				return;
+			}
+			targetCenterPadding = el.clientHeight / 2;
+			await tick();
+			if (!isCurrent()) return;
+			const target = [
+				...el.querySelectorAll<HTMLElement>("[data-message-id]"),
+			].find((element) => element.dataset.messageId === messageId);
+			target?.scrollIntoView({ behavior: "auto", block: "center" });
+			onContainerScrollEnd();
+		});
+
+		return () => {
+			if (targetGeneration === generation) targetGeneration += 1;
+		};
 	}
 
 	$effect(followNewMessages);
@@ -200,11 +265,25 @@
 			<div
 				class="flex min-h-overscrollable shrink-0 flex-col justify-end gap-1"
 			>
+				{#if targetCenterPadding > 0}
+					<div
+						aria-hidden="true"
+						class="shrink-0"
+						style:height="{targetCenterPadding}px"
+					></div>
+				{/if}
 				{#if conversationState.loadingMore}
 					<Spinner class="mt-25 shrink-0 self-center" />
 				{/if}
 				<ConversationPaginationSentinel {container} />
-				<MessagesList {seenMessageIds} />
+				<MessagesList {seenMessageIds} {targetMessageId} />
+				{#if targetCenterPadding > 0}
+					<div
+						aria-hidden="true"
+						class="shrink-0"
+						style:height="{targetCenterPadding}px"
+					></div>
+				{/if}
 			</div>
 		{/if}
 	</div>

@@ -17,16 +17,19 @@
 	import * as ContextMenu from "$lib/components/ui/context-menu";
 	import * as Item from "$lib/components/ui/item";
 	import { previewLabel } from "$lib/model/messaging/message-preview";
+	import type { ConversationSearchMatch } from "$lib/chat/conversation-search-index";
 	import type { Conversation } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
 
 	let {
 		conversation,
+		searchMatch = null,
 		selection = null,
 		onEnterSelection,
 		onRequestDelete,
 	}: {
 		conversation: Conversation;
+		searchMatch?: ConversationSearchMatch | null;
 		selection?: SelectionSet<string> | null;
 		onEnterSelection?: () => void;
 		onRequestDelete?: () => void;
@@ -38,6 +41,11 @@
 	const participant = $derived(conversation.data.participants[0]);
 	const previewText = $derived(previewLabel(preview));
 	const conversationId = $derived(conversation.data.conversationId);
+	const conversationLink = $derived(
+		searchMatch?.source === "message"
+			? `/chat/${conversationId}?messageId=${encodeURIComponent(searchMatch.messageId)}`
+			: `/chat/${conversationId}`,
+	);
 	const draft = $derived(conversations.drafts.get(conversationId));
 
 	const active = $derived(page.params.conversationId === conversationId);
@@ -92,7 +100,7 @@
 		}}
 		title={{ value: conversation.data.name, badge: titleBadges }}
 		onlineUntil={conversation.data.onlineUntil ?? participant?.onlineUntil}
-		link="/chat/{conversationId}"
+		link={conversationLink}
 		selected={isSelected}
 		onToggleSelected={selection ? toggleSelected : undefined}
 		onLongPress={onEnterSelection}
@@ -109,7 +117,11 @@
 					},
 				]}
 			>
-				{#if draft !== ""}
+				{#if searchMatch?.source === "message"}
+					<span class="font-medium text-primary"
+						>{searchMatch.preview}</span
+					>
+				{:else if draft !== ""}
 					<span
 						data-slot="conversation-draft-prefix"
 						class="font-bold text-primary">Draft:&nbsp;</span

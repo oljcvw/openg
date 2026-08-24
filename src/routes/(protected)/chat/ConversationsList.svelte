@@ -3,6 +3,8 @@
 	import { page } from "$app/state";
 	import { tick } from "svelte";
 
+	import { compileConversationSearch } from "$lib/chat/conversation-search";
+	import { runConversationSearch } from "$lib/chat/conversation-search-runner";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
@@ -11,6 +13,7 @@
 	import { below } from "$lib/util/breakpoints.svelte";
 	import { restoreScrollOnce } from "$lib/util/scroll-restore.svelte";
 	import { SelectionSet } from "$lib/util/selection.svelte";
+	import type { ConversationSearchMatch } from "$lib/chat/conversation-search-index";
 	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
 	import Conversation from "./Conversation.svelte";
 	import ConversationsFilters from "./ConversationsFilters.svelte";
@@ -20,9 +23,94 @@
 	import LazyConversation from "./LazyConversation.svelte";
 
 	const EAGER_COUNT = 10;
+	const SEARCH_DEBOUNCE_MS = 250;
 
 	const conversations: ConversationsState = getConversations();
 	const mobile = below("split");
+	let searchQuery = $state("");
+	const compiledSearch = $derived(compileConversationSearch(searchQuery));
+	const searching = $derived(compiledSearch.terms.length > 0);
+	let searchCacheRevision = $state(0);
+	let searchRunning = $state(false);
+	let searchFailure: Error | null = $state(null);
+	let searchRetryNonce = $state(0);
+	let searchGeneration = 0;
+	const visibleResults = $derived(
+		(() => {
+			void searchCacheRevision;
+			return conversations.entries.flatMap((conversation) => {
+				const match = conversations.searchIndex.getCachedMatch(
+					conversation,
+					compiledSearch,
+				);
+				return match ? [{ conversation, match }] : [];
+			});
+		})(),
+	);
+
+	$effect(() => {
+		const query = compiledSearch;
+		const filterKey = conversations.filters.active.join("\u0000");
+		const initialLoading = conversations.loading;
+		void filterKey;
+		void searchRetryNonce;
+
+		searchGeneration += 1;
+		const generation = searchGeneration;
+		searchFailure = null;
+		if (query.terms.length === 0 || initialLoading) {
+			searchRunning = false;
+			return;
+		}
+
+		searchRunning = true;
+		const isCurrent = () => generation === searchGeneration;
+		const timer = setTimeout(() => {
+			void runConversationSearch({
+				index: conversations.searchIndex,
+				query,
+				getConversations: () => conversations.entries,
+				hasMoreConversations: () => conversations.nextPage !== null,
+				conversationPageToken: () => conversations.paging.armToken,
+				loadMoreConversations: () => conversations.paging.runToIdle(),
+				getPagingFailure: () => conversations.paging.failure,
+				prime: (conversation) =>
+					conversations.searchIndex.prime(
+						conversation,
+						conversations.getCachedConversation(
+							conversation.data.conversationId,
+						),
+					),
+				isCurrent,
+				onProgress: () => {
+					if (isCurrent()) searchCacheRevision += 1;
+				},
+			})
+				.then(() => {
+					if (!isCurrent()) return;
+					searchCacheRevision += 1;
+					searchRunning = false;
+				})
+				.catch((error: unknown) => {
+					if (!isCurrent()) return;
+					searchFailure =
+						error instanceof Error
+							? error
+							: new Error(String(error));
+					searchRunning = false;
+				});
+		}, SEARCH_DEBOUNCE_MS);
+
+		return () => {
+			clearTimeout(timer);
+			if (searchGeneration === generation) searchGeneration += 1;
+		};
+	});
+
+	function retrySearch() {
+		if (conversations.paging.failure) conversations.paging.retry();
+		searchRetryNonce += 1;
+	}
 
 	$effect(() => {
 		conversations.noteListViewed();
@@ -190,12 +278,16 @@
 				<div
 					class="flex min-h-overscrollable shrink-0 flex-col gap-1 pb-nav-clear"
 				>
-					{#each conversations.entries as conversation, i (conversation.data.conversationId)}
+					{#each visibleResults as result, i (result.conversation.data.conversationId)}
+						{@const conversation = result.conversation}
 						{@const conversationId =
 							conversation.data.conversationId}
+						{@const searchMatch: ConversationSearchMatch | null =
+							searching ? result.match : null}
 						{#if i < EAGER_COUNT}
 							<Conversation
 								{conversation}
+								{searchMatch}
 								selection={selecting ? selection : null}
 								onEnterSelection={mobile.current
 									? () => enterSelection(conversationId)
@@ -206,6 +298,7 @@
 						{:else}
 							<LazyConversation
 								{conversation}
+								{searchMatch}
 								selection={selecting ? selection : null}
 								onEnterSelection={mobile.current
 									? () => enterSelection(conversationId)
@@ -218,8 +311,13 @@
 					<ConversationsPagingTail
 						paging={conversations.paging}
 						hasMore={conversations.nextPage !== null}
-						listEmpty={conversations.entries.length === 0}
-						filtered={conversations.filters.active.length > 0}
+						listEmpty={visibleResults.length === 0}
+						filtered={conversations.filters.active.length > 0 ||
+							searching}
+						query={searchQuery}
+						searchingHistory={searchRunning}
+						{searchFailure}
+						onSearchRetry={retrySearch}
 					/>
 				</div>
 			{/if}
@@ -235,6 +333,7 @@
 		<ConversationsFilters
 			filters={conversations.filters}
 			onchange={(active) => conversations.setFilters(active)}
+			bind:query={searchQuery}
 			inert={selecting}
 		/>
 	</div>

@@ -83,6 +83,7 @@ async function stateWithMessage() {
 			clearActive: vi.fn(),
 			getCachedConversation: vi.fn(() => undefined),
 			setCachedConversation: vi.fn(),
+			invalidateConversation: vi.fn(),
 			updatePreview: vi.fn(),
 			markRead: vi.fn(),
 			ensureLoaded: vi.fn(),

@@ -55,10 +55,18 @@ function mount({
 	loadPage = () => Promise.resolve(),
 	listEmpty = false,
 	hasMore = true,
+	query = "",
+	searchingHistory = false,
+	searchFailure = null,
+	onSearchRetry,
 }: {
 	loadPage?: (page: number) => Promise<void>;
 	listEmpty?: boolean;
 	hasMore?: boolean;
+	query?: string;
+	searchingHistory?: boolean;
+	searchFailure?: Error | null;
+	onSearchRetry?: () => void;
 } = {}) {
 	const paging = new InboxPaging({ loadPage, cursor: () => 2 });
 	const rendered = render(ConversationsPagingTail, {
@@ -66,6 +74,10 @@ function mount({
 		hasMore,
 		listEmpty,
 		filtered: false,
+		query,
+		searchingHistory,
+		searchFailure,
+		onSearchRetry,
 	});
 	return { paging, ...rendered };
 }
@@ -167,6 +179,46 @@ describe("ConversationsPagingTail", () => {
 		mount({ listEmpty: true, hasMore: false });
 
 		expect(screen.getByText("No Conversations Yet")).toBeTruthy();
+	});
+
+	it("shows the search-specific empty state after every page is checked", () => {
+		mount({ listEmpty: true, hasMore: false, query: "lost words" });
+
+		expect(screen.getByText("No matching conversations")).toBeTruthy();
+		expect(
+			screen.getByText("No names or messages match “lost words”."),
+		).toBeTruthy();
+	});
+
+	it("keeps the empty state pending while message history is searched", () => {
+		const { container } = mount({
+			listEmpty: true,
+			hasMore: false,
+			query: "deep words",
+			searchingHistory: true,
+		});
+
+		expect(screen.queryByText("No matching conversations")).toBeNull();
+		expect(screen.getByRole("status").textContent?.trim()).toBe(
+			"Searching message history",
+		);
+		expect(skeletonCount(container)).toBe(8);
+	});
+
+	it("offers the search retry callback when history loading fails", () => {
+		const onSearchRetry = vi.fn();
+		mount({
+			listEmpty: true,
+			hasMore: false,
+			searchFailure: new Error("offline"),
+			onSearchRetry,
+		});
+
+		expect(screen.getByRole("status").textContent?.trim()).toBe(
+			"Failed to search message history",
+		);
+		screen.getByRole("button", { name: "Retry" }).click();
+		expect(onSearchRetry).toHaveBeenCalledOnce();
 	});
 
 	it("shows six skeletons below existing rows while a page loads", async () => {

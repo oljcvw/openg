@@ -12,6 +12,7 @@ export class InboxPaging {
 	#demandWhileRunning = false;
 	#retryTimer: ReturnType<typeof setTimeout> | null = null;
 	#destroyed = false;
+	#idleWaiters: (() => void)[] = [];
 
 	constructor({
 		loadPage,
@@ -54,7 +55,14 @@ export class InboxPaging {
 			const deferredDemand = this.#demandWhileRunning;
 			this.#demandWhileRunning = false;
 			if (deferredDemand && succeeded) this.#armNonce += 1;
+			for (const resolve of this.#idleWaiters) resolve();
+			this.#idleWaiters = [];
 		}
+	}
+
+	async runToIdle(): Promise<void> {
+		if (!this.running) return await this.run();
+		await new Promise<void>((resolve) => this.#idleWaiters.push(resolve));
 	}
 
 	retry(): void {

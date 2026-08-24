@@ -9,6 +9,7 @@ import {
 	setConversationPinned,
 } from "$lib/api/messaging/conversations";
 import { onProfileEdit } from "$lib/api/users/profiles";
+import { createConversationSearchIndex } from "$lib/chat/create-conversation-search-index";
 import { InboxViewedMarker } from "$lib/chat/inbox-last-viewed.svelte";
 import { InboxPaging } from "$lib/chat/inbox-paging.svelte";
 import { applyOptimisticBatch } from "$lib/chat/optimistic-batch";
@@ -61,6 +62,7 @@ class ConversationsState {
 	readonly filters = new ConversationFilters();
 	readonly inboxViewed: InboxViewedMarker;
 	readonly paging: InboxPaging;
+	readonly searchIndex = createConversationSearchIndex();
 	#onIncomingMessage: IncomingMessageHandler;
 	#activeConversationId: string | null = null;
 	#wsPromises: Promise<() => void>[] = [];
@@ -149,7 +151,7 @@ class ConversationsState {
 
 		if (this.#seenMessages.has(message.messageId)) {
 			if (!this.#isActive(conversationId))
-				this.invalidateConversation(conversationId);
+				this.#messageCache.delete(conversationId);
 			return;
 		}
 		this.#seenMessages.mark(message.messageId);
@@ -157,7 +159,7 @@ class ConversationsState {
 		if (entry) {
 			const isActive = this.#isActive(conversationId);
 			if (!isActive && isIncoming) entry.data.unreadCount += 1;
-			if (!isActive) this.invalidateConversation(conversationId);
+			if (!isActive) this.#messageCache.delete(conversationId);
 			if (message.timestamp > entry.data.lastActivityTimestamp) {
 				this.updatePreview({
 					conversationId,
@@ -178,6 +180,7 @@ class ConversationsState {
 			if (!this.#isActive(conversationId))
 				data.unreadCount = Math.max(data.unreadCount, arrived);
 		}
+		this.searchIndex.appendMessage(entry, message);
 		const isInboxPageRoot = page.route.id === "/(protected)/chat";
 		const twoColLayout = !singleColumnLayout.current;
 		const isConversationsListVisible = isInboxPageRoot || twoColLayout;
@@ -389,6 +392,7 @@ class ConversationsState {
 
 	remove(conversationId: string) {
 		this.#messageCache.delete(conversationId);
+		this.searchIndex.delete(conversationId);
 		const index = this.entries.findIndex(
 			(e) => e.data.conversationId === conversationId,
 		);
@@ -638,10 +642,12 @@ class ConversationsState {
 		data: CachedConversation;
 	}): void {
 		this.#messageCache.set(conversationId, data);
+		this.searchIndex.prime(this.#find(conversationId), data);
 	}
 
 	invalidateConversation(id: string): void {
 		this.#messageCache.delete(id);
+		this.searchIndex.invalidate(id);
 	}
 }
 

@@ -5,6 +5,7 @@ import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Drafts } from "$lib/chat/drafts.svelte";
+import type { ConversationSearchMatch } from "$lib/chat/conversation-search-index";
 
 const { conversations, currentPage } = vi.hoisted(() => ({
 	conversations: { drafts: null as Drafts | null },
@@ -75,10 +76,12 @@ function textPreview(text: string): ConversationType["data"]["preview"] {
 function renderRow(
 	preview: ConversationType["data"]["preview"],
 	unreadCount = 0,
+	searchMatch: ConversationSearchMatch | null = null,
 ) {
 	return render(Conversation, {
 		props: {
 			conversation: conversation(preview, unreadCount),
+			searchMatch,
 			onEnterSelection: () => {},
 		},
 	});
@@ -182,5 +185,33 @@ describe("Conversation preview line", () => {
 		const { container } = renderRow(textPreview("hello there"));
 
 		expect(previewLine(container)).toBe("hello there");
+	});
+
+	it("shows a deep-history match instead of the current preview or draft", () => {
+		drafts.save({ conversationId: CONVERSATION_ID, text: "typing" });
+		const { container } = renderRow(textPreview("current preview"), 0, {
+			source: "message",
+			messageId: "message/42",
+			preview: "archived words",
+		});
+
+		expect(previewLine(container)).toBe("archived words");
+		expect(container.querySelector(".text-primary")?.textContent).toBe(
+			"archived words",
+		);
+		expect(
+			container.querySelector(
+				'a[href="/chat/a:1?messageId=message%2F42"]',
+			),
+		).not.toBeNull();
+	});
+
+	it("keeps the ordinary preview and link for a metadata match", () => {
+		const { container } = renderRow(textPreview("current preview"), 0, {
+			source: "metadata",
+		});
+
+		expect(previewLine(container)).toBe("current preview");
+		expect(container.querySelector('a[href="/chat/a:1"]')).not.toBeNull();
 	});
 });

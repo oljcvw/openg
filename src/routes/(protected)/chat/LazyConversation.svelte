@@ -1,16 +1,19 @@
 <script lang="ts">
 	import { observeIntersection } from "$lib/util/observe-intersection";
+	import type { ConversationSearchMatch } from "$lib/chat/conversation-search-index";
 	import type { Conversation as ConversationType } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
 	import Conversation from "./Conversation.svelte";
 
 	let {
 		conversation,
+		searchMatch = null,
 		selection = null,
 		onEnterSelection,
 		onRequestDelete,
 	}: {
 		conversation: ConversationType;
+		searchMatch?: ConversationSearchMatch | null;
 		selection?: SelectionSet<string> | null;
 		onEnterSelection?: () => void;
 		onRequestDelete?: () => void;
@@ -22,6 +25,7 @@
 {#if mounted}
 	<Conversation
 		{conversation}
+		{searchMatch}
 		{selection}
 		{onEnterSelection}
 		{onRequestDelete}

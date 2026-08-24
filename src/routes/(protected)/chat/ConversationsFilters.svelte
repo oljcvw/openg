@@ -8,15 +8,18 @@
 	} from "$lib/chat/conversation-filters.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { buttonVariants } from "$lib/components/ui/button";
+	import { Input } from "$lib/components/ui/input";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
 
 	let {
 		filters,
 		onchange,
+		query = $bindable(""),
 		inert = false,
 	}: {
 		filters: ConversationFilters;
 		onchange: (active: ConversationFilterKey[]) => void;
+		query?: string;
 		inert?: boolean;
 	} = $props();
 
@@ -31,14 +34,23 @@
 	data-fixed-header
 	class="absolute inset-x-0 top-0 z-10"
 	bgClass="bg-linear-to-b from-background to-transparent"
-	contentClass="scrollbar-thin flex gap-0.5 overflow-x-auto px-4 pt-4 pb-2"
+	contentClass="flex gap-1 px-4 pt-4 pb-2"
 	{inert}
 >
+	<Input
+		type="search"
+		placeholder="Search conversations..."
+		aria-label="Search conversations"
+		autocomplete="off"
+		maxlength={100}
+		class="min-w-0 flex-1"
+		bind:value={query}
+	/>
 	<ToggleGroup.Root
 		type="multiple"
 		variant="default"
 		size="sm"
-		class="h-9"
+		class="h-9 shrink-0"
 		bind:value={
 			() => filters.active,
 			(values: string[]) =>

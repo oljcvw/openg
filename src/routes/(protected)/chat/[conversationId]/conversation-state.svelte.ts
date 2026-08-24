@@ -224,6 +224,7 @@ export class ConversationState {
 				return;
 			}
 
+			this.#conversations.invalidateConversation(this.conversationId);
 			this.messages = messages;
 			this.#updatePreview(this.messages.at(0));
 			this.#syncCache();
@@ -506,10 +507,12 @@ export class ConversationState {
 		if (removed) {
 			this.messages.splice(index, 1);
 			if (isLatest) this.#updatePreview(this.messages.at(0));
+			this.#conversations.invalidateConversation(this.conversationId);
 			this.#syncCache();
 			const revertDeleteMessage = () => {
 				this.messages.splice(index, 0, removed);
 				if (isLatest) this.#updatePreview(removed);
+				this.#conversations.invalidateConversation(this.conversationId);
 				this.#syncCache();
 			};
 
@@ -599,12 +602,14 @@ export class ConversationState {
 			msg.unsent = true;
 			msg.type = "Unsent";
 			msg.body = null;
+			this.#conversations.invalidateConversation(this.conversationId);
 			this.#syncCache();
 			this.#updatePreview(msg);
 			revert = () => {
 				msg.unsent = original.unsent;
 				msg.type = original.type;
 				msg.body = original.body;
+				this.#conversations.invalidateConversation(this.conversationId);
 				this.#syncCache();
 				this.#updatePreview(msg);
 			};

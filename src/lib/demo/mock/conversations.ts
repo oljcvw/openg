@@ -146,7 +146,10 @@ const demoConversationSeeds: DemoConversation[] = [
 		lastActivityAgo: 45,
 		messages: Array.from({ length: 80 }, (_, i) => ({
 			fromMe: i % 3 === 0,
-			text: `Backlog message ${i + 1}`,
+			text:
+				i === 0
+					? "Archived nebula handshake"
+					: `Backlog message ${i + 1}`,
 		})),
 	},
 ];

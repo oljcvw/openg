@@ -9,7 +9,11 @@
 	import { processMessages } from "../messages";
 	import Message from "./message/Message.svelte";
 
-	let { seenMessageIds }: { seenMessageIds: Set<string> } = $props();
+	let {
+		seenMessageIds,
+		targetMessageId = null,
+	}: { seenMessageIds: Set<string>; targetMessageId?: string | null } =
+		$props();
 
 	const conversationState = $derived(getConversationState()());
 
@@ -30,6 +34,7 @@
 		stackLength={message.stackLength}
 		dayStart={message.dayStart}
 		status={message.status}
+		searchTarget={message.messageId === targetMessageId}
 		isRead={isOut && message.messageId === messages[0]?.messageId
 			? conversationState.lastReadTimestamp === message.timestamp
 			: null}

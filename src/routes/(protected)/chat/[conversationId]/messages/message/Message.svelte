@@ -32,6 +32,7 @@
 		stackLength,
 		dayStart,
 		status,
+		searchTarget = false,
 		onReact,
 		onDelete,
 		onVisible,
@@ -46,6 +47,7 @@
 		stackLength: number;
 		dayStart?: number;
 		status?: "sent" | "pending" | "error";
+		searchTarget?: boolean;
 		onReact?: (reactionId: number) => void;
 		onDelete?: () => void;
 		onVisible?: () => void;
@@ -219,7 +221,16 @@
 	     that box and would report itself seen without ever being scrolled to. -->
 	<div
 		data-slot="message"
-		class={["relative flex flex-col", { "touch-pan-y": swipe !== null }]}
+		data-message-id={message.messageId}
+		data-search-target={searchTarget ? "" : undefined}
+		class={[
+			"relative flex flex-col rounded-xl transition-colors",
+			{
+				"touch-pan-y": swipe !== null,
+				"bg-primary/10 outline-2 outline-offset-2 outline-primary/60":
+					searchTarget,
+			},
+		]}
 		use:observeIntersection={{ handle: onVisible, once: true }}
 		{...swipe?.handlers}
 	>
