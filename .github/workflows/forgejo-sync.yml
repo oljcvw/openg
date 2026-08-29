@@ -17,13 +17,11 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - name: Configure Git
         run: |
           git config user.name "goodbot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global url."https://".insteadOf "ssh://git@"
 
       - name: Fetch upstream
         run: |
