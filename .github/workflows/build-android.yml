@@ -1,0 +1,198 @@
+# ---------------------------------------------------------------------------
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#
+#   ANDROID_KEYSTORE           base64-encoded contents of your release .jks
+#   ANDROID_KEYSTORE_PASSWORD  the keystore/key password
+#
+# Generate a matching keystore locally with:
+#
+#   keytool -genkeypair -v -keystore release.jks -alias open-grind \
+#     -keyalg EC -groupname secp256r1 -sigalg SHA256withECDSA \
+#     -validity 20000 -storepass "yourpassword" -keypass "yourpassword"
+#
+#   base64 -w0 release.jks
+#   # paste that output into the ANDROID_KEYSTORE secret
+# ---------------------------------------------------------------------------
+
+name: Build Android APK
+
+on:
+#  push:
+#    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Choose the build variant to compile'
+        required: true
+        type: choice
+        default: 'Release'
+        options:
+          - Release
+          - Debug
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Determine build type
+        run: |
+          # If triggered by a push, default to 'Release'
+          TYPE="${{ inputs.build_type || 'Release' }}"
+          TYPE_LOWER=$(echo "$TYPE" | tr '[:upper:]' '[:lower:]')
+
+          echo "BUILD_TYPE=$TYPE" >> "$GITHUB_ENV"
+          echo "BUILD_TYPE_LOWER=$TYPE_LOWER" >> "$GITHUB_ENV"
+
+      - name: Extract SDK versions from gradle.properties
+        run: |
+          PROP_FILE="src-tauri/gen/android/gradle.properties"
+          if [ ! -f "$PROP_FILE" ]; then
+            echo "::error::$PROP_FILE not found"
+            exit 1
+          fi
+
+          COMPILE_SDK=$(sed -n 's/^opengrind\.android\.compileSdk=\(.*\)/\1/p' "$PROP_FILE" | tr -d '\r')
+          BUILD_TOOLS=$(sed -n 's/^opengrind\.android\.buildTools=\(.*\)/\1/p' "$PROP_FILE" | tr -d '\r')
+          NDK_VERSION=$(sed -n 's/^opengrind\.android\.ndk=\(.*\)/\1/p' "$PROP_FILE" | tr -d '\r')
+          CMAKE_VERSION=$(sed -n 's/^opengrind\.android\.cmake=\(.*\)/\1/p' "$PROP_FILE" | tr -d '\r')
+
+          for pair in "COMPILE_SDK=$COMPILE_SDK" "BUILD_TOOLS=$BUILD_TOOLS" "NDK_VERSION=$NDK_VERSION" "CMAKE_VERSION=$CMAKE_VERSION"; do
+            name="${pair%%=*}"; value="${pair#*=}"
+            if [ -z "$value" ]; then
+              echo "::error::Failed to parse $name from $PROP_FILE"
+              exit 1
+            fi
+          done
+
+          echo "COMPILE_SDK=$COMPILE_SDK" >> "$GITHUB_ENV"
+          echo "BUILD_TOOLS=$BUILD_TOOLS" >> "$GITHUB_ENV"
+          echo "NDK_VERSION=$NDK_VERSION" >> "$GITHUB_ENV"
+          echo "CMAKE_VERSION=$CMAKE_VERSION" >> "$GITHUB_ENV"
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential pkg-config libclang-dev cmake perl
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Resolve Android SDK path
+        run: |
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+
+      - name: Cache pinned Android SDK components
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
+            ${{ env.ANDROID_HOME }}/build-tools/${{ env.BUILD_TOOLS }}
+            ${{ env.ANDROID_HOME }}/platforms/android-${{ env.COMPILE_SDK }}
+            ${{ env.ANDROID_HOME }}/cmake/${{ env.CMAKE_VERSION }}
+          key: android-sdk-ndk${{ env.NDK_VERSION }}-bt${{ env.BUILD_TOOLS }}-p${{ env.COMPILE_SDK }}-cmake${{ env.CMAKE_VERSION }}
+
+      - name: Install pinned Android SDK components
+        run: |
+          SDKMANAGER="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 2 -name sdkmanager | sort | tail -n1)"
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+          "$SDKMANAGER" --install \
+            "platforms;android-${{ env.COMPILE_SDK }}" \
+            "build-tools;${{ env.BUILD_TOOLS }}" \
+            "ndk;${{ env.NDK_VERSION }}" \
+            "cmake;${{ env.CMAKE_VERSION }}"
+
+          {
+            echo "NDK_HOME=$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}"
+            echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}"
+          } >> "$GITHUB_ENV"
+          echo "$ANDROID_HOME/cmake/${{ env.CMAKE_VERSION }}/bin" >> "$GITHUB_PATH"
+
+      # rust-toolchain.toml pins the compiler + Android targets; rustup
+      # installs them automatically the first time cargo runs in the repo.
+      # This also caches ~/.cargo and src-tauri/target between runs.
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+          shared-key: android
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache Bun install cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('**/bun.lock*', '**/package.json') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      # Auto-detects and caches the Gradle wrapper + dependency caches used
+      # by the generated src-tauri/gen/android project, even though it's
+      # invoked indirectly through the Tauri CLI rather than called directly.
+      - name: Set up Gradle caching
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Restore signing keystore
+        if: env.BUILD_TYPE == 'Release'
+        run: |
+          mkdir -p src-tauri/gen/android
+          printf '%s' "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > src-tauri/gen/android/release.jks
+          cat > src-tauri/gen/android/keystore.properties <<PROPS
+          storeFile=${{ github.workspace }}/src-tauri/gen/android/release.jks
+          keyAlias=open-grind
+          password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          PROPS
+
+      - name: Install project dependencies
+        run: bun ci
+
+      - name: Build ${{ env.BUILD_TYPE }} APK
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: |
+          if [ "$BUILD_TYPE" = "Debug" ]; then
+            bun run tauri android build --apk --debug --target aarch64
+          else
+            bun run tauri android build --apk --target aarch64
+          fi
+
+      - name: Collect and rename APK
+        run: |
+          SRC_DIR="src-tauri/gen/android/app/build/outputs/apk/universal/${BUILD_TYPE_LOWER}"
+          APK="$(find "$SRC_DIR" -maxdepth 1 -name '*.apk' | sort | head -n1)"
+          if [ -z "$APK" ]; then
+            echo "::error::No APK found in $SRC_DIR"
+            exit 1
+          fi
+          mkdir -p out
+          cp "$APK" "out/open-grind-${BUILD_TYPE_LOWER}-${{ github.run_number }}.apk"
+
+      - name: Remove signing material
+        if: always() && env.BUILD_TYPE == 'Release'
+        run: rm -f src-tauri/gen/android/keystore.properties src-tauri/gen/android/release.jks
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: open-grind-${{ env.BUILD_TYPE_LOWER }}-apk
+          path: out/*.apk
+          overwrite: true
+          retention-days: 7
+          archive: false
