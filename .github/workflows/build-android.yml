@@ -106,7 +106,7 @@ jobs:
         run: |
           SDKMANAGER="$(command -v sdkmanager || true)"
           if [ -z "$SDKMANAGER" ]; then
-            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 2 -name sdkmanager | sort | tail -n1)"
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 4 -name sdkmanager | sort | tail -n1)"
           fi
           yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
           "$SDKMANAGER" --install \
