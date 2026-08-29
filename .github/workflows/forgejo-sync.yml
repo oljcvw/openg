@@ -1,0 +1,51 @@
+name: Sync PR from Forgejo
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Configure Git
+        run: |
+          git config user.name "goodbot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global url."https://".insteadOf "ssh://git@"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://git.opengrind.org/open-grind/open-grind.git \
+            || git remote set-url upstream https://git.opengrind.org/open-grind/open-grind.git
+          git fetch upstream main
+
+      - name: Sync branch and open/refresh PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          UPSTREAM_COMMITS=$(git log HEAD..upstream/main --oneline | wc -l)
+          echo "Found $UPSTREAM_COMMITS new upstream commits."
+
+          if [ "$UPSTREAM_COMMITS" -gt 0 ]; then
+            git push --force origin upstream/main:refs/heads/forgejo-sync
+            gh pr create \
+              --head forgejo-sync \
+              --base main \
+              --title "Sync from Forgejo" \
+              --body "Automated pull of upstream/main from Forgejo. Review and resolve any conflicts here before merging." \
+            || echo "PR already open — branch refreshed."
+          else
+            echo "Already up to date."
+          fi
