@@ -35,6 +35,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      - name: Configure Git for public submodules over HTTPS
+        run: |
+          git config --global url."https://".insteadOf "ssh://git@"
+
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
