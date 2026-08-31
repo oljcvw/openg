@@ -180,6 +180,7 @@
 		{@attach media.attach}
 	>
 		<MediaImage
+            loading="lazy"
 			src={proxyMediaUrl(message.coverUrl)}
 			class="absolute top-0 left-0 h-full w-full rounded-[inherit]"
 			imgClass="bg-card-foreground/10"
