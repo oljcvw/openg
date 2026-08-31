@@ -108,28 +108,28 @@ jobs:
           if [ ! -d "$ANDROID_HOME/cmake/$CMAKE_VERSION" ]; then echo "cmake=true" >> "$GITHUB_OUTPUT"; fi
 
       - name: Cache Android NDK
-	    if: steps.sdk_check.outputs.ndk == 'true'
+        if: steps.sdk_check.outputs.ndk == 'true'
         uses: actions/cache@v6
         with:
           path: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
           key: android-ndk-${{ env.NDK_VERSION }}
 
       - name: Cache Android Build Tools
-	    if: steps.sdk_check.outputs.build_tools == 'true'
+        if: steps.sdk_check.outputs.build_tools == 'true'
         uses: actions/cache@v6
         with:
           path: ${{ env.ANDROID_HOME }}/build-tools/${{ env.BUILD_TOOLS }}
           key: android-build-tools-${{ env.BUILD_TOOLS }}
 
       - name: Cache Android Platform
-	    if: steps.sdk_check.outputs.platform == 'true'
+        if: steps.sdk_check.outputs.platform == 'true'
         uses: actions/cache@v6
         with:
           path: ${{ env.ANDROID_HOME }}/platforms/android-${{ env.COMPILE_SDK }}
           key: android-platform-${{ env.COMPILE_SDK }}
 
       - name: Cache Android CMake
-	    if: steps.sdk_check.outputs.cmake == 'true'
+        if: steps.sdk_check.outputs.cmake == 'true'
         uses: actions/cache@v6
         with:
           path: ${{ env.ANDROID_HOME }}/cmake/${{ env.CMAKE_VERSION }}
