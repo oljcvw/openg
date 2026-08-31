@@ -9,6 +9,11 @@ const root = Bun.fileURLToPath(new URL("..", import.meta.url)).replace(
 	"",
 );
 const profile = Bun.argv.includes("--debug") ? "debug" : "release";
+const appStore = Bun.argv.includes("--app-store");
+const variant = appStore
+	? ["--config", `${root}/src-tauri/tauri.appstore.conf.json`]
+	: [];
+const features = appStore ? "keychain" : "keychain,private-api";
 const bundles = macosBundle(root, profile);
 const out = `${root}/src-tauri/target/${profile}/artifacts`;
 const entitlements = `${root}/src-tauri/entitlements.plist`;
@@ -32,9 +37,29 @@ const stamp = new Date(Number(epoch) * 1000)
 	.replace(".000Z", "Z");
 
 const { version } = await Bun.file(`${root}/src-tauri/tauri.conf.json`).json();
-const zip = `${out}/open-grind-v${version}${hostAssetSuffix()}`;
+const zip = appStore
+	? `${out}/open-grind-v${version}-macos-appstore.zip`
+	: `${out}/open-grind-v${version}${hostAssetSuffix()}`;
 
-await $`bun run tauri build ${profile === "debug" ? ["--debug"] : []} --features keychain --target ${MACOS_TARGET} --bundles app`.cwd(
+const SYSTEM_DYLIBS = ["libiconv.2.dylib"];
+
+async function useSystemDylibs(binary: string): Promise<void> {
+	const linked = await $`otool -L ${binary}`.text();
+	const fromStore = [
+		...new Set(linked.match(/\/nix\/store\/\S+\.dylib/g) ?? []),
+	];
+	for (const ref of fromStore) {
+		const name = ref.split("/").pop()!;
+		if (!SYSTEM_DYLIBS.includes(name)) {
+			throw new Error(
+				`${name} is linked from the Nix store and has no system counterpart, so the app would not launch off this machine`,
+			);
+		}
+		await $`install_name_tool -change ${ref} /usr/lib/${name} ${binary}`.quiet();
+	}
+}
+
+await $`bun run tauri build ${profile === "debug" ? ["--debug"] : []} ${variant} --features ${features} --target ${MACOS_TARGET} --bundles app`.cwd(
 	root,
 );
 
@@ -42,6 +67,8 @@ await $`rm -rf ${out}`;
 await $`mkdir -p ${out}`;
 
 const app = await only("*.app", bundles);
+await useSystemDylibs(`${app}/Contents/MacOS/open-grind`);
+
 const timestamped = adHoc ? [] : ["--timestamp"];
 const entitled = (await Bun.file(entitlements).exists())
 	? ["--entitlements", entitlements]

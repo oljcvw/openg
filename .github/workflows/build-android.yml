@@ -96,15 +96,44 @@ jobs:
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
-      - name: Cache pinned Android SDK components
+      - name: Take ownership of the Android SDK directory
+        run: sudo chown -R "$(id -u):$(id -g)" "$ANDROID_HOME"
+
+      - name: Check whether pinned SDK components are missing
+        id: sdk_check
+        run: |
+          if [ ! -d "$ANDROID_HOME/ndk/$NDK_VERSION" ]; then echo "ndk=true" >> "$GITHUB_OUTPUT"; fi
+          if [ ! -d "$ANDROID_HOME/build-tools/$BUILD_TOOLS" ]; then echo "build_tools=true" >> "$GITHUB_OUTPUT"; fi
+          if [ ! -d "$ANDROID_HOME/platforms/android-$COMPILE_SDK" ]; then echo "platform=true" >> "$GITHUB_OUTPUT"; fi
+          if [ ! -d "$ANDROID_HOME/cmake/$CMAKE_VERSION" ]; then echo "cmake=true" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Cache Android NDK
+        if: steps.sdk_check.outputs.ndk == 'true'
         uses: actions/cache@v6
         with:
-          path: |
-            ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
-            ${{ env.ANDROID_HOME }}/build-tools/${{ env.BUILD_TOOLS }}
-            ${{ env.ANDROID_HOME }}/platforms/android-${{ env.COMPILE_SDK }}
-            ${{ env.ANDROID_HOME }}/cmake/${{ env.CMAKE_VERSION }}
-          key: android-sdk-ndk${{ env.NDK_VERSION }}-bt${{ env.BUILD_TOOLS }}-p${{ env.COMPILE_SDK }}-cmake${{ env.CMAKE_VERSION }}
+          path: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
+          key: android-ndk-${{ env.NDK_VERSION }}
+
+      - name: Cache Android Build Tools
+        if: steps.sdk_check.outputs.build_tools == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.ANDROID_HOME }}/build-tools/${{ env.BUILD_TOOLS }}
+          key: android-build-tools-${{ env.BUILD_TOOLS }}
+
+      - name: Cache Android Platform
+        if: steps.sdk_check.outputs.platform == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.ANDROID_HOME }}/platforms/android-${{ env.COMPILE_SDK }}
+          key: android-platform-${{ env.COMPILE_SDK }}
+
+      - name: Cache Android CMake
+        if: steps.sdk_check.outputs.cmake == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.ANDROID_HOME }}/cmake/${{ env.CMAKE_VERSION }}
+          key: android-cmake-${{ env.CMAKE_VERSION }}
 
       - name: Install pinned Android SDK components
         run: |

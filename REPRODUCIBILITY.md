@@ -62,8 +62,8 @@ Every input that affects the output bytes is pinned in exactly one place:
 
     |            | On x86_64   | On arm64                 |
     | ---------- | ----------- | ------------------------ |
-    | On Linux   | _Canonical_ | Untested                 |
-    | On macOS   | Untested    | **NOT reproducible[^1]** |
+    | On Linux   | _Canonical_ | Not buildable[^1]        |
+    | On macOS   | Untested    | **NOT reproducible[^2]** |
     | On Windows | Untested    | Untested                 |
 
 - Pinned inputs:
@@ -111,7 +111,9 @@ else
 fi
 ```
 
-[^1]: Different host toolchains, even within Nix environment. Builds are only reproducible with full Docker amd64 emulation.
+[^1]: Google publishes `aapt2` only for `linux` (x86-64)
+
+[^2]: Different host toolchains, even within Nix environment. Builds are only reproducible with full Docker amd64 emulation.
 
 ## Linux
 
@@ -122,7 +124,7 @@ fi
     |            | On x86_64   | On arm64                 |
     | ---------- | ----------- | ------------------------ |
     | On Linux   | _Canonical_ | Untested                 |
-    | On macOS   | Untested    | **NOT reproducible[^2]** |
+    | On macOS   | Untested    | **NOT reproducible[^3]** |
     | On Windows | Untested    | Untested                 |
 
 - Cross-compilation table **for Linux arm64 builds**:
@@ -130,7 +132,7 @@ fi
     |            | On x86_64 | On arm64             |
     | ---------- | --------- | -------------------- |
     | On Linux   | Untested  | _Canonical_          |
-    | On macOS   | Untested  | **Reproducible[^3]** |
+    | On macOS   | Untested  | **Reproducible[^4]** |
     | On Windows | Untested  | Untested             |
 
 The container builds for the host architecture, so verify the `x86_64` `.deb` on an x86_64 host and the `arm64` one on arm64. The `.deb` ships unsigned next to a detached `.minisig`, so nothing inside it varies between builds and the whole file must match byte for byte.
@@ -156,9 +158,9 @@ else
 fi
 ```
 
-[^2]: Different host toolchains, even within Nix environment. Builds are only reproducible with full Docker amd64 emulation.
+[^3]: Different host toolchains, even within Nix environment. Builds are only reproducible with full Docker amd64 emulation.
 
-[^3]: `Installed-Size` differs because tauri-bundler sums directory `len()` values, which are filesystem-specific (ext4 4096 vs APFS-backed virtiofs). Recomputing it from file sizes + 1 KiB per directory in `ci/linux/build.sh` makes both hosts produce the identical .deb.
+[^4]: `Installed-Size` differs because tauri-bundler sums directory `len()` values, which are filesystem-specific (ext4 4096 vs APFS-backed virtiofs). Recomputing it from file sizes + 1 KiB per directory in `ci/linux/build.sh` makes both hosts produce the identical .deb.
 
 ## Windows
 
@@ -169,7 +171,7 @@ fi
     |            | On x86_64   | On arm64                 |
     | ---------- | ----------- | ------------------------ |
     | On Linux   | _Canonical_ | Untested                 |
-    | On macOS   | Untested    | **NOT reproducible[^4]** |
+    | On macOS   | Untested    | **NOT reproducible[^5]** |
     | On Windows | Untested    | Untested                 |
 
 - Cross-compilation table **for Windows arm64 builds**:
@@ -177,7 +179,7 @@ fi
     |            | On x86_64   | On arm64                 |
     | ---------- | ----------- | ------------------------ |
     | On Linux   | _Canonical_ | Untested                 |
-    | On macOS   | Untested    | **NOT reproducible[^5]** |
+    | On macOS   | Untested    | **NOT reproducible[^6]** |
     | On Windows | Untested    | Untested                 |
 
 - Pinned inputs:
@@ -214,9 +216,9 @@ else
 fi
 ```
 
-[^4]: Different host toolchains, even within Nix environment. Builds are only reproducible with full Docker amd64 emulation.
+[^5]: Different host toolchains, even within Nix environment. Builds are only reproducible with full Docker amd64 emulation.
 
-[^5]: exe differs in `.text` (+1220 B on the Mac) and `.rdata` (−1840 B) with everything else matching; not fixable by us.
+[^6]: exe differs in `.text` (+1220 B on the Mac) and `.rdata` (−1840 B) with everything else matching; not fixable by us.
 
 ## macOS
 
@@ -237,9 +239,9 @@ fi
     | `plutil` (Info.plist)             | `flake.lock` (nixpkgs `xcbuild`)                           |
     | Checkout path and `CARGO_HOME`    | remapped to `/open-grind` and `/cargo` by `nix/common.nix` |
 
-`codesign`, `ditto` and `plutil` come from macOS itself and cannot be pinned by Nix. None of them affect the compiled code: `ditto` only packs the archive, and the signature is removed on both sides before comparing.
+`codesign` and `ditto` come from macOS itself and cannot be pinned by Nix. Neither affects the compiled code: `ditto` only packs the archive, and the signature is removed from both sides before comparing.
 
-A signature embeds a secure timestamp and stapling adds a notarization ticket, and removing a signature does not restore the pre-signing bytes, so both sides are brought to the same state instead: sign ad-hoc, remove that signature, delete the signature directory. Everything else (code, resources, `Info.plist`) is byte-identical between two builds of the same source on the same toolchain. Stripping also hides the hardened runtime and the entitlements, so step 4 checks those first.
+A signature cannot be reproduced without its key, and removing one does not restore the pre-signing bytes, so both sides are brought to the same state instead: re-sign ad-hoc, remove that signature, delete the signature directory. That normalization is signing identity-independent. Stripping also hides the hardened runtime and the entitlements, so step 3 checks those first.
 
 ```bash
 # 1. Reproduce the app locally
