@@ -85,6 +85,7 @@ tauri-plugin-android-fs = "=28.2.2"
 tauri-plugin-single-instance = "2"
 
 [profile.release]
+lto = true
 strip = "symbols"
 
 # See https://github.com/tauri-apps/tauri/pull/15777
