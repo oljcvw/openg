@@ -158,6 +158,7 @@
 		class="item block"
 	>
 		<MediaImage
+            loading="lazy"
 			{src}
 			class={["w-full rounded-lg", media.cornerClass]}
 			imgClass="bg-card-foreground/10"
