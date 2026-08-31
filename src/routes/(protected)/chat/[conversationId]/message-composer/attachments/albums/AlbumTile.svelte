@@ -48,7 +48,6 @@
 	<MediaImage
         loading="lazy"
 		src={proxyMediaUrl(album.content[0]?.thumbUrl)}
-		loading="lazy"
 		class="absolute inset-0 size-full rounded-[inherit]"
 		imgClass="bg-card-foreground/10"
 	/>
