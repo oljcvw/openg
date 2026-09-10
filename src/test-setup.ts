@@ -56,3 +56,37 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 		return animation as unknown as Animation;
 	};
 }
+
+// jsdom's Blob has no arrayBuffer either, and media reading goes through it.
+if (typeof Blob !== "undefined" && !Blob.prototype.arrayBuffer) {
+	Blob.prototype.arrayBuffer = function () {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onload = () => resolve(reader.result as ArrayBuffer);
+			reader.onerror = () =>
+				reject(
+					new Error(reader.error?.message ?? "Failed to read blob"),
+				);
+			reader.readAsArrayBuffer(this);
+		});
+	};
+}
+
+// jsdom has no CSS.supports, and the backdrop-filter feature test reads it.
+if (typeof globalThis.CSS === "undefined") {
+	globalThis.CSS = {
+		supports: () => true,
+		escape: (value: string) => value,
+	} as unknown as typeof CSS;
+} else if (typeof globalThis.CSS.supports !== "function") {
+	globalThis.CSS.supports = () => true;
+}
+
+// jsdom has no ResizeObserver, and bits-ui measures every slider track with it.
+if (typeof globalThis.ResizeObserver === "undefined") {
+	globalThis.ResizeObserver = class {
+		observe() {}
+		unobserve() {}
+		disconnect() {}
+	};
+}

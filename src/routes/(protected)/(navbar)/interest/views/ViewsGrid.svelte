@@ -3,6 +3,7 @@
 
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
+	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
 	import { Skeleton } from "$lib/components/ui/skeleton";
 	import { observeIntersection } from "$lib/util/observe-intersection";
 	import { restoreScrollOnce } from "$lib/util/scroll-restore.svelte";
@@ -32,7 +33,7 @@
 		onscroll={() => (views.scrollY = container?.scrollTop ?? 0)}
 	>
 		<div
-			class="@container/photo-grid mx-auto flex min-h-overscrollable w-full max-w-120 flex-col gap-3 px-4 pt-16 pb-nav-clear"
+			class="@container/photo-grid mx-auto flex min-h-overscrollable w-full max-w-120 flex-col gap-3 px-4 pt-header-clear-16 pb-nav-clear"
 		>
 			{#if views.loading}
 				<div class="photo-grid">
@@ -40,7 +41,7 @@
 						<Skeleton class="aspect-square rounded-none" />
 					{/each}
 				</div>
-			{:else if views.error}
+			{:else if views.error && views.views.length === 0}
 				<div class="flex flex-1">
 					<ApiErrorDisplay
 						error={views.error}
@@ -77,7 +78,7 @@
 			{/if}
 		</div>
 	</div>
-	{#if !views.loading && !views.error}
+	{#if !views.loading && (views.views.length > 0 || !views.error)}
 		<DataRefreshControl
 			{container}
 			updating={views.refreshing}
@@ -85,4 +86,5 @@
 			onrefresh={() => void views.refresh()}
 		/>
 	{/if}
+	<ScrollToTopButton {container} class="bottom-nav-clear" />
 </div>

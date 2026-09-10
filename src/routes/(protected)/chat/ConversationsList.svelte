@@ -6,6 +6,7 @@
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
+	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { below } from "$lib/util/breakpoints.svelte";
@@ -13,10 +14,10 @@
 	import { SelectionSet } from "$lib/util/selection.svelte";
 	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
 	import Conversation from "./Conversation.svelte";
-	import ConversationsFilters from "./ConversationsFilters.svelte";
 	import ConversationsPagingTail from "./ConversationsPagingTail.svelte";
 	import ConversationsSelectionBar from "./ConversationsSelectionBar.svelte";
 	import DeleteConversationsDialog from "./DeleteConversationsDialog.svelte";
+	import ConversationsFilters from "./filters/ConversationsFilters.svelte";
 	import LazyConversation from "./LazyConversation.svelte";
 
 	const EAGER_COUNT = 10;
@@ -167,8 +168,9 @@
 			class={[
 				"flex min-h-0 flex-1 flex-col gap-1 overflow-auto overscroll-contain px-4",
 				{
-					"pt-15": !selecting,
-					"pt-(--selection-bar-height)": selecting,
+					"pt-header-clear-15": !selecting,
+					"pt-[calc(var(--selection-bar-height)+var(--bar-content-gap))]":
+						selecting,
 				},
 				className,
 			]}
@@ -178,7 +180,7 @@
 				{#each Array(8)}
 					<Skeleton class="h-24.5 w-full shrink-0" />
 				{/each}
-			{:else if conversations.error}
+			{:else if conversations.error && conversations.entries.length === 0}
 				<div class="flex flex-1">
 					<ApiErrorDisplay
 						error={conversations.error}
@@ -219,12 +221,12 @@
 						paging={conversations.paging}
 						hasMore={conversations.nextPage !== null}
 						listEmpty={conversations.entries.length === 0}
-						filtered={conversations.filters.active.length > 0}
+						filtered={conversations.filters.filtered}
 					/>
 				</div>
 			{/if}
 		</div>
-		{#if !conversations.loading && !conversations.error}
+		{#if !conversations.loading && (conversations.entries.length > 0 || !conversations.error)}
 			<DataRefreshControl
 				{container}
 				updating={conversations.refreshing}
@@ -232,9 +234,10 @@
 				onrefresh={() => void conversations.refresh()}
 			/>
 		{/if}
+		<ScrollToTopButton {container} class="bottom-(--nav-clear)" />
 		<ConversationsFilters
 			filters={conversations.filters}
-			onchange={(active) => conversations.setFilters(active)}
+			onchange={(values) => conversations.setFilters(values)}
 			inert={selecting}
 		/>
 	</div>

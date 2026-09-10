@@ -60,8 +60,7 @@ jobs:
           git checkout -q FETCH_HEAD
           [ -z "$EXPECTED_SHA" ] || [ "$(git rev-parse HEAD)" = "$EXPECTED_SHA" ] \
             || { echo "FATAL: PR head moved since approval (want $EXPECTED_SHA, got $(git rev-parse HEAD))"; exit 1; }
-          git -c url."$FORGEJO_SERVER_URL/".insteadOf="ssh://git@git.opengrind.org/" \
-            submodule update --init --recursive --quiet
+          git submodule update --init --recursive --quiet
 
       - name: Load CI cache
         run: |
@@ -77,6 +76,7 @@ jobs:
 
           cd "$CI_WORKSPACE"
           . ci/rust-env.sh
+          bun run patch-deps
           cargo metadata --quiet --manifest-path src-tauri/Cargo.toml --format-version 1 >/dev/null
 
       - name: Install JS dependencies
@@ -87,6 +87,9 @@ jobs:
 
       - name: Check the Android backup rules
         run: cd "$CI_WORKSPACE" && bun run check:backup-rules
+
+      - name: Check the credits against the lockfiles
+        run: cd "$CI_WORKSPACE" && bun run check:credits-sync
 
       - name: Lint
         run: cd "$CI_WORKSPACE" && bun ci/lint.ts

@@ -2,7 +2,7 @@
 
 Reproducibility verifies that a released artifact was built from a given source code snapshot. This is stronger than a simple artifact signature check, because it means you trust the code rather than whoever built it. Reproducibility verification requires [building](./BUILDING.md) the artifact in a deterministic way with pinned toolchain on a canonical OS and CPU arch. This means, you must pull ~30 GB of environment, allocate ~12 GB of RAM and run the build which takes up to 4 hours. If you trust Open Grind developers, simply [verify the signature](./BUILDING.md#verify-minisign-signature) instead.
 
-Every recipe below needs a checkout with submodules — `git clone --recurse-submodules`, or `git submodule update --init` after switching tags. `src-tauri/vendor/grindr-google-oauth-webextension` is compiled into the binary; without it the build fails in `include_str!`.
+The Linux, Windows and macOS recipes need a checkout with submodules — `git clone --recurse-submodules https://git.opengrind.org/open-grind/open-grind.git`, or `git submodule update --init` after switching tags. `src-tauri/vendor/grindr-google-oauth-webextension` is compiled into the desktop binaries; without it the build fails in `include_str!`.
 
 - [Open Grind Reproducibility](#open-grind-reproducibility)
     - [Trusting the build environment](#trusting-the-build-environment)
@@ -81,32 +81,31 @@ Every input that affects the output bytes is pinned in exactly one place:
 
 The `opengrind.android.*` keys in `gradle.properties` are read by both Gradle and `flake.nix`. Bump them there once and both consumers pick up the new value.
 
-v1 (JAR) signatures (`META-INF/*.SF`, `*.{RSA,EC,DSA}`, `MANIFEST.MF`) and v2/v3 signing block (last zip entry and the central directory) are not reproducible. Everything else (dex, native libs, resources, manifest, assets) is byte-identical between a signed and an unsigned build of the same source on the same toolchain.
+v1 (JAR) signatures (`META-INF/*.SF`, `*.{RSA,EC,DSA}`, `MANIFEST.MF`) and v2/v3 signing block (last zip entry and the central directory) are not reproducible. [apksigcopier](https://github.com/obfusk/apksigcopier) copies the v1 files (`META-INF/MANIFEST.MF`, `*.SF`, `*.{RSA,EC,DSA}`) and the v2/v3 signing block from the published APK onto the freshly built unsigned one. Everything else (dex, native libs, resources, manifest, assets) is byte-identical between a signed and an unsigned build of the same source on the same toolchain.
+
+Needs `apksigcopier` and `apksigner`, both on `PATH` in `nix develop .#android`.
 
 ```bash
 # 1. Reproduce the unsigned APK locally
 git checkout v<tag>
 nix run .#build-android
-LOCAL=src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<tag>-android-unsigned.apk
+LOCAL="$(find src-tauri/gen/android/app/build/outputs/apk/universal/release -name '*-unsigned.apk')"
 
 # 2. Fetch from https://git.opengrind.org/open-grind/open-grind/releases
 PUBLISHED=/path/to/open-grind-v<tag>-android.apk
+RELEASE_CERT=2805fdd8f0badb9424d3244c5e5b3473cef5b8798ec1117382e89eda45c3658c # KEYS.md
 
 # 3. Confirm the content reproduces
-apk_content_hash() {
-  unzip -Z1 "$1" \
-    | grep -vE '^META-INF/(MANIFEST\.MF|[^/]+\.(SF|RSA|EC|DSA))$' \
-    | while IFS= read -r entry; do
-        printf '%s  %s\n' \
-          "$(unzip -p "$1" "$entry" | sha256sum | cut -c1-64)" \
-          "$entry"
-      done
-}
+SIGCOPIED="$(mktemp -d)/$(basename "$PUBLISHED")"
+trap 'rm -rf "$(dirname "$SIGCOPIED")"' EXIT
 
-if diff <(apk_content_hash "$LOCAL") <(apk_content_hash "$PUBLISHED"); then
-  echo "✓ APK hash checksum matches"
+if [ -s "$LOCAL" ] && [ -s "$PUBLISHED" ] &&
+  apksigcopier copy "$PUBLISHED" "$LOCAL" "$SIGCOPIED" &&
+  cmp "$SIGCOPIED" "$PUBLISHED" &&
+  apksigner verify --print-certs "$PUBLISHED" | grep -qi "$RELEASE_CERT"; then
+  echo "✓ the published APK is this build, signed with the release key"
 else
-  echo "✗ APK hash checksum mismatch, local build does not match the published APK" >&2
+  echo "✗ APK does not reproduce, or is not signed with the release key" >&2
   exit 1
 fi
 ```
@@ -135,27 +134,29 @@ fi
     | On macOS   | Untested  | **Reproducible[^4]** |
     | On Windows | Untested  | Untested             |
 
-The container builds for the host architecture, so verify the `x86_64` `.deb` on an x86_64 host and the `arm64` one on arm64. The `.deb` ships unsigned next to a detached `.minisig`, so nothing inside it varies between builds and the whole file must match byte for byte.
-
 ```bash
 # 1. Reproduce the app locally
 git checkout v<tag>
 podman build -t open-grind-linux ci/linux
 podman run --rm -v "$PWD:/work" open-grind-linux sh ci/linux/build.sh
-LOCAL="$(find src-tauri/target/release/bundle/deb -name '*.deb')"
 
-# 2. Fetch from https://git.opengrind.org/open-grind/open-grind/releases
-PUBLISHED=/path/to/open-grind-v<tag>-linux-<arch>.deb
+# 2. Fetch both into one directory from https://git.opengrind.org/open-grind/open-grind/releases
+PUBLISHED=/path/to/published
 
 # 3. Confirm the content reproduces
-sha256sum "$LOCAL" "$PUBLISHED"
-
-if cmp -s "$LOCAL" "$PUBLISHED"; then
-  echo "✓ .deb matches"
-else
-  echo "✗ .deb mismatch, local build does not match the published package" >&2
-  exit 1
-fi
+for LOCAL in \
+  src-tauri/target/release/bundle/deb/*.deb \
+  src-tauri/target/release/bundle/appimage/*.AppImage
+do
+  name="$(basename "$LOCAL")"
+  sha256sum "$LOCAL" "$PUBLISHED/$name"
+  if cmp -s "$LOCAL" "$PUBLISHED/$name"; then
+    echo "✓ $name matches"
+  else
+    echo "✗ $name mismatch, local build does not match the published artifact" >&2
+    exit 1
+  fi
+done
 ```
 
 [^3]: Different host toolchains, even within Nix environment. Builds are only reproducible with full Docker amd64 emulation.

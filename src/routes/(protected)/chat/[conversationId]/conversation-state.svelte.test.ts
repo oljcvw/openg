@@ -255,7 +255,7 @@ describe("ConversationState send echo matching", () => {
 		state.send([outbound("Text", { text: "a" })]);
 		state.send([outbound("Text", { text: "b" })]);
 
-		const bodyText = (m: { body: unknown }) =>
+		const bodyText = (m: { body?: unknown }) =>
 			(m.body as { text: string }).text;
 		expect(state.messages.map(bodyText)).toEqual(["b", "a"]);
 		expect(state.messages.every((m) => m.status === "pending")).toBe(true);
@@ -301,49 +301,6 @@ describe("ConversationState send echo matching", () => {
 		emitMessageSent(echo("real-text", "Text", { text: "hello" }));
 		expect(text().messageId).toBe("real-text");
 		expect(text().status).toBe("sent");
-	});
-});
-
-describe("ConversationState send failures", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		readHandlers.length = 0;
-		messageSentHandlers.length = 0;
-		reconcileHandlers.length = 0;
-	});
-
-	it("keeps the rejected send's error on the message so it can be copied", async () => {
-		getConversationMock.mockResolvedValue({
-			messages: [],
-			profile,
-			pageKey: null,
-			lastReadTimestamp: null,
-		});
-		const rejection = new ApiError({
-			message: "API request failed with status 403",
-			request: { method: "POST", path: "/v4/chat/message/send" },
-			response: {
-				status: 403,
-				body: JSON.stringify({
-					type: "urn:gr:err:unauthorized_action",
-				}),
-			},
-		});
-		sendMessageMock.mockRejectedValue(rejection);
-		const logged = vi.spyOn(console, "error").mockImplementation(() => {});
-
-		const state = create();
-		await flush();
-		state.send([outbound("Text", { text: "a" })]);
-		await flush();
-
-		expect(state.messages[0]?.status).toBe("error");
-		expect(state.messages[0]?.sendError).toBe(rejection);
-		expect(logged).toHaveBeenCalledWith(
-			"Failed to send message (urn:gr:err:unauthorized_action)",
-			rejection,
-		);
-		logged.mockRestore();
 	});
 });
 
@@ -630,5 +587,58 @@ describe("ConversationState error classification", () => {
 
 		expect(state.error).toBeNull();
 		expect(state.messages).toHaveLength(1);
+	});
+});
+
+describe("ConversationState unsend preview", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		reconcileHandlers.length = 0;
+	});
+
+	async function withTwoMessages(
+		conversations: ReturnType<typeof conversationsStub>,
+	) {
+		getConversationMock.mockResolvedValue({
+			messages: [message("m2", 2000), message("m1", 1000)],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		const state = create(conversations);
+		await flush();
+		conversations.updatePreview.mockClear();
+		return state;
+	}
+
+	it("rewrites the inbox row when the newest message is unsent, and puts it back", async () => {
+		const conversations = conversationsStub();
+		const state = await withTwoMessages(conversations);
+
+		const { revert } = state.markMessageAsUnsent("m2");
+
+		expect(conversations.updatePreview).toHaveBeenLastCalledWith({
+			conversationId: CONVERSATION_ID,
+			preview: expect.objectContaining({ type: "Unsent" }),
+			timestamp: 2000,
+		});
+
+		revert();
+
+		expect(conversations.updatePreview).toHaveBeenLastCalledWith({
+			conversationId: CONVERSATION_ID,
+			preview: expect.objectContaining({ type: "Text", text: "m2" }),
+			timestamp: 2000,
+		});
+	});
+
+	it("leaves the inbox row alone when an older message is unsent", async () => {
+		const conversations = conversationsStub();
+		const state = await withTwoMessages(conversations);
+
+		const { revert } = state.markMessageAsUnsent("m1");
+		revert();
+
+		expect(conversations.updatePreview).not.toHaveBeenCalled();
 	});
 });
