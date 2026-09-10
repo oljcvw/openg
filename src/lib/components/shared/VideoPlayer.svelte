@@ -10,6 +10,7 @@
 	import type { SvelteMediaTimeRange } from "svelte/elements";
 
 	import { Button } from "$lib/components/ui/button";
+	import { now } from "$lib/util/clock";
 	import { formatMediaDuration } from "$lib/util/format-time";
 	import VideoScrubber from "./VideoScrubber.svelte";
 
@@ -22,8 +23,51 @@
 		src: string;
 		poster: string | null;
 		onready?: () => void;
-		onfail?: () => void;
+		onfail?: (failure: { undecodable: boolean; detail: string }) => void;
 	} = $props();
+
+	let element = $state<HTMLVideoElement | null>(null);
+	let retriedSrc: string | null = null;
+	let startedAt = now();
+
+	function elapsedSeconds(): string {
+		return ((now() - startedAt) / 1000).toFixed(1);
+	}
+
+	function describeFailure(error: MediaError | null): string {
+		if (error === null)
+			return `unknown media error after ${elapsedSeconds()}s`;
+		const message = error.message === "" ? "" : `: ${error.message}`;
+		return `MediaError ${error.code} after ${elapsedSeconds()}s${message}`;
+	}
+
+	function failed() {
+		const video = element;
+		const error = video?.error ?? null;
+		const undecodable =
+			error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED;
+		const untouched =
+			video !== null &&
+			video.readyState === HTMLMediaElement.HAVE_NOTHING;
+		if (!undecodable && untouched && retriedSrc !== src) {
+			retriedSrc = src;
+			startedAt = now();
+			video?.load();
+			return;
+		}
+		onfail?.({ undecodable, detail: describeFailure(error) });
+	}
+
+	function loaded() {
+		if (element !== null && element.videoWidth === 0) {
+			onfail?.({
+				undecodable: true,
+				detail: `no decodable video track after ${elapsedSeconds()}s`,
+			});
+			return;
+		}
+		onready?.();
+	}
 
 	let paused = $state(true);
 	let muted = $state(true);
@@ -75,6 +119,7 @@
 >
 	<!-- svelte-ignore a11y_media_has_caption -->
 	<video
+		bind:this={element}
 		onpointerdown={toggle}
 		bind:paused
 		bind:muted
@@ -86,8 +131,8 @@
 		playsinline
 		preload="metadata"
 		class="size-full object-contain"
-		onloadeddata={onready}
-		onerror={onfail}
+		onloadeddata={loaded}
+		onerror={failed}
 	></video>
 	{#if controlsVisible}
 		<div

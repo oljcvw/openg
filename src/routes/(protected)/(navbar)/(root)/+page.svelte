@@ -4,6 +4,7 @@
 		hydratePreferences,
 	} from "$lib/app-data/preferences.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
+	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import { restoreScrollOnce } from "$lib/util/scroll-restore.svelte";
 	import Grid from "./Grid.svelte";
@@ -36,7 +37,7 @@
 					(gridState.scrollY = gridContainer?.scrollTop ?? 0)}
 			>
 				<div
-					class="@container/photo-grid flex min-h-overscrollable flex-col gap-4 px-4 pt-17 pb-nav-clear"
+					class="@container/photo-grid flex min-h-overscrollable flex-col gap-4 px-4 pt-header-clear-17 pb-nav-clear"
 				>
 					<Grid {geohash} />
 				</div>
@@ -46,9 +47,14 @@
 					container={gridContainer}
 					updating={gridState.refreshing}
 					position="top"
-					onrefresh={() => void gridState.refresh()}
+					onrefresh={() =>
+						void gridState.refresh({ keepLoadedPages: false })}
 				/>
 			{/if}
+			<ScrollToTopButton
+				container={gridContainer}
+				class="bottom-nav-clear"
+			/>
 		</main>
 	{/if}
 {/await}

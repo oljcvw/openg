@@ -69,8 +69,7 @@ jobs:
           git remote add origin "$FORGEJO_SERVER_URL/$FORGEJO_REPOSITORY.git"
           git fetch -q --depth 1 origin "$FORGEJO_REF_NAME"
           git checkout -q "$FORGEJO_SHA"
-          git -c url."$FORGEJO_SERVER_URL/".insteadOf="ssh://git@git.opengrind.org/" \
-            submodule update --init --recursive
+          git submodule update --init --recursive
       - name: Check the version
         env:
           ALLOW_DEV: ${{ inputs.allow_dev }}
@@ -86,6 +85,10 @@ jobs:
           [ ${#apk[@]} -eq 1 ]
           mkdir -p out
           cp "${apk[0]}" out/
+      - name: Check the Android credits
+        run: |
+          cd "${BUILD_ROOT:?}"
+          nix develop .#android --command bun run check:credits-android
       - name: Android unit tests
         run: |
           cd "${BUILD_ROOT:?}"
@@ -130,8 +133,7 @@ jobs:
           git remote add origin "$FORGEJO_SERVER_URL/$FORGEJO_REPOSITORY.git"
           git fetch -q --depth 1 origin "$FORGEJO_REF_NAME"
           git checkout -q "$FORGEJO_SHA"
-          git -c url."$FORGEJO_SERVER_URL/".insteadOf="ssh://git@git.opengrind.org/" \
-            submodule update --init --recursive
+          git submodule update --init --recursive
       - name: Check the version
         env:
           ALLOW_DEV: ${{ inputs.allow_dev }}
@@ -143,13 +145,15 @@ jobs:
           cd "${BUILD_ROOT:?}"
           podman build -t open-grind-linux ci/linux
           podman run --rm -v "$BUILD_ROOT:/work" open-grind-linux sh ci/linux/build.sh
-      - name: Collect .deb
+      - name: Collect .deb and .AppImage
         run: |
           : "${BUILD_ROOT:?}"
           deb=("$BUILD_ROOT"/src-tauri/target/release/bundle/deb/*.deb)
+          appimage=("$BUILD_ROOT"/src-tauri/target/release/bundle/appimage/*.AppImage)
           [ ${#deb[@]} -eq 1 ]
+          [ ${#appimage[@]} -eq 1 ]
           mkdir -p out
-          cp "${deb[0]}" out/
+          cp "${deb[0]}" "${appimage[0]}" out/
       - name: Upload
         uses: https://code.forgejo.org/forgejo/upload-artifact@16871d9e8cfcf27ff31822cac382bbb5450f1e1e # v4
         with:
@@ -184,8 +188,7 @@ jobs:
           git remote add origin "$FORGEJO_SERVER_URL/$FORGEJO_REPOSITORY.git"
           git fetch -q --depth 1 origin "$FORGEJO_REF_NAME"
           git checkout -q "$FORGEJO_SHA"
-          git -c url."$FORGEJO_SERVER_URL/".insteadOf="ssh://git@git.opengrind.org/" \
-            submodule update --init --recursive
+          git submodule update --init --recursive
       - name: Check the version
         env:
           ALLOW_DEV: ${{ inputs.allow_dev }}
@@ -197,13 +200,15 @@ jobs:
           cd "${BUILD_ROOT:?}"
           podman build -t open-grind-linux ci/linux
           podman run --rm -v "$BUILD_ROOT:/work" open-grind-linux sh ci/linux/build.sh
-      - name: Collect .deb
+      - name: Collect .deb and .AppImage
         run: |
           : "${BUILD_ROOT:?}"
           deb=("$BUILD_ROOT"/src-tauri/target/release/bundle/deb/*.deb)
+          appimage=("$BUILD_ROOT"/src-tauri/target/release/bundle/appimage/*.AppImage)
           [ ${#deb[@]} -eq 1 ]
+          [ ${#appimage[@]} -eq 1 ]
           mkdir -p out
-          cp "${deb[0]}" out/
+          cp "${deb[0]}" "${appimage[0]}" out/
       - name: Upload
         uses: https://code.forgejo.org/forgejo/upload-artifact@16871d9e8cfcf27ff31822cac382bbb5450f1e1e # v4
         with:
@@ -240,8 +245,7 @@ jobs:
           git remote add origin "$FORGEJO_SERVER_URL/$FORGEJO_REPOSITORY.git"
           git fetch -q --depth 1 origin "$FORGEJO_REF_NAME"
           git checkout -q "$FORGEJO_SHA"
-          git -c url."$FORGEJO_SERVER_URL/".insteadOf="ssh://git@git.opengrind.org/" \
-            submodule update --init --recursive
+          git submodule update --init --recursive
       - name: Check the version
         env:
           ALLOW_DEV: ${{ inputs.allow_dev }}
@@ -293,8 +297,7 @@ jobs:
           git remote add origin "$FORGEJO_SERVER_URL/$FORGEJO_REPOSITORY.git"
           git fetch -q --depth 1 origin "$FORGEJO_REF_NAME"
           git checkout -q "$FORGEJO_SHA"
-          git -c url."$FORGEJO_SERVER_URL/".insteadOf="ssh://git@git.opengrind.org/" \
-            submodule update --init --recursive
+          git submodule update --init --recursive
       - name: Check the version
         env:
           ALLOW_DEV: ${{ inputs.allow_dev }}
@@ -328,6 +331,7 @@ jobs:
       ]
     if: >-
       !cancelled()
+      && (inputs.x86_64_providers == 'all' || inputs.arm64_providers == 'all')
       && needs.build-android.result != 'failure'
       && needs.build-linux.result != 'failure'
       && needs.build-linux-arm64.result != 'failure'
