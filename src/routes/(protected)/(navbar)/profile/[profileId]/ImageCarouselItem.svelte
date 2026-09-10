@@ -26,6 +26,7 @@
 	aria-label={label}
 >
 	<MediaImage
+        loading="lazy"
 		src={thumb}
 		class="absolute top-0 left-0 h-full w-full"
 		imgClass="bg-stone-700"

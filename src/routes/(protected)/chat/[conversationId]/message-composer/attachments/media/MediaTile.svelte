@@ -30,6 +30,7 @@
 	{onclick}
 >
 	<MediaImage
+        loading="lazy"
 		src={proxyMediaUrl(item.url)}
 		alt="Photo {index + 1}"
 		class="size-full rounded-[inherit]"

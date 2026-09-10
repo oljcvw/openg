@@ -23,6 +23,7 @@
 	import TextMessage from "./TextMessage.svelte";
 	import UnsentMessage from "./UnsentMessage.svelte";
 	import UnsupportedMessage from "./UnsupportedMessage.svelte";
+	import LocationMessage from "./LocationMessage.svelte";
 
 	let {
 		message,
@@ -200,6 +201,8 @@
 			<AlbumMessage message={message.body} />
 		{:else if message.type === "Unsent"}
 			<UnsentMessage />
+		{:else if message.type === "Location"}
+			<LocationMessage message={message.body} />
 		{:else}
 			<UnsupportedMessage
 				type={"unrecognizedType" in message
