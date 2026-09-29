@@ -61,12 +61,11 @@ jobs:
             exit 1
           fi
 
-          COMPILE_SDK=$(sed -n 's/^opengrind\.android\.compileSdk=\(.*\)/\1/p' "$PROP_FILE" | tr -d '\r')
           BUILD_TOOLS=$(sed -n 's/^opengrind\.android\.buildTools=\(.*\)/\1/p' "$PROP_FILE" | tr -d '\r')
           NDK_VERSION=$(sed -n 's/^opengrind\.android\.ndk=\(.*\)/\1/p' "$PROP_FILE" | tr -d '\r')
           CMAKE_VERSION=$(sed -n 's/^opengrind\.android\.cmake=\(.*\)/\1/p' "$PROP_FILE" | tr -d '\r')
 
-          for pair in "COMPILE_SDK=$COMPILE_SDK" "BUILD_TOOLS=$BUILD_TOOLS" "NDK_VERSION=$NDK_VERSION" "CMAKE_VERSION=$CMAKE_VERSION"; do
+          for pair in "BUILD_TOOLS=$BUILD_TOOLS" "NDK_VERSION=$NDK_VERSION" "CMAKE_VERSION=$CMAKE_VERSION"; do
             name="${pair%%=*}"; value="${pair#*=}"
             if [ -z "$value" ]; then
               echo "::error::Failed to parse $name from $PROP_FILE"
@@ -74,7 +73,6 @@ jobs:
             fi
           done
 
-          echo "COMPILE_SDK=$COMPILE_SDK" >> "$GITHUB_ENV"
           echo "BUILD_TOOLS=$BUILD_TOOLS" >> "$GITHUB_ENV"
           echo "NDK_VERSION=$NDK_VERSION" >> "$GITHUB_ENV"
           echo "CMAKE_VERSION=$CMAKE_VERSION" >> "$GITHUB_ENV"
@@ -96,16 +94,21 @@ jobs:
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
-      - name: Take ownership of the Android SDK directory
-        run: sudo chown -R "$(id -u):$(id -g)" "$ANDROID_HOME"
-
       - name: Check whether pinned SDK components are missing
         id: sdk_check
         run: |
-          if [ ! -d "$ANDROID_HOME/ndk/$NDK_VERSION" ]; then echo "ndk=true" >> "$GITHUB_OUTPUT"; fi
-          if [ ! -d "$ANDROID_HOME/build-tools/$BUILD_TOOLS" ]; then echo "build_tools=true" >> "$GITHUB_OUTPUT"; fi
-          if [ ! -d "$ANDROID_HOME/platforms/android-$COMPILE_SDK" ]; then echo "platform=true" >> "$GITHUB_OUTPUT"; fi
-          if [ ! -d "$ANDROID_HOME/cmake/$CMAKE_VERSION" ]; then echo "cmake=true" >> "$GITHUB_OUTPUT"; fi
+          if [ ! -d "$ANDROID_HOME/ndk/$NDK_VERSION" ]; then
+            echo "ndk=true" >> "$GITHUB_OUTPUT"
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          fi
+          if [ ! -d "$ANDROID_HOME/build-tools/$BUILD_TOOLS" ]; then
+            echo "build_tools=true" >> "$GITHUB_OUTPUT"
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          fi
+          if [ ! -d "$ANDROID_HOME/cmake/$CMAKE_VERSION" ]; then
+            echo "cmake=true" >> "$GITHUB_OUTPUT"
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Cache Android NDK
         if: steps.sdk_check.outputs.ndk == 'true'
@@ -121,13 +124,6 @@ jobs:
           path: ${{ env.ANDROID_HOME }}/build-tools/${{ env.BUILD_TOOLS }}
           key: android-build-tools-${{ env.BUILD_TOOLS }}
 
-      - name: Cache Android Platform
-        if: steps.sdk_check.outputs.platform == 'true'
-        uses: actions/cache@v6
-        with:
-          path: ${{ env.ANDROID_HOME }}/platforms/android-${{ env.COMPILE_SDK }}
-          key: android-platform-${{ env.COMPILE_SDK }}
-
       - name: Cache Android CMake
         if: steps.sdk_check.outputs.cmake == 'true'
         uses: actions/cache@v6
@@ -135,7 +131,10 @@ jobs:
           path: ${{ env.ANDROID_HOME }}/cmake/${{ env.CMAKE_VERSION }}
           key: android-cmake-${{ env.CMAKE_VERSION }}
 
+      # Only runs when something pinned is missing, so an image that already
+      # ships everything never invokes sdkmanager (which needs write access).
       - name: Install pinned Android SDK components
+        if: steps.sdk_check.outputs.any == 'true'
         run: |
           SDKMANAGER="$(command -v sdkmanager || true)"
           if [ -z "$SDKMANAGER" ]; then
@@ -143,11 +142,12 @@ jobs:
           fi
           yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
           "$SDKMANAGER" --install \
-            "platforms;android-${{ env.COMPILE_SDK }}" \
             "build-tools;${{ env.BUILD_TOOLS }}" \
             "ndk;${{ env.NDK_VERSION }}" \
             "cmake;${{ env.CMAKE_VERSION }}"
 
+      - name: Export NDK and CMake paths
+        run: |
           {
             echo "NDK_HOME=$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}"
             echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}"
@@ -176,11 +176,20 @@ jobs:
           restore-keys: |
             bun-${{ runner.os }}-
 
-      # Auto-detects and caches the Gradle wrapper + dependency caches used
-      # by the generated src-tauri/gen/android project, even though it's
-      # invoked indirectly through the Tauri CLI rather than called directly.
       - name: Set up Gradle caching
         uses: gradle/actions/setup-gradle@v6
+
+      - name: Use newest installed Android platform (>= 36)
+        run: |
+          MIN=36
+          BEST=$(ls -1 "$ANDROID_HOME/platforms" | sed -n 's/^android-\([0-9][0-9]*\)$/\1/p' | sort -n | tail -n1)
+          if [ -z "$BEST" ] || [ "$BEST" -lt "$MIN" ]; then
+            echo "::error::No installed Android platform >= $MIN (found: ${BEST:-none})"
+            exit 1
+          fi
+          echo "Using compileSdk=$BEST"
+          mkdir -p "$HOME/.gradle"
+          echo "opengrind.android.compileSdk=$BEST" >> "$HOME/.gradle/gradle.properties"
 
       - name: Restore signing keystore
         if: env.BUILD_TYPE == 'Release'
