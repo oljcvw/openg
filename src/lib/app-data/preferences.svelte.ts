@@ -2,6 +2,8 @@ import { decode, encode } from "@msgpack/msgpack";
 import { toast } from "svelte-sonner";
 import z from "zod";
 
+import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
+import { backdropBlurQualitySchema } from "$lib/blur/quality";
 import { gridSearchFiltersSchema } from "$lib/model/browse/grid/filters";
 import { geohashSchema } from "$lib/model/geohash";
 import { unitSystemSchema } from "$lib/util/units";
@@ -14,9 +16,19 @@ import {
 
 const preferencesSchema = z.object({
 	autoUpdateLocation: z.boolean().default(false),
+	backdropBlurCalibration: backdropBlurCalibrationSchema
+		.nullable()
+		.default(null)
+		.catch(null),
+	backdropBlurQuality: backdropBlurQualitySchema
+		.nullable()
+		.default(null)
+		.catch(null),
 	geohash: geohashSchema.nullable().default(null),
+	hapticFeedback: z.boolean().default(true),
 	onboardingComplete: z.boolean().default(false),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
+	notificationsEnabled: z.boolean().default(false),
 	revealMessageRead: z.boolean().default(false),
 	revealProfileViews: z.boolean().default(false),
 	stayOnline: z.boolean().default(true),
@@ -24,6 +36,12 @@ const preferencesSchema = z.object({
 });
 
 type Preferences = z.infer<typeof preferencesSchema>;
+
+export type BooleanPreference = {
+	[Key in keyof Preferences]-?: Preferences[Key] extends boolean
+		? Key
+		: never;
+}[keyof Preferences];
 
 let writeQueue: Promise<unknown> = Promise.resolve();
 let snapshot = $state<Preferences>(preferencesSchema.parse({}));
@@ -80,7 +98,7 @@ export async function getPreferences(): Promise<Preferences> {
 	return structuredClone(await hydrating);
 }
 
-export function getPreferencesSnapshot(): Preferences {
+export function preferencesSnapshot(): Preferences {
 	return snapshot;
 }
 
@@ -125,6 +143,7 @@ const accountPreferenceKeys = [
 	"autoUpdateLocation",
 	"geohash",
 	"gridSearchFilters",
+	"notificationsEnabled",
 ] as const;
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {

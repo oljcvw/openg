@@ -4,7 +4,7 @@ import { ApiError } from "$lib/api/api-error";
 import { promptCopyError } from "$lib/api/error-copy";
 
 function isSessionGone({ kind }: ApiError): boolean {
-	return kind === "SessionCleared" || kind === "NotLoggedIn";
+	return kind === "SessionCleared" || kind === "NotSignedIn";
 }
 
 export function showErrorToast({
@@ -17,7 +17,7 @@ export function showErrorToast({
 	onRetry?: () => void;
 }) {
 	if (error instanceof ApiError && isSessionGone(error)) return;
-	if (onRetry && error instanceof ApiError && error.retryable) {
+	if (onRetry) {
 		toast.error(label, {
 			action: { label: "Retry", onClick: onRetry },
 			cancel: {

@@ -1,12 +1,16 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
-import { installTauriShim, trackpadSwipe, TrustedTouch } from "./support/app";
+import {
+	captureInvokes,
+	INCOMING_ROW,
+	installTauriShim,
+	MESSAGE_ROW,
+	trackpadSwipe,
+	TrustedTouch,
+} from "./support/app";
 
 const CONVERSATION = "/chat/100001:123456000";
 const WITH_AN_UNSENT_MESSAGE = "/chat/100009:123456000";
-const MESSAGE_ROW = '[role="button"][tabindex="0"]';
-// only an incoming row pads its end, and only incoming rows swipe rightward
-const INCOMING_ROW = `${MESSAGE_ROW}.pe-3`;
 const SCROLLER = '[data-slot="messages-scroller"]';
 const QUOTE = '[data-slot="message-quote"]';
 const REPLIABLE = "consectetur adipiscing elit";
@@ -52,7 +56,9 @@ test("replying quotes the message it answers", async ({ page }) => {
 	await page.getByRole("textbox").fill("quoting you");
 	await page.getByRole("textbox").press("Enter");
 
-	await expect(page.getByText("quoting you")).toBeVisible();
+	await expect(
+		page.getByText("quoting you").filter({ visible: true }),
+	).toBeVisible();
 	await expect(page.locator(QUOTE)).toHaveCount(quotesBefore + 1);
 	await expect(replyBar).toBeHidden();
 });
@@ -69,7 +75,9 @@ test("cancelling a reply leaves the message unquoted", async ({ page }) => {
 	await page.getByRole("textbox").fill("just a message");
 	await page.getByRole("textbox").press("Enter");
 
-	await expect(page.getByText("just a message")).toBeVisible();
+	await expect(
+		page.getByText("just a message").filter({ visible: true }),
+	).toBeVisible();
 	await expect(page.locator(QUOTE)).toHaveCount(quotesBefore);
 });
 
@@ -155,21 +163,50 @@ test("a scroll that starts leaning sideways still reaches the conversation", asy
 
 // real touches only: synthetic PointerEvents skip the implicit capture that
 // once cancelled every touch drag
-test("a touch drag past the trigger replies on lift", async ({ page }) => {
-	await openConversation(page, { platform: "android" });
+async function swipeIncoming(page: Page, distancePx: number) {
 	const row = page.locator(INCOMING_ROW).last();
 	await row.scrollIntoViewIfNeeded();
 	const box = (await row.boundingBox())!;
+	const y = box.y + box.height / 2;
 	const touch = await TrustedTouch.attach(page);
-
 	await touch.drag(
 		page,
-		{ x: box.x + 60, y: box.y + box.height / 2 },
-		{ x: box.x + 200, y: box.y + box.height / 2 },
+		{ x: box.x + 60, y },
+		{ x: box.x + 60 + distancePx, y },
 		{ steps: 14, holdMs: 16 },
 	);
+}
+
+test("a touch drag past the trigger replies on lift", async ({ page }) => {
+	await openConversation(page, { platform: "android" });
+
+	await swipeIncoming(page, 140);
 
 	await expect(page.getByLabel("Cancel reply")).toBeVisible();
+});
+
+test("a touch drag taps the actuator as it passes the trigger, once", async ({
+	page,
+}) => {
+	await openConversation(page, { platform: "android" });
+	const taps = await captureInvokes(page, "play_haptic");
+
+	await swipeIncoming(page, 140);
+
+	await expect(page.getByLabel("Cancel reply")).toBeVisible();
+	expect(await taps()).toEqual([{ kind: "threshold" }]);
+});
+
+test("a touch drag that stops short of the trigger taps nothing", async ({
+	page,
+}) => {
+	await openConversation(page, { platform: "android" });
+	const taps = await captureInvokes(page, "play_haptic");
+
+	await swipeIncoming(page, 40);
+
+	await expect(page.getByLabel("Cancel reply")).toHaveCount(0);
+	expect(await taps()).toHaveLength(0);
 });
 
 test("a vertical touch drag scrolls instead of replying", async ({ page }) => {
@@ -202,7 +239,7 @@ test("an unsent message offers no reply", async ({ page }) => {
 	await expect(unsent).toHaveCount(1);
 	await unsent.click({ button: "right" });
 
-	await expect(page.getByRole("button", { name: "Report" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Report" })).toHaveCount(0);
 	await expect(page.getByRole("button", { name: "Reply" })).toHaveCount(0);
 	await expect(
 		page.getByRole("button", { name: "React with fire" }),

@@ -3,7 +3,8 @@ export const apiErrorKinds = [
 	"Connect",
 	"Auth",
 	"Media",
-	"NotLoggedIn",
+	"NotSignedIn",
+	"SessionStale",
 	"Api",
 	"Unauthorized",
 	"Banned",
@@ -12,6 +13,9 @@ export const apiErrorKinds = [
 	"NetworkBlocked",
 	"NotInitialized",
 	"SessionCleared",
+	"ContentTooLarge",
+	"Recaptcha",
+	"Push",
 ] as const;
 
 export type ApiErrorKind = (typeof apiErrorKinds)[number];
@@ -38,6 +42,7 @@ export class ApiError extends Error {
 	get retryable(): boolean {
 		if (this.kind === "Http" || this.kind === "Connect") return true;
 		if (this.kind === "Auth" || this.kind === "Unauthorized") return true;
+		if (this.kind === "SessionStale") return true;
 		if (this.kind === "RequestBlocked") return true;
 		if (this.kind === "NetworkBlocked") return true;
 		if (this.response !== null) {
@@ -48,3 +53,13 @@ export class ApiError extends Error {
 		return false;
 	}
 }
+
+export function httpStatusOf(error: unknown): number | null {
+	return error instanceof ApiError ? (error.response?.status ?? null) : null;
+}
+
+export const blockedAndStaleMessages = {
+	RequestBlocked: "Grindr is blocking your requests",
+	NetworkBlocked: "Something blocked the request before it reached Grindr",
+	SessionStale: "Couldn't refresh your session",
+} as const satisfies Partial<Record<ApiErrorKind, string>>;

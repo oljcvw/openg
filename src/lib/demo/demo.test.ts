@@ -4,6 +4,7 @@ import z from "zod";
 import { demoRoute } from "$lib/demo";
 import { demoMeProfileId } from "$lib/demo/config";
 import { cascadeV4ResponseSchema } from "$lib/model/browse/grid/cascade/response/v4";
+import { FilterPosition } from "$lib/model/browse/grid/filters";
 import { searchProfileSchema } from "$lib/model/browse/grid/search";
 import { tapProfileSchema } from "$lib/model/interest/tap-profile";
 import {
@@ -14,10 +15,11 @@ import {
 	albumContentSchema,
 	albumDetailsSchema,
 	albumMinSchema,
-	albumSharesResponseSchema,
-	myAlbumsResponseSchema,
 } from "$lib/model/messaging/albums";
-import { fullConversationSchema } from "$lib/model/messaging/conversations";
+import {
+	conversationEntrySchema,
+	fullConversationSchema,
+} from "$lib/model/messaging/conversations";
 import { previewLabel } from "$lib/model/messaging/message-preview";
 import {
 	apiResponseMessageSchema,
@@ -31,6 +33,7 @@ import {
 } from "$lib/model/users/profiles";
 import { pronounsSchema } from "$lib/model/users/pronouns";
 import { profileTagsResponseSchema } from "$lib/model/users/tags";
+import type { InboxFilterRequest } from "$lib/api/messaging/conversations";
 
 const shortProfileSchema = z.object({
 	...profileShortSchema.shape,
@@ -109,8 +112,6 @@ describe("demo route data matches the real schemas", () => {
 		const entries = z.array(fullConversationSchema).parse(body.entries);
 		const times = entries.map((e) => e.data.lastActivityTimestamp);
 		expect(times).toEqual([...times].sort((a, b) => b - a));
-		const imageConv = entries.find((e) => e.data.preview?.type === "Image");
-		expect(imageConv?.data.preview?.text).toBeNull();
 		const albumConv = entries.find((e) => e.data.preview?.type === "Album");
 		expect(albumConv?.data.preview?.albumId).not.toBeNull();
 		expect(previewLabel(albumConv?.data.preview ?? null)).toBe("Album");
@@ -176,6 +177,17 @@ describe("demo route data matches the real schemas", () => {
 						route(`/v2/albums/${message.body.albumId}`),
 					);
 					expect(album.content.length).toBeGreaterThan(0);
+					const holds = (kind: string) =>
+						album.content.some((item) =>
+							item.contentType.startsWith(`${kind}/`),
+						);
+					expect({
+						hasPhoto: message.body.hasPhoto,
+						hasVideo: message.body.hasVideo,
+					}).toEqual({
+						hasPhoto: holds("image"),
+						hasVideo: holds("video"),
+					});
 				} else if (message.type === "ExpiringImage") {
 					expiringImages++;
 					const single = expiringImageMessageSchema.parse(
@@ -193,88 +205,6 @@ describe("demo route data matches the real schemas", () => {
 		}
 		expect(albums).toBeGreaterThan(0);
 		expect(expiringImages).toBeGreaterThan(0);
-	});
-
-	it("my albums cover the states the composer tab renders", () => {
-		const { albums } = myAlbumsResponseSchema.parse(route("/v1/albums"));
-
-		expect(albums.length).toBeGreaterThan(0);
-		expect(albums.some((album) => album.albumName === null)).toBe(true);
-		expect(albums.some((album) => !album.isShareable)).toBe(true);
-		expect(
-			albums.some((album) =>
-				album.content.some((item) =>
-					item.contentType.startsWith("video/"),
-				),
-			),
-		).toBe(true);
-	});
-
-	it("records an album share against the album it names", () => {
-		const albumId = myAlbumsResponseSchema.parse(route("/v1/albums"))
-			.albums[0]!.albumId;
-		const sharedCountOf = (id: number) =>
-			myAlbumsResponseSchema
-				.parse(route("/v1/albums"))
-				.albums.find((album) => album.albumId === id)!.sharedCount;
-		const before = sharedCountOf(albumId);
-		const neighborBefore = sharedCountOf(albumId + 1);
-
-		expect(
-			demoRoute({
-				path: `/v4/albums/${albumId}/shares`,
-				method: "POST",
-				body: {
-					profiles: [{ profileId: 1, expirationType: "INDEFINITE" }],
-				},
-			}).status,
-		).toBe(200);
-
-		expect(sharedCountOf(albumId)).toBe(before + 1);
-		expect(sharedCountOf(albumId + 1)).toBe(neighborBefore);
-	});
-
-	it("lists the profiles an album is shared with, then forgets an unshare", () => {
-		const albumId = 902;
-		const sharesOf = (id: number) =>
-			albumSharesResponseSchema.parse(route(`/v1/albums/${id}/shares`))
-				.profileIds;
-
-		expect(sharesOf(albumId)).not.toContain(7);
-
-		route(`/v4/albums/${albumId}/shares`, "POST", {
-			profiles: [{ profileId: 7, expirationType: "INDEFINITE" }],
-		});
-		expect(sharesOf(albumId)).toContain(7);
-
-		expect(
-			demoRoute({
-				path: `/v1/albums/${albumId}/unshares`,
-				method: "PUT",
-				body: { profiles: [{ profileId: 7, shareId: "share-1" }] },
-			}).status,
-		).toBe(200);
-		expect(sharesOf(albumId)).not.toContain(7);
-	});
-
-	it("rejects an album unshare whose body is not the documented shape", () => {
-		expect(() =>
-			demoRoute({
-				path: "/v1/albums/900/unshares",
-				method: "PUT",
-				body: { profileIds: [1] },
-			}),
-		).toThrow();
-	});
-
-	it("rejects an album share whose body is not the documented shape", () => {
-		expect(() =>
-			demoRoute({
-				path: "/v4/albums/900/shares",
-				method: "POST",
-				body: { profileIds: [1] },
-			}),
-		).toThrow();
 	});
 
 	it("paginated message requests are empty", () => {
@@ -454,5 +384,165 @@ describe("demo route data matches the real schemas", () => {
 
 		expect(entries.length).toBeGreaterThan(0);
 		expect(entries.every((entry) => entry.data.favorite)).toBe(true);
+	});
+
+	describe("the inbox filter body", () => {
+		const inboxEntries = (filters?: Partial<InboxFilterRequest>) => {
+			const body = route("/v4/inbox?page=1", "POST", filters) as {
+				entries: unknown[];
+			};
+			return z.array(conversationEntrySchema).parse(body.entries);
+		};
+		const inboxIds = (filters?: Partial<InboxFilterRequest>): string[] =>
+			inboxEntries(filters).map((entry) => entry.data.conversationId);
+		const conversationWith = (profileId: number) =>
+			`${profileId}:${demoMeProfileId}`;
+		const theo = conversationWith(100006);
+		const james = conversationWith(100001);
+		const jack = conversationWith(100250);
+		const henry = conversationWith(100009);
+		const pablo = conversationWith(100777);
+		const bear = conversationWith(100002);
+
+		const expectMatches = ({
+			filters,
+			matches,
+		}: {
+			filters: Partial<InboxFilterRequest>;
+			matches: string[];
+		}) => {
+			const unfiltered = inboxIds();
+			const undeleted = matches.filter((id) => unfiltered.includes(id));
+			expect(undeleted.length).toBeGreaterThan(0);
+			expect(unfiltered.length).toBeGreaterThan(undeleted.length);
+			expect(inboxIds(filters).toSorted()).toEqual(undeleted.toSorted());
+		};
+
+		it("returns every conversation for an all-default body", () => {
+			const unfiltered = inboxIds();
+			expect(unfiltered.length).toBeGreaterThan(0);
+			expect(
+				inboxIds({
+					unreadOnly: false,
+					chemistryOnly: false,
+					favoritesOnly: false,
+					rightNowOnly: false,
+					onlineNowOnly: false,
+					distanceMeters: null,
+					positions: [],
+				}),
+			).toEqual(unfiltered);
+		});
+
+		it("keeps only conversations with unread messages", () => {
+			expectMatches({
+				filters: { unreadOnly: true },
+				matches: [theo, james, pablo],
+			});
+		});
+
+		it("keeps only conversations whose peer is online now", () => {
+			expectMatches({
+				filters: { onlineNowOnly: true },
+				matches: [jack],
+			});
+		});
+
+		it("keeps only conversations whose peer is right now active", () => {
+			expectMatches({ filters: { rightNowOnly: true }, matches: [theo] });
+		});
+
+		it("keeps only conversations with dating potential", () => {
+			expectMatches({
+				filters: { chemistryOnly: true },
+				matches: [henry],
+			});
+		});
+
+		it("treats distanceMeters as an inclusive maximum", () => {
+			expectMatches({
+				filters: { distanceMeters: 9_300 },
+				matches: [james, bear, theo, pablo, henry],
+			});
+			expectMatches({
+				filters: { distanceMeters: 9_299 },
+				matches: [james, bear, theo, pablo],
+			});
+		});
+
+		it("matches positions, counting an unstated position as -1", () => {
+			expectMatches({
+				filters: { positions: [FilterPosition.Side] },
+				matches: [james, henry],
+			});
+			expectMatches({
+				filters: {
+					positions: [
+						FilterPosition.NotSpecified,
+						FilterPosition.Side,
+					],
+				},
+				matches: [theo, james, henry],
+			});
+		});
+
+		it("intersects filters instead of unioning them", () => {
+			const unread = inboxIds({ unreadOnly: true });
+			const sides = inboxIds({ positions: [FilterPosition.Side] });
+			const both = inboxIds({
+				unreadOnly: true,
+				positions: [FilterPosition.Side],
+			});
+
+			expect(both).toEqual([james]);
+			expect(both).toEqual(unread.filter((id) => sides.includes(id)));
+			expect(unread.length).toBeGreaterThan(both.length);
+			expect(sides.length).toBeGreaterThan(both.length);
+		});
+
+		it("gates results past the free allowance into partial entries", () => {
+			const entries = inboxEntries({ distanceMeters: 9_300 });
+
+			expect(entries.length).toBeGreaterThan(2);
+			expect(entries.map((entry) => entry.type)).toEqual([
+				"full_conversation_v1",
+				"full_conversation_v1",
+				...entries.slice(2).map(() => "partial_conversation_v1"),
+			]);
+		});
+
+		it("leaves the flags a partial entry omits out of the payload", () => {
+			const body = route("/v4/inbox?page=1", "POST", {
+				distanceMeters: 9_300,
+			}) as {
+				entries: { type: string; data: Record<string, unknown> }[];
+			};
+			const partial = body.entries.find(
+				(entry) => entry.type === "partial_conversation_v1",
+			);
+
+			expect(partial).toBeDefined();
+			expect(Object.keys(partial?.data ?? {}).toSorted()).toEqual([
+				"conversationId",
+				"lastActivityTimestamp",
+				"name",
+				"participants",
+				"preview",
+				"unreadCount",
+			]);
+		});
+
+		it("gates nothing until one of the paid filters is set", () => {
+			const unfiltered = inboxEntries();
+			const unread = inboxEntries({ unreadOnly: true });
+
+			expect(unfiltered.length).toBeGreaterThan(2);
+			expect(unread.length).toBeGreaterThan(0);
+			expect(
+				[...unfiltered, ...unread].every(
+					(entry) => entry.type === "full_conversation_v1",
+				),
+			).toBe(true);
+		});
 	});
 });

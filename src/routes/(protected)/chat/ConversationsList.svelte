@@ -1,39 +1,46 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { tick } from "svelte";
+	import { onDestroy, tick } from "svelte";
 
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
+	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { below } from "$lib/util/breakpoints.svelte";
 	import { restoreScrollOnce } from "$lib/util/scroll-restore.svelte";
 	import { SelectionSet } from "$lib/util/selection.svelte";
 	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
-	import Conversation from "./Conversation.svelte";
-	import ConversationsFilters from "./ConversationsFilters.svelte";
 	import ConversationsPagingTail from "./ConversationsPagingTail.svelte";
 	import ConversationsSelectionBar from "./ConversationsSelectionBar.svelte";
 	import DeleteConversationsDialog from "./DeleteConversationsDialog.svelte";
+	import ConversationsFilters from "./filters/ConversationsFilters.svelte";
 	import LazyConversation from "./LazyConversation.svelte";
+	import { MountQueue } from "./mount-queue";
+
+	let {
+		covered = false,
+		class: className,
+	}: { covered?: boolean; class?: import("svelte/elements").ClassValue } =
+		$props();
 
 	const EAGER_COUNT = 10;
 
 	const conversations: ConversationsState = getConversations();
 	const mobile = below("split");
+	const mountQueue = new MountQueue();
+
+	onDestroy(() => mountQueue.destroy());
 
 	$effect(() => {
-		conversations.noteListViewed();
+		if (!covered) conversations.noteListViewed();
 	});
 
 	let container: HTMLDivElement | null = $state(null);
 
-	restoreScrollOnce(() => container, conversations);
-
-	let { class: className }: { class?: import("svelte/elements").ClassValue } =
-		$props();
+	restoreScrollOnce({ container: () => container, state: conversations });
 
 	const selection = new SelectionSet<string>();
 	let selecting = $state(false);
@@ -86,7 +93,7 @@
 	}
 
 	$effect(() => {
-		if (selecting && (!mobile.current || selection.size === 0)) {
+		if (selecting && (!mobile.current || covered || selection.size === 0)) {
 			exitSelection();
 		}
 	});
@@ -167,8 +174,9 @@
 			class={[
 				"flex min-h-0 flex-1 flex-col gap-1 overflow-auto overscroll-contain px-4",
 				{
-					"pt-15": !selecting,
-					"pt-(--selection-bar-height)": selecting,
+					"pt-header-clear-15": !selecting,
+					"pt-[calc(var(--selection-bar-height)+var(--bar-content-gap))]":
+						selecting,
 				},
 				className,
 			]}
@@ -178,7 +186,7 @@
 				{#each Array(8)}
 					<Skeleton class="h-24.5 w-full shrink-0" />
 				{/each}
-			{:else if conversations.error}
+			{:else if conversations.error && conversations.entries.length === 0}
 				<div class="flex flex-1">
 					<ApiErrorDisplay
 						error={conversations.error}
@@ -193,38 +201,28 @@
 					{#each conversations.entries as conversation, i (conversation.data.conversationId)}
 						{@const conversationId =
 							conversation.data.conversationId}
-						{#if i < EAGER_COUNT}
-							<Conversation
-								{conversation}
-								selection={selecting ? selection : null}
-								onEnterSelection={mobile.current
-									? () => enterSelection(conversationId)
-									: undefined}
-								onRequestDelete={() =>
-									requestDelete([conversationId])}
-							/>
-						{:else}
-							<LazyConversation
-								{conversation}
-								selection={selecting ? selection : null}
-								onEnterSelection={mobile.current
-									? () => enterSelection(conversationId)
-									: undefined}
-								onRequestDelete={() =>
-									requestDelete([conversationId])}
-							/>
-						{/if}
+						<LazyConversation
+							{conversation}
+							eager={i < EAGER_COUNT}
+							queue={mountQueue}
+							selection={selecting ? selection : null}
+							onEnterSelection={mobile.current
+								? () => enterSelection(conversationId)
+								: undefined}
+							onRequestDelete={() =>
+								requestDelete([conversationId])}
+						/>
 					{/each}
 					<ConversationsPagingTail
 						paging={conversations.paging}
 						hasMore={conversations.nextPage !== null}
 						listEmpty={conversations.entries.length === 0}
-						filtered={conversations.filters.active.length > 0}
+						filtered={conversations.filters.filtered}
 					/>
 				</div>
 			{/if}
 		</div>
-		{#if !conversations.loading && !conversations.error}
+		{#if !conversations.loading && (conversations.entries.length > 0 || !conversations.error)}
 			<DataRefreshControl
 				{container}
 				updating={conversations.refreshing}
@@ -232,9 +230,10 @@
 				onrefresh={() => void conversations.refresh()}
 			/>
 		{/if}
+		<ScrollToTopButton {container} class="bottom-(--nav-clear)" />
 		<ConversationsFilters
 			filters={conversations.filters}
-			onchange={(active) => conversations.setFilters(active)}
+			onchange={(values) => conversations.setFilters(values)}
 			inert={selecting}
 		/>
 	</div>

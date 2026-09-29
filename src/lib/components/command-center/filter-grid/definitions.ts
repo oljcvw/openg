@@ -1,4 +1,4 @@
-import { getPreferencesSnapshot } from "$lib/app-data/preferences.svelte";
+import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 import {
 	AGE_MAX,
 	AGE_MIN,
@@ -14,8 +14,14 @@ import {
 	type GridSearchFilters,
 	HEIGHT_CM_MAX,
 	HEIGHT_CM_MIN,
+	isFilterableGenderId,
+	isFilterableTribe,
+	rangeBoundTexts,
+	WEIGHT_GRAMS_MAX,
+	WEIGHT_GRAMS_MIN,
 	WEIGHT_KG_MAX,
 	WEIGHT_KG_MIN,
+	weightGramsToKg,
 } from "$lib/model/browse/grid/filters";
 import {
 	acceptNSFWPics,
@@ -27,7 +33,7 @@ import {
 	sexualPositions,
 	tribes,
 } from "$lib/model/users/profiles";
-import { formatHeight, formatWeightKg, type UnitSystem } from "$lib/util/units";
+import { formatHeight, formatWeightKg } from "$lib/util/units";
 import {
 	booleanApply,
 	boundApply,
@@ -41,21 +47,13 @@ import {
 } from "./apply";
 import type { BooleanKey, Filter, ListKey, Render } from "./types";
 
-function rangeText({
-	floor,
-	ceiling,
-	range: [min = floor, max = ceiling],
-	format,
-}: {
-	floor: number;
-	ceiling: number;
-	range: number[];
-	format: (value: number, units: UnitSystem) => string;
-}): string {
-	const units = getPreferencesSnapshot().units;
-	return `${min === floor ? "No min" : format(min, units)} - ${
-		max === ceiling ? "No max" : format(max, units)
-	}`;
+function rangeText(
+	bounds: Omit<Parameters<typeof rangeBoundTexts>[0], "units">,
+): string {
+	return rangeBoundTexts({
+		...bounds,
+		units: preferencesSnapshot().units,
+	}).join(" - ");
 }
 
 function booleanFilter({
@@ -237,9 +235,9 @@ export const filters: Filter[] = [
 		max: WEIGHT_KG_MAX,
 		minKey: "weightGramsMin",
 		maxKey: "weightGramsMax",
-		rawMin: WEIGHT_KG_MIN * 1000,
-		rawMax: WEIGHT_KG_MAX * 1000,
-		store: (grams) => grams / 1000,
+		rawMin: WEIGHT_GRAMS_MIN,
+		rawMax: WEIGHT_GRAMS_MAX,
+		store: weightGramsToKg,
 		render: (f) =>
 			rangeText({
 				floor: WEIGHT_KG_MIN,
@@ -261,7 +259,11 @@ export const filters: Filter[] = [
 		keys: ["tribes", "tribe"],
 		target: "tribes",
 		enabled: "tribesEnabled",
-		enumObject: FilterTribe,
+		enumObject: Object.fromEntries(
+			Object.entries(FilterTribe).filter(([, id]) =>
+				isFilterableTribe(id),
+			),
+		),
 		labelMap: tribes,
 	}),
 	enumFilter({
@@ -324,7 +326,8 @@ export const filters: Filter[] = [
 				apply: idListApply({
 					target: "genders",
 					enabled: "genderEnabled",
-					isValid: (id) => id === -1 || id >= 0,
+					isValid: (id) =>
+						id === -1 || (id >= 0 && isFilterableGenderId(id)),
 					invalidLabel: "Invalid gender ID",
 				}),
 			},

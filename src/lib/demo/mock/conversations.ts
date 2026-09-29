@@ -1,10 +1,12 @@
 import { previewFromMessage } from "$lib/model/messaging/message-preview";
 import { type ApiResponseMessage } from "$lib/model/messaging/messages";
+import type { InboxFilterRequest } from "$lib/api/messaging/conversations";
 import type { AlbumExpirationType } from "$lib/model/messaging/albums";
 import type { Conversation } from "$lib/model/messaging/conversations";
 import { DAY, demoMeProfileId, HOUR, MINUTE, NOW, SECOND } from "../config";
-import { albumCoverUrl } from "./albums";
+import { albumCoverUrl, demoAlbumContent } from "./albums";
 import { hashFromSeed, picsum } from "./avatars";
+import { isTierGatedFilter, matchesInboxFilters } from "./conversation-filters";
 import { demoFavoriteOf } from "./favorites";
 import { lastOnlineOf, onlineUntilOf, photosOf, profileSeed } from "./profiles";
 
@@ -30,6 +32,8 @@ type DemoConversation = {
 	favorite: boolean;
 	muted: boolean;
 	lastActivityAgo: number;
+	rightNow?: Conversation["data"]["rightNow"];
+	chemistry?: boolean;
 	messages: DemoMessage[];
 };
 
@@ -67,13 +71,13 @@ const demoConversationSeeds: DemoConversation[] = [
 		favorite: false,
 		muted: false,
 		lastActivityAgo: 1,
+		rightNow: "HOSTING",
 		messages: [
-			{ fromMe: false, text: "👀" },
-			{ fromMe: true, text: "Lorem ipsum?" },
+			{ fromMe: true, text: "Hi, how are you?" },
 			{ fromMe: true, kind: "expiringImage" },
 			{ fromMe: false, kind: "expiringImage", expired: true },
-			{ fromMe: false, text: "Did you catch it? 🔥" },
-			{ fromMe: false, kind: "image", reactions: 1 },
+			{ fromMe: false, text: "Did you catch it? 👀" },
+			{ fromMe: false, kind: "album", albumId: 5004, reactions: 1 },
 		],
 	},
 	{
@@ -83,6 +87,7 @@ const demoConversationSeeds: DemoConversation[] = [
 		favorite: false,
 		muted: false,
 		lastActivityAgo: 52,
+		chemistry: true,
 		messages: [
 			{ fromMe: true, text: "Quis nostrud exercitation." },
 			{ fromMe: false, text: "Ullamco laboris nisi." },
@@ -133,6 +138,7 @@ const demoConversationSeeds: DemoConversation[] = [
 		messages: [
 			{ fromMe: true, text: "Duis aute irure dolor." },
 			{ fromMe: false, kind: "expiringImage" },
+			{ fromMe: false, kind: "image" },
 			{ fromMe: false, text: "🐻 lorem ipsum", reactions: 2 },
 		],
 	},
@@ -248,6 +254,9 @@ function buildMessage({
 				unsent: false,
 			};
 		case "album": {
+			const { content } = demoAlbumContent(message.albumId);
+			const albumHolds = (kind: "image" | "video") =>
+				content.some((item) => item.contentType.startsWith(`${kind}/`));
 			const albumBody = {
 				albumId: message.albumId,
 				hasUnseenContent: message.unseen ?? false,
@@ -263,8 +272,8 @@ function buildMessage({
 							: albumCoverUrl(message.albumId),
 				ownerProfileId: message.fromMe ? demoMeProfileId : conv.withId,
 				isViewable: !message.locked,
-				hasVideo: false,
-				hasPhoto: true,
+				hasVideo: albumHolds("video"),
+				hasPhoto: albumHolds("image"),
 				viewableUntil: message.expiring ? timestamp + DAY : null,
 			};
 			if (message.expiring === "v2")
@@ -309,23 +318,43 @@ function threadMessages(conv: DemoConversation): ApiResponseMessage[] {
 	return ordered.reverse();
 }
 
+const GATED_FULL_ENTRY_LIMIT = 2;
+
+const emptyInbox = {
+	entries: [],
+	showsFreeHeaderLabel: false,
+	totalFullConversations: 0,
+	totalPartialConversations: 0,
+	maxDisplayLockCount: 99,
+	nextPage: null,
+};
+
+function partialEntry({ data }: Conversation) {
+	return {
+		type: "partial_conversation_v1" as const,
+		data: {
+			conversationId: data.conversationId,
+			name: data.name,
+			participants: data.participants,
+			lastActivityTimestamp: data.lastActivityTimestamp,
+			unreadCount: data.unreadCount,
+			preview: data.preview,
+		},
+	};
+}
+
 export function demoConversations({
 	page,
-	favoritesOnly = false,
+	filters = {},
 }: {
 	page: number;
-	favoritesOnly?: boolean;
-}): { entries: Conversation[]; nextPage: number | null } {
-	if (page > 1) return { entries: [], nextPage: null };
+	filters?: Partial<InboxFilterRequest>;
+}) {
+	if (page > 1) return emptyInbox;
 	const entries: Conversation[] = demoConversationSeeds
 		.filter(
 			(conv) =>
 				!deletedConversationIds.has(conversationIdFor(conv.withId)),
-		)
-		.filter(
-			(conv) =>
-				!favoritesOnly ||
-				demoFavoriteOf({ profileId: conv.withId, seed: conv.favorite }),
 		)
 		.map((conv): Conversation => {
 			const conversationId = conversationIdFor(conv.withId);
@@ -349,7 +378,7 @@ export function demoConversations({
 								profileId: conv.withId,
 								seed: conv.favorite,
 							}),
-							hasDatingPotential: false,
+							hasDatingPotential: conv.chemistry ?? false,
 						},
 					],
 					lastActivityTimestamp: lastActivityOf(conv),
@@ -361,17 +390,30 @@ export function demoConversations({
 						profileId: conv.withId,
 						seed: conv.favorite,
 					}),
-					rightNow: "NOT_ACTIVE",
+					rightNow: conv.rightNow ?? "NOT_ACTIVE",
 					onlineUntil: onlineUntilOf(seed),
 					hasUnreadThrob: false,
 				},
 			};
 		})
+		.filter((entry) => matchesInboxFilters({ entry, filters }))
 		.sort(
 			(a, b) =>
 				b.data.lastActivityTimestamp - a.data.lastActivityTimestamp,
 		);
-	return { entries, nextPage: null };
+	const gatedFrom = isTierGatedFilter(filters)
+		? GATED_FULL_ENTRY_LIMIT
+		: entries.length;
+	return {
+		entries: entries.map((entry, index) =>
+			index < gatedFrom ? entry : partialEntry(entry),
+		),
+		showsFreeHeaderLabel: gatedFrom < entries.length,
+		totalFullConversations: Math.min(gatedFrom, entries.length),
+		totalPartialConversations: Math.max(entries.length - gatedFrom, 0),
+		maxDisplayLockCount: 99,
+		nextPage: null,
+	};
 }
 
 export function demoConversationMessages({
@@ -538,6 +580,8 @@ export function demoUploadChatMedia({
 	};
 }
 
+const deletedDrawerMedia = new Set<number>();
+
 export function demoDrawerMedia(): DemoDrawerMedia[] {
 	return [
 		...uploadedDrawerMedia,
@@ -549,5 +593,9 @@ export function demoDrawerMedia(): DemoDrawerMedia[] {
 			used: index % 3 === 0,
 			takenOnGrindr: false,
 		})),
-	];
+	].filter(({ id }) => !deletedDrawerMedia.has(id));
+}
+
+export function demoDeleteDrawerMedia(mediaId: number): void {
+	deletedDrawerMedia.add(mediaId);
 }

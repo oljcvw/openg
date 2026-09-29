@@ -39,13 +39,13 @@ Projects reference:
 - **[grindr.rs](https://git.opengrind.org/open-grind/grindr.rs) Rust crate** — Grindr API transport layer, authentication, network calls
 - **[Grindr Google OAuth WebExtension](https://git.opengrind.org/open-grind/grindr-google-oauth-webextension)** — a web browser extension that extracts a Google OAuth token for Grindr (used for Sign in with Google)
 - **[Open Grind](https://git.opengrind.org/open-grind/open-grind)** — cross-platform Tauri application using **grindr.rs** and sharing code from **Grindr Google OAuth WebExtension** for non-Android Google OAuth flow
-- **[Open Grind Google OAuth Android App](https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app)** — a companion Android-only app that renders Geckoview with **Grindr Google OAuth WebExtension** embedded, needed because Android system's WebView blocks the Google OAuth page
+- **[Open Grind Google OAuth Android App](https://git.opengrind.org/open-grind/google-oauth-app)** — a companion Android-only app that renders Geckoview with **Grindr Google OAuth WebExtension** embedded, needed because Android system's WebView blocks the Google OAuth page
 - **[Grindr Web Unlock](https://git.opengrind.org/open-grind/grindr-web-unlock)** — separate web browser extension that bypasses web.grindr.com client-side paywall
 - **[Grindr API developer tool](https://git.opengrind.org/open-grind/grindr-api-dev-tool)** — Desktop Tauri app that handles API authorization, security headers, request fingerprints for you and provides type hints for known fields
 
 ### Development environment
 
-1. Clone repository with submodules: `git clone --recurse-submodules ssh://git@git.opengrind.org/open-grind/open-grind.git`
+1. Clone repository with submodules: `git clone --recurse-submodules https://git.opengrind.org/open-grind/open-grind.git`
 2. Install prerequisites:
     - [Bun](https://bun.sh)
     - [Rust](https://rustup.rs)
@@ -87,10 +87,10 @@ const securityHeaders = {
 	requireRealDeviceInfo: "true",
 	"L-Time-Zone": "Europe/Madrid",
 	"User-Agent":
-		"grindr3/25.20.0.147239;147239;Free;Android 13;Pixel 7;Google",
+		"grindr3/26.17.0.181424;181424;Free;Android 13;Pixel 7;Google",
 	"L-Device-Info":
 		"1fAf9fB2aFfd47Fd;GLOBAL;2;3543028095;2400x1080;a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-	// modify L-Device-Info values randomly if you're getting ACCOUNT_BANNED at login stage
+	// modify L-Device-Info values randomly if you're getting ACCOUNT_BANNED at sign-in
 	// more info about these headers in docs: ./docs/content/grindr-api/security-headers.md
 };
 
@@ -100,7 +100,7 @@ const req = await fetch("https://grindr.mobi/v8/sessions", {
 	body: JSON.stringify({
 		email: "yourmail@example.org",
 		password:
-			"comment out this field after you log in once, use authToken to refresh session",
+			"comment out this field after you sign in once, use authToken to refresh session",
 		// authToken:
 		//	"just reuse any of previous authTokens, even expired",
 		token: null,
@@ -166,16 +166,17 @@ Open Grind adopts semver and uses it for canonical version names, i.e. `vMAJOR.M
 Android version code is calculated using `major * 1000000 + minor * 1000 + patch`, but for pre-mvp (v0.1.0) this convention is broken:
 
 ```
-v0.1.0-alpha.1 = 1000
-v0.1.0-alpha.2 = 1001
-v0.1.0-alpha.3 = 1002
-v0.1.0-alpha.4 = 1003
-v0.1.0-alpha.5 = 1004
-v0.1.0-beta.1  = 1010 (due to error, the actual release is 1004)
-v0.1.0-beta.2  = 1020 (due to error, the actual release is 1010)
-v0.1.0-beta.3  = 1030 (due to error, the actual release is 1020)
-v0.1.0-beta.4  = 1040 (error fixed, actual release jumps from 1020 to 1040)
-v0.1.0-beta.5  = 1050
+v0.1.0-alpha.1  = 1000
+v0.1.0-alpha.2  = 1001
+v0.1.0-alpha.3  = 1002
+v0.1.0-alpha.4  = 1003
+v0.1.0-alpha.5  = 1004
+v0.1.0-beta.1   = 1010 (due to error, the actual release is 1004)
+v0.1.0-beta.2   = 1020 (due to error, the actual release is 1010)
+v0.1.0-beta.3   = 1030 (due to error, the actual release is 1020)
+v0.1.0-beta.4   = 1040 (error fixed, actual release jumps from 1020 to 1040)
+v0.1.0-beta.4.1 = 1041
+v0.1.0-beta.5   = 1050
 ```
 
 Post-mvp versioning:
@@ -205,17 +206,24 @@ Before opening a pull request, run the same checks CI runs:
 End-to-end tests are a separate tier:
 
 - `bun run test:e2e` — Playwright. One-time setup: `bunx playwright install chromium`. It drives the web build and runs the browser serially, which is why it stays out of `bun run test`.
+- `bun run test:e2e:guard` — the layout guard. It builds the web demo for production, then checks every signed-in page and the 404 page at a phone and a desktop size: the bars can't scroll and stay see-through in every blur mode, nothing overflows, and the page structure passes axe. About 5 minutes, build included.
 - `bun run test:android` — JUnit tests for the Android sources. Needs the Android SDK and the Gradle files that `bun run tauri android build` generates, which is why it stays out of `bun run test`.
 
 Local updater testing:
 
 ```sh
-bun run dev:updater-server   # generates a dev minisign key, signs a payload, prints two exports
+ARTIFACT=zip bun run dev:updater-server   # ARTIFACT is apk, deb, AppImage, exe or zip; generates a dev minisign key, signs a payload, prints two exports
 export OPEN_GRIND_UPDATE_ORIGIN=http://127.0.0.1:8787/
 export OPEN_GRIND_UPDATE_KEY=<printed key>
 ```
 
-Both variables are read only under `debug_assertions` ([dev.rs](./src-tauri/src/api/update/dev.rs)). Run `adb reverse tcp:8787 tcp:8787` to tunnel to an Android device. On Android the debug build instead reads the same two assignments from `/data/local/tmp/open-grind-update.env` on the device — `e2e/updater/run.ts android` pushes it automatically, or `adb push` it when testing by hand. `cargo test --lib -- --ignored live_` runs the end-to-end check, download and signature tests against it.
+Both variables are read only under `debug_assertions` ([dev.rs](./src-tauri/src/api/update/dev.rs)). Run `adb reverse tcp:8787 tcp:8787` to tunnel to an Android device. On Android the debug build instead reads the same two assignments from `/data/local/tmp/open-grind-update.env` on the device — `e2e/updater/run.ts android` pushes it automatically, or `adb push` it when testing by hand.
+
+The dev server also serves a Google OAuth app release when given `COMPANION_PAYLOAD=<apk>` (tag `COMPANION_TAG`, default `v99.0.0`; `COMPANION_ABI` one of `arm64-v8a`, `v7a`, `x86_64`, default `arm64-v8a`); without `PAYLOAD`, `APP_BUNDLE`, `ARTIFACT` or `SUFFIX` it serves only the companion.
+
+`cargo test --lib -- --ignored live_` runs the end-to-end check, download and signature tests against the dev server. It needs both releases: this machine's app artifact (`ARTIFACT=zip` on macOS) and `COMPANION_PAYLOAD` with the default `COMPANION_ABI`. When serving only the app, run `cargo test --lib -- --ignored live_published live_release_host` instead.
+
+`e2e/updater/run.ts android-addon` drives the guided companion runs on a device, with `ADDON` set to `install` (default) or `update`. `ADDON=install` uninstalls the companion and serves the published `COMPANION_RELEASE`, downloaded and verified against the minisign key in [KEYS.md](./KEYS.md). A local `COMPANION_APK` is not checked against that key and must be signed with the release keystore: a companion with another signer is never offered an update, and sign-in refuses it. `ADDON=update` installs it first and re-serves it under the next patch tag, or `COMPANION_TAG`. The companion ABI follows `ABI`.
 
 `bun ci` also installs a pre-commit hook ([lefthook](https://lefthook.dev/), configured in [lefthook.yml](./lefthook.yml)) that runs over staged files only:
 
@@ -254,7 +262,7 @@ Both variables are read only under `debug_assertions` ([dev.rs](./src-tauri/src/
 
 ## Reproducibility
 
-Consult [REPRODUCIBILITY.md](./REPRODUCIBILITY.md) for full details on how to reproduce builds and verify them.
+Consult [BUILDING.md](./BUILDING.md) for how to build and sign a release on every platform, and [REPRODUCIBILITY.md](./REPRODUCIBILITY.md) for full details on how to reproduce builds and verify them.
 
 Refreshing the lock:
 

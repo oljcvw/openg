@@ -9,8 +9,9 @@ Pick your platform, then a method within it. Everything below the platform secti
         - [Build apk manually (advanced)](#build-apk-manually-advanced)
         - [Sign Android build](#sign-android-build)
         - [Verify Android release](#verify-android-release)
+        - [Publish to Google Play](#publish-to-google-play)
     - [Linux](#linux)
-        - [Build Linux deb](#build-linux-deb)
+        - [Build Linux deb, AppImage (Docker/Podman)](#build-linux-deb-appimage-dockerpodman)
         - [Sign Linux build](#sign-linux-build)
         - [Verify Linux release](#verify-linux-release)
     - [Windows](#windows)
@@ -19,6 +20,7 @@ Pick your platform, then a method within it. Everything below the platform secti
         - [Verify Windows release](#verify-windows-release)
     - [macOS](#macos)
         - [Build macOS app](#build-macos-app)
+        - [Build for the App Store](#build-for-the-app-store)
         - [Sign and notarize macOS build](#sign-and-notarize-macos-build)
         - [Verify macOS release](#verify-macos-release)
     - [Credential storage](#credential-storage)
@@ -57,7 +59,7 @@ docker image rm open-grind-build   # removes the thin image
 
 ### Build apk with Nix only (faster)
 
-Open Grind ships a [Nix flake](./flake.nix) that pins the entire Android toolchain — Rust, the JDK, the Android SDK, the NDK, Gradle, Bun, and Node.js — so any contributor on Linux or macOS can produce an identical build in an identical environment.
+Open Grind ships a [Nix flake](./flake.nix) that pins the entire Android toolchain — Rust, the JDK, the Android SDK, the NDK, Gradle, Bun, and Node.js — so a native build on x86_64 Linux reproduces the release. On Apple Silicon, only the [Docker build](#build-apk-with-nix-in-docker-easiest) does.
 
 - [Nix](https://nixos.org/download) >= 2.18
 - ~30 GB of disk space
@@ -70,7 +72,7 @@ Open Grind ships a [Nix flake](./flake.nix) that pins the entire Android toolcha
 > First time you run `nix develop` or `nix run` in Open Grind's repository, Nix will download and setup about 3 GB environment, which might take some time, depending on your internet connection speed.
 
 > [!NOTE]
-> If you use [direnv](https://direnv.net/), the bundled [.envrc](./.envrc) activates the dev shell automatically when you `cd` into the repository.
+> If you use [direnv](https://direnv.net/), the bundled [.envrc](./.envrc) activates the dev shell automatically when you `cd` into the repository. `nix run .#build-*` started from a dev shell drops its environment and keeps only `HOME`, `USER`, `LOGNAME`, `TERM`, locale, proxy and CA certificate variables, `CARGO_HOME`, `XWIN_CACHE_DIR`, `NODE_OPTIONS`, `OPEN_GRIND_*`, `MACOS_*` and the `PATH` entries outside the Nix store.
 
 ### Build apk manually (advanced)
 
@@ -127,8 +129,8 @@ cp /path/to/open-grind/contrib/keystore.properties.example ~/.config/open-grind/
 3. Sign the apk:
 
 ```bash
-OPEN_GRIND_KEYSTORE_PROPERTIES=~/.config/open-grind/keystore.properties
-bun /path/to/open-grind/ci/sign.ts /path/to/open-grind.apk /out/path/to/open-grind-signed.apk
+OPEN_GRIND_KEYSTORE_PROPERTIES=~/.config/open-grind/keystore.properties \
+  bun /path/to/open-grind/ci/sign.ts /path/to/open-grind.apk /out/path/to/open-grind-signed.apk
 ```
 
 ### Verify Android release
@@ -136,32 +138,49 @@ bun /path/to/open-grind/ci/sign.ts /path/to/open-grind.apk /out/path/to/open-gri
 - [Verify minisign signature](#verify-minisign-signature) to prove the APK was built by Open Grind developers
 - [Reproduce the release](./REPRODUCIBILITY.md#android) to prove the APK was built from the open source code
 
+### Publish to Google Play
+
+The Play bundle removes the in-app updater, so it is built separately from the APK. Every release runs `play.yml`, which builds the bundle on several providers and publishes the verified `open-grind-unsigned-play` artifact.
+
+1. Download the artifact from the `play` workflow run.
+
+2. Sign it with the Play upload key. The properties file has the same fields as [contrib/keystore.properties.example](./contrib/keystore.properties.example) and points at an RSA keystore:
+
+```bash
+OPEN_GRIND_PLAY_KEYSTORE_PROPERTIES=~/.config/open-grind/play-upload.properties \
+  nix develop .#play --command bun ci/sign.ts /path/to/open-grind-v<version>-android-unsigned.aab
+```
+
+3. Upload the bundle, its release notes and the store listing to the internal track from a checkout of the release tag, so the listing matches the bundle. Use `SUPPLY_RELEASE_STATUS=draft` until the app's first release leaves draft in the Play Console. fastlane cancels a review that is already running, so wait for it to finish first.
+
+```bash
+SUPPLY_JSON_KEY=~/.config/open-grind/play-service-account.json \
+  nix develop .#play --command ci/play-upload.sh /path/to/open-grind-v<version>-android.aab
+```
+
 ## Linux
 
-The release `.deb` is built in a pinned Debian 12 container ([ci/linux/](./ci/linux)) so the binary links against Debian 12's system libraries. The glibc floor is 2.34, which covers Debian 12+ and Ubuntu 22.04+. The Nix shell is for development only — its glibc is newer than any shipping distribution. `nix run .#build-linux` builds a `.deb` too, but against Nix's glibc, so it does not install on a normal distribution. Use the container for anything that leaves your machine.
-
-Other Linux formats:
-
 - `.rpm` — tauri-bundler passes the version through unsanitised and RPM's `Version` cannot contain `-`, so every prerelease is rejected; there is no `rpm.version` override
-- AppImage — tauri-bundler downloads linuxdeploy and its plugins from unpinned branches at bundle time, and the default bundle breaks on Mesa 25+ ([tauri#15665](https://github.com/tauri-apps/tauri/issues/15665))
-- Bundled codecs — The app uses the system WebKitGTK, which decodes through the system GStreamer; shipping codecs would only duplicate what `Recommends` already installs
 
-### Build Linux deb
+### Build Linux deb, AppImage (Docker/Podman)
 
-Needs Podman or Docker.
+Built in a pinned Debian 12 container ([ci/linux/](./ci/linux)), linked against Debian 12's system libraries. The glibc floor is 2.34, (Debian 12+, Ubuntu 22.04+).
 
 ```bash
 podman build -t open-grind-linux ci/linux
 podman run --rm -v "$PWD:/work" open-grind-linux sh ci/linux/build.sh
 ```
 
-The result is `src-tauri/target/release/bundle/deb/open-grind-v<version>-linux-<arch>.deb`. The script repacks what `tauri build` produced with `dpkg-deb` under `SOURCE_DATE_EPOCH`, because tauri-bundler writes wall-clock mtimes and unsorted entries ([tauri#13612](https://github.com/tauri-apps/tauri/issues/13612)).
+`bun run package:linux` runs both. Docker takes the same two commands with `docker` in place of `podman`.
 
-Runtime notes:
+The result is `src-tauri/target/release/bundle/deb/open-grind-v<version>-linux-<arch>.deb` and `src-tauri/target/release/bundle/appimage/open-grind-v<version>-linux-<arch>.AppImage`. Each run empties both directories first, so they only ever hold the latest build.
 
-- Video needs GStreamer: `gstreamer1.0-plugins-good` for MP4 and `gstreamer1.0-libav` for H.264, both declared as `Recommends`. Fedora strips patent-encumbered codecs from its own packages.
-- Without a Secret Service (a headless box, or no D-Bus session) the login is kept in a plain file under the app data directory and the app says so on launch.
-- Location is not available through the geolocation plugin on Linux. Set it from the command palette by geohash.
+The script repacks what `tauri build` generated with `dpkg-deb` under `SOURCE_DATE_EPOCH`, because tauri-bundler writes clock mtimes and unsorted entries ([tauri#13612](https://github.com/tauri-apps/tauri/issues/13612)).
+
+AppImage is generated from `.deb`. The script writes the AppDir, runs `mksquashfs` under `SOURCE_DATE_EPOCH` and prepends the runtime pinned by `APPIMAGE_RUNTIME_TAG` in [ci/linux/Dockerfile](./ci/linux/Dockerfile).
+
+- Don't use Nix shell for releases, its glibc is newer than any shipping distribution.
+- Don't use `tauri build --bundles appimage`, it runs linuxdeploy, which downloads tooling at build time and over-bundles until the result fails to start against Mesa 25+ ([tauri#15665](https://github.com/tauri-apps/tauri/issues/15665)).
 
 ### Sign Linux build
 
@@ -169,8 +188,8 @@ Linux builds ship unsigned.
 
 ### Verify Linux release
 
-- [Verify minisign signature](#verify-minisign-signature) to prove the .deb was built by Open Grind developers
-- [Reproduce the release](./REPRODUCIBILITY.md#linux) to prove the .deb was built from the open source code
+- [Verify minisign signature](#verify-minisign-signature) to prove the .deb and .AppImage were built by Open Grind developers
+- [Reproduce the release](./REPRODUCIBILITY.md#linux) to prove they were built from the open source code
 
 ## Windows
 
@@ -182,12 +201,19 @@ Nix runs the full `tauri build --bundles nsis`. On first use cargo-xwin download
 
 ```bash
 # x86_64:
-nix develop .#windows-x64
-cargo xwin check --manifest-path src-tauri/Cargo.toml --lib --target x86_64-pc-windows-msvc
+nix run .#build-windows-x64
 
 # arm64:
-nix develop .#windows-arm64
-cargo xwin check --manifest-path src-tauri/Cargo.toml --lib --target aarch64-pc-windows-msvc
+nix run .#build-windows-arm64
+```
+
+The result is `src-tauri/target/<triple>/release/bundle/nsis/*-setup.exe`. Releases carry the published name instead, because [ci/windows/build.sh](./ci/windows/build.sh) renames it to `open-grind-v<version>-windows-<arch>.exe`.
+
+To type-check the Rust library without bundling an installer:
+
+```bash
+nix develop .#windows-x64
+cargo xwin check --manifest-path src-tauri/Cargo.toml --lib --target x86_64-pc-windows-msvc
 ```
 
 ### Sign Windows build
@@ -209,7 +235,15 @@ A macOS build needs a Mac. Nix pins the toolchain and remaps the build paths the
 nix run .#build-macos
 ```
 
-This builds a universal app, signs it, and writes a reproducible zip to `src-tauri/target/release/artifacts/`. The build always enables the `keychain` feature, ad-hoc builds therefore cannot read back credentials an earlier build wrote. A release build refuses to run from anywhere but `/Applications` or `~/Applications`. Debug builds do not reproduce; the release profile is the default, `nix run .#build-macos -- --debug` to opt out.
+This builds a universal app, signs it ad-hoc unless `MACOS_SIGN_IDENTITY` is set, and writes the release zip to `src-tauri/target/release/artifacts/`. The ad-hoc zip [reproduces](./REPRODUCIBILITY.md#macos) byte for byte. The build always enables the `keychain` feature, ad-hoc builds therefore cannot read back credentials an earlier build wrote. A release build refuses to run from anywhere but `/Applications` or `~/Applications`. Debug builds do not reproduce; the release profile is the default, `nix run .#build-macos -- --debug` to opt out.
+
+### Build for the App Store
+
+```bash
+nix run .#build-macos -- --app-store
+```
+
+The default build uses two private macOS APIs: WebKit's `_setUseSystemAppearance:` for `-apple-visual-effect`, and `drawsBackground`.
 
 ### Sign and notarize macOS build
 
@@ -218,7 +252,7 @@ This builds a universal app, signs it, and writes a reproducible zip to `src-tau
 | `MACOS_SIGN_IDENTITY`  | `-`     | `-` is ad-hoc                                                  |
 | `MACOS_NOTARY_PROFILE` | unset   | `notarytool` keychain profile; when set, notarizes and staples |
 
-`src-tauri/entitlements.plist` is passed to `codesign` when it exists.
+`src-tauri/entitlements.plist` is passed to the signer when it exists. Ad-hoc builds are signed by the pinned `rcodesign`, Developer ID builds by macOS `codesign`.
 
 For distribution, store the notary credentials once, then build:
 
@@ -264,7 +298,7 @@ PUBLISHED=/path/to/file
 if minisign -Vm "$PUBLISHED" -P RWReleaseOpenGrindurRQcmR+NovOaU5IEU3LM5l6TcXJvOGYw2m4O+; then
   echo "✓ signature valid and verified"
 else
-  echo "✗ signature invalid, do not install this APK" >&2
+  echo "✗ signature invalid, do not install this" >&2
   exit 1
 fi
 ```

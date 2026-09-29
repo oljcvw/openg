@@ -14,15 +14,23 @@
 		placeholder?: string;
 	} = $props();
 
+	const id = $props.id();
+
 	const remaining = $derived(maxLength - value.length);
 	const over = $derived(remaining < 0);
 </script>
 
 <div class="flex flex-col gap-1.5">
 	{#if label !== undefined}
-		<Label class="px-1">{label}</Label>
+		<Label class="px-1" for={id}>{label}</Label>
 	{/if}
-	<Textarea bind:value {placeholder} aria-invalid={over} class="min-h-24" />
+	<Textarea
+		{id}
+		bind:value
+		{placeholder}
+		aria-invalid={over}
+		class="min-h-24"
+	/>
 	<div class="flex justify-end gap-2 px-1 text-xs">
 		<span
 			class={[

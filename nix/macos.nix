@@ -7,7 +7,15 @@ let
   sdk = pkgs.apple-sdk;
 
   toolchainInputs =
-    common.cargoInputs ++ common.frontendInputs ++ common.nativeCcInputs ++ [ pkgs.xcbuild ];
+    common.cargoInputs
+    ++ common.frontendInputs
+    ++ common.nativeCcInputs
+    ++ [
+      pkgs.xcbuild
+      pkgs.cctools
+      pkgs.rcodesign
+      pkgs.zip
+    ];
 
   env = {
     SDKROOT = toString sdk.sdkroot;
@@ -25,6 +33,7 @@ in
           || { echo "FATAL: $tool not found — run xcode-select --install" >&2; exit 1; }
       done
 
+      unset ZIP ZIPOPT "''${!RCODESIGN_@}"
       bun ci
       bun scripts/package-macos.ts "$@"
     '';

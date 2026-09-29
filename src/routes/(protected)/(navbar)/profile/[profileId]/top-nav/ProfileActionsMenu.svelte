@@ -11,18 +11,24 @@
 	import { blockUser } from "$lib/api/browse/blocks";
 	import { hideUser } from "$lib/api/browse/hides";
 	import { showErrorToast } from "$lib/api/error-toast";
-	import ToastUnimplemented from "$lib/components/feedback/ToastUnimplemented.svelte";
+	import ReportSheet from "$lib/components/report/ReportSheet.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
 
 	let {
 		profileId,
+		blockable,
 		onBlocked,
 		onHidden,
-	}: { profileId: number; onBlocked: () => void; onHidden: () => void } =
-		$props();
+	}: {
+		profileId: number;
+		blockable: boolean;
+		onBlocked: () => void;
+		onHidden: () => void;
+	} = $props();
 
 	let submitting = $state(false);
+	let reportOpen = $state(false);
 </script>
 
 <DropdownMenu.Root>
@@ -60,13 +66,7 @@
 			<CopyIcon class="size-5" />
 			Copy profile ID
 		</DropdownMenu.Item>
-		<DropdownMenu.Item
-			onSelect={() => {
-				toast(ToastUnimplemented, {
-					componentProps: { feature: "Report profile", issue: 41 },
-				});
-			}}
-		>
+		<DropdownMenu.Item onSelect={() => (reportOpen = true)}>
 			<FlagIcon class="size-5" />
 			Report profile
 		</DropdownMenu.Item>
@@ -84,19 +84,26 @@
 			<EyeSlashIcon class="size-5" />
 			Hide profile
 		</DropdownMenu.Item>
-		<DropdownMenu.Item
-			onSelect={async () => {
-				try {
-					await blockUser({ profileId });
-					onBlocked();
-				} catch (error) {
-					console.error(error);
-					showErrorToast({ label: "Failed to block user", error });
-				}
-			}}
-		>
-			<ProhibitIcon class="size-5" />
-			Block profile
-		</DropdownMenu.Item>
+		{#if blockable}
+			<DropdownMenu.Item
+				onSelect={async () => {
+					try {
+						await blockUser({ profileId });
+						onBlocked();
+					} catch (error) {
+						console.error(error);
+						showErrorToast({
+							label: "Failed to block user",
+							error,
+						});
+					}
+				}}
+			>
+				<ProhibitIcon class="size-5" />
+				Block profile
+			</DropdownMenu.Item>
+		{/if}
 	</DropdownMenu.Content>
 </DropdownMenu.Root>
+
+<ReportSheet bind:open={reportOpen} {profileId} {blockable} {onBlocked} />

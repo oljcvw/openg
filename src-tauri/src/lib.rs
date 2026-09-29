@@ -1,13 +1,26 @@
 pub mod api;
+mod app_data;
 mod app_settings;
 mod appearance;
+mod appimage;
 mod context_menu;
+mod desktop_entry;
 mod error;
+mod haptics;
+mod hex;
 pub mod media;
+mod media_picker;
 mod photo;
+#[cfg(test)]
+mod pin_support;
+mod plugin_rejection;
+#[cfg(any(target_os = "android", test))]
+mod push_poll;
 mod scroll_phase;
 mod state;
 mod storage;
+mod upload;
+mod video;
 
 use std::sync::OnceLock;
 
@@ -16,9 +29,6 @@ use tauri::Manager;
 use crate::state::AppState;
 use crate::storage::{AuthStorage, DeviceStorage, SigningKeyStorage};
 
-// Mirrors MIN_SUPPORTED_WEBVIEW_MAJOR in gen/android/app/build.gradle.kts and the
-// CSS feature floor in src/app.html (Tailwind v4: Chromium 111 / WebKitGTK 2.42 /
-// Safari 16.4). Keep in sync.
 #[cfg(target_os = "windows")]
 const MIN_CHROMIUM_MAJOR: u32 = 111;
 #[cfg(target_os = "linux")]
@@ -117,6 +127,9 @@ fn quit_when_closed(window: &tauri::WebviewWindow) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+	#[cfg(target_os = "linux")]
+	appearance::apply_environment_defaults();
+
 	api::update::enforce_home();
 
 	#[cfg(feature = "devtools")]
@@ -143,7 +156,9 @@ pub fn run() {
 	#[cfg(target_os = "android")]
 	let builder = builder
 		.plugin(tauri_plugin_android_fs::init())
-		.plugin(photo::plugin());
+		.plugin(photo::plugin())
+		.plugin(api::recaptcha::plugin())
+		.plugin(api::push::plugin());
 
 	builder
         .plugin(open_grind_platform_plugin())
@@ -154,45 +169,83 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(api::google_oauth::plugin())
+        .plugin(api::facebook_oauth::plugin())
         .plugin(api::update::plugin())
         .plugin(app_settings::plugin())
+        .plugin(media_picker::plugin())
         .manage(AppState {
             client: OnceLock::new(),
         })
+        .manage(upload::UploadLock::default())
         .manage(media::MediaProxy::default())
         .manage(api::session_recovery::SessionRecovery::default())
         .register_asynchronous_uri_scheme_protocol(media::SCHEME, media::handle)
         .invoke_handler(tauri::generate_handler![
-            api::auth::login,
-            api::auth::login_with_google,
-            api::auth::google_sign_in,
-            api::auth::refresh_token,
-            api::auth::logout,
-            api::auth::auth_state,
+            api::auth::sign_in_with_email,
+            api::auth::sign_in_with_google,
+            api::auth::sign_in_with_google_token,
+            api::auth::backend_ready,
+            api::auth::google_handoff_pending,
+            api::auth::sign_in_with_google_handoff,
+            api::auth::discard_google_handoff,
+            api::auth::sign_in_with_facebook,
+            api::auth::refresh_session,
+            api::auth::sign_out,
             api::auth::account_restriction,
             api::auth::recaptcha_first_party_enabled,
+            api::recaptcha::mint_recaptcha_token,
+            api::push::push_addon_ready,
+            api::push::push_token,
+            api::push::push_delete_token,
+            api::push::push_notifications_enabled,
+            api::push::push_set_notifications_enabled,
+            api::push::push_dismiss_conversation,
+            api::push::push_open_notification_settings,
+            api::push::push_mode,
+            api::push::push_set_mode,
+            api::push::push_categories,
+            api::push::push_set_category,
+            api::push::push_open_category_settings,
+            api::push::push_notification_permission,
+            api::push::push_request_notification_permission,
+            api::push::push_take_deeplink,
+            api::push::push_watch,
             storage::storage_backend,
             api::rest::request,
-            api::media_upload::upload_chat_media,
+            upload::bytes::upload_media,
+            upload::inspect::inspect_media_file,
+            upload::file::upload_media_file,
             api::ws::ws_connect,
+            api::ws::ws_reconnect,
             api::ws::ws_send,
             api::client::rotate_api_params,
             api::session_recovery::set_app_active,
-            api::session_recovery::session_health,
-            scroll_phase::scroll_gesture_capture,
-            api::update::commands::update_capability,
-            api::update::commands::update_settings,
-            api::update::commands::update_set_auto_check,
-            api::update::commands::update_check,
-            api::update::commands::update_download,
-            api::update::commands::update_cancel_download,
-            api::update::commands::update_progress,
-            api::update::commands::update_readiness,
-            api::update::commands::update_install,
-            api::update::commands::update_take_install_outcome,
-            api::update::commands::update_open_install_permission_settings,
-            api::update::commands::update_discard,
+            api::session_recovery::current_session,
+            haptics::play_haptic,
+            scroll_phase::set_scroll_gesture_capture,
+            desktop_entry::desktop_entry_state,
+            desktop_entry::desktop_entry_install,
+            desktop_entry::desktop_entry_remove,
+            api::update::commands::updater_capability,
+            api::update::commands::updater_settings,
+            api::update::commands::updater_set_auto_check,
+            api::update::commands::updater_check,
+            api::update::commands::updater_download,
+            api::update::commands::updater_cancel_download,
+            api::update::commands::updater_progress,
+            api::update::commands::updater_readiness,
+            api::update::commands::updater_install,
+            api::update::commands::updater_install_pending,
+            api::update::commands::updater_installed_version,
+            api::update::commands::updater_take_install_outcome,
+            api::update::commands::updater_open_install_permission_settings,
+            api::update::commands::updater_discard,
             app_settings::open_app_settings,
+            media_picker::pick_android_media,
+            appearance::backdrop_filter_renders,
+            app_data::read_app_data,
+            app_data::write_app_data,
+            app_data::remove_app_data,
         ])
         .setup(|app| {
             scroll_phase::install_scroll_gesture_bridge(app.handle());
@@ -209,11 +262,17 @@ pub fn run() {
                 .cloned()
                 .collect();
             for window in deferred {
-                let window =
+                let builder =
                     tauri::WebviewWindowBuilder::from_config(app.handle(), &window)?
                         .user_agent(&user_agent)
-                        .on_navigation(is_app_url)
-                        .build()?;
+                        .on_navigation(is_app_url);
+                #[cfg(target_os = "linux")]
+                let builder = builder.extensions_path(
+                    app.path().resource_dir()?.join(media::WEBKIT_EXTENSIONS),
+                );
+                let window = builder.build()?;
+                #[cfg(target_os = "linux")]
+                media::serve_element_opens(&window);
                 appearance::unlock_visual_effects(&window);
                 context_menu::trim_native_menu(&window);
                 #[cfg(desktop)]
@@ -252,8 +311,10 @@ pub fn run() {
                 credentials,
                 token: None,
             });
-            let client = grindr::GrindrClient::new(device, resumed)
-                .expect("failed to build GrindrClient");
+            let client = state::share(|| {
+                grindr::GrindrClient::new(device, resumed)
+                    .expect("failed to build GrindrClient")
+            });
 
             {
                 let mut session_rx = client.session_receiver();
@@ -374,6 +435,87 @@ mod tests {
 			"http://ogmedia.localhost/aHR0cHM6Ly9leGFtcGxlLm9yZw",
 		] {
 			assert!(!allows(url), "{url} must not load in the main webview");
+		}
+	}
+}
+
+#[cfg(test)]
+mod webview_floor_pins {
+	const THIS: &str = include_str!("lib.rs");
+	const TAURI_CONF: &str = include_str!("../tauri.conf.json");
+	const GRADLE: &str = include_str!("../gen/android/app/build.gradle.kts");
+	const APP_HTML: &str = include_str!("../../src/app.html");
+
+	fn numbers_after<'a>(
+		haystack: &'a str,
+		marker: &str,
+	) -> impl Iterator<Item = u32> + 'a {
+		let at = haystack.find(marker).expect(marker) + marker.len();
+		haystack[at..]
+			.split(|c: char| !c.is_ascii_digit())
+			.filter(|run| !run.is_empty())
+			.map(|run| run.parse().unwrap())
+	}
+
+	#[test]
+	fn every_webview_floor_names_the_same_chromium_major() {
+		let rust =
+			numbers_after(THIS, "const MIN_CHROMIUM_MAJOR: u32 =").next();
+		assert_eq!(
+			rust,
+			numbers_after(TAURI_CONF, "\"minimumWebview2Version\":").next()
+		);
+		assert_eq!(
+			rust,
+			numbers_after(GRADLE, "MIN_SUPPORTED_WEBVIEW_MAJOR\",").next()
+		);
+	}
+
+	#[test]
+	fn the_unsupported_page_names_the_webkitgtk_floor() {
+		let rust: Vec<u32> =
+			numbers_after(THIS, "const MIN_WEBKITGTK: (u32, u32) =")
+				.take(2)
+				.collect();
+		let page: Vec<u32> =
+			numbers_after(APP_HTML, "<code>webkit2gtk</code> (")
+				.take(2)
+				.collect();
+		assert_eq!(rust, page);
+	}
+}
+
+#[cfg(test)]
+mod frontend_method_pins {
+	const THIS: &str = include_str!("lib.rs");
+	const METHODS: &str = include_str!("../../src/lib/api/methods.ts");
+
+	fn between<'a>(haystack: &'a str, open: &str, close: &str) -> &'a str {
+		let start = haystack.find(open).expect(open) + open.len();
+		let len = haystack[start..].find(close).expect(close);
+		&haystack[start..start + len]
+	}
+
+	#[test]
+	fn every_frontend_method_is_a_registered_command() {
+		let registered: Vec<&str> =
+			between(THIS, "tauri::generate_handler![", "])")
+				.split(',')
+				.filter_map(|entry| entry.trim().rsplit("::").next())
+				.collect();
+		let methods: Vec<&str> =
+			between(METHODS, "export const methods = {", "\n}")
+				.lines()
+				.filter_map(|line| line.strip_prefix('\t'))
+				.filter(|line| !line.starts_with(['\t', '}']))
+				.map(|line| line.split_once(':').expect(line).0)
+				.collect();
+		assert!(!methods.is_empty());
+		for method in methods {
+			assert!(
+				registered.contains(&method),
+				"{method} is called by the frontend but not registered"
+			);
 		}
 	}
 }

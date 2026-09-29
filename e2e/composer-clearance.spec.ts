@@ -1,15 +1,17 @@
 import { expect, type Page, test } from "@playwright/test";
 
-import { DEMO_CONVERSATION, installTauriShim } from "./support/app";
+import {
+	DEMO_CONVERSATION,
+	installTauriShim,
+	MESSAGE_ROW,
+} from "./support/app";
 
 const MULTILINE_TEXT =
 	"one two three four five six seven eight nine ten eleven twelve thirteen " +
 	"fourteen fifteen sixteen seventeen eighteen nineteen twenty twentyone";
 
-/** px between the newest message and the composer, from pb-[…+--spacing(1.5)] */
+/** px between the newest message and the composer, from the scroller padding-bottom (composer height + --spacing * 1.5) */
 const GAP_PX = 6;
-
-const MESSAGE = '[role="button"][tabindex="0"]';
 
 type Metrics = {
 	composerHeight: number;
@@ -24,7 +26,7 @@ type Metrics = {
 async function openConversation(page: Page) {
 	await installTauriShim(page);
 	await page.goto(DEMO_CONVERSATION);
-	await page.locator(MESSAGE).first().waitFor({ timeout: 30_000 });
+	await page.locator(MESSAGE_ROW).first().waitFor({ timeout: 30_000 });
 	await page.waitForTimeout(600);
 }
 
@@ -57,7 +59,7 @@ function measure(page: Page): Promise<Metrics> {
 				? parseFloat(getComputedStyle(refresh).bottom)
 				: NaN,
 		};
-	}, MESSAGE);
+	}, MESSAGE_ROW);
 }
 
 const scrollTo = (page: Page, where: "floor" | "middle") =>

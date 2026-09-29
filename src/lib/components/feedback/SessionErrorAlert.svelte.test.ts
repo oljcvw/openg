@@ -68,7 +68,7 @@ describe("SessionErrorAlert", () => {
 	beforeEach(() => {
 		callMethodMock
 			.mockReset()
-			.mockResolvedValue({ signedIn: true, expiresAt: 0, stale: true });
+			.mockResolvedValue({ profileId: 1, expiresAt: 0, stale: true });
 		signOutMock.mockReset().mockResolvedValue(undefined);
 		toastErrorMock.mockReset();
 		writeTextMock.mockReset().mockResolvedValue(undefined);
@@ -185,6 +185,24 @@ describe("SessionErrorAlert", () => {
 		expect(toastErrorMock).toHaveBeenCalled();
 	});
 
+	it("raises a dialog for a refresh Grindr itself refused", async () => {
+		sessionErrorState.open = false;
+		render(SessionErrorAlert);
+
+		emit("auth:session-error", {
+			message: "Could not refresh the session",
+			unauthorized: false,
+			kind: "SessionStale",
+			attempts: 3,
+			transient: true,
+		});
+		await settle();
+
+		expect(sessionErrorState.open).toBe(true);
+		expect(screen.getByText("Grindr refused your session")).toBeTruthy();
+		expect(toastErrorMock).not.toHaveBeenCalled();
+	});
+
 	it("closes on a refresh that succeeds", async () => {
 		callMethodMock.mockResolvedValue({ profileId: 1, restriction: null });
 		render(SessionErrorAlert);
@@ -198,7 +216,7 @@ describe("SessionErrorAlert", () => {
 	});
 
 	it("signs out instead of retrying forever once the session is gone", async () => {
-		callMethodMock.mockRejectedValue({ kind: "NotLoggedIn" });
+		callMethodMock.mockRejectedValue({ kind: "NotSignedIn" });
 		render(SessionErrorAlert);
 
 		await fireEvent.click(

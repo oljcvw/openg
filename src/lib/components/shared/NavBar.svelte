@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import ChatCircleIcon from "phosphor-svelte/lib/ChatCircleIcon";
 	import DotsNineIcon from "phosphor-svelte/lib/DotsNineIcon";
@@ -14,6 +15,10 @@
 	import { Badge } from "$lib/components/ui/badge";
 	import { tabsListVariants } from "$lib/components/ui/tabs";
 	import { getTapsState } from "$lib/interest/taps-state.svelte";
+	import { traverseBackTo } from "$lib/util/history";
+	import { isWithin } from "$lib/util/pathname";
+	import { isPlainClick } from "$lib/util/plain-click";
+	import { bottomChrome } from "$lib/util/screen-chrome.svelte";
 
 	let { ourProfileId }: { ourProfileId: number } = $props();
 
@@ -28,14 +33,40 @@
 
 	const taps = untrack(() => getTapsState(ourProfileId));
 	const hasUnseenTaps = $derived(taps.hasUnseen);
+
+	function tabNavigation({
+		href,
+		landsOn = href,
+	}: {
+		href: string;
+		landsOn?: string;
+	}) {
+		return (event: MouseEvent) => {
+			if (!isPlainClick(event)) return;
+
+			const current = page.url.pathname;
+			if (current === landsOn) {
+				event.preventDefault();
+				return;
+			}
+			if (!isWithin({ pathname: current, root: href })) return;
+
+			event.preventDefault();
+			if (!traverseBackTo(landsOn))
+				void goto(landsOn, { replaceState: true });
+		};
+	}
 </script>
 
 <ProgressiveBlur
 	direction="bottomToTop"
 	tag="nav"
+	aria-label="Main"
 	class="fixed bottom-0 z-50 w-full pt-2 pb-fixed-nav"
 	bgClass="bg-linear-to-t from-background to-transparent"
-	contentClass="overflow-auto no-scrollbar left-1/2 -translate-x-1/2 m-auto flex justify-center gap-2 px-1"
+	contentClass="flex gap-2 overflow-auto no-scrollbar px-1 *:first:ms-auto *:last:me-auto"
+	contentScrollIntent="x"
+	{@attach bottomChrome}
 >
 	<div
 		class={[
@@ -46,11 +77,7 @@
 		<a
 			href="/"
 			data-active={page.route.id === "/(protected)/(navbar)/(root)"}
-			onclick={(e) => {
-				if (page.route.id === "/(protected)/(navbar)/(root)") {
-					e.preventDefault();
-				}
-			}}
+			onclick={tabNavigation({ href: "/" })}
 		>
 			<DotsNineIcon weight="fill" />
 			Browse
@@ -58,6 +85,7 @@
 		<a
 			href="/right-now"
 			data-active={page.route.id === "/(protected)/(navbar)/right-now"}
+			onclick={tabNavigation({ href: "/right-now" })}
 		>
 			<DropIcon weight="fill" />
 			Right Now
@@ -67,6 +95,10 @@
 			data-active={page.route.id?.startsWith(
 				"/(protected)/(navbar)/interest",
 			)}
+			onclick={tabNavigation({
+				href: "/interest",
+				landsOn: "/interest/taps",
+			})}
 		>
 			<FireIcon weight="fill" />
 			Interest
@@ -76,7 +108,11 @@
 				/>
 			{/if}
 		</a>
-		<a href="/chat" data-active={page.route.id === "/(protected)/chat"}>
+		<a
+			href="/chat"
+			data-active={page.route.id === "/(protected)/chat"}
+			onclick={tabNavigation({ href: "/chat" })}
+		>
 			<ChatCircleIcon weight="fill" />
 			Inbox
 			{#if hasUnread}
@@ -89,6 +125,7 @@
 	<a
 		href="/settings"
 		aria-label="Me"
+		onclick={tabNavigation({ href: "/settings" })}
 		class={[
 			"flex size-14 shrink-0 rounded-full border bg-muted p-1",
 			{

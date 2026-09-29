@@ -1,7 +1,8 @@
 use tauri::http::{header, Response, StatusCode};
 
 use super::cache::CachedMedia;
-use super::response::{deliver, refused};
+use super::requested::Requested;
+use super::response::{deliver, refused, Freshness};
 
 enum Slice {
 	Whole,
@@ -10,43 +11,21 @@ enum Slice {
 }
 
 fn parse_range(range: Option<&str>, len: usize) -> Slice {
-	let Some(spec) = range.and_then(|value| value.strip_prefix("bytes="))
-	else {
-		return Slice::Whole;
-	};
-	if spec.contains(',') {
-		return Slice::Whole;
-	}
-	let Some((start, end)) = spec.split_once('-') else {
-		return Slice::Whole;
-	};
-	if start.is_empty() {
-		let Ok(suffix) = end.parse::<u64>() else {
-			return Slice::Whole;
-		};
-		if suffix == 0 || len == 0 {
-			return Slice::Unsatisfiable;
+	let total = len as u64;
+	let (first, last) = match Requested::parse(range) {
+		Requested::Whole => return Slice::Whole,
+		Requested::Suffix(suffix) if suffix == 0 || len == 0 => {
+			return Slice::Unsatisfiable
 		}
-		let take = suffix.min(len as u64) as usize;
-		return Slice::Part {
-			start: len - take,
-			end: len,
-		};
-	}
-	let Ok(first) = start.parse::<u64>() else {
-		return Slice::Whole;
+		Requested::Suffix(suffix) => (total - suffix.min(total), total - 1),
+		Requested::From(first) => (first, total.saturating_sub(1)),
+		Requested::Closed { first, last } => {
+			(first, last.min(total.saturating_sub(1)))
+		}
 	};
-	if first >= len as u64 {
+	if first >= total {
 		return Slice::Unsatisfiable;
 	}
-	let last = if end.is_empty() {
-		len as u64 - 1
-	} else {
-		match end.parse::<u64>() {
-			Ok(last) if last >= first => last.min(len as u64 - 1),
-			_ => return Slice::Whole,
-		}
-	};
 	Slice::Part {
 		start: first as usize,
 		end: last as usize + 1,
@@ -57,10 +36,13 @@ pub fn deliver_ranged(
 	media: &CachedMedia,
 	range: Option<&str>,
 	is_head: bool,
+	freshness: Freshness,
 ) -> Response<Vec<u8>> {
 	let total = media.body.len();
 	let (mut response, content_range) = match parse_range(range, total) {
-		Slice::Whole => (deliver(media, StatusCode::OK, is_head), None),
+		Slice::Whole => {
+			(deliver(media, StatusCode::OK, is_head, freshness), None)
+		}
 		Slice::Part { start, end } => (
 			deliver(
 				&CachedMedia {
@@ -69,6 +51,7 @@ pub fn deliver_ranged(
 				},
 				StatusCode::PARTIAL_CONTENT,
 				is_head,
+				freshness,
 			),
 			Some(format!("bytes {start}-{}/{total}", end - 1)),
 		),
@@ -90,6 +73,7 @@ pub fn deliver_ranged(
 
 #[cfg(test)]
 mod tests {
+	use super::super::tests::header_str;
 	use super::*;
 
 	fn media(body: &'static [u8]) -> CachedMedia {
@@ -100,19 +84,22 @@ mod tests {
 	}
 
 	fn ranged(range: &str) -> Response<Vec<u8>> {
-		deliver_ranged(&media(b"1234567890"), Some(range), false)
-	}
-
-	fn header_str(
-		response: &Response<Vec<u8>>,
-		name: header::HeaderName,
-	) -> Option<&str> {
-		response.headers().get(name).and_then(|v| v.to_str().ok())
+		deliver_ranged(
+			&media(b"1234567890"),
+			Some(range),
+			false,
+			Freshness::Uncacheable,
+		)
 	}
 
 	#[test]
 	fn no_range_is_the_whole_body_advertising_ranges() {
-		let response = deliver_ranged(&media(b"1234567890"), None, false);
+		let response = deliver_ranged(
+			&media(b"1234567890"),
+			None,
+			false,
+			Freshness::Uncacheable,
+		);
 
 		assert_eq!(response.status(), StatusCode::OK);
 		assert_eq!(response.body().as_slice(), b"1234567890");
@@ -136,7 +123,12 @@ mod tests {
 	#[test]
 	fn every_answer_advertises_ranges_or_players_refuse_to_seek() {
 		for range in [None, Some("bytes=0-3"), Some("bytes=99-")] {
-			let response = deliver_ranged(&media(b"1234567890"), range, false);
+			let response = deliver_ranged(
+				&media(b"1234567890"),
+				range,
+				false,
+				Freshness::Uncacheable,
+			);
 
 			assert_eq!(
 				header_str(&response, header::ACCEPT_RANGES),
@@ -200,7 +192,12 @@ mod tests {
 
 	#[test]
 	fn an_empty_body_satisfies_no_range() {
-		let response = deliver_ranged(&media(b""), Some("bytes=0-"), false);
+		let response = deliver_ranged(
+			&media(b""),
+			Some("bytes=0-"),
+			false,
+			Freshness::Uncacheable,
+		);
 
 		assert_eq!(response.status(), StatusCode::RANGE_NOT_SATISFIABLE);
 		assert_eq!(
@@ -228,8 +225,12 @@ mod tests {
 
 	#[test]
 	fn a_head_keeps_the_range_headers_and_drops_the_slice() {
-		let response =
-			deliver_ranged(&media(b"1234567890"), Some("bytes=0-3"), true);
+		let response = deliver_ranged(
+			&media(b"1234567890"),
+			Some("bytes=0-3"),
+			true,
+			Freshness::Uncacheable,
+		);
 
 		assert_eq!(response.status(), StatusCode::PARTIAL_CONTENT);
 		assert!(response.body().is_empty());

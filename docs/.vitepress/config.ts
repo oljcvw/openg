@@ -1,5 +1,8 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
+import footnote from "markdown-it-footnote";
+
+import { icons } from "./icons";
 
 import { loadContext } from "../scripts/generator/context";
 import type { StaticSidebarPages } from "../scripts/generator/sidebar";
@@ -26,6 +29,7 @@ const staticPages: StaticSidebarPages = {
 				{ text: "Commands", link: "/grindr-api/websocket/commands" },
 			],
 		},
+		{ text: "Push Notifications", link: "/grindr-api/push-notifications" },
 		{ text: "Appendix", link: "/grindr-api/appendix" },
 		{ text: "Shared types", link: "/grindr-api/shared-types" },
 	],
@@ -42,13 +46,31 @@ export default defineConfig({
 
 	cleanUrls: true,
 
-	rewrites: {
-		"generated/:path*": ":path*",
-	},
+	rewrites: { "generated/:path*": ":path*" },
 
 	title: "Open Grind",
 	description: "Open Grind project documentation and Grindr API reference",
-	head: [["link", { rel: "icon", href: "/logo.svg" }]],
+	head: [
+		[
+			"link",
+			{
+				rel: "icon",
+				type: "image/png",
+				href: "/favicon-96x96.png",
+				sizes: "96x96",
+			},
+		],
+		["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }],
+		["link", { rel: "shortcut icon", href: "/favicon.ico" }],
+		[
+			"link",
+			{
+				rel: "apple-touch-icon",
+				sizes: "180x180",
+				href: "/apple-touch-icon.png",
+			},
+		],
+	],
 
 	themeConfig: {
 		// https://vitepress.dev/reference/default-theme-config
@@ -57,12 +79,12 @@ export default defineConfig({
 
 		nav: [
 			{ text: "Home", link: "/" },
+			{ text: "FAQ", link: "/guides/faq" },
+			{ text: "Guides", link: "/guides/features/unlimited-profiles" },
 			{ text: "Grindr API", link: "/grindr-api" },
 		],
 
-		search: {
-			provider: "local",
-		},
+		search: { provider: "local" },
 
 		sidebar: {
 			"/guides/": [
@@ -74,7 +96,23 @@ export default defineConfig({
 							text: "Sign in with Google",
 							link: "/guides/sign-in-with-google",
 						},
+						{
+							text: "Sign in with Facebook",
+							link: "/guides/sign-in-with-facebook",
+						},
+						{
+							text: "Video codecs on Linux",
+							link: "/guides/codecs",
+						},
+						{
+							text: "Notifications",
+							link: "/guides/notifications",
+						},
 						{ text: "FAQ", link: "/guides/faq" },
+						{
+							text: "Grindr API bypasses",
+							link: "/guides/bypasses",
+						},
 					],
 				},
 				{
@@ -126,13 +164,24 @@ export default defineConfig({
 		},
 
 		socialLinks: [
-			{ icon: "git", link: "https://git.opengrind.org/open-grind/open-grind/" },
+			{
+				icon: "git",
+				link: "https://git.opengrind.org/open-grind/open-grind/",
+			},
 		],
 
 		footer: {
 			message: "Open Grind is not affiliated with Grindr in any way.",
 			copyright:
 				'Licensed under the <a href="https://opengrind.org/license">MIT</a> License.',
+		},
+	},
+
+	vite: { plugins: [icons()], esbuild: { legalComments: "inline" } },
+
+	markdown: {
+		config: (md) => {
+			md.use(footnote);
 		},
 	},
 });

@@ -9,7 +9,7 @@
 		<style>
 			:root {
 				color-scheme: dark;
-				background-color: #1e1e1e;
+				background-color: #0a0a0a;
 				--background: oklch(0.145 0 0);
 				background-color: var(--background);
 			}
@@ -29,7 +29,7 @@
 				bottom: 0;
 				z-index: 2147483647;
 				overflow: auto;
-				background: #1e1e1e;
+				background: #0a0a0a;
 				color: #eee;
 				text-align: center;
 				padding: env(safe-area-inset-top, 0px)
@@ -88,6 +88,25 @@
 				root.classList.add(
 					"plat-" + (window.__OPEN_GRIND_PLATFORM || "web"),
 				);
+			})();
+		</script>
+		<script>
+			(function () {
+				try {
+					var stored = localStorage.getItem(
+						"open-grind:backdrop-blur",
+					);
+					if (
+						stored === "max" ||
+						stored === "medium" ||
+						stored === "min" ||
+						stored === "off"
+					)
+						document.documentElement.setAttribute(
+							"data-backdrop-blur",
+							stored,
+						);
+				} catch (e) {}
 			})();
 		</script>
 		%sveltekit.head%

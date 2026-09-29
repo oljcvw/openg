@@ -6,7 +6,10 @@
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { Spinner } from "$lib/components/ui/spinner";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
+	import { isFilterableGender } from "$lib/model/browse/grid/filters";
+	import { instantWhenReducedMotion } from "$lib/util/reduced-motion";
 	import FilterBoolean from "./FilterBoolean.svelte";
+	import { isGenderChipShown, selectGenders } from "./gender-chips";
 
 	let {
 		checked = $bindable(),
@@ -16,20 +19,22 @@
 	const genders = $derived(
 		getGenders().then((genders) =>
 			genders
-				.filter((g) => g.displayGroup > 0)
-				.sort((a, b) => (a.sortFilter ?? 1) - (b.sortFilter ?? 1)),
+				.filter(isFilterableGender)
+				.sort((a, b) => a.sortFilter - b.sortFilter),
 		),
 	);
 
-	const hide = (node: HTMLDivElement): TransitionConfig => {
-		const width = node.offsetWidth;
-		return {
-			duration: 400,
-			css: (t: number, u: number) =>
-				`width: calc(${t} * ${width}px); opacity: ${t}; margin-left: calc(${u} * -4px)`,
-			easing: expoOut,
-		};
-	};
+	const hide = instantWhenReducedMotion(
+		(node: HTMLDivElement): TransitionConfig => {
+			const width = node.offsetWidth;
+			return {
+				duration: 400,
+				css: (t: number, u: number) =>
+					`width: calc(${t} * ${width}px); opacity: ${t}; margin-left: calc(${u} * -4px)`,
+				easing: expoOut,
+			};
+		},
+	);
 
 	let expanded = $state(false);
 </script>
@@ -47,21 +52,26 @@
 				class="w-full flex-wrap gap-1"
 				bind:value={
 					() => value.map(String),
-					(v: string[]) => (
-						(checked = v.length > 0),
-						(value = v.map(Number))
-					)
+					(next: string[]) => {
+						value = selectGenders({
+							genders,
+							previous: value,
+							next: next.map(Number),
+						});
+						checked = value.length > 0;
+					}
 				}
 			>
-				{#each genders as { genderId, gender, excludeOnFilterSelection: excludeList, genderPlural, displayGroup } (genderId)}
-					{@const render =
-						!excludeList ||
-						(!value.some((v) => excludeList.includes(v)) &&
-							(expanded || displayGroup === 1))}
-					{#if render}
+				{#each genders as gender (gender.genderId)}
+					{@const shown = isGenderChipShown({
+						gender,
+						selected: value,
+						expanded,
+					})}
+					{#if shown}
 						<div transition:hide class="overflow-clip">
-							<ToggleGroup.Item value={String(genderId)}>
-								{genderPlural ?? gender}
+							<ToggleGroup.Item value={String(gender.genderId)}>
+								{gender.genderPlural ?? gender.gender}
 							</ToggleGroup.Item>
 						</div>
 					{/if}

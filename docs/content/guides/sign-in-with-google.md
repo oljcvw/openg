@@ -1,6 +1,7 @@
 ---
 prev: false
 next: false
+title: 'Sign in with Google'
 ---
 
 # Sign in with Google in Open Grind
@@ -9,42 +10,50 @@ Starting with v0.1.0-beta.2 it's possible to authenticate if your account in Gri
 
 ## Windows, Linux, macOS, iOS
 
-Just download the app and tap "Sign in with Google" on the login screen.
+Just download the app and tap "Sign in with Google" on the sign-in screen.
 
 ## Android
 
-Due to platform limitations enforced by Google, it's not possible to log in via the Open Grind app itself. Read the technical in-depth explanation below. **For Android specifically, Open Grind supports signing in with Google via the companion app or manual token paste.**
+Due to security checks by Google, you must [install a Google OAuth add-on (recommended)](#open-grind-google-oauth-app-recommended) or [paste the sign in token manually](#manually-paste-google-oauth-token).
 
 ### Open Grind Google OAuth app (recommended)
 
-1. Visit the [**Open Grind Google OAuth**](https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app/releases) companion app's Releases page
-2. Download the version matching your device's CPU architecture (98% of devices today support arm64-v8a, so **try arm64-v8a.apk first**)
-3. Install **Open Grind Google OAuth** app on your device
-4. Go to Open Grind sign in screen and tap "Sign in with Google"
-5. You should now have another screen opened with the same "Sign in with Google" button, tap it again and follow the instructions, no further setup needed. If you still see prompts to install the companion app and retrying in the Open Grind app does not help, see [Manual Google OAuth copy-paste](#manual-google-oauth-copy-paste) section below
+1. Tap "Sign in with Google"
+2. On the sign in screen, tap "Install" and confirm Android's install prompt; alternatively, install [Google OAuth App manually](https://git.opengrind.org/open-grind/google-oauth-app/releases)
+3. Tap "Continue", then follow the instructions
 
-### Manual Google OAuth copy-paste (advanced)
+### Installed from Google Play
+
+Open Grind from Google Play can't install other apps, so install the add-on yourself:
+
+1. Open [Google OAuth App releases](https://git.opengrind.org/open-grind/google-oauth-app/releases) in your browser
+2. Download the APK for your device and open it; Android asks your browser for permission to install apps once
+3. Return to Open Grind, tap "Sign in with Google", then "Continue"
+
+Or skip the add-on and [paste the sign in token manually](#manually-paste-google-oauth-token).
+
+### Manually paste Google OAuth token
 
 **If you already have Open Grind Google OAuth app installed,** try these steps to retrieve Google OAuth token and put it into Open Grind manually:
 
 1. Launch **Open Grind Google OAuth** app from your Android launcher or home
 2. Tap the "Sign in with Google" button, then follow the instructions to sign in
-3. After that, you should land on a page with the token, starting with `ya29.` — tap it and copy
+3. You land on a page with your token masked. Tap "Copy token"
 4. Go to Open Grind sign in with Google screen and tap "paste the OAuth token manually"
 5. Paste the copied token and tap "Sign in"
 
-**If you have Firefox or Librewolf installed (Desktop/Android), Google Chrome or Chromium-based browsers (Desktop only, there are no extensions in Google Chrome for Android),** you have an option to avoid using the companion app altogether.
+**If you have Firefox or Librewolf installed (Desktop/Android), Google Chrome or Chromium-based browsers (Desktop only, there are no extensions in Google Chrome for Android),** you have an option to avoid using the Google OAuth app altogether.
 
 1. Install the [**Grindr Google OAuth WebExtension**](https://git.opengrind.org/open-grind/grindr-google-oauth-webextension#install) in your browser
 2. In the extensions list in the browser toolbar, click on the **extension's icon**
 3. A new page should open with the "Sign in with Google" button — tap it, then follow the instructions to sign in
-4. After that, you should land on a page with the token, starting with `ya29.` — tap it and copy
+4. You land on a page with your token masked. Tap "Copy token"
 5. Go to Open Grind sign in with Google screen and tap "paste the OAuth token manually"
 6. Paste the copied token and tap "Sign in"
 
 ### Why a separate app? (technical in-depth explanation)
 
-This section answers some questions on why the decision to release a separate companion app for Android was made. It's intended for technical experts who have some knowledge of mobile development and are familiar with the OAuth protocol.
+This section answers some questions on why the decision to release a separate Google OAuth app for Android was made. It's intended for technical experts who have some knowledge of mobile development and are familiar with the OAuth protocol.
 
 *Full discussion: https://git.opengrind.org/open-grind/open-grind/issues/27*
 
@@ -64,7 +73,7 @@ MicroG itself does not allow spoofing, as it's a drop-in that works via the same
 
 Yes, that's how web.grindr.com works. The entire authentication is web flow, meaning it's supposed to run in browsers, without requiring any device attestation tokens, so it's possible to run it on any platform, even in emulators. Web flow is launched from web.grindr.com with `responseType=postMessage` and the resulting code is posted by GIS JavaScript with `web.grindr.com` origin, so only pages with web.grindr.com origin can receive the callback. Additionally, browsers (even embedded ones) prevent actions such as opening new tabs without user gesture, which is why a tap is needed on the launch page. 
 
-However, there's another problem: Google OAuth Web Flow page checks aggressively for any signs of rendering the login page in embedded windows (including system WebViews, which is what Tauri uses under the hood of Open Grind UI), and while changing User-Agent and removing Sec- headers is possible for both WebKit-based WebViews (WKWebView for macOS & iOS, WebKitGTK for Linux) and Chromium-based WebViews (WebView2 for Windows, Chromium for Android), **Android's Chromium WebView specifically adds a special X-Requested-With header that's impossible to remove.** This has been pushed by Google specifically for "fraud/abuse detection" (i.e. to detect Android WebView in their services, such as the OAuth page). In 2023 it was announced Google starts a trial to allow developers to opt-out of sending this header, **but in 2025 the decision was reversed and X-Requested-With is now sent on all Android system's Chromium WebView requests with no option to disable it,** which is exactly what triggers Google OAuth page "security checks" and rejects attempts to sign in.
+However, there's another problem: Google OAuth Web Flow page checks aggressively for any signs of rendering the sign-in page in embedded windows (including system WebViews, which is what Tauri uses under the hood of Open Grind UI), and while changing User-Agent and removing Sec- headers is possible for both WebKit-based WebViews (WKWebView for macOS & iOS, WebKitGTK for Linux) and Chromium-based WebViews (WebView2 for Windows, Chromium for Android), **Android's Chromium WebView specifically adds a special X-Requested-With header that's impossible to remove.** This has been pushed by Google specifically for "fraud/abuse detection" (i.e. to detect Android WebView in their services, such as the OAuth page). In 2023 it was announced Google starts a trial to allow developers to opt-out of sending this header, **but in 2025 the decision was reversed and X-Requested-With is now sent on all Android system's Chromium WebView requests with no option to disable it,** which is exactly what triggers Google OAuth page "security checks" and rejects attempts to sign in.
 
 **All other platforms work just fine by rendering Google's OAuth page directly in platform's native WebView,** so it's only an issue on Android.
 
@@ -84,12 +93,12 @@ No, Tauri's [wry](https://github.com/tauri-apps/wry) only works with system's We
 
 #### How do we solve all these issues?
 
-To solve these Google OAuth issues, we've built the [Grindr Google OAuth WebExtension](https://git.opengrind.org/open-grind/grindr-google-oauth-webextension). It's a browser extension (Firefox, any Firefox-based browser such as Librewolf, Firefox for Android, Google Chrome, Chromium, any Chromium-based browser such as Brave) that launches web.grindr.com (to satisfy the launch page's origin requirement), replaces document with a simple "Sign in with Google" button, then intercepts the response token from Google OAuth page before it hits Grindr Web's API and either prints it or passes to GeckoView for programmatic intent.
+To solve these Google OAuth issues, we've built the [Grindr Google OAuth WebExtension](https://git.opengrind.org/open-grind/grindr-google-oauth-webextension). It's a browser extension (Firefox, any Firefox-based browser such as Librewolf, Firefox for Android, Google Chrome, Chromium, any Chromium-based browser such as Brave) that launches web.grindr.com (to satisfy the launch page's origin requirement), replaces document with a simple "Sign in with Google" button, then intercepts the response token from Google OAuth page before it hits Grindr Web's API and either shows it masked on a local page for copying, or passes it to GeckoView for programmatic intent.
 
 #### So why build an app if it's an extension?
 
 The whole app is basically a headless browser powered by [GeckoView](https://mozilla.github.io/geckoview/) embedding the extension. The reason is simply that most Android users don't have Firefox and use Google Chrome for Android instead, which does not support extensions.
 
-Also, the app features a programmatic intent, which allows the Open Grind app to call this app and get the token back automatically without copy-pasting. For security, this only works if both apps are signed by the same JKS.
+Also, the app features a programmatic intent, which allows the Open Grind app to call this app and get the token back automatically without copy-pasting. For security, this only works with official builds: Open Grind must be signed by Open Grind or installed from Google Play, and the Google OAuth app must be signed by Open Grind.
 
 If you're an *advanced user* and prefer to avoid installing an unnecessary app, consider using the browser extension directly and copy-pasting the token into Open Grind app.

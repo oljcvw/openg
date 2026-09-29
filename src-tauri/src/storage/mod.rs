@@ -1,3 +1,7 @@
+use std::sync::OnceLock;
+
+use crate::error::AppError;
+
 mod entries;
 #[cfg(any(
 	target_os = "linux",
@@ -6,6 +10,13 @@ mod entries;
 mod file_store;
 
 pub use entries::{AuthStorage, DeviceStorage, SigningKeyStorage};
+
+const SERVICE: &str = "open-grind";
+
+pub(crate) fn entry(name: &str) -> Result<keyring_core::Entry, AppError> {
+	keyring_core::Entry::new(SERVICE, name)
+		.map_err(|e| AppError::Auth(e.to_string()))
+}
 
 #[cfg(any(
 	target_os = "linux",
@@ -29,6 +40,25 @@ const HAS_FILE_STORE: bool = cfg!(any(
 ));
 
 pub fn init_keyring() -> StorageBackend {
+	static USABLE: OnceLock<StorageBackend> = OnceLock::new();
+	cached(&USABLE, probe_keyring)
+}
+
+fn cached(
+	usable: &OnceLock<StorageBackend>,
+	probe: impl FnOnce() -> StorageBackend,
+) -> StorageBackend {
+	if let Some(backend) = usable.get() {
+		return *backend;
+	}
+	let backend = probe();
+	if backend != StorageBackend::Unavailable {
+		let _ = usable.set(backend);
+	}
+	backend
+}
+
+fn probe_keyring() -> StorageBackend {
 	let backend = match install_platform_store() {
 		Ok(()) => StorageBackend::Keyring,
 		Err(e) if HAS_FILE_STORE => {
@@ -102,8 +132,7 @@ pub fn storage_backend(
 }
 
 fn round_trips() -> bool {
-	let Ok(entry) = keyring_core::Entry::new("open-grind", "startup-probe")
-	else {
+	let Ok(entry) = entry("startup-probe") else {
 		return false;
 	};
 	let ok = entry.set_secret(b"ok").is_ok()
@@ -119,28 +148,40 @@ fn round_trips() -> bool {
 		all(target_os = "macos", not(feature = "keychain"))
 	)
 ))]
-mod tests {
+pub(crate) mod test_support {
 	use std::path::Path;
 	use std::sync::Mutex;
 
-	use super::*;
+	use super::{file_store, init_file_store};
 
 	static DEFAULT_STORE: Mutex<()> = Mutex::new(());
 
-	const PERSISTED_ENTRIES: [&str; 3] =
-		["device-info", "device-signing-key", "session"];
-
-	fn lock() -> std::sync::MutexGuard<'static, ()> {
+	pub(crate) fn lock() -> std::sync::MutexGuard<'static, ()> {
 		DEFAULT_STORE.lock().unwrap_or_else(|e| e.into_inner())
 	}
 
-	fn with_file_store(test: impl FnOnce(&Path)) {
+	pub(crate) fn with_file_store(test: impl FnOnce(&Path)) {
 		let _guard = lock();
 		let base = file_store::scratch_dir();
 		init_file_store(base.clone());
 		test(&base);
 		std::fs::remove_dir_all(&base).ok();
 	}
+}
+
+#[cfg(all(
+	test,
+	any(
+		target_os = "linux",
+		all(target_os = "macos", not(feature = "keychain"))
+	)
+))]
+mod tests {
+	use super::test_support::{lock, with_file_store};
+	use super::*;
+
+	const PERSISTED_ENTRIES: [&str; 3] =
+		["device-info", "device-signing-key", "session"];
 
 	fn entry(user: &str) -> keyring_core::Entry {
 		keyring_core::Entry::new("open-grind", user).unwrap()
@@ -195,14 +236,43 @@ mod tests {
 	}
 
 	#[test]
-	fn init_keyring_leaves_a_usable_store_behind() {
+	fn a_probe_leaves_a_usable_store_behind() {
 		with_file_store(|_| {
-			let backend = init_keyring();
+			let backend = probe_keyring();
 
 			assert_ne!(backend, StorageBackend::Unavailable);
 			assert!(keyring_core::get_default_store().is_some());
 			assert!(keyring_core::Entry::new("open-grind", "session").is_ok());
 		});
+	}
+
+	#[test]
+	fn a_second_init_keyring_reuses_the_first_probe() {
+		with_file_store(|_| {
+			let first = init_keyring();
+			keyring_core::unset_default_store();
+
+			assert_eq!(init_keyring(), first);
+			assert!(keyring_core::get_default_store().is_none());
+		});
+	}
+
+	#[test]
+	fn a_failed_probe_is_tried_again_and_a_usable_one_is_kept() {
+		let usable = OnceLock::new();
+
+		assert_eq!(
+			cached(&usable, || StorageBackend::Unavailable),
+			StorageBackend::Unavailable
+		);
+		assert_eq!(
+			cached(&usable, || StorageBackend::File),
+			StorageBackend::File
+		);
+		assert_eq!(
+			cached(&usable, || unreachable!("a usable backend is probed once")),
+			StorageBackend::File
+		);
 	}
 
 	#[test]
@@ -379,7 +449,7 @@ mod tests {
 	}
 
 	#[test]
-	fn a_login_stored_before_credentials_existed_still_loads() {
+	fn a_session_stored_before_credentials_existed_still_loads() {
 		with_file_store(|_| {
 			let legacy = serde_json::json!({
 				"email": "user@example.com",

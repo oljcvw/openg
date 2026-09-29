@@ -5,10 +5,13 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.widget.TextView
+import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
@@ -17,16 +20,27 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import io.crates.keyring.Keyring
+import org.opengrind.push.AppForeground
+import org.opengrind.push.PushNotifier
 
 class MainActivity : TauriActivity() {
-	private var insetsTop = 0
-	private var insetsBottom = 0
-	private var insetsLeft = 0
-	private var insetsRight = 0
-	@Volatile private var imeVisibleState = false
+	private data class WebInsets(
+		val top: Double,
+		val bottom: Double,
+		val left: Double,
+		val right: Double,
+		val imeVisible: Boolean,
+	) {
+		fun toJavascript() = "{ top: $top, bottom: $bottom, left: $left, right: $right, ime: $imeVisible }"
+	}
+
+	@Volatile private var webInsets = WebInsets(top = 0.0, bottom = 0.0, left = 0.0, right = 0.0, imeVisible = false)
+	private var sentWebInsets: WebInsets? = null
+	@Volatile private var backGestureProgress = 0f
 	private var webViewRef: WebView? = null
 	private var pendingWebViewWarning: WebViewSupport.Status? = null
 	private var shownWebViewWarning = false
+	private val hoverRepair = WebViewHoverRepair(context = this, webView = { webViewRef })
 
 	override val handleBackNavigation = false
 
@@ -54,14 +68,38 @@ class MainActivity : TauriActivity() {
 	}
 
 	inner class InsetsInterface {
-		@JavascriptInterface fun top() = insetsTop
-		@JavascriptInterface fun bottom() = insetsBottom
-		@JavascriptInterface fun left() = insetsLeft
-		@JavascriptInterface fun right() = insetsRight
-		@JavascriptInterface fun imeVisible() = imeVisibleState
+		@JavascriptInterface fun top() = webInsets.top
+		@JavascriptInterface fun bottom() = webInsets.bottom
+		@JavascriptInterface fun left() = webInsets.left
+		@JavascriptInterface fun right() = webInsets.right
+		@JavascriptInterface fun imeVisible() = webInsets.imeVisible
+	}
+
+	private val backProgressCallback = object : OnBackPressedCallback(true) {
+		override fun handleOnBackStarted(backEvent: BackEventCompat) {
+			backGestureProgress = 0f
+			webViewRef?.evaluateJavascript("window.__AndroidOnBackGestureStart?.()", null)
+		}
+
+		override fun handleOnBackProgressed(backEvent: BackEventCompat) {
+			backGestureProgress = backEvent.progress
+		}
+
+		override fun handleOnBackCancelled() {
+			backGestureProgress = 0f
+			webViewRef?.evaluateJavascript("window.__AndroidOnBackGestureCancel?.()", null)
+		}
+
+		override fun handleOnBackPressed() {
+			isEnabled = false
+			onBackPressedDispatcher.onBackPressed()
+			isEnabled = true
+		}
 	}
 
 	inner class BackInterface {
+		@JavascriptInterface fun gestureProgress() = backGestureProgress
+
 		@JavascriptInterface fun moveTaskToBack() {
 			runOnUiThread { this@MainActivity.moveTaskToBack(true) }
 		}
@@ -74,7 +112,9 @@ class MainActivity : TauriActivity() {
 			context = this,
 			minSupportedMajor = BuildConfig.MIN_SUPPORTED_WEBVIEW_MAJOR,
 		).takeIf { it.disposition == WebViewSupport.Disposition.WARNING }
+		if (isRelaunch(savedInstanceState)) intent.removeExtra(PushNotifier.EXTRA_DEEPLINK)
 		super.onCreate(savedInstanceState)
+		AppForeground.catchUpPollingOnLeave(this)
 
 		onBackPressedDispatcher.addCallback(this, backGestureCallback)
 
@@ -83,17 +123,22 @@ class MainActivity : TauriActivity() {
 			isAppearanceLightNavigationBars = false
 		}
 		
-		ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
-			val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+		ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(android.R.id.content)) { view, insets ->
+			val bars = insets.getInsets(
+				WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+			)
 			val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
 			val isImeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
-			imeVisibleState = isImeVisible
-			val density = resources.displayMetrics.density
+			val density = resources.displayMetrics.density.toDouble()
 			
-			insetsTop = (bars.top / density).toInt()
-			insetsBottom = if (isImeVisible) 0 else (bars.bottom / density).toInt()
-			insetsLeft = (bars.left / density).toInt()
-			insetsRight = (bars.right / density).toInt()
+			val nextInsets = WebInsets(
+				top = bars.top / density,
+				bottom = if (isImeVisible) 0.0 else bars.bottom / density,
+				left = bars.left / density,
+				right = bars.right / density,
+				imeVisible = isImeVisible,
+			)
+			webInsets = nextInsets
 			
 			val bottomMargin = if (isImeVisible) ime.bottom else 0
 			webViewRef?.let { wv ->
@@ -105,20 +150,48 @@ class MainActivity : TauriActivity() {
 				}
 			}
 			
-			webViewRef?.evaluateJavascript("window.__reapplyInsets?.()", null)
+			val webView = webViewRef
+			if (webView != null && nextInsets != sentWebInsets) {
+				sentWebInsets = nextInsets
+				webView.evaluateJavascript("window.__reapplyInsets?.(${nextInsets.toJavascript()})", null)
+			}
 			
 			ViewCompat.onApplyWindowInsets(view, insets)
 		}
 	}
 	
+	override fun onNewIntent(intent: Intent) {
+		setIntent(intent)
+		super.onNewIntent(intent)
+	}
+
+	override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+		hoverRepair.observe(event)
+		return super.dispatchGenericMotionEvent(event)
+	}
+
+	override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+		hoverRepair.observe(event)
+		return super.dispatchTouchEvent(event)
+	}
+
 	override fun onWebViewCreate(webView: WebView) {
 		super.onWebViewCreate(webView)
 		webViewRef = webView
 		webView.settings.setGeolocationEnabled(false)
+		webView.isHapticFeedbackEnabled = false
 		webView.addJavascriptInterface(InsetsInterface(), "__AndroidInsets")
 		webView.addJavascriptInterface(BackInterface(), "__AndroidBack")
+		// Registered here, not in onCreate: Tauri's AppPlugin adds its own back
+		// callback while the plugins load, and only the last one added gets the
+		// gesture progress. Move this earlier and the progress stops arriving.
+		backProgressCallback.remove()
+		onBackPressedDispatcher.addCallback(this, backProgressCallback)
 		maybeWarnAboutWebView()
 	}
+
+	private fun isRelaunch(savedInstanceState: Bundle?) =
+		savedInstanceState != null || (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
 
 	private fun maybeWarnAboutWebView() {
 		val warning = pendingWebViewWarning ?: return

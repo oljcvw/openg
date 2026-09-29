@@ -4,6 +4,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { requestBlockedAlertState } from "$lib/api/request-blocked-state.svelte";
+import {
+	refusedCompanionMessage,
+	untrustedCompanionMessage,
+} from "$lib/api/sign-in";
 import SignInForm from "./SignInForm.svelte";
 
 const { callMethodMock, gotoMock, toastMock } = vi.hoisted(() => ({
@@ -98,6 +102,27 @@ describe("SignInForm", () => {
 		expect(toastMock.error).not.toHaveBeenCalled();
 	});
 
+	it.each(["Google", "Facebook"])(
+		"names the official app when %s sign-in hits an unregistered account",
+		async (vendor) => {
+			callMethodMock.mockRejectedValue({
+				kind: "Auth",
+				message: "account not registered",
+			});
+			render(SignInForm);
+
+			await fireEvent.click(
+				screen.getByRole("button", { name: `Sign in with ${vendor}` }),
+			);
+			await settle();
+
+			expect(toastMock.error).toHaveBeenCalledExactlyOnceWith(
+				"Account not registered in Grindr. Register first using the official Grindr app",
+			);
+			expect(gotoMock).not.toHaveBeenCalled();
+		},
+	);
+
 	it("falls back to a toast when a muted block kills Google sign-in", async () => {
 		requestBlockedAlertState.disable = true;
 		callMethodMock.mockRejectedValue({ kind: "NetworkBlocked" });
@@ -112,6 +137,114 @@ describe("SignInForm", () => {
 			"Something blocked the request before it reached Grindr",
 		);
 	});
+
+	it("sends a missing Google OAuth app to the Google sign-in screen", async () => {
+		callMethodMock.mockRejectedValue({
+			kind: "Auth",
+			message: "companion-unavailable",
+		});
+		render(SignInForm);
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Sign in with Google" }),
+		);
+		await settle();
+
+		expect(gotoMock).toHaveBeenCalledExactlyOnceWith(
+			"/auth/sign-in/google",
+		);
+		expect(toastMock.error).not.toHaveBeenCalled();
+	});
+
+	it("stays on the sign-in screen when the Google OAuth app is turned off", async () => {
+		callMethodMock.mockRejectedValue({
+			kind: "Auth",
+			message: "companion-disabled",
+		});
+		render(SignInForm);
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Sign in with Google" }),
+		);
+		await settle();
+
+		expect(toastMock.error).toHaveBeenCalledExactlyOnceWith(
+			"The Open Grind Google OAuth app is turned off. Turn it on in Android settings, then try again.",
+		);
+		expect(gotoMock).not.toHaveBeenCalled();
+	});
+
+	it("sends an untrusted Google OAuth app straight to the pasted token", async () => {
+		callMethodMock.mockRejectedValue({
+			kind: "Auth",
+			message: "companion-untrusted",
+		});
+		render(SignInForm);
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Sign in with Google" }),
+		);
+		await settle();
+
+		expect(toastMock.error).toHaveBeenCalledExactlyOnceWith(
+			untrustedCompanionMessage,
+		);
+		expect(gotoMock).toHaveBeenCalledExactlyOnceWith(
+			"/auth/sign-in/google?paste",
+		);
+	});
+
+	it("sends a Google OAuth app that refuses this build straight to the pasted token", async () => {
+		callMethodMock.mockRejectedValue({
+			kind: "Auth",
+			message: "companion-refused",
+		});
+		render(SignInForm);
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Sign in with Google" }),
+		);
+		await settle();
+
+		expect(toastMock.error).toHaveBeenCalledExactlyOnceWith(
+			refusedCompanionMessage,
+		);
+		expect(gotoMock).toHaveBeenCalledExactlyOnceWith(
+			"/auth/sign-in/google?paste",
+		);
+	});
+
+	it("keeps the password button's name while it signs in", async () => {
+		callMethodMock.mockReturnValue(new Promise(() => {}));
+		render(SignInForm);
+
+		await submitSignIn();
+
+		const busy = screen.getByRole("button", { name: "Sign in" });
+		expect(busy.getAttribute("aria-busy")).toBe("true");
+		expect(
+			screen
+				.getByRole("button", { name: "Sign in with Google" })
+				.getAttribute("aria-busy"),
+		).toBe("false");
+	});
+
+	it.each(["Google", "Facebook"])(
+		"keeps the %s button's name while it signs in",
+		async (vendor) => {
+			callMethodMock.mockReturnValue(new Promise(() => {}));
+			render(SignInForm);
+			const name = `Sign in with ${vendor}`;
+
+			await fireEvent.click(screen.getByRole("button", { name }));
+			await settle();
+
+			const busy = screen.getByRole("button", { name });
+			expect(busy).toHaveProperty("disabled", true);
+			expect(busy.getAttribute("aria-busy")).toBe("true");
+			expect(screen.queryByRole("status")).toBeNull();
+		},
+	);
 
 	it("still reports an ordinary API failure", async () => {
 		callMethodMock.mockRejectedValue({

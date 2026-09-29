@@ -13,6 +13,7 @@ const { conversations } = vi.hoisted(() => ({
 	conversations: { drafts: null as Drafts | null },
 }));
 
+vi.mock("$app/navigation", () => ({ onNavigate: vi.fn() }));
 vi.mock("$lib/chat/conversations-context.svelte", () => ({
 	getConversations: () => conversations,
 }));
@@ -26,6 +27,7 @@ vi.mock("$lib/ws.svelte", () => ({
 		on: () => Promise.resolve(() => {}),
 		onConnected: () => Promise.resolve(() => {}),
 		onEventsDropped: () => Promise.resolve(() => {}),
+		onEventRejected: () => () => {},
 		send: () => {},
 		sendCommand: () => Promise.resolve(undefined),
 	},

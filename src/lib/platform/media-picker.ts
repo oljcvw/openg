@@ -1,5 +1,5 @@
+import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { readFile } from "@tauri-apps/plugin-fs";
 import { AndroidFs, type AndroidFsUri } from "tauri-plugin-android-fs-api";
 
 import { demoEnabled } from "$lib/demo";
@@ -10,14 +10,15 @@ type MediaFilter = { name: string; extensions: string[]; mimeTypes: string[] };
 const mimeTypesByExtension: Record<string, string> = {
 	jpeg: "image/jpeg",
 	jpg: "image/jpeg",
+	mov: "video/quicktime",
 	mp4: "video/mp4",
 	png: "image/png",
-	webm: "video/webm",
+	webp: "image/webp",
 };
 
-const imageExtensions = ["jpg", "jpeg", "png"];
+const imageExtensions = ["jpg", "jpeg", "png", "webp"];
 
-const videoExtensions = ["mp4", "webm"];
+const videoExtensions = ["mp4", "mov"];
 
 const filtersByKind = {
 	image: {
@@ -54,19 +55,6 @@ export function pickMultipleMedia(kind: MediaKind): Promise<PickedMedia[]> {
 	return pick({ kind, multiple: true });
 }
 
-export async function readMediaBytes(
-	media: PickedMedia,
-): Promise<Uint8Array<ArrayBuffer>> {
-	switch (media.source) {
-		case "android":
-			return AndroidFs.readFile(media.uri);
-		case "desktop":
-			return readFile(media.path);
-		case "web":
-			return new Uint8Array(await media.file.arrayBuffer());
-	}
-}
-
 async function pick({
 	kind,
 	multiple,
@@ -89,20 +77,14 @@ async function pick({
 	}
 
 	if (isAndroidPlatform()) {
-		const uris = await AndroidFs.showOpenFilePicker({
-			pickerType: "Gallery",
-			mimeTypes: filter.mimeTypes,
-			multiple,
-		});
-		return Promise.all(
-			uris.map(
-				async (uri): Promise<PickedMedia> => ({
-					source: "android",
-					key: crypto.randomUUID(),
-					mimeType: await AndroidFs.getMimeType(uri),
-					uri,
-				}),
-			),
+		const uris = await pickAndroidUris({ filter, multiple });
+		return uris.map(
+			(uri): PickedMedia => ({
+				source: "android",
+				key: crypto.randomUUID(),
+				mimeType: null,
+				uri,
+			}),
 		);
 	}
 
@@ -124,6 +106,29 @@ async function pick({
 			path,
 		}),
 	);
+}
+
+async function pickAndroidUris({
+	filter,
+	multiple,
+}: {
+	filter: MediaFilter;
+	multiple: boolean;
+}): Promise<AndroidFsUri[]> {
+	const picked = await invoke<string[] | null>("pick_android_media", {
+		mimeTypes: filter.mimeTypes,
+		multiple,
+	});
+	if (picked !== null) {
+		return picked.map(
+			(uri): AndroidFsUri => ({ uri, documentTopTreeUri: null }),
+		);
+	}
+	return AndroidFs.showOpenFilePicker({
+		pickerType: "Gallery",
+		mimeTypes: filter.mimeTypes,
+		multiple,
+	});
 }
 
 function mimeTypeFromPath(path: string): string | null {

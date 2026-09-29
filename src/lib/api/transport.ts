@@ -8,23 +8,14 @@ import {
 	blockedKindOf,
 	markRequestBlocked,
 } from "$lib/api/methods";
+import { redactPath } from "$lib/api/redact/text";
 import { signOutIfSessionLost } from "$lib/api/session-lost";
 import { demoEnabled, demoRoute } from "$lib/demo";
 import { schemaName } from "$lib/model/schema-names";
 import { fromBase64, toBase64 } from "$lib/util/base64";
+import type { MediaFileDescriptor } from "$lib/platform/media-file";
 
-type RequestInfo = { method: string; path: string; body: unknown };
-
-// https://github.com/tauri-apps/tauri/issues/10573
-async function invokeWithBinaryPayload(
-	payload: Uint8Array,
-): Promise<Uint8Array> {
-	const res = await invoke("request", { payload: toBase64(payload) });
-	if (typeof res !== "string") {
-		throw new Error("Invalid response from backend");
-	}
-	return fromBase64(res);
-}
+type RequestInfo = { method: string; path: string; body?: unknown };
 
 function buildRestResponse({
 	status,
@@ -70,6 +61,7 @@ function buildRestResponse({
 			}
 		},
 		jsonParsed<TSchema extends z.ZodType>(schema: TSchema) {
+			this.assertOk();
 			const data = this.json();
 			try {
 				return parseApiResponse({
@@ -81,7 +73,11 @@ function buildRestResponse({
 			} catch (error) {
 				if (error instanceof ApiError) throw error;
 				throw new ApiError({
-					message: schemaMismatchMessage({ schema, error }),
+					message: schemaMismatchMessage({
+						schema,
+						error,
+						request: requestInfo,
+					}),
 					request: requestInfo,
 					response: { status, body: text() },
 					cause: error,
@@ -89,6 +85,119 @@ function buildRestResponse({
 			}
 		},
 	};
+}
+
+function decodeRestResponse({
+	encoded,
+	requestInfo,
+}: {
+	encoded: unknown;
+	requestInfo: RequestInfo;
+}) {
+	if (typeof encoded !== "string") {
+		throw new Error("Invalid response from backend");
+	}
+	const decoded = decode(fromBase64(encoded));
+	const { status, body: responseBody } = z
+		.object({ status: z.number(), body: z.instanceof(Uint8Array) })
+		.parse(decoded);
+	return buildRestResponse({ status, responseBody, requestInfo });
+}
+
+function restInvokeError({
+	error,
+	requestInfo,
+}: {
+	error: unknown;
+	requestInfo: RequestInfo;
+}): ApiError {
+	if (error instanceof ApiError) return error;
+	const appError = asAppError(error);
+	if (appError !== undefined) {
+		const blocked = blockedKindOf(appError.kind);
+		if (blocked !== undefined) {
+			markRequestBlocked({ kind: blocked });
+			return new ApiError({
+				message:
+					blocked === "network"
+						? "Request blocked before it reached Grindr"
+						: "Request blocked by Grindr",
+				request: requestInfo,
+				response: null,
+				kind: appError.kind,
+				cause: error,
+			});
+		}
+	}
+	if (appError?.kind === "NotSignedIn") {
+		signOutIfSessionLost().catch((error) => console.error(error));
+	}
+	return new ApiError({
+		message:
+			appError?.prettyMessage ??
+			(error instanceof Error ? error.message : String(error)),
+		request: requestInfo,
+		response: null,
+		kind: appError?.kind ?? null,
+		cause: error,
+	});
+}
+
+// https://github.com/tauri-apps/tauri/issues/10573
+export async function invokeRest(
+	command: string,
+	options: { args: Record<string, unknown>; requestInfo: RequestInfo },
+) {
+	const { requestInfo } = options;
+	try {
+		const encoded = await invoke(command, options.args);
+		return decodeRestResponse({ encoded, requestInfo });
+	} catch (error) {
+		throw restInvokeError({ error, requestInfo });
+	}
+}
+
+const uploadOutcomeSchema = z.object({
+	response: z.string(),
+	sha256: z
+		.string()
+		.regex(/^[0-9a-f]{64}$/)
+		.nullable(),
+	bodySize: z.int().nonnegative(),
+});
+
+export async function uploadFileRest(
+	path: string,
+	options: {
+		file: MediaFileDescriptor;
+		part: { name: string; filename: string } | null;
+		maxBodySize: number;
+		profileId: number;
+		onHashed?: (sha256: string) => void;
+	},
+) {
+	const method = "POST";
+	const requestInfo = { method, path };
+	try {
+		const outcome = uploadOutcomeSchema.parse(
+			await invoke("upload_media_file", {
+				file: options.file,
+				request: { method, path, part: options.part },
+				maxBodySize: options.maxBodySize,
+				profileId: String(options.profileId),
+			}),
+		);
+		if (outcome.sha256 !== null) options.onHashed?.(outcome.sha256);
+		return {
+			response: decodeRestResponse({
+				encoded: outcome.response,
+				requestInfo,
+			}),
+			sha256: outcome.sha256,
+		};
+	} catch (error) {
+		throw restInvokeError({ error, requestInfo });
+	}
 }
 
 export async function fetchRest(
@@ -112,53 +221,23 @@ export async function fetchRest(
 		);
 		return buildRestResponse({ status, responseBody, requestInfo });
 	}
-	try {
-		const payload = encode({
-			method: options.method || "GET",
-			path,
-			body: options.body === undefined ? null : encode(options.body),
-		});
-		const packed = await invokeWithBinaryPayload(payload);
-		if (options.abortController?.signal.aborted) {
-			throw new Error("Request aborted");
-		}
-		const decoded = decode(packed);
-		const { status, body: responseBody } = z
-			.object({ status: z.number(), body: z.instanceof(Uint8Array) })
-			.parse(decoded);
-		return buildRestResponse({ status, responseBody, requestInfo });
-	} catch (error) {
-		if (error instanceof ApiError) throw error;
-		const appError = asAppError(error);
-		if (appError !== undefined) {
-			const blocked = blockedKindOf(appError.kind);
-			if (blocked !== undefined) {
-				markRequestBlocked({ kind: blocked });
-				throw new ApiError({
-					message:
-						blocked === "network"
-							? "Request blocked before it reached Grindr"
-							: "Request blocked by Grindr",
-					request: requestInfo,
-					response: null,
-					kind: appError.kind,
-					cause: error,
-				});
-			}
-		}
-		if (appError?.kind === "NotLoggedIn") {
-			signOutIfSessionLost().catch((error) => console.error(error));
-		}
+	const payload = encode({
+		method,
+		path,
+		body: options.body === undefined ? null : encode(options.body),
+	});
+	const response = await invokeRest("request", {
+		args: { payload: toBase64(payload) },
+		requestInfo,
+	});
+	if (options.abortController?.signal.aborted) {
 		throw new ApiError({
-			message:
-				appError?.prettyMessage ??
-				(error instanceof Error ? error.message : String(error)),
+			message: "Request aborted",
 			request: requestInfo,
 			response: null,
-			kind: appError?.kind ?? null,
-			cause: error,
 		});
 	}
+	return response;
 }
 
 export function parseApiResponse<TSchema extends z.ZodType>(options: {
@@ -183,15 +262,25 @@ export function parseApiResponse<TSchema extends z.ZodType>(options: {
 	throw parsed.error;
 }
 
-function schemaMismatchMessage({
+function endpointOf(path: string): string {
+	const redacted = redactPath(path);
+	return redacted.split("?")[0] ?? redacted;
+}
+
+export function schemaMismatchMessage({
 	schema,
 	error,
+	request,
 }: {
 	schema: z.ZodType;
 	error: unknown;
+	request: RequestInfo;
 }): string {
 	if (error instanceof z.ZodError) {
-		return `API response did not match ${schemaName(schema) ?? "the expected schema"}`;
+		const subject =
+			schemaName(schema) ??
+			`the schema for ${request.method} ${endpointOf(request.path)}`;
+		return `API response did not match ${subject}`;
 	}
 	return error instanceof Error
 		? error.message

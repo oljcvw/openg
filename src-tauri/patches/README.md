@@ -28,8 +28,49 @@ The HTTP/2 stack under `wreq`. Cloudflare sees every frame we send, so these hun
 
 The rest will not be upstreamed: the flush was [declined](https://github.com/0x676e67/http2/issues/68), and `mod hpack` is private, so the HPACK hunks are unreachable from a dependent crate.
 
+## wry
+
+On Android the custom-protocol handler runs while the process-global `REQUEST_HANDLER` mutex is held, and it blocks there for up to 30s waiting on the responder, so every media fetch and asset load is serialised.
+
+| File                         | Change                                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `android/binding.rs`         | Clone the handler out of the map and drop the guard before calling it.                                                   |
+| `android/mod.rs`             | Store it as `Arc<dyn Fn ... + Send + Sync>` so it can be cloned.                                                         |
+| `lib.rs`, `wkwebview/mod.rs` | `Send + Sync` on `custom_protocols`, both `with_*_custom_protocol` bounds and `protocol_ptrs`, which the clone requires. |
+| `Cargo.toml`                 | Allow warnings, since a path dependency gets no `--cap-lints allow`.                                                     |
+
+Backport of [wry 0.56.0](https://github.com/tauri-apps/wry/releases/tag/wry-v0.56.0). **Delete when a `tauri-runtime-wry` requiring `wry >= 0.56` is published**.
+
+Android WebView paints `WebChromeClient.getDefaultVideoPoster()`, a gray play icon when it returns null, on every `<video>` without a `poster` until it plays or seeks. `android/kotlin/RustWebChromeClient.kt` returns a transparent bitmap instead. Backport of [wry#1804](https://github.com/tauri-apps/wry/pull/1804) from 0.56.1: **delete once the lock resolves `wry >= 0.56.1`**.
+
+On Android and Apple wry hands the WebView the fully buffered body. A handler can instead register a `ResponseStream` and name its id in the `x-wry-stream` header, and the WebView gets the body as it arrives. Like the Android WebView, the reader skips to the request's `Range` start first.
+
+| File                                    | Change                                                                                                                           |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `stream.rs`, `lib.rs`                   | `ResponseStream` and the id registry, exported on Android and Apple.                                                             |
+| `android/stream.rs`                     | The four `stream*` natives.                                                                                                      |
+| `android/binding.rs`                    | Register the natives in `android_binding!`.                                                                                      |
+| `android/kotlin/`                       | `RustInputStream` reads through the natives. `RustWebViewClient` swaps it in for the `x-wry-stream` header, and R8 keeps it.     |
+| `wkwebview/class/url_scheme_handler.rs` | A thread sends the stream in 64 KiB `didReceiveData` pieces with no default `Content-Length`, and `stopURLSchemeTask` closes it. |
+
+Not a backport: **keep it when the 0.56 hunks are deleted.**
+
 ## tauri-codegen
 
 Embedded assets and CSP hashes are emitted in hash-map and `readdir` order. The patch sorts both.
 
 **Delete when `tauri-codegen > 2.6.3` publishes** — [tauri#15777](https://github.com/tauri-apps/tauri/pull/15777) is merged and supersedes it.
+
+## tauri-plugin-geolocation
+
+`play-services-location` put four proprietary Play Services AARs into the APK, and the plugin returned no fix at all without Play Services.
+
+| File                                   | Change                                                                                                                                         |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `android/build.gradle.kts`             | Drop the `play-services-location` dependency.                                                                                                  |
+| `android/src/main/java/Geolocation.kt` | Reimplement on the platform `LocationManager` via `androidx.core.location`, which back-compats it to `minSdk` 28. GPS and network providers.   |
+| `android/src/main/java/Geolocation.kt` | Fix `getLastLocation`, which kept the oldest fix within `maximumAge` instead of the freshest.                                                  |
+
+Accuracy and time to first fix are worse where Play Services exists, since the platform API does no sensor fusion.
+
+**Delete when upstream drops `play-services-location`.** [plugins-workspace#3377](https://github.com/tauri-apps/plugins-workspace/pull/3377) does not: it keeps the dependency and the GMS-first path, and needs API 31.

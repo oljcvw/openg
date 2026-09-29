@@ -26,45 +26,48 @@
 </script>
 
 <Field {label}>
-	<DropdownMenu.Root>
-		<DropdownMenu.Trigger>
-			{#snippet child({ props })}
-				<Button
-					{...props}
-					variant="outline"
-					class="w-full justify-between font-normal"
-				>
-					<span class={{ "text-muted-foreground": !selected }}>
-						{selected?.label ?? placeholder}
-					</span>
-					<CaretUpDownIcon class="size-4 shrink-0 opacity-60" />
-				</Button>
-			{/snippet}
-		</DropdownMenu.Trigger>
-		<DropdownMenu.Content
-			class="max-h-72 w-(--bits-dropdown-menu-anchor-width)"
-		>
-			<DropdownMenu.RadioGroup
-				bind:value={
-					() => (value === null ? "" : String(value)),
-					(next) =>
-						(value =
-							options.find(
-								(option) => String(option.value) === next,
-							)?.value ?? null)
-				}
-			>
-				{#if nullable}
-					<DropdownMenu.RadioItem value=""
-						>{clearLabel}</DropdownMenu.RadioItem
+	{#snippet picker({ labelId })}
+		<DropdownMenu.Root>
+			<DropdownMenu.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						aria-labelledby="{labelId} {props.id}"
+						variant="outline"
+						class="w-full justify-between font-normal"
 					>
-				{/if}
-				{#each options as option (option.value)}
-					<DropdownMenu.RadioItem value={String(option.value)}>
-						{option.label}
-					</DropdownMenu.RadioItem>
-				{/each}
-			</DropdownMenu.RadioGroup>
-		</DropdownMenu.Content>
-	</DropdownMenu.Root>
+						<span class={{ "text-muted-foreground": !selected }}>
+							{selected?.label ?? placeholder}
+						</span>
+						<CaretUpDownIcon class="size-4 shrink-0 opacity-60" />
+					</Button>
+				{/snippet}
+			</DropdownMenu.Trigger>
+			<DropdownMenu.Content
+				class="max-h-72 w-(--bits-dropdown-menu-anchor-width)"
+			>
+				<DropdownMenu.RadioGroup
+					bind:value={
+						() => (value === null ? "" : String(value)),
+						(next) =>
+							(value =
+								options.find(
+									(option) => String(option.value) === next,
+								)?.value ?? null)
+					}
+				>
+					{#if nullable}
+						<DropdownMenu.RadioItem value=""
+							>{clearLabel}</DropdownMenu.RadioItem
+						>
+					{/if}
+					{#each options as option (option.value)}
+						<DropdownMenu.RadioItem value={String(option.value)}>
+							{option.label}
+						</DropdownMenu.RadioItem>
+					{/each}
+				</DropdownMenu.RadioGroup>
+			</DropdownMenu.Content>
+		</DropdownMenu.Root>
+	{/snippet}
 </Field>

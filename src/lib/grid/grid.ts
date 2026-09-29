@@ -1,8 +1,12 @@
 import type z from "zod";
 
+import { registerAccountCache } from "$lib/api/account-caches";
 import { getCascadeV4 } from "$lib/api/browse/grid";
+import { updateLocation } from "$lib/api/browse/location";
 import { TtlCache } from "$lib/api/cache";
-import { getProfiles } from "$lib/api/users/profiles";
+import { clearProfileCaches, getProfiles } from "$lib/api/users/profiles";
+import { awaitEntitlementGrant } from "$lib/entitlements/bypass.svelte";
+import { coarsenGeohash } from "$lib/model/geohash";
 import { now } from "$lib/util/clock";
 import type { cascadeV4ResponseFullProfileV1Schema } from "$lib/model/browse/grid/cascade/response/v4";
 
@@ -19,10 +23,12 @@ export type RenderedGridProfile = {
 	type: "rendered";
 	id: number;
 	displayName: string | null;
+	age: number | null | undefined;
 	distance: number | null;
 	profilePhotosHashes: string[] | null;
 	unread: number | null;
 	onlineUntil: number | null;
+	seen: number | null;
 	isFavorite: boolean;
 	isVisiting: boolean;
 	hasChattedInLast24Hrs: boolean;
@@ -39,20 +45,26 @@ export type GridProfile = RenderedGridProfile | LazyGridProfile;
 
 function lazyProfile(profile: {
 	profileId: number;
-	unreadCount: number;
-	isVisiting: boolean;
+	unreadCount?: number | null;
+	isVisiting?: boolean | null;
 }): LazyGridProfile {
 	return {
 		type: "lazy",
 		id: profile.profileId,
-		unread: profile.unreadCount,
-		isVisiting: profile.isVisiting,
+		unread: profile.unreadCount ?? null,
+		isVisiting: profile.isVisiting ?? false,
 	};
 }
 
 // v4 sends `favorite`/`chatted` on every profile item; their absence marks a
 // base-shaped payload, which carries no photo to render from either.
-function gridProfile(profile: CascadeProfileData): GridProfile {
+function gridProfile({
+	profile,
+	carriesAge,
+}: {
+	profile: CascadeProfileData;
+	carriesAge: boolean;
+}): GridProfile {
 	const { favorite, chatted } = profile;
 	if (favorite === undefined || chatted === undefined) {
 		return lazyProfile(profile);
@@ -61,30 +73,49 @@ function gridProfile(profile: CascadeProfileData): GridProfile {
 		type: "rendered",
 		id: profile.profileId,
 		displayName: profile.displayName ?? null,
+		age: carriesAge ? (profile.age ?? null) : undefined,
 		distance: profile.distanceMeters ?? null,
 		profilePhotosHashes: primaryImageHashes(profile.primaryImageUrl),
 		unread: profile.unreadCount ?? null,
 		onlineUntil: profile.onlineUntil ?? null,
+		seen: profile.lastOnline ?? null,
 		isFavorite: favorite,
-		isVisiting: profile.isVisiting,
+		isVisiting: profile.isVisiting ?? false,
 		hasChattedInLast24Hrs: chatted,
 	};
 }
 
 export async function getGrid(query: Parameters<typeof getCascadeV4>[0]) {
+	await awaitEntitlementGrant();
+	if (query.favorites && !query.pageNumber) {
+		await updateLocation({ geohash: query.nearbyGeoHash }).then(
+			() => recordStoredLocation(query.nearbyGeoHash),
+			(error: unknown) => console.error(error),
+		);
+	}
 	const response = await getCascadeV4(query);
+	if (!query.favorites) recordStoredLocation(query.nearbyGeoHash);
 	const items: GridProfile[] = [];
 
 	for (const item of response.items) {
 		if (
 			item.type === "full_profile_v1" ||
 			item.type === "partial_profile_v1" ||
-			item.type === "hidden_profile_v1" ||
 			item.type === "smart_boost_profile_v1"
 		) {
-			items.push(gridProfile(item.data));
+			items.push(
+				gridProfile({
+					profile: item.data,
+					carriesAge: item.type !== "partial_profile_v1",
+				}),
+			);
 		} else if (item.type === "sponsored_profile_v1") {
-			items.push(gridProfile(item.data.alternativeProfile));
+			items.push(
+				gridProfile({
+					profile: item.data.alternativeProfile,
+					carriesAge: true,
+				}),
+			);
 		}
 	}
 
@@ -94,6 +125,22 @@ export async function getGrid(query: Parameters<typeof getCascadeV4>[0]) {
 const profileCache = new TtlCache<number, RenderedGridProfile>({
 	ttlMs: 60_000,
 });
+
+let storedGeohash: string | null = null;
+
+registerAccountCache({
+	reset: () => {
+		storedGeohash = null;
+	},
+});
+
+function recordStoredLocation(geohash: string): void {
+	const coarse = coarsenGeohash(geohash);
+	if (coarse === storedGeohash) return;
+	storedGeohash = coarse;
+	clearProfileCaches();
+	profileCache.clear();
+}
 
 export function getCachedProfile(id: number): RenderedGridProfile | null {
 	return profileCache.get(id);
@@ -122,10 +169,12 @@ export async function resolveLazyProfile(
 		type: "rendered",
 		id: resolved.profileId,
 		displayName: resolved.displayName ?? null,
+		age: resolved.age,
 		distance: resolved.distance ?? null,
 		profilePhotosHashes: resolved.medias?.map((m) => m.mediaHash) ?? null,
 		unread: profile.unread,
 		onlineUntil: resolved.onlineUntil ?? null,
+		seen: resolved.seen,
 		isFavorite: resolved.isFavorite,
 		isVisiting: profile.isVisiting,
 		hasChattedInLast24Hrs:

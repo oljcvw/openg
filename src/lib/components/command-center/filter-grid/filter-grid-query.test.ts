@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { defaultFilters } from "$lib/model/browse/grid/filters";
+import { sentFilterKeys } from "$lib/grid/grid-query";
+import {
+	defaultFilters,
+	WEIGHT_KG_MAX,
+	WEIGHT_KG_MIN,
+} from "$lib/model/browse/grid/filters";
 import { parseFilterGridQuery } from "./filter-grid-query";
 
 function parsedAt<T>(entries: readonly T[], index: number): T {
@@ -36,6 +41,19 @@ describe("parseFilterGridQuery", () => {
 		expect(result.filters.tribes).toEqual([1, 6]);
 		expect(result.filters.weightEnabled).toBe(true);
 		expect(result.filters.weight).toEqual([70, defaultFilters.weight[1]]);
+	});
+
+	it("stores the official weight ends in grams as the slider ends", () => {
+		const result = parseFilterGridQuery(
+			"?weightGramsMin=40823&weightGramsMax=272156",
+		);
+		expect(result.filters.weight).toEqual([WEIGHT_KG_MIN, WEIGHT_KG_MAX]);
+		expect(sentFilterKeys(result.filters)).toEqual([]);
+	});
+
+	it("rounds a typed weight in grams to whole kilograms", () => {
+		const result = parseFilterGridQuery("?weightGramsMax=80600");
+		expect(result.filters.weight).toEqual([WEIGHT_KG_MIN, 81]);
 	});
 
 	it("renders min and max as a single field, matching the filters UI", () => {
@@ -114,6 +132,18 @@ describe("parseFilterGridQuery", () => {
 		expect(genders.filters.genderEnabled).toBe(true);
 		expect(genders.filters.genders).toEqual([-1, 42]);
 		expect(parsedAt(genders.parsed, 0).valueText).toBe("Not specified, 42");
+	});
+
+	it("flags the Ask me gender as invalid because the server fails on it", () => {
+		const result = parseFilterGridQuery("?genders=1,62");
+		expect(parsedAt(result.parsed, 0).valid).toBe(false);
+		expect(result.filters.genderEnabled).toBe(false);
+	});
+
+	it("flags the Trans tribe as invalid because it moved to genders", () => {
+		const result = parseFilterGridQuery("?tribes=1,11");
+		expect(parsedAt(result.parsed, 0).valid).toBe(false);
+		expect(result.filters.tribesEnabled).toBe(false);
 	});
 
 	it("flags unknown keys as invalid", () => {

@@ -1,153 +1,194 @@
 <script lang="ts">
+	import SiFacebook from "@icons-pack/svelte-simple-icons/icons/SiFacebook";
+	import SiGoogle from "@icons-pack/svelte-simple-icons/icons/SiGoogle";
 	import { goto } from "$app/navigation";
 	import { toast } from "svelte-sonner";
 	import z from "zod";
 
+	import { callMethod } from "$lib/api/methods";
 	import {
-		accountStatusState,
-		showAccountRestriction,
-	} from "$lib/api/account-status-state.svelte";
-	import { showErrorToast } from "$lib/api/error-toast";
-	import {
-		asAppError,
-		asBanned,
-		blockedKindOf,
-		callMethod,
-		markRequestBlocked,
-	} from "$lib/api/methods";
-	import { noticeStorageBackend } from "$lib/api/storage-notice";
-	import { clearProfileCaches } from "$lib/api/users/profiles";
+		companionDisabled,
+		companionRefused,
+		companionUnavailable,
+		companionUntrusted,
+		disabledCompanionMessage,
+		finishSignIn,
+		refusedCompanionMessage,
+		reportSignInFailure,
+		untrustedCompanionMessage,
+	} from "$lib/api/sign-in";
 	import { Button } from "$lib/components/ui/button";
 	import * as Card from "$lib/components/ui/card";
 	import { Input } from "$lib/components/ui/input";
 	import { Label } from "$lib/components/ui/label";
 	import { Spinner } from "$lib/components/ui/spinner";
-	import RecaptchaUnsupported from "./RecaptchaUnsupported.svelte";
+
+	type OauthProvider = "google" | "facebook";
+
+	const oauthProviders: Record<
+		OauthProvider,
+		{
+			method: "sign_in_with_google" | "sign_in_with_facebook";
+			label: string;
+			failures: Record<string, () => void>;
+		}
+	> = {
+		google: {
+			method: "sign_in_with_google",
+			label: "Google",
+			failures: {
+				[companionUnavailable]: () => void goto("/auth/sign-in/google"),
+				[companionDisabled]: () =>
+					toast.error(disabledCompanionMessage),
+				[companionUntrusted]: () => {
+					toast.error(untrustedCompanionMessage);
+					void goto("/auth/sign-in/google?paste");
+				},
+				[companionRefused]: () => {
+					toast.error(refusedCompanionMessage);
+					void goto("/auth/sign-in/google?paste");
+				},
+			},
+		},
+		facebook: {
+			method: "sign_in_with_facebook",
+			label: "Facebook",
+			failures: {
+				"facebook-dialog-error": () =>
+					toast.error(
+						"Facebook didn't grant access. Try again, or sign in with your email and password.",
+					),
+				"facebook-handoff-refused": () =>
+					toast.error(
+						"Facebook tried to open its own app, which Open Grind can't use. Sign in with your email and password instead.",
+					),
+			},
+		},
+	};
 
 	let email = $state("");
 	let password = $state("");
-	let submitting: false | "password" | "google" = $state(false);
+	let submitting: false | "password" | OauthProvider = $state(false);
 
-	function handleAccountBlock(error: unknown): boolean {
-		const ban = asBanned(error);
-		if (ban) {
-			accountStatusState.status = { kind: "banned", info: ban };
-			accountStatusState.open = true;
-			return true;
-		}
-		if (asAppError(error)?.kind === "RateLimited") {
-			toast.error("Too many attempts. Please try again later.");
-			return true;
-		}
-		return false;
-	}
+	const invalidCredentialsSchema = z.object({
+		kind: z.literal("Api"),
+		message: z.object({
+			code: z.literal(4),
+			message: z.literal("Invalid input parameters"),
+		}),
+	});
+
+	const recaptchaErrorSchema = z.object({
+		kind: z.literal("Recaptcha"),
+		message: z.object({ reason: z.string() }),
+	});
+
+	const captchaSignInMessages: Record<string, string> = {
+		unsupportedPlatform:
+			"This account needs captcha verification, available through the Open Grind reCAPTCHA helper on Android.",
+		addonUnavailable:
+			"Install the Open Grind reCAPTCHA helper to sign in to this account.",
+		addonDisabled:
+			"Enable the Open Grind reCAPTCHA helper to sign in to this account.",
+		addonUntrusted:
+			"The installed reCAPTCHA helper isn't the official Open Grind build.",
+		grindrMissing:
+			"The reCAPTCHA helper needs the Grindr app installed to verify this sign-in.",
+	};
 
 	async function signIn(event: SubmitEvent) {
 		event.preventDefault();
+		if (submitting) return;
 		submitting = "password";
 		try {
-			const result = await callMethod("login", { email, password });
-			if (showAccountRestriction(result.restriction)) return;
-			clearProfileCaches();
-			void noticeStorageBackend();
-			void goto("/");
-		} catch (error) {
-			console.error(error);
-			const appError = asAppError(error);
-			const blockedKind = blockedKindOf(appError?.kind);
-			if (blockedKind && markRequestBlocked({ kind: blockedKind })) {
-				return;
-			}
-			if (handleAccountBlock(error)) return;
-			if (appError) {
-				const invalidInputParameters = z
-					.object({
-						kind: z.literal("Api"),
-						message: z.object({
-							code: z.literal(4),
-							message: z.literal("Invalid input parameters"),
-						}),
-					})
-					.safeParse(appError).success;
-				if (
-					invalidInputParameters ||
-					appError.kind === "Unauthorized"
-				) {
-					toast.error("Invalid email or password");
-					void maybeCheckRecaptcha();
-				} else {
-					toast.error(appError.prettyMessage);
-				}
-			} else {
-				showErrorToast({ error });
-			}
+			if (await trySignIn()) return;
+			await trySignInWithCaptcha();
 		} finally {
 			submitting = false;
 		}
 	}
 
-	let recaptchaChecked = false;
-	let recaptchaDialogOpen = $state(false);
-
-	async function maybeCheckRecaptcha() {
-		if (recaptchaChecked) return;
-		recaptchaChecked = true;
+	async function trySignIn(captchaToken?: string): Promise<boolean> {
 		try {
-			const enabled = await callMethod("recaptcha_first_party_enabled");
-			if (enabled) recaptchaDialogOpen = true;
-		} catch (error) {
-			console.error(
-				"[login] failed to check recaptcha_first_party assignment",
-				error,
+			finishSignIn(
+				await callMethod("sign_in_with_email", {
+					email,
+					password,
+					captchaToken,
+				}),
 			);
+			return true;
+		} catch (error) {
+			let invalidCredentials = false;
+			reportSignInFailure({
+				error,
+				onFailure: (appError) => {
+					if (
+						appError.kind !== "Unauthorized" &&
+						!invalidCredentialsSchema.safeParse(appError).success
+					) {
+						return false;
+					}
+					invalidCredentials = true;
+					return true;
+				},
+			});
+			if (invalidCredentials && captchaToken === undefined) return false;
+			if (invalidCredentials) toast.error("Invalid email or password");
+			return true;
 		}
 	}
 
-	async function signInWithGoogle() {
-		if (submitting) return;
-		submitting = "google";
+	async function trySignInWithCaptcha() {
+		let required = false;
 		try {
-			const result = await callMethod("login_with_google");
-			if (showAccountRestriction(result.restriction)) return;
-			clearProfileCaches();
-			void noticeStorageBackend();
-			void goto("/");
+			required = await callMethod("recaptcha_first_party_enabled");
 		} catch (error) {
-			console.error(error);
-			const appError = asAppError(error);
-			const blockedKind = blockedKindOf(appError?.kind);
-			if (blockedKind && markRequestBlocked({ kind: blockedKind })) {
-				return;
-			}
-			if (
-				appError?.kind === "Auth" &&
-				appError.message === "companion-unavailable"
-			) {
-				void goto("/auth/sign-in/google");
-				return;
-			}
-			if (
-				appError?.kind === "Auth" &&
-				appError.message === "companion-untrusted"
-			) {
-				toast.error(
-					"An app using the companion's name is installed but isn't signed by Open Grind, so its token was refused. Uninstall it, or paste the OAuth token manually.",
-				);
-				void goto("/auth/sign-in/google");
-				return;
-			}
-			if (
-				appError?.kind === "Auth" &&
-				appError.message === "Sign-in canceled"
-			) {
-				return;
-			}
-			if (handleAccountBlock(error)) return;
-			if (appError) {
-				toast.error(appError.prettyMessage);
-			} else {
-				toast.error("Google sign-in failed");
-			}
+			console.error(
+				"[sign-in] failed to check recaptcha_first_party assignment",
+				error,
+			);
+		}
+		if (!required) {
+			toast.error("Invalid email or password");
+			return;
+		}
+		try {
+			const captchaToken = await callMethod("mint_recaptcha_token", {
+				action: "login",
+			});
+			await trySignIn(captchaToken);
+		} catch (error) {
+			reportCaptchaFailure(error);
+		}
+	}
+
+	function reportCaptchaFailure(error: unknown) {
+		const parsed = recaptchaErrorSchema.safeParse(error);
+		const reason = parsed.success ? parsed.data.message.reason : undefined;
+		if (reason === "cancelled") return;
+		toast.error(
+			(reason ? captchaSignInMessages[reason] : undefined) ??
+				"Captcha verification failed. Try again.",
+		);
+	}
+
+	async function signInWith(provider: OauthProvider) {
+		if (submitting) return;
+		submitting = provider;
+		const { method, label, failures } = oauthProviders[provider];
+		try {
+			finishSignIn(await callMethod(method));
+		} catch (error) {
+			reportSignInFailure({
+				error,
+				label: `${label} sign-in failed`,
+				onAuthFailure: (message) => {
+					const handle = failures[message];
+					handle?.();
+					return handle !== undefined;
+				},
+			});
 		} finally {
 			submitting = false;
 		}
@@ -206,9 +247,10 @@
 				type="submit"
 				class="w-full"
 				disabled={submitting !== false}
+				aria-busy={submitting === "password"}
 			>
 				{#if submitting === "password"}
-					<Spinner />
+					<Spinner aria-hidden="true" />
 				{/if}
 				Sign in
 			</Button>
@@ -217,14 +259,31 @@
 				variant="outline"
 				class="w-full"
 				disabled={submitting !== false}
-				onclick={signInWithGoogle}
+				aria-busy={submitting === "google"}
+				onclick={() => signInWith("google")}
 			>
 				{#if submitting === "google"}
-					<Spinner />
+					<Spinner aria-hidden="true" />
+				{:else}
+					<SiGoogle class="size-4" aria-hidden="true" />
 				{/if}
 				Sign in with Google
+			</Button>
+			<Button
+				type="button"
+				variant="outline"
+				class="w-full"
+				disabled={submitting !== false}
+				aria-busy={submitting === "facebook"}
+				onclick={() => signInWith("facebook")}
+			>
+				{#if submitting === "facebook"}
+					<Spinner aria-hidden="true" />
+				{:else}
+					<SiFacebook class="size-4" aria-hidden="true" />
+				{/if}
+				Sign in with Facebook
 			</Button>
 		</Card.Footer>
 	</Card.Root>
 </form>
-<RecaptchaUnsupported bind:open={recaptchaDialogOpen} />

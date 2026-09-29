@@ -2,6 +2,9 @@ use std::fmt;
 
 use serde::Serialize;
 
+use crate::api::push::PushError;
+use crate::api::recaptcha::RecaptchaError;
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BanInfo {
@@ -40,7 +43,8 @@ pub enum AppError {
 	Connect(String),
 	Auth(String),
 	Media(String),
-	NotLoggedIn,
+	NotSignedIn,
+	SessionStale,
 	Api { code: i32, message: String },
 	Unauthorized { code: i32, message: String },
 	Banned(BanInfo),
@@ -49,6 +53,33 @@ pub enum AppError {
 	NetworkBlocked,
 	NotInitialized,
 	SessionCleared,
+	ContentTooLarge,
+	Recaptcha(RecaptchaError),
+	Push(PushError),
+}
+
+impl AppError {
+	pub fn kind(&self) -> &'static str {
+		match self {
+			AppError::Http(_) => "Http",
+			AppError::Connect(_) => "Connect",
+			AppError::Auth(_) => "Auth",
+			AppError::Media(_) => "Media",
+			AppError::NotSignedIn => "NotSignedIn",
+			AppError::SessionStale => "SessionStale",
+			AppError::Api { .. } => "Api",
+			AppError::Unauthorized { .. } => "Unauthorized",
+			AppError::Banned(_) => "Banned",
+			AppError::RateLimited => "RateLimited",
+			AppError::RequestBlocked => "RequestBlocked",
+			AppError::NetworkBlocked => "NetworkBlocked",
+			AppError::NotInitialized => "NotInitialized",
+			AppError::SessionCleared => "SessionCleared",
+			AppError::ContentTooLarge => "ContentTooLarge",
+			AppError::Recaptcha(_) => "Recaptcha",
+			AppError::Push(_) => "Push",
+		}
+	}
 }
 
 impl fmt::Display for AppError {
@@ -58,7 +89,10 @@ impl fmt::Display for AppError {
 			AppError::Connect(msg) => write!(f, "Could not connect: {msg}"),
 			AppError::Auth(msg) => write!(f, "Auth error: {msg}"),
 			AppError::Media(msg) => write!(f, "Media error: {msg}"),
-			AppError::NotLoggedIn => write!(f, "Not logged in"),
+			AppError::NotSignedIn => write!(f, "Not signed in"),
+			AppError::SessionStale => {
+				write!(f, "Could not refresh the session")
+			}
 			AppError::Api { code, message } => {
 				write!(f, "API error {code}: {message}")
 			}
@@ -81,6 +115,11 @@ impl fmt::Display for AppError {
 			AppError::NotInitialized => {
 				write!(f, "GrindrClient not initialized")
 			}
+			AppError::ContentTooLarge => {
+				write!(f, "Larger than the upload limit")
+			}
+			AppError::Recaptcha(error) => write!(f, "reCAPTCHA error: {error}"),
+			AppError::Push(error) => write!(f, "push error: {error}"),
 		}
 	}
 }
@@ -111,15 +150,35 @@ impl From<grindr::GrindrError> for AppError {
 	}
 }
 
+enum SessionState {
+	SignedOut,
+	AwaitingFirstToken,
+	Authorized,
+}
+
+fn session_state(client: &grindr::GrindrClient) -> SessionState {
+	match client.session_receiver().borrow().as_ref() {
+		None => SessionState::SignedOut,
+		Some(session) if session.token.is_none() => {
+			SessionState::AwaitingFirstToken
+		}
+		Some(_) => SessionState::Authorized,
+	}
+}
+
 impl AppError {
 	pub fn from_client_error(
 		error: grindr::GrindrError,
 		client: &grindr::GrindrClient,
 	) -> Self {
-		let signed_in = client.session_receiver().borrow().is_some();
-		match AppError::from(error) {
-			AppError::Auth(_) if !signed_in => AppError::NotLoggedIn,
-			mapped => mapped,
+		match (AppError::from(error), session_state(client)) {
+			(AppError::Auth(_), SessionState::SignedOut) => {
+				AppError::NotSignedIn
+			}
+			(AppError::Auth(_), SessionState::AwaitingFirstToken) => {
+				AppError::SessionStale
+			}
+			(mapped, _) => mapped,
 		}
 	}
 }
@@ -127,6 +186,48 @@ impl AppError {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn every_kind_matches_its_serde_tag() {
+		let ban = BanInfo {
+			kind: "profile".to_owned(),
+			code: 27,
+			message: String::new(),
+			reason: None,
+			sub_reason: None,
+			automated: None,
+		};
+		let errors = [
+			AppError::Http(String::new()),
+			AppError::Connect(String::new()),
+			AppError::Auth(String::new()),
+			AppError::Media(String::new()),
+			AppError::NotSignedIn,
+			AppError::SessionStale,
+			AppError::Api {
+				code: 0,
+				message: String::new(),
+			},
+			AppError::Unauthorized {
+				code: 0,
+				message: String::new(),
+			},
+			AppError::Banned(ban),
+			AppError::RateLimited,
+			AppError::RequestBlocked,
+			AppError::NetworkBlocked,
+			AppError::NotInitialized,
+			AppError::SessionCleared,
+			AppError::ContentTooLarge,
+			AppError::Recaptcha(RecaptchaError::Failed),
+		];
+		for error in errors {
+			assert_eq!(
+				serde_json::to_value(&error).unwrap()["kind"],
+				error.kind()
+			);
+		}
+	}
 
 	#[test]
 	fn simulated_ban_response_maps_to_banned_app_error() {
@@ -154,39 +255,44 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn auth_failure_without_a_session_maps_to_not_logged_in() {
+	async fn auth_failure_without_a_session_maps_to_not_signed_in() {
 		let client =
 			grindr::GrindrClient::new(grindr::DeviceInfo::generate(), None)
 				.unwrap();
-		let error = client.refresh_token().await.unwrap_err();
+		let error = client.refresh_session().await.unwrap_err();
 
 		let app = AppError::from_client_error(error, &client);
 
-		assert!(matches!(app, AppError::NotLoggedIn));
-		assert_eq!(serde_json::to_value(&app).unwrap()["kind"], "NotLoggedIn");
+		assert!(matches!(app, AppError::NotSignedIn));
+		assert_eq!(serde_json::to_value(&app).unwrap()["kind"], "NotSignedIn");
+	}
+
+	fn signed_in_client(
+		token: Option<grindr::SessionToken>,
+	) -> grindr::GrindrClient {
+		grindr::GrindrClient::new(
+			grindr::DeviceInfo::generate(),
+			Some(grindr::Session {
+				credentials: grindr::Credentials {
+					email: "user@example.com".to_owned(),
+					profile_id: Some("42".to_owned()),
+					auth_token: "auth-token".to_owned(),
+					kind: grindr::SessionKind::Email,
+					third_party_user_id: None,
+				},
+				token,
+			}),
+		)
+		.unwrap()
 	}
 
 	#[test]
 	fn auth_failure_with_a_session_stays_an_auth_error() {
-		let session = grindr::Session {
-			credentials: grindr::Credentials {
-				email: "user@example.com".to_owned(),
-				profile_id: Some("42".to_owned()),
-				auth_token: "auth-token".to_owned(),
-				kind: grindr::SessionKind::Email,
-				third_party_user_id: None,
-			},
-			token: Some(grindr::SessionToken {
-				session_id: "session-token".to_owned(),
-				expires_at: 9_999_999_999,
-				restriction: None,
-			}),
-		};
-		let client = grindr::GrindrClient::new(
-			grindr::DeviceInfo::generate(),
-			Some(session),
-		)
-		.unwrap();
+		let client = signed_in_client(Some(grindr::SessionToken {
+			session_id: "session-token".to_owned(),
+			expires_at: 9_999_999_999,
+			restriction: None,
+		}));
 
 		let app = AppError::from_client_error(
 			grindr::GrindrError::Auth("device key rejected".to_owned()),
@@ -194,6 +300,19 @@ mod tests {
 		);
 
 		assert!(matches!(app, AppError::Auth(_)));
+	}
+
+	#[test]
+	fn auth_failure_before_the_first_token_is_a_stale_session() {
+		let client = signed_in_client(None);
+
+		let app = AppError::from_client_error(
+			grindr::GrindrError::Auth("not signed in".to_owned()),
+			&client,
+		);
+
+		assert!(matches!(app, AppError::SessionStale));
+		assert_eq!(serde_json::to_value(&app).unwrap()["kind"], "SessionStale");
 	}
 
 	#[test]

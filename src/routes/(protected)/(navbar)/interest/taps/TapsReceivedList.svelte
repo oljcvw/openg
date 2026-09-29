@@ -3,6 +3,7 @@
 
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
+	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import { getTapsState } from "$lib/interest/taps-state.svelte";
 	import { observeIntersection } from "$lib/util/observe-intersection";
@@ -10,7 +11,8 @@
 	import EmptyTapsList from "./EmptyTapsList.svelte";
 	import TapReceivedProfile from "./TapReceivedProfile.svelte";
 
-	let { ourProfileId }: { ourProfileId: number } = $props();
+	let { ourProfileId, active }: { ourProfileId: number; active: boolean } =
+		$props();
 
 	const taps = untrack(() => {
 		const state = getTapsState(ourProfileId);
@@ -19,28 +21,28 @@
 	});
 
 	$effect(() => {
-		if (taps.hasUnseen) taps.markViewed();
+		if (active && taps.hasUnseen) taps.markViewed();
 	});
 
 	let container: HTMLDivElement | null = $state(null);
 
-	restoreScrollOnce(() => container, taps);
+	restoreScrollOnce({ container: () => container, state: taps });
 </script>
 
 <div class="screen-nav-host">
 	<div
 		bind:this={container}
-		class="pull-scroller"
+		class="pull-scroller overscroll-x-auto"
 		onscroll={() => (taps.scrollY = container?.scrollTop ?? 0)}
 	>
 		<div
-			class="mx-auto flex min-h-overscrollable w-full max-w-120 flex-col gap-1 px-4 pt-16 pb-nav-clear"
+			class="mx-auto flex min-h-overscrollable w-full max-w-120 flex-col gap-1 px-4 pt-header-clear-16 pb-nav-clear"
 		>
 			{#if taps.loading}
 				{#each Array(8)}
 					<Skeleton class="h-24.5 w-full shrink-0" />
 				{/each}
-			{:else if taps.error}
+			{:else if taps.error && taps.taps.length === 0}
 				<div class="flex flex-1">
 					<ApiErrorDisplay
 						error={taps.error}
@@ -66,7 +68,7 @@
 			{/if}
 		</div>
 	</div>
-	{#if !taps.loading && !taps.error}
+	{#if !taps.loading && (taps.taps.length > 0 || !taps.error)}
 		<DataRefreshControl
 			{container}
 			updating={taps.refreshing}
@@ -74,4 +76,5 @@
 			onrefresh={() => void taps.refresh()}
 		/>
 	{/if}
+	<ScrollToTopButton {container} class="bottom-nav-clear" />
 </div>

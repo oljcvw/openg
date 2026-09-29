@@ -20,5 +20,7 @@
 </script>
 
 <Field {label} hint="{value.length}/{maxLength}">
-	<Input bind:value {placeholder} {type} maxlength={maxLength} />
+	{#snippet control({ id })}
+		<Input {id} bind:value {placeholder} {type} maxlength={maxLength} />
+	{/snippet}
 </Field>

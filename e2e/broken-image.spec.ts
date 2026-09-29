@@ -9,7 +9,7 @@ import {
 } from "./support/media";
 
 const BROKEN = '[data-slot="broken-media"]';
-const IMAGE_CONVERSATION = "/chat/100006:123456000";
+const IMAGE_CONVERSATION = "/chat/100002:123456000";
 const FIRST_LOAD_TIMEOUT = 120_000;
 
 test.describe("broken images", () => {
@@ -94,6 +94,17 @@ test.describe("broken images", () => {
 		await expect(page.locator(".pswp")).toHaveCount(0);
 	});
 
+	test("a failing album cover shows the placeholder", async ({ page }) => {
+		await installTauriShim(page);
+		await abortImages(page, CHAT_MEDIA_HOST);
+		await page.goto("/settings/albums");
+
+		await page
+			.locator(`[data-slot="album-tile"] ${BROKEN}`)
+			.first()
+			.waitFor({ timeout: FIRST_LOAD_TIMEOUT });
+	});
+
 	test("loaded photos still open their lightboxes", async ({ page }) => {
 		await installTauriShim(page);
 		await serveImages(page, AVATAR_HOST);
@@ -149,7 +160,7 @@ test.describe("broken images", () => {
 		await expect(page.locator(".pswp")).toHaveCount(0);
 
 		await page
-			.getByRole("button", { name: "View expiring image" })
+			.getByRole("button", { name: "Expiring image", exact: true })
 			.last()
 			.click();
 		const errorSlide = page.locator(

@@ -1,5 +1,5 @@
 import { appLifecycle } from "$lib/api/app-lifecycle.svelte";
-import { callMethod } from "$lib/api/methods";
+import { signedInProfileId } from "$lib/api/current-session";
 import { ws } from "$lib/ws.svelte";
 
 const THROTTLE_MS = 2000;
@@ -26,6 +26,11 @@ class Reconciler {
 			console.warn(`[ws] resyncing after ${skipped} dropped events`);
 			this.#scheduleResync();
 		}).catch((error) => console.error(error));
+
+		ws.onEventRejected((eventType) => {
+			console.warn(`[ws] resyncing after rejecting a ${eventType} event`);
+			this.#scheduleResync();
+		});
 
 		if (typeof document !== "undefined") {
 			document.addEventListener("visibilitychange", () => {
@@ -62,7 +67,7 @@ class Reconciler {
 		if (now - this.#lastReconcileAt < THROTTLE_MS) return;
 		this.#lastReconcileAt = now;
 
-		const profileId = await callMethod("auth_state").catch(() => null);
+		const profileId = await signedInProfileId().catch(() => null);
 		if (profileId === null) return;
 
 		await Promise.all(

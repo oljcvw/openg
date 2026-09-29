@@ -12,8 +12,8 @@
 	import type { ComponentProps } from "svelte";
 
 	import fireEmoji from "$lib/assets/emojis/fire/32px.png";
-	import ToastUnimplemented from "$lib/components/feedback/ToastUnimplemented.svelte";
 	import ContextMenu from "$lib/components/shared/ContextMenu.svelte";
+	import ContextMenuPanel from "$lib/components/shared/ContextMenuPanel.svelte";
 	import { Button } from "$lib/components/ui/button";
 
 	let {
@@ -23,6 +23,7 @@
 		onUnsend,
 		onCopyError,
 		onReply,
+		onReport,
 		onReact,
 		...props
 	}: ComponentProps<typeof ContextMenu> & {
@@ -32,23 +33,16 @@
 		onUnsend?: () => void;
 		onCopyError?: () => void;
 		onReply?: () => void;
+		onReport?: () => void;
 		onReact?: (reactionId: number) => void;
 	} = $props();
 </script>
 
 <ContextMenu {...props}>
-	{#snippet children(placement)}
+	{#snippet header()}
 		{#if reactionAvailable}
-			<!-- a cursor cannot double-tap, so it gets the reaction itself
-			     where a touchscreen gets the hint -->
 			<span
-				class={[
-					"mb-2 block w-45 text-center text-foreground/50 text-shadow-sm can-hover:hidden",
-					{
-						"-mt-8": !placement.startsWith("bottom"),
-						"mt-1": placement.startsWith("bottom"),
-					},
-				]}
+				class="mt-1 mb-2 block w-45 text-center text-foreground/50 text-shadow-sm can-hover:hidden"
 			>
 				Double tap to <img
 					src={fireEmoji}
@@ -63,13 +57,7 @@
 				variant="ghost"
 				size="icon-lg"
 				aria-label="React with fire"
-				class={[
-					"mb-2 hidden self-start rounded-full bg-black/80 can-hover:inline-flex",
-					{
-						"-mt-8": !placement.startsWith("bottom"),
-						"mt-1": placement.startsWith("bottom"),
-					},
-				]}
+				class="mt-1 mb-2 hidden self-start rounded-full bg-black/80 can-hover:inline-flex"
 				onclick={() => {
 					onReact?.(1);
 					props.onClose();
@@ -84,82 +72,79 @@
 				/>
 			</Button>
 		{/if}
-		<div
-			class="flex w-45 flex-col rounded-xl bg-black/80 p-1 *:justify-start *:active:translate-y-0!"
-		>
-			{#if onReply}
-				<Button
-					variant="ghost"
-					onclick={() => {
-						onReply();
-						props.onClose();
-					}}
-				>
-					<ArrowBendUpLeftIcon /> Reply
-				</Button>
-			{/if}
-			{#if textContent !== undefined}
-				<Button
-					variant="ghost"
-					onclick={() => {
-						writeText(textContent)
-							.then(() => {
-								toast.success("Message copied to clipboard");
-								props.onClose();
-							})
-							.catch((error) => console.error(error));
-					}}
-				>
-					<CopyIcon /> Copy message
-				</Button>
-			{/if}
-			{#if onCopyError}
-				<Button
-					variant="ghost"
-					onclick={() => {
-						onCopyError();
-						props.onClose();
-					}}
-				>
-					<WarningCircleIcon /> Copy error
-				</Button>
-			{/if}
+	{/snippet}
+	<ContextMenuPanel>
+		{#if onReply}
 			<Button
 				variant="ghost"
 				onclick={() => {
-					onDelete?.();
+					onReply();
+					props.onClose();
+				}}
+			>
+				<ArrowBendUpLeftIcon /> Reply
+			</Button>
+		{/if}
+		{#if textContent !== undefined}
+			<Button
+				variant="ghost"
+				onclick={() => {
+					writeText(textContent)
+						.then(() => {
+							toast.success("Message copied to clipboard");
+							props.onClose();
+						})
+						.catch((error) => console.error(error));
+				}}
+			>
+				<CopyIcon /> Copy message
+			</Button>
+		{/if}
+		{#if onCopyError}
+			<Button
+				variant="ghost"
+				onclick={() => {
+					onCopyError();
+					props.onClose();
+				}}
+			>
+				<WarningCircleIcon /> Copy error
+			</Button>
+		{/if}
+		{#if onDelete}
+			<Button
+				variant="ghost"
+				onclick={() => {
+					onDelete();
 					props.onClose();
 				}}
 			>
 				<TrashIcon />
 				Delete for me
 			</Button>
-			{#if onUnsend}
-				<Button
-					variant="ghost"
-					onclick={() => {
-						onUnsend();
-						props.onClose();
-					}}
-				>
-					<ArrowUUpLeftIcon />
-					Unsend message
-				</Button>
-			{/if}
+		{/if}
+		{#if onUnsend}
 			<Button
 				variant="ghost"
 				onclick={() => {
-					toast(ToastUnimplemented, {
-						componentProps: {
-							feature: "Report message",
-							issue: 41,
-						},
-					});
+					onUnsend();
 					props.onClose();
+				}}
+			>
+				<ArrowUUpLeftIcon />
+				Unsend message
+			</Button>
+		{/if}
+		{#if onReport}
+			<Button
+				variant="ghost"
+				onclick={() => {
+					props.onClose();
+					onReport();
 				}}
 			>
 				<FlagIcon /> Report
 			</Button>
-		</div>
-	{/snippet}
+		{/if}
+	</ContextMenuPanel>
 </ContextMenu>

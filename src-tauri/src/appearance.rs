@@ -1,10 +1,140 @@
-//! Unlocks WebKit's `-apple-visual-effect` in the app's webviews. No-op off macOS.
+#[cfg(target_os = "linux")]
+const COMPOSITING_OFF_VARS: [&str; 2] = [
+	"WEBKIT_DISABLE_COMPOSITING_MODE",
+	"WEBKIT_DISABLE_DMABUF_RENDERER",
+];
+
+#[cfg(any(target_os = "linux", test))]
+const ENVIRONMENT_DEFAULTS: [(&str, &str); 1] = [
+	// GTK 3 crashes on NVIDIA under Wayland without it:
+	// https://gitlab.gnome.org/GNOME/gtk/-/issues/8056
+	("__NV_DISABLE_EXPLICIT_SYNC", "1"),
+];
+
+#[cfg(any(target_os = "linux", test))]
+fn defaults_to_apply(
+	is_set: impl Fn(&str) -> bool,
+) -> impl Iterator<Item = (&'static str, &'static str)> {
+	ENVIRONMENT_DEFAULTS
+		.into_iter()
+		.filter(move |(name, _)| !is_set(name))
+}
+
+#[cfg(target_os = "linux")]
+const MEDIA_PROTOCOLS_VAR: &str = "WEBKIT_GST_ALLOWED_URI_PROTOCOLS";
+
+#[cfg(any(target_os = "linux", test))]
+fn with_media_scheme(allowed: Option<&str>) -> Option<String> {
+	let scheme = crate::media::SCHEME;
+	match allowed.map(str::trim).filter(|list| !list.is_empty()) {
+		None => Some(scheme.to_owned()),
+		Some(list) if list.split(',').any(|entry| entry.trim() == scheme) => {
+			None
+		}
+		Some(list) => Some(format!("{list},{scheme}")),
+	}
+}
+
+#[cfg(target_os = "linux")]
+pub fn apply_environment_defaults() {
+	for (name, value) in
+		defaults_to_apply(|name| std::env::var_os(name).is_some())
+	{
+		std::env::set_var(name, value);
+	}
+	let allowed = std::env::var(MEDIA_PROTOCOLS_VAR).ok();
+	if let Some(protocols) = with_media_scheme(allowed.as_deref()) {
+		std::env::set_var(MEDIA_PROTOCOLS_VAR, protocols);
+	}
+}
+
+#[cfg(test)]
+mod environment_default_tests {
+	#[test]
+	fn applies_every_default_when_nothing_is_set() {
+		assert_eq!(
+			super::defaults_to_apply(|_| false).collect::<Vec<_>>(),
+			super::ENVIRONMENT_DEFAULTS
+		);
+	}
+
+	#[test]
+	fn keeps_a_value_the_user_already_set() {
+		assert_eq!(super::defaults_to_apply(|_| true).count(), 0);
+	}
+
+	#[test]
+	fn allows_the_media_scheme_when_nothing_else_is_allowed() {
+		assert_eq!(super::with_media_scheme(None).as_deref(), Some("ogmedia"));
+		assert_eq!(
+			super::with_media_scheme(Some(" ")).as_deref(),
+			Some("ogmedia")
+		);
+	}
+
+	#[test]
+	fn appends_the_media_scheme_to_protocols_the_user_allowed() {
+		assert_eq!(
+			super::with_media_scheme(Some("rtsp")).as_deref(),
+			Some("rtsp,ogmedia")
+		);
+	}
+
+	#[test]
+	fn leaves_a_list_that_already_allows_the_media_scheme() {
+		assert_eq!(super::with_media_scheme(Some("rtsp, ogmedia")), None);
+	}
+}
+
+#[cfg(target_os = "linux")]
+fn disabled_by_environment(read: impl Fn(&str) -> Option<String>) -> bool {
+	COMPOSITING_OFF_VARS
+		.iter()
+		.filter_map(|name| read(name))
+		.any(|value| !matches!(value.as_str(), "" | "0"))
+}
+
+#[tauri::command]
+pub fn backdrop_filter_renders() -> bool {
+	#[cfg(target_os = "linux")]
+	{
+		!disabled_by_environment(|name| std::env::var(name).ok())
+	}
+
+	#[cfg(not(target_os = "linux"))]
+	true
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod compositing_tests {
+	#[test]
+	fn reads_every_variable_that_turns_compositing_off() {
+		for name in super::COMPOSITING_OFF_VARS {
+			assert!(super::disabled_by_environment(|queried| {
+				(queried == name).then(|| "1".to_owned())
+			}));
+		}
+	}
+
+	#[test]
+	fn ignores_an_unset_empty_or_zero_value() {
+		assert!(!super::disabled_by_environment(|_| None));
+		assert!(!super::disabled_by_environment(|_| Some(String::new())));
+		assert!(!super::disabled_by_environment(|_| Some("0".to_owned())));
+	}
+}
 
 pub fn unlock_visual_effects<R: tauri::Runtime>(
 	window: &tauri::WebviewWindow<R>,
 ) {
-	#[cfg(target_os = "macos")]
+	#[cfg(all(target_os = "macos", feature = "private-api"))]
 	{
+		use tauri::Manager;
+
+		if !window.config().app.macos_private_api {
+			return;
+		}
+
 		let dispatched = window.with_webview(|webview| {
 			if !macos::enable_system_appearance(webview.inner()) {
 				tracing::warn!(
@@ -18,11 +148,11 @@ pub fn unlock_visual_effects<R: tauri::Runtime>(
 		}
 	}
 
-	#[cfg(not(target_os = "macos"))]
+	#[cfg(not(all(target_os = "macos", feature = "private-api")))]
 	let _ = window;
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", feature = "private-api"))]
 mod macos {
 	use std::ffi::c_void;
 

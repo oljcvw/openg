@@ -5,6 +5,31 @@ use std::str::FromStr;
 use crate::error::AppError;
 use crate::state::AppState;
 
+const SIGNED_UPLOAD_PATHS: [&str; 2] =
+	["/v5/media/upload", "/v6/chat/media/upload"];
+
+fn requires_device_signature(path: &str) -> bool {
+	let path = path.split(['?', '#']).next().unwrap_or(path);
+	SIGNED_UPLOAD_PATHS.contains(&path)
+}
+
+pub(crate) fn refuse_signed_path(path: &str) -> Result<(), AppError> {
+	if requires_device_signature(path) {
+		return Err(AppError::Api {
+			code: 400,
+			message: format!("{path} needs the signed upload command"),
+		});
+	}
+	Ok(())
+}
+
+pub(crate) fn parse_method(method: &str) -> Result<grindr::Method, AppError> {
+	grindr::Method::from_str(method).map_err(|_| AppError::Api {
+		code: 400,
+		message: format!("Invalid method: {method}"),
+	})
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct RawResponse {
 	pub status: u16,
@@ -30,7 +55,9 @@ fn decode_request(payload: &str) -> Result<RequestPayload, AppError> {
 	})
 }
 
-fn encode_response(response: &RawResponse) -> Result<String, AppError> {
+pub(crate) fn encode_response(
+	response: &RawResponse,
+) -> Result<String, AppError> {
 	rmp_serde::encode::to_vec_named(response)
 		.map(|bytes| STANDARD.encode(&bytes))
 		.map_err(|e| AppError::Http(e.to_string()))
@@ -43,22 +70,8 @@ pub async fn request(
 ) -> Result<String, AppError> {
 	let payload = decode_request(&payload)?;
 
-	if grindr::requires_device_signature(&payload.path) {
-		return Err(AppError::Api {
-			code: 400,
-			message: format!(
-				"{} needs the signed upload command, not the REST bridge",
-				payload.path
-			),
-		});
-	}
-
-	let method = grindr::Method::from_str(&payload.method).map_err(|_| {
-		AppError::Api {
-			code: 400,
-			message: format!("Invalid method: {}", payload.method),
-		}
-	})?;
+	refuse_signed_path(&payload.path)?;
+	let method = parse_method(&payload.method)?;
 
 	let json_body: Option<serde_json::Value> = match payload.body {
 		Some(b) => Some(
@@ -70,8 +83,13 @@ pub async fn request(
 	};
 
 	let client = state.client()?;
-	let raw = client
-		.request_authenticated_raw(method, &payload.path, json_body)
+	let request = client.request(method, &payload.path);
+	let request = match &json_body {
+		Some(body) => request.json(body),
+		None => request,
+	};
+	let raw = request
+		.send()
 		.await
 		.map_err(|e| AppError::from_client_error(e, client))?;
 
@@ -141,15 +159,26 @@ mod tests {
 
 	#[test]
 	fn the_signed_upload_paths_are_the_ones_the_rest_bridge_refuses() {
-		assert!(grindr::requires_device_signature("/v5/media/upload"));
-		assert!(grindr::requires_device_signature(
+		assert!(requires_device_signature("/v5/media/upload"));
+		assert!(requires_device_signature(
 			"/v6/chat/media/upload?takenOnGrindr=true"
 		));
 
-		assert!(!grindr::requires_device_signature(
+		assert!(!requires_device_signature(
 			"/v5/chat/media/upload?takenOnGrindr=false"
 		));
-		assert!(!grindr::requires_device_signature("/v7/profiles/1"));
+		assert!(!requires_device_signature("/v7/profiles/1"));
+	}
+
+	#[test]
+	fn a_signed_upload_path_is_refused_with_a_client_error() {
+		assert!(matches!(
+			refuse_signed_path("/v5/media/upload"),
+			Err(AppError::Api { code: 400, .. })
+		));
+		assert!(
+			refuse_signed_path("/v1/albums/1/content?isFresh=false").is_ok()
+		);
 	}
 
 	#[test]

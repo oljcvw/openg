@@ -16,9 +16,12 @@ import {
 	asUpdateError,
 	cancelUpdateDownload,
 	checkForUpdate,
+	discardStagedUpdate,
+	getInstalledVersion,
 	getUpdateCapability,
 	getUpdateProgress,
 	getUpdateReadiness,
+	installPending,
 	installUpdate,
 	onUpdateProgress,
 	setAutomaticUpdateChecks,
@@ -28,6 +31,8 @@ import { stageOf } from "$lib/updates/stage";
 import type { Progress } from "$lib/updates/types";
 
 const release = {
+	component: "app",
+	kind: "update",
 	tag: "v0.1.0-beta.4",
 	version: "0.1.0-beta.4",
 	notes: "# notes",
@@ -60,9 +65,10 @@ describe("update checks", () => {
 			release,
 		});
 
-		const result = await checkForUpdate("automatic");
+		const result = await checkForUpdate({ trigger: "automatic" });
 
-		expect(invokeMock).toHaveBeenCalledWith("update_check", {
+		expect(invokeMock).toHaveBeenCalledWith("updater_check", {
+			component: "app",
 			trigger: "automatic",
 		});
 		expect(result.available).toBe(true);
@@ -76,7 +82,7 @@ describe("update checks", () => {
 			release: null,
 		});
 
-		const result = await checkForUpdate("manual");
+		const result = await checkForUpdate({ trigger: "manual" });
 
 		expect(result.available).toBe(false);
 		expect(result.release).toBeNull();
@@ -84,7 +90,7 @@ describe("update checks", () => {
 
 	it("rejects a payload that does not match the backend contract", async () => {
 		invokeMock.mockResolvedValue({ available: "yes" });
-		await expect(checkForUpdate("manual")).rejects.toThrow();
+		await expect(checkForUpdate({ trigger: "manual" })).rejects.toThrow();
 	});
 });
 
@@ -122,12 +128,33 @@ describe("capability and readiness", () => {
 		});
 	});
 
+	it("parses an AppImage sitting where it cannot replace itself", async () => {
+		invokeMock.mockResolvedValue({
+			state: "unsupported",
+			detail: {
+				reason: "locationNotWritable",
+				detail: { path: "/opt/open-grind.AppImage" },
+			},
+		});
+
+		const capability = await getUpdateCapability();
+
+		expect(capability).toEqual({
+			state: "unsupported",
+			detail: {
+				reason: "locationNotWritable",
+				detail: { path: "/opt/open-grind.AppImage" },
+			},
+		});
+	});
+
 	it("parses a staged update that is ready to install", async () => {
 		invokeMock.mockResolvedValue({
 			state: "ready",
 			detail: {
 				tag: "v0.1.0-beta.4",
 				version: "0.1.0-beta.4",
+				kind: "update",
 				canInstallNow: true,
 			},
 		});
@@ -143,9 +170,48 @@ describe("capability and readiness", () => {
 	});
 });
 
+describe("local install state", () => {
+	it("never reaches the backend outside a Tauri build", async () => {
+		isTauriMock.mockReturnValue(false);
+
+		expect(await installPending()).toBe(false);
+		expect(await getInstalledVersion("google-oauth")).toBeNull();
+		expect(invokeMock).not.toHaveBeenCalled();
+	});
+
+	it("reports whether a committed install session is still open", async () => {
+		invokeMock.mockResolvedValue(true);
+
+		expect(await installPending()).toBe(true);
+		expect(invokeMock).toHaveBeenCalledWith("updater_install_pending");
+	});
+
+	it("reads the installed version of the component the caller names", async () => {
+		invokeMock.mockResolvedValue("1.4.0");
+
+		expect(await getInstalledVersion("google-oauth")).toBe("1.4.0");
+		expect(invokeMock).toHaveBeenCalledWith("updater_installed_version", {
+			component: "google-oauth",
+		});
+	});
+
+	it("reports an absent component as no version", async () => {
+		invokeMock.mockResolvedValue(null);
+		expect(await getInstalledVersion("google-oauth")).toBeNull();
+	});
+
+	it("rejects payloads that do not match the backend contract", async () => {
+		invokeMock.mockResolvedValue({ pending: true });
+		await expect(installPending()).rejects.toThrow();
+		await expect(getInstalledVersion("google-oauth")).rejects.toThrow();
+	});
+});
+
 describe("download and install", () => {
 	it("returns progress for a started download", async () => {
 		invokeMock.mockResolvedValue({
+			component: "app",
+			kind: "update",
 			tag: "v0.1.0-beta.4",
 			version: "0.1.0-beta.4",
 			phase: "downloading",
@@ -155,12 +221,17 @@ describe("download and install", () => {
 
 		const progress = await startUpdateDownload();
 
-		expect(invokeMock).toHaveBeenCalledWith("update_download");
+		expect(invokeMock).toHaveBeenCalledWith("updater_download", {
+			component: "app",
+		});
 		expect(progress.phase).toBe("downloading");
+		expect(progress.kind).toBe("update");
 	});
 
 	it("carries the failure detail on a failed transfer", async () => {
 		invokeMock.mockResolvedValue({
+			component: "app",
+			kind: "update",
 			tag: "v0.1.0-beta.4",
 			version: "0.1.0-beta.4",
 			phase: "failed",
@@ -186,13 +257,31 @@ describe("download and install", () => {
 	it("asks the backend to stop an in-flight download", async () => {
 		invokeMock.mockResolvedValue(null);
 		await cancelUpdateDownload();
-		expect(invokeMock).toHaveBeenCalledWith("update_cancel_download");
+		expect(invokeMock).toHaveBeenCalledWith("updater_cancel_download", {
+			component: "app",
+		});
+	});
+
+	it("addresses the component the caller names, not always the app", async () => {
+		invokeMock.mockResolvedValue(null);
+		await installUpdate("google-oauth");
+		expect(invokeMock).toHaveBeenCalledWith("updater_install", {
+			component: "google-oauth",
+		});
+
+		invokeMock.mockClear();
+		await discardStagedUpdate("google-oauth");
+		expect(invokeMock).toHaveBeenCalledWith("updater_discard", {
+			component: "google-oauth",
+		});
 	});
 
 	it("hands off to the system installer without a payload of its own", async () => {
 		invokeMock.mockResolvedValue(null);
 		await installUpdate();
-		expect(invokeMock).toHaveBeenCalledWith("update_install");
+		expect(invokeMock).toHaveBeenCalledWith("updater_install", {
+			component: "app",
+		});
 	});
 
 	it("forwards the opt-in flag when turning automatic checks on", async () => {
@@ -203,7 +292,7 @@ describe("download and install", () => {
 
 		const settings = await setAutomaticUpdateChecks(true);
 
-		expect(invokeMock).toHaveBeenCalledWith("update_set_auto_check", {
+		expect(invokeMock).toHaveBeenCalledWith("updater_set_auto_check", {
 			enabled: true,
 		});
 		expect(settings.autoCheck).toBe(true);
@@ -219,18 +308,23 @@ describe("progress events", () => {
 			string,
 			(event: { payload: unknown }) => void,
 		];
-		expect(event).toBe("update:progress");
+		expect(event).toBe("updater:progress");
 
 		callback({
 			payload: {
-				tag: "v0.1.0-beta.4",
-				version: "0.1.0-beta.4",
+				component: "google-oauth",
+				kind: "install",
+				tag: "v1.2.0",
+				version: "1.2.0",
 				phase: "verifying",
 				received: 72294080,
 				total: 72294080,
 			},
 		});
 		expect(handler).toHaveBeenCalledOnce();
+		expect(handler).toHaveBeenCalledWith(
+			expect.objectContaining({ kind: "install" }),
+		);
 
 		vi.spyOn(console, "error").mockImplementation(() => {});
 		callback({ payload: { phase: "nonsense" } });

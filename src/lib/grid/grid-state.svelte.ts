@@ -6,11 +6,10 @@ import { showErrorToast } from "$lib/api/error-toast";
 import { onProfileViewabilityChange } from "$lib/api/users/profile-viewability";
 import { onProfileEdit } from "$lib/api/users/profiles";
 import {
-	getPreferencesSnapshot,
+	preferencesSnapshot,
 	setPreferences,
 } from "$lib/app-data/preferences.svelte";
 import { autoLocation } from "$lib/location/auto-location";
-import { WEIGHT_KG_MAX, WEIGHT_KG_MIN } from "$lib/model/browse/grid/filters";
 import { reconciler } from "$lib/util/reconcile";
 import type { cascadeV4QuerySchema } from "$lib/model/browse/grid/cascade/query/v4";
 import {
@@ -21,11 +20,14 @@ import {
 	resolveLazyProfile,
 	setCachedProfile,
 } from "./grid";
+import { dedupeGridProfiles, indexProfilesById } from "./grid-profiles";
+import { buildCascadeQuery } from "./grid-query";
 import { GridSearchFiltersState } from "./grid-search-filters-state.svelte";
 
 class GridState {
 	filters = new GridSearchFiltersState({ onQueryChange: () => this.retry() });
 	items: GridProfile[] = $state.raw([]);
+	readonly profiles: GridProfile[] = $derived(dedupeGridProfiles(this.items));
 	nextPage: number | null = $state(0);
 	loadingMore = $state(false);
 	loading = $state(false);
@@ -38,11 +40,28 @@ class GridState {
 	}
 	currentQuery: z.infer<typeof cascadeV4QuerySchema> | null = null;
 	scrollY = 0;
+	revealProfileId: number | null = null;
 
 	#geohash: string | null = null;
 	#retargeted: string | null = null;
 	#resolvingIds = new Set<number>();
+	#firstPageIds = new Set<number>();
 	#fetchToken = 0;
+	#indexById = $derived(indexProfilesById(this.profiles));
+
+	indexInProfiles(profileId: number): number {
+		return this.#indexById.get(profileId) ?? -1;
+	}
+
+	profileById(profileId: number): GridProfile | null {
+		return this.profiles[this.indexInProfiles(profileId)] ?? null;
+	}
+
+	consumeReveal(): number | null {
+		const profileId = this.revealProfileId;
+		this.revealProfileId = null;
+		return profileId;
+	}
 
 	setFavorite({
 		profileId,
@@ -52,16 +71,17 @@ class GridState {
 		isFavorite: boolean;
 	}): void {
 		patchCachedProfile({ id: profileId, patch: { isFavorite } });
-		const index = this.items.findIndex((item) => item.id === profileId);
-		const item = this.items[index];
-		if (!item || item.type !== "rendered") return;
-		this.items = this.items.with(index, { ...item, isFavorite });
+		if (this.profileById(profileId)?.type !== "rendered") return;
+		this.items = this.items.map((item) =>
+			item.id === profileId && item.type === "rendered"
+				? { ...item, isFavorite }
+				: item,
+		);
 	}
 
 	removeProfile(profileId: number): void {
-		const index = this.items.findIndex((item) => item.id === profileId);
-		if (index === -1) return;
-		this.items = this.items.toSpliced(index, 1);
+		if (this.indexInProfiles(profileId) === -1) return;
+		this.items = this.items.filter((item) => item.id !== profileId);
 	}
 
 	load(geohash: string): void {
@@ -81,8 +101,11 @@ class GridState {
 		void this.#fetchProfiles(this.#geohash);
 	}
 
-	async refresh({ background = false } = {}): Promise<void> {
-		const geohash = this.#geohash ?? getPreferencesSnapshot().geohash;
+	async refresh({
+		background = false,
+		keepLoadedPages = true,
+	} = {}): Promise<void> {
+		const geohash = this.#geohash ?? preferencesSnapshot().geohash;
 		if (!geohash || this.refreshing) return;
 		this.#geohash = geohash;
 		this.refreshing = true;
@@ -91,6 +114,7 @@ class GridState {
 				silent: true,
 				background,
 				sampleLocation: !background || this.viewActive,
+				keepLoadedPages,
 			});
 		} finally {
 			this.refreshing = false;
@@ -104,7 +128,9 @@ class GridState {
 		this.loading = true;
 		this.error = null;
 		this.currentQuery = null;
+		this.revealProfileId = null;
 		this.#resolvingIds.clear();
+		this.#firstPageIds.clear();
 	}
 
 	reset(): void {
@@ -130,7 +156,11 @@ class GridState {
 			});
 			if (token !== this.#fetchToken || query !== this.currentQuery)
 				return;
-			this.items = [...this.items, ...result.items];
+			const loadedIds = new Set(this.items.map((item) => item.id));
+			this.items = [
+				...this.items,
+				...result.items.filter((item) => !loadedIds.has(item.id)),
+			];
 			this.nextPage = result.nextPage;
 		} catch (error) {
 			console.error(error);
@@ -163,7 +193,7 @@ class GridState {
 				setCachedProfile(resolved);
 				this.items = this.items.with(idx, resolved);
 			} else {
-				this.items = this.items.toSpliced(idx, 1);
+				this.removeProfile(id);
 			}
 		} catch (error) {
 			console.error(id, error);
@@ -191,11 +221,12 @@ class GridState {
 	}
 
 	async #fetchProfiles(
-		geohash: string,
+		requestedGeohash: string,
 		opts?: {
 			silent?: boolean;
 			background?: boolean;
 			sampleLocation?: boolean;
+			keepLoadedPages?: boolean;
 		},
 	): Promise<void> {
 		const token = ++this.#fetchToken;
@@ -203,80 +234,37 @@ class GridState {
 		try {
 			await this.filters.ready;
 			if (token !== this.#fetchToken) return;
-			if (opts?.sampleLocation ?? true) {
-				geohash = await this.#withLiveLocation(
-					geohash,
-					token,
-					opts?.background ?? false,
-				);
-				if (token !== this.#fetchToken) return;
-			}
-			const filters = this.filters.value;
-			const query = {
-				nearbyGeoHash: geohash,
-				favorites: filters?.isFavorite || undefined,
-				onlineOnly: filters?.isOnline || undefined,
-				rightNow: filters?.isRightNow || undefined,
-				...(filters?.ageEnabled && {
-					ageMin: filters?.age[0],
-					ageMax: filters?.age[1],
-				}),
-				...(filters?.genderEnabled && { genders: filters?.genders }),
-				...(filters?.positionEnabled && {
-					sexualPositions: filters?.positions,
-				}),
-				...(filters?.photosEnabled &&
-					filters?.photos.includes("has-photos") && {
-						photoOnly: true,
-					}),
-				...(filters?.photosEnabled &&
-					filters?.photos.includes("has-albums") && {
-						hasAlbum: true,
-					}),
-				...(filters?.photosEnabled &&
-					filters?.photos.includes("has-face-pics") && {
-						faceOnly: true,
-					}),
-				...(filters?.tribesEnabled && { tribes: filters?.tribes }),
-				...(filters?.bodyTypesEnabled && {
-					bodyTypes: filters?.bodyTypes,
-				}),
-				...(filters?.heightEnabled && {
-					heightCmMin: filters?.height[0],
-					heightCmMax: filters?.height[1],
-				}),
-				...(filters?.weightEnabled && {
-					weightGramsMin:
-						(filters?.weight[0] ?? WEIGHT_KG_MIN) * 1000,
-					weightGramsMax:
-						(filters?.weight[1] ?? WEIGHT_KG_MAX) * 1000,
-				}),
-				...(filters?.relationshipStatusesEnabled && {
-					relationshipStatuses: filters?.relationshipStatuses,
-				}),
-				...(filters?.acceptNSFWPicsEnabled &&
-					filters?.acceptNSFWPics !== undefined && {
-						nsfwPics: filters?.acceptNSFWPics,
-					}),
-				...(filters?.lookingForEnabled && {
-					lookingFor: filters?.lookingFor,
-				}),
-				...(filters?.meetAtEnabled && { meetAt: filters?.meetAt }),
-				notRecentlyChatted:
-					filters?.haventChattedTodayEnabled || undefined,
-				...(filters?.healthPracticesEnabled && {
-					sexualHealth: filters?.healthPractices,
-				}),
-				...(filters?.tagsEnabled &&
-					filters?.tags && { tags: filters?.tags }),
-				fresh: filters?.isFresh || undefined,
-			} satisfies z.infer<typeof cascadeV4QuerySchema>;
+			const [geohash] = await Promise.all([
+				(opts?.sampleLocation ?? true)
+					? this.#withLiveLocation(
+							requestedGeohash,
+							token,
+							opts?.background ?? false,
+						)
+					: requestedGeohash,
+				this.filters.resolveTagKeys(),
+			]);
+			if (token !== this.#fetchToken) return;
+			const query = buildCascadeQuery({
+				geohash,
+				filters: this.filters.value,
+			});
 			const result = await getGrid(query);
 			if (token !== this.#fetchToken) return;
 			this.currentQuery = query;
 			this.#resolvingIds.clear();
-			this.items = result.items;
-			this.nextPage = result.nextPage;
+			const firstPageIds = new Set(result.items.map((item) => item.id));
+			const laterPages =
+				opts?.keepLoadedPages && geohash === requestedGeohash
+					? this.items.filter(
+							(item) =>
+								!this.#firstPageIds.has(item.id) &&
+								!firstPageIds.has(item.id),
+						)
+					: [];
+			this.#firstPageIds = firstPageIds;
+			this.items = [...result.items, ...laterPages];
+			if (laterPages.length === 0) this.nextPage = result.nextPage;
 			this.error = null;
 			this.loading = false;
 		} catch (err) {
@@ -288,6 +276,10 @@ class GridState {
 				showErrorToast({
 					label: "Failed to refresh profiles",
 					error: err,
+					onRetry: () =>
+						void this.refresh({
+							keepLoadedPages: opts.keepLoadedPages,
+						}),
 				});
 				return;
 			}
