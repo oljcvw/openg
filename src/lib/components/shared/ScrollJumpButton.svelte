@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { sineOut } from "svelte/easing";
+<<<<<<< HEAD
 	import { fly } from "svelte/transition";
 
 	import { Button } from "$lib/components/ui/button";
+=======
+
+	import { Button } from "$lib/components/ui/button";
+	import { fly } from "$lib/util/reduced-motion";
+>>>>>>> origin/forgejo-sync
 
 	let {
 		label,

@@ -18,26 +18,30 @@
 </script>
 
 <Field {label}>
-	<div class="relative">
-		{#if Icon}
-			<span
-				class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground"
-			>
-				<Icon class="size-4" />
-			</span>
-		{/if}
-		<Input
-			bind:value={
-				() => value ?? "",
-				(newValue: string) =>
-					(value = newValue.trim() === "" ? null : newValue.trim())
-			}
-			maxlength={maxLength}
-			placeholder="username"
-			autocapitalize="off"
-			autocomplete="off"
-			spellcheck={false}
-			class={{ "pl-9": Icon }}
-		/>
-	</div>
+	{#snippet control({ id })}
+		<div class="relative">
+			{#if Icon}
+				<span
+					class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground"
+				>
+					<Icon class="size-4" />
+				</span>
+			{/if}
+			<Input
+				{id}
+				bind:value={
+					() => value ?? "",
+					(newValue: string) =>
+						(value =
+							newValue.trim() === "" ? null : newValue.trim())
+				}
+				maxlength={maxLength}
+				placeholder="username"
+				autocapitalize="off"
+				autocomplete="off"
+				spellcheck={false}
+				class={{ "pl-9": Icon }}
+			/>
+		</div>
+	{/snippet}
 </Field>

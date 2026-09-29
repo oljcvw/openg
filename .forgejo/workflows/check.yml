@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   check:
-    runs-on: ["check", "hetzner"]
+    runs-on: ["fork", "toolchain", "8c16g", "hetzner"]
     timeout-minutes: 60
     defaults:
       run:
@@ -119,3 +119,6 @@ jobs:
 
       - name: End-to-end tests
         run: cd "$CI_WORKSPACE" && bun run test:e2e
+
+      - name: Layout guard
+        run: cd "$CI_WORKSPACE" && bun run test:e2e:guard

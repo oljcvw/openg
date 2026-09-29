@@ -2,7 +2,12 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+<<<<<<< HEAD
 const layout = readFileSync("src/layout.css", "utf8");
+=======
+const layoutSource = readFileSync("src/layout.css", "utf8");
+const layout = layoutSource.replace(/[ \t]*-webkit-mask-image:[^;]*;\n/g, "");
+>>>>>>> origin/forgejo-sync
 
 function layerTable(mode: "max" | "medium" | "min") {
 	const prefix =
@@ -193,6 +198,25 @@ describe("progressive blur layer map", () => {
 		}
 	});
 
+<<<<<<< HEAD
+=======
+	it("pairs every mask with a -webkit- twin, since Chromium below 120 drops the unprefixed property and the Android floor is 111", () => {
+		const declarations = [
+			...layoutSource.matchAll(/(-webkit-)?mask-image:([^;]*);/g),
+		];
+		const standard = declarations.filter(
+			([, prefix]) => prefix === undefined,
+		);
+		const prefixed = declarations.filter(
+			([, prefix]) => prefix !== undefined,
+		);
+		expect(standard.length).toBeGreaterThan(0);
+		expect(prefixed.map(([, , value]) => value)).toEqual(
+			standard.map(([, , value]) => value),
+		);
+	});
+
+>>>>>>> origin/forgejo-sync
 	it("keeps min's overhang out of hit testing, since it covers content above the band", () => {
 		expect(minRule('.pblur-layer[data-pblur-layer="0"]')).toContain(
 			"pointer-events: none",

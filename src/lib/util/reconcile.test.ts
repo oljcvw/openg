@@ -2,7 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { callMethodMock, connectedHandlers, droppedHandlers, rejectedHandlers } =
 	vi.hoisted(() => ({
+<<<<<<< HEAD
 		callMethodMock: vi.fn(() => Promise.resolve(1)),
+=======
+		callMethodMock: vi.fn(() =>
+			Promise.resolve({ profileId: 1, expiresAt: null, stale: false }),
+		),
+>>>>>>> origin/forgejo-sync
 		connectedHandlers: [] as (() => void)[],
 		droppedHandlers: [] as ((skipped: number) => void)[],
 		rejectedHandlers: [] as ((eventType: string) => void)[],

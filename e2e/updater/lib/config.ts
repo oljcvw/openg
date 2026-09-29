@@ -1,3 +1,5 @@
+import { assetSuffix } from "../../../scripts/lib/asset-suffix";
+
 const here = Bun.fileURLToPath(new URL(".", import.meta.url)).replace(
 	/\/$/,
 	"",
@@ -29,7 +31,7 @@ export function cachedBundle(version: string): string {
 }
 
 export const androidPackage = "org.opengrind";
-export const androidSuffix = "-android.apk";
+export const androidSuffix = assetSuffix("apk");
 export const androidAbi = Bun.env.ABI ?? "aarch64";
 export const oldCode = Number(Bun.env.OLD_CODE ?? 1030);
 export const newCode = Number(Bun.env.NEW_CODE ?? 1031);
@@ -37,6 +39,60 @@ export const overrideFile = "/data/local/tmp/open-grind-update.env";
 export const keystoreProperties =
 	Bun.env.OPEN_GRIND_KEYSTORE_PROPERTIES ??
 	`${home}/.config/open-grind/keystore.properties`;
+
+export const harnessOptions = {
+	home: serverHome,
+	port,
+	rate,
+	failMode,
+	journal: requestLog,
+};
+
+export const companionPackage = "org.opengrind.google_oauth";
+export const companionRepo = "google-oauth-app";
+export const companionStem = "open-grind-google-oauth";
+export const companionRelease = Bun.env.COMPANION_RELEASE ?? "v1.1.0";
+const addonModes = ["install", "update"] as const;
+
+export function addonMode(): (typeof addonModes)[number] {
+	const value = Bun.env.ADDON;
+	if (value === undefined) return "install";
+	const mode = addonModes.find((candidate) => candidate === value);
+	if (!mode) throw new Error(`ADDON must be one of ${addonModes.join(", ")}`);
+	return mode;
+}
+
+const companionAbiTokens = new Map([
+	["aarch64", "arm64-v8a"],
+	["armv7", "v7a"],
+	["x86_64", "x86_64"],
+]);
+
+export const publishedCompanionAbis = [...companionAbiTokens.values()];
+
+export function companionAbiToken(abi: string): string {
+	const token = companionAbiTokens.get(abi);
+	if (!token) throw new Error(`no published companion build for ${abi}`);
+	return token;
+}
+
+export function companionSuffix(abiToken: string): string {
+	return `-${abiToken}.apk`;
+}
+
+export function companionAsset({
+	tag,
+	abiToken,
+}: {
+	tag: string;
+	abiToken: string;
+}): string {
+	return `${companionStem}-${tag}${companionSuffix(abiToken)}`;
+}
+
+export function cachedCompanionApk(asset: string): string {
+	return `${cache}/android/${asset}`;
+}
 
 export function cachedApk(version: string): string {
 	return `${cache}/android/open-grind-${version}.apk`;

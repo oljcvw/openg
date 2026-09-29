@@ -2,7 +2,33 @@ use tauri::http::{header, Response, StatusCode};
 
 use super::cache::CachedMedia;
 
-const RANGE_WINDOW_BYTES: u64 = 2 * 1024 * 1024;
+pub const RANGE_WINDOW_BYTES: u64 = 2 * 1024 * 1024;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Freshness {
+	Immutable,
+	Uncacheable,
+}
+
+impl Freshness {
+	pub fn of(url: &str) -> Self {
+		let content_addressed = url
+			.starts_with("https://cdns.grindr.com/images/")
+			&& !url.contains('?');
+		if content_addressed {
+			Self::Immutable
+		} else {
+			Self::Uncacheable
+		}
+	}
+
+	pub fn directive(self) -> &'static str {
+		match self {
+			Self::Immutable => "private, max-age=604800, immutable",
+			Self::Uncacheable => "no-store",
+		}
+	}
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Freshness {

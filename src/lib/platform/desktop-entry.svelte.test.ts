@@ -4,6 +4,7 @@ const tauri = vi.hoisted(() => ({ invoke: vi.fn(), isTauri: vi.fn() }));
 
 vi.mock("@tauri-apps/api/core", () => tauri);
 
+<<<<<<< HEAD
 const state = (available: boolean, installed: boolean) => ({
 	available,
 	installed,
@@ -13,6 +14,14 @@ function backendReports(available: boolean, installed: boolean) {
 	tauri.invoke.mockImplementation((command: string) =>
 		command === "desktop_entry_state"
 			? Promise.resolve(state(available, installed))
+=======
+type State = { available: boolean; installed: boolean };
+
+function backendReports(reported: State) {
+	tauri.invoke.mockImplementation((command: string) =>
+		command === "desktop_entry_state"
+			? Promise.resolve(reported)
+>>>>>>> origin/forgejo-sync
 			: Promise.resolve(),
 	);
 }
@@ -25,7 +34,11 @@ describe("the desktop entry state", () => {
 	});
 
 	it("offers nothing until it has been hydrated", async () => {
+<<<<<<< HEAD
 		backendReports(true, false);
+=======
+		backendReports({ available: true, installed: false });
+>>>>>>> origin/forgejo-sync
 		const { desktopEntryAvailable } =
 			await import("./desktop-entry.svelte");
 
@@ -33,7 +46,11 @@ describe("the desktop entry state", () => {
 	});
 
 	it("reports what the backend says once hydrated", async () => {
+<<<<<<< HEAD
 		backendReports(true, true);
+=======
+		backendReports({ available: true, installed: true });
+>>>>>>> origin/forgejo-sync
 		const {
 			hydrateDesktopEntryState,
 			desktopEntryAvailable,
@@ -84,7 +101,11 @@ describe("the desktop entry state", () => {
 	});
 
 	it("probes once, not on every navigation", async () => {
+<<<<<<< HEAD
 		backendReports(true, false);
+=======
+		backendReports({ available: true, installed: false });
+>>>>>>> origin/forgejo-sync
 		const { hydrateDesktopEntryState } =
 			await import("./desktop-entry.svelte");
 
@@ -106,10 +127,17 @@ describe("the desktop entry state", () => {
 	});
 
 	it("installs and re-reads, so the toggle shows what is on disk", async () => {
+<<<<<<< HEAD
 		backendReports(true, false);
 		const { setDesktopEntryInstalled, desktopEntryInstalled } =
 			await import("./desktop-entry.svelte");
 		backendReports(true, true);
+=======
+		backendReports({ available: true, installed: false });
+		const { setDesktopEntryInstalled, desktopEntryInstalled } =
+			await import("./desktop-entry.svelte");
+		backendReports({ available: true, installed: true });
+>>>>>>> origin/forgejo-sync
 
 		await setDesktopEntryInstalled(true);
 
@@ -118,10 +146,17 @@ describe("the desktop entry state", () => {
 	});
 
 	it("removes when switched off", async () => {
+<<<<<<< HEAD
 		backendReports(true, true);
 		const { setDesktopEntryInstalled, desktopEntryInstalled } =
 			await import("./desktop-entry.svelte");
 		backendReports(true, false);
+=======
+		backendReports({ available: true, installed: true });
+		const { setDesktopEntryInstalled, desktopEntryInstalled } =
+			await import("./desktop-entry.svelte");
+		backendReports({ available: true, installed: false });
+>>>>>>> origin/forgejo-sync
 
 		await setDesktopEntryInstalled(false);
 

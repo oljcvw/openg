@@ -1,5 +1,7 @@
 import { registerAccountCache } from "$lib/api/account-caches";
+import type { ApiErrorKind } from "$lib/api/api-error";
 
+<<<<<<< HEAD
 export type SessionErrorKind =
 	| "Http"
 	| "RateLimited"
@@ -11,6 +13,22 @@ export type SessionErrorKind =
 	| "Api"
 	| "Banned"
 	| "NotLoggedIn";
+=======
+export const sessionErrorKinds = [
+	"Http",
+	"RateLimited",
+	"RequestBlocked",
+	"NetworkBlocked",
+	"Unauthorized",
+	"Auth",
+	"SessionStale",
+	"Api",
+	"Banned",
+	"NotSignedIn",
+] as const satisfies readonly ApiErrorKind[];
+
+export type SessionErrorKind = (typeof sessionErrorKinds)[number];
+>>>>>>> origin/forgejo-sync
 
 export const sessionErrorState = $state<{
 	open: boolean;

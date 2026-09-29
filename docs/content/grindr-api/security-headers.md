@@ -11,8 +11,8 @@ Security headers are HTTP headers that the Grindr API requires to be present and
   - [`L-Grindr-Roles`](#l-grindr-roles)
   - [Device-key upload signing](#device-key-upload-signing)
     - [The device key](#the-device-key)
-    - [1. Register the key](#1-register-the-key)
-    - [2. Sign each upload](#2-sign-each-upload)
+    - [1. Register the key](#register-the-key)
+    - [2. Sign each upload](#sign-each-upload)
     - [Signing errors](#signing-errors)
   - [Correct headers order](#correct-headers-order)
   - [Fingerprint](#fingerprint)
@@ -21,10 +21,10 @@ Security headers are HTTP headers that the Grindr API requires to be present and
     - [TLS fingerprint](#tls-fingerprint)
       - [Cipher suites](#cipher-suites)
       - [Extensions](#extensions)
-    - [HTTP/2 fingerprint](#http2-fingerprint)
+    - [HTTP/2 fingerprint](#http-2-fingerprint)
       - [Frames](#frames)
       - [Pseudoheaders](#pseudoheaders)
-    - [JA3/JA4 fingerprint hashes](#ja3ja4-fingerprint-hashes)
+    - [JA3/JA4 fingerprint hashes](#ja3-ja4-fingerprint-hashes)
 
 ## `Accept`
 
@@ -52,13 +52,14 @@ Example: `a1b2c3d4e5f60789;GLOBAL;2;8026152960;2400x1080;550e8400-e29b-41d4-a716
 Absence or incorrect forming of this header might lead to HTTP status 400 and `urn:gr:err:header` API error or 403 [WebSocket](/grindr-api/websocket/index#websocket) connection error.
 
 ```
-grindr3/25.20.0.147239;147239;<subscriptionTier>;<os>;<deviceModel>;<manufacturer>
+grindr3/<appVersion>;<buildNumber>;<subscriptionTier>;<os>;<deviceModel>;<manufacturer>
 ```
 
+- `appVersion` and `buildNumber`: the Grindr app version you present as and its build number, e.g. `26.17.0.181424` and `181424`
 - `subscriptionTier`: `Free`, `Plus`, `Xtra`, `Unlimited`, `Premium`, `Free_Plus`, `Free_Xtra`, `Free_Unlimited`, `Free_Premium`
 - `os`: `Android 13`, `Android 14`, etc.
  
-Example: `grindr3/25.20.0.147239;147239;Free;Android 13;Pixel 7;Google`
+Example: `grindr3/26.17.0.181424;181424;Free;Android 13;Pixel 7;Google`
 
 ## `L-Time-Zone`
 
@@ -100,7 +101,7 @@ Generate one **P-256 (secp256r1)** key pair per session (the official app stores
 - `publicKey` = `base64url( SubjectPublicKeyInfo DER )` — the X.509 SPKI (`spki`) encoding of the public key.
 - `keyId` = `base64url( SHA-256( SubjectPublicKeyInfo DER ) )` — SHA-256 over the exact same SPKI bytes.
 
-### 1. Register the key
+### 1. Register the key {#register-the-key}
 
 Both calls require [Authorization](/grindr-api/api-authorization). First fetch a challenge:
 
@@ -138,7 +139,7 @@ Body (`RegisterKeyRequest`):
 
 Response (`RegisterKeyResponse`): `{ "keyId": "<keyId>" }`, echoing the accepted key id.
 
-### 2. Sign each upload
+### 2. Sign each upload {#sign-each-upload}
 
 For every signed upload, compute three per-request values:
 

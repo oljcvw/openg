@@ -1,7 +1,11 @@
 import { expect, type Page, test } from "@playwright/test";
 
 import generated from "../src/lib/credits/generated.json" with { type: "json" };
+<<<<<<< HEAD
 import { captureOpenedUrls, installTauriShim } from "./support/app";
+=======
+import { backLink, captureOpenedUrls, installTauriShim } from "./support/app";
+>>>>>>> origin/forgejo-sync
 
 const APP_SETTINGS = "/settings/app";
 const CREDITS = `${APP_SETTINGS}/credits`;
@@ -14,8 +18,14 @@ const HEADINGS = [
 ];
 
 const rows = (page: Page) => page.locator('[data-slot="credit-row"]');
+<<<<<<< HEAD
 const scroller = (page: Page) =>
 	page.locator('[data-slot="settings-scroller"]');
+=======
+const suggestAnEdit = (page: Page) =>
+	page.getByRole("link", { name: "Suggest an edit" });
+const scroller = (page: Page) => page.locator('[data-slot="subpage-scroller"]');
+>>>>>>> origin/forgejo-sync
 const scrollTop = (page: Page) =>
 	scroller(page).evaluate((el) => Math.round(el.scrollTop));
 
@@ -85,10 +95,17 @@ test.describe("credits page", () => {
 		const openCreditsAndScroll = async () => {
 			await link.click();
 			await expect(page).toHaveURL(new RegExp(`${CREDITS}$`));
+<<<<<<< HEAD
 			await rows(page).first().waitFor({ timeout: 120_000 });
 			expect(await scrollTop(page)).toBe(0);
 			await scroller(page).evaluate((el) => el.scrollTo(0, 3000));
 			await expect.poll(() => scrollTop(page)).toBe(3000);
+=======
+			await suggestAnEdit(page).waitFor({ timeout: 120_000 });
+			expect(await scrollTop(page)).toBe(0);
+			await scroller(page).evaluate((el) => el.scrollTo(0, 3000));
+			await expect.poll(() => scrollTop(page)).toBeGreaterThan(2000);
+>>>>>>> origin/forgejo-sync
 		};
 		const backOnAppSettings = async () => {
 			await expect(page).toHaveURL(new RegExp(`${APP_SETTINGS}$`));
@@ -96,7 +113,11 @@ test.describe("credits page", () => {
 		};
 
 		await openCreditsAndScroll();
+<<<<<<< HEAD
 		const back = page.getByRole("link", { name: "Back", exact: true });
+=======
+		const back = backLink(page);
+>>>>>>> origin/forgejo-sync
 		await expect(back).toHaveAttribute("href", APP_SETTINGS);
 		await back.click();
 		await backOnAppSettings();
@@ -112,7 +133,11 @@ test.describe("credits page", () => {
 		await openCredits(page);
 		const opened = await captureOpenedUrls(page);
 
+<<<<<<< HEAD
 		const link = page.getByRole("link", { name: "Suggest an edit" });
+=======
+		const link = suggestAnEdit(page);
+>>>>>>> origin/forgejo-sync
 		await link.scrollIntoViewIfNeeded();
 		await link.click();
 

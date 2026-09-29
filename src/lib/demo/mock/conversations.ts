@@ -4,7 +4,7 @@ import type { InboxFilterRequest } from "$lib/api/messaging/conversations";
 import type { AlbumExpirationType } from "$lib/model/messaging/albums";
 import type { Conversation } from "$lib/model/messaging/conversations";
 import { DAY, demoMeProfileId, HOUR, MINUTE, NOW, SECOND } from "../config";
-import { albumCoverUrl } from "./albums";
+import { albumCoverUrl, demoAlbumContent } from "./albums";
 import { hashFromSeed, picsum } from "./avatars";
 import { isTierGatedFilter, matchesInboxFilters } from "./conversation-filters";
 import { demoFavoriteOf } from "./favorites";
@@ -73,12 +73,11 @@ const demoConversationSeeds: DemoConversation[] = [
 		lastActivityAgo: 1,
 		rightNow: "HOSTING",
 		messages: [
-			{ fromMe: false, text: "👀" },
-			{ fromMe: true, text: "Lorem ipsum?" },
+			{ fromMe: true, text: "Hi, how are you?" },
 			{ fromMe: true, kind: "expiringImage" },
 			{ fromMe: false, kind: "expiringImage", expired: true },
-			{ fromMe: false, text: "Did you catch it? 🔥" },
-			{ fromMe: false, kind: "image", reactions: 1 },
+			{ fromMe: false, text: "Did you catch it? 👀" },
+			{ fromMe: false, kind: "album", albumId: 5004, reactions: 1 },
 		],
 	},
 	{
@@ -139,6 +138,7 @@ const demoConversationSeeds: DemoConversation[] = [
 		messages: [
 			{ fromMe: true, text: "Duis aute irure dolor." },
 			{ fromMe: false, kind: "expiringImage" },
+			{ fromMe: false, kind: "image" },
 			{ fromMe: false, text: "🐻 lorem ipsum", reactions: 2 },
 		],
 	},
@@ -254,6 +254,9 @@ function buildMessage({
 				unsent: false,
 			};
 		case "album": {
+			const { content } = demoAlbumContent(message.albumId);
+			const albumHolds = (kind: "image" | "video") =>
+				content.some((item) => item.contentType.startsWith(`${kind}/`));
 			const albumBody = {
 				albumId: message.albumId,
 				hasUnseenContent: message.unseen ?? false,
@@ -269,8 +272,8 @@ function buildMessage({
 							: albumCoverUrl(message.albumId),
 				ownerProfileId: message.fromMe ? demoMeProfileId : conv.withId,
 				isViewable: !message.locked,
-				hasVideo: false,
-				hasPhoto: true,
+				hasVideo: albumHolds("video"),
+				hasPhoto: albumHolds("image"),
 				viewableUntil: message.expiring ? timestamp + DAY : null,
 			};
 			if (message.expiring === "v2")
@@ -577,6 +580,8 @@ export function demoUploadChatMedia({
 	};
 }
 
+const deletedDrawerMedia = new Set<number>();
+
 export function demoDrawerMedia(): DemoDrawerMedia[] {
 	return [
 		...uploadedDrawerMedia,
@@ -588,5 +593,9 @@ export function demoDrawerMedia(): DemoDrawerMedia[] {
 			used: index % 3 === 0,
 			takenOnGrindr: false,
 		})),
-	];
+	].filter(({ id }) => !deletedDrawerMedia.has(id));
+}
+
+export function demoDeleteDrawerMedia(mediaId: number): void {
+	deletedDrawerMedia.add(mediaId);
 }

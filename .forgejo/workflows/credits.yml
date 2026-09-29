@@ -21,6 +21,25 @@ on:
       - .forgejo/workflows/credits.yml
   push:
     branches: [main]
+<<<<<<< HEAD
+=======
+    paths:
+      - src/**
+      - scripts/credits/**
+      - scripts/gen-credits.ts
+      - package.json
+      - bun.lock
+      - patches/**
+      - scripts/patch-deps.ts
+      - svelte.config.js
+      - vite.config.mjs
+      - src-tauri/Cargo.toml
+      - src-tauri/Cargo.lock
+      - src-tauri/patches/**
+      - src-tauri/about.toml
+      - src-tauri/about.hbs
+      - .forgejo/workflows/credits.yml
+>>>>>>> origin/forgejo-sync
   workflow_dispatch:
 
 concurrency:
@@ -29,7 +48,11 @@ concurrency:
 
 jobs:
   credits:
+<<<<<<< HEAD
     runs-on: ["audit", "hetzner"]
+=======
+    runs-on: ["fork", "toolchain", "8c16g", "hetzner"]
+>>>>>>> origin/forgejo-sync
     timeout-minutes: 30
     defaults:
       run:
@@ -47,8 +70,11 @@ jobs:
       RUSTUP_HOME: /opt/rust/rustup
       CARGO_TERM_PROGRESS_WHEN: never
       NODE_OPTIONS: --max-old-space-size=6144
+<<<<<<< HEAD
       CARGO_ABOUT_VERSION: "0.9.2"
       CARGO_ABOUT_SHA256: 9099a59e820c38a68b9d65f300662a567d56562f9a10f6aa4c7e86c17c2566af
+=======
+>>>>>>> origin/forgejo-sync
     steps:
       - name: Verify CI environment
         run: |
@@ -78,6 +104,7 @@ jobs:
             || { echo "FATAL: PR head moved since approval (want $EXPECTED_SHA, got $(git rev-parse HEAD))"; exit 1; }
           git submodule update --init --recursive --quiet
 
+<<<<<<< HEAD
       - name: Install cargo-about
         run: |
           set -euo pipefail
@@ -90,6 +117,8 @@ jobs:
             "/tmp/cargo-about-${CARGO_ABOUT_VERSION}-x86_64-unknown-linux-musl/cargo-about" \
             /usr/local/bin/cargo-about
 
+=======
+>>>>>>> origin/forgejo-sync
       - name: Install JS dependencies
         run: cd "$CI_WORKSPACE" && bun install --frozen-lockfile --no-summary
 

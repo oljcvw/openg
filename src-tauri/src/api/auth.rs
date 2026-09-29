@@ -5,15 +5,17 @@ use crate::media::MediaProxy;
 use crate::state::AppState;
 use crate::storage::{AuthStorage, DeviceStorage, SigningKeyStorage};
 
+static SIGN_OUT: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LoginResult {
+pub struct SignInResult {
 	pub profile_id: String,
 	pub restriction: Option<Restriction>,
 }
 
-impl From<grindr::LoginResult> for LoginResult {
-	fn from(r: grindr::LoginResult) -> Self {
+impl From<grindr::SignInResult> for SignInResult {
+	fn from(r: grindr::SignInResult) -> Self {
 		Self {
 			profile_id: r.profile_id,
 			restriction: r.restriction.map(Restriction::from),
@@ -71,36 +73,54 @@ fn region_str(region: grindr::VerificationRegion) -> &'static str {
 }
 
 #[tauri::command]
-pub async fn login(
-	state: tauri::State<'_, AppState>,
-	email: String,
-	password: String,
-) -> Result<LoginResult, AppError> {
-	let result = state.client()?.login(&email, &password).await?;
-	Ok(LoginResult::from(result))
-}
-
-#[tauri::command]
-pub async fn login_with_google(
+pub async fn sign_in_with_email(
 	app: tauri::AppHandle,
 	state: tauri::State<'_, AppState>,
-) -> Result<LoginResult, AppError> {
+	media: tauri::State<'_, MediaProxy>,
+	email: String,
+	password: String,
+	captcha_token: Option<String>,
+) -> Result<SignInResult, AppError> {
+	end_existing_session(&app, &state, &media).await?;
+	let client = state.client()?;
+	let result = match captcha_token {
+		Some(token) => {
+			client
+				.sign_in_with_email_captcha(&email, &password, &token)
+				.await?
+		}
+		None => client.sign_in_with_email(&email, &password).await?,
+	};
+	Ok(SignInResult::from(result))
+}
+
+#[tauri::command]
+pub async fn sign_in_with_google(
+	app: tauri::AppHandle,
+	state: tauri::State<'_, AppState>,
+	media: tauri::State<'_, MediaProxy>,
+) -> Result<SignInResult, AppError> {
 	let access_token =
 		super::google_oauth::fetch_google_access_token(&app).await?;
-	let result = state.client()?.google_sign_in(&access_token).await?;
-	Ok(LoginResult::from(result))
+	end_existing_session(&app, &state, &media).await?;
+	let result = state.client()?.sign_in_with_google(&access_token).await?;
+	Ok(SignInResult::from(result))
 }
 
 #[tauri::command]
-pub async fn google_sign_in(
+pub async fn sign_in_with_google_token(
+	app: tauri::AppHandle,
 	state: tauri::State<'_, AppState>,
+	media: tauri::State<'_, MediaProxy>,
 	token: String,
-) -> Result<LoginResult, AppError> {
-	let result = state.client()?.google_sign_in(&token).await?;
-	Ok(LoginResult::from(result))
+) -> Result<SignInResult, AppError> {
+	end_existing_session(&app, &state, &media).await?;
+	let result = state.client()?.sign_in_with_google(&token).await?;
+	Ok(SignInResult::from(result))
 }
 
 #[tauri::command]
+<<<<<<< HEAD
 pub async fn login_with_facebook(
 	app: tauri::AppHandle,
 	state: tauri::State<'_, AppState>,
@@ -113,25 +133,102 @@ pub async fn login_with_facebook(
 
 #[tauri::command]
 pub async fn refresh_token(
-	state: tauri::State<'_, AppState>,
-) -> Result<LoginResult, AppError> {
-	let client = state.client()?;
-	let result = client
-		.refresh_token()
-		.await
-		.map_err(|e| AppError::from_client_error(e, client))?;
-	Ok(LoginResult::from(result))
+=======
+pub fn backend_ready(state: tauri::State<'_, AppState>) -> bool {
+	state.client().is_ok()
 }
 
 #[tauri::command]
+pub fn google_handoff_pending(app: tauri::AppHandle) -> bool {
+	super::google_oauth::handoff_pending(&app)
+}
+
+#[tauri::command]
+pub async fn sign_in_with_google_handoff(
+	app: tauri::AppHandle,
+>>>>>>> origin/forgejo-sync
+	state: tauri::State<'_, AppState>,
+	media: tauri::State<'_, MediaProxy>,
+) -> Result<Option<SignInResult>, AppError> {
+	let Some(token) = super::google_oauth::take_handoff(&app) else {
+		return Ok(None);
+	};
+	end_existing_session(&app, &state, &media).await?;
+	let result = state.client()?.sign_in_with_google(&token).await?;
+	Ok(Some(SignInResult::from(result)))
+}
+
+#[tauri::command]
+pub fn discard_google_handoff(app: tauri::AppHandle) {
+	super::google_oauth::discard_handoff(&app);
+}
+
+#[tauri::command]
+pub async fn sign_in_with_facebook(
+	app: tauri::AppHandle,
+	state: tauri::State<'_, AppState>,
+	media: tauri::State<'_, MediaProxy>,
+) -> Result<SignInResult, AppError> {
+	let access_token =
+		super::facebook_oauth::fetch_facebook_access_token(&app).await?;
+	end_existing_session(&app, &state, &media).await?;
+	let result = state.client()?.sign_in_with_facebook(&access_token).await?;
+	Ok(SignInResult::from(result))
+}
+
+#[tauri::command]
+pub async fn refresh_session(
+	state: tauri::State<'_, AppState>,
+	geohash: Option<String>,
+) -> Result<SignInResult, AppError> {
+	let client = state.client()?;
+	let result = client
+		.refresh_session_at_geohash(geohash.as_deref())
+		.await
+		.map_err(|e| AppError::from_client_error(e, client))?;
+	Ok(SignInResult::from(result))
+}
+
+#[tauri::command]
+<<<<<<< HEAD
 pub async fn logout(
+=======
+pub async fn sign_out(
+>>>>>>> origin/forgejo-sync
 	app: tauri::AppHandle,
 	state: tauri::State<'_, AppState>,
 	media: tauri::State<'_, MediaProxy>,
 ) -> Result<(), AppError> {
-	let client = state.client()?;
+	end_session(&app, &state, &media).await
+}
 
-	client.logout().await;
+pub(crate) async fn end_session(
+	app: &tauri::AppHandle,
+	state: &AppState,
+	media: &MediaProxy,
+) -> Result<(), AppError> {
+	let _one_at_a_time = SIGN_OUT.lock().await;
+	forget_account(state.client()?, media).await?;
+	super::facebook_oauth::forget_sign_in_profile(app).await;
+	Ok(())
+}
+
+async fn end_existing_session(
+	app: &tauri::AppHandle,
+	state: &AppState,
+	media: &MediaProxy,
+) -> Result<(), AppError> {
+	if state.client()?.session_receiver().borrow().is_none() {
+		return Ok(());
+	}
+	end_session(app, state, media).await
+}
+
+pub(crate) async fn forget_account(
+	client: &grindr::GrindrClient,
+	media: &MediaProxy,
+) -> Result<(), AppError> {
+	client.sign_out().await;
 	AuthStorage::delete_credentials();
 	SigningKeyStorage::delete();
 	media.forget_everything().await;
@@ -161,20 +258,6 @@ pub async fn recaptcha_first_party_enabled(
 }
 
 #[tauri::command]
-pub async fn auth_state(
-	state: tauri::State<'_, AppState>,
-) -> Result<Option<u64>, AppError> {
-	let Ok(client) = state.client() else {
-		return Ok(None);
-	};
-	Ok(client
-		.session_receiver()
-		.borrow()
-		.as_ref()
-		.and_then(|s| s.credentials.profile_id.as_ref()?.parse::<u64>().ok()))
-}
-
-#[tauri::command]
 pub async fn account_restriction(
 	state: tauri::State<'_, AppState>,
 ) -> Result<Option<Restriction>, AppError> {
@@ -192,6 +275,57 @@ pub async fn account_restriction(
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[cfg(any(
+		target_os = "linux",
+		all(target_os = "macos", not(feature = "keychain"))
+	))]
+	#[test]
+	fn ending_a_session_forgets_the_account_and_moves_to_a_new_device() {
+		crate::storage::test_support::with_file_store(|_| {
+			let old_device = grindr::DeviceInfo::generate();
+			let credentials = grindr::Credentials {
+				email: "user@example.com".to_owned(),
+				profile_id: Some("42".to_owned()),
+				auth_token: "auth-token".to_owned(),
+				kind: grindr::SessionKind::Email,
+				third_party_user_id: None,
+			};
+			DeviceStorage::save(&old_device).unwrap();
+			AuthStorage::set_credentials(&credentials).unwrap();
+			SigningKeyStorage::save(
+				&serde_json::from_value(serde_json::json!({
+					"key": "-----BEGIN PRIVATE KEY-----",
+					"user_id": "42",
+				}))
+				.unwrap(),
+			)
+			.unwrap();
+			let client = grindr::GrindrClient::new(
+				old_device.clone(),
+				Some(grindr::Session {
+					credentials,
+					token: None,
+				}),
+			)
+			.unwrap();
+
+			let runtime = tokio::runtime::Runtime::new().unwrap();
+			runtime
+				.block_on(forget_account(&client, &MediaProxy::default()))
+				.unwrap();
+
+			assert!(client.session_receiver().borrow().is_none());
+			assert!(AuthStorage::get_credentials().unwrap().is_none());
+			assert!(SigningKeyStorage::load().unwrap().is_none());
+			let stored = DeviceStorage::load().unwrap().expect("a new device");
+			assert_ne!(stored.device_id, old_device.device_id);
+			assert_eq!(
+				runtime.block_on(client.current_device()).device_id,
+				stored.device_id
+			);
+		});
+	}
 
 	#[test]
 	fn simulated_age_restriction_maps_to_frontend_shape() {

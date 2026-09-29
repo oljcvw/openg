@@ -1,7 +1,14 @@
 import {
+<<<<<<< HEAD
 	getPreferencesSnapshot,
 	preferencesLoaded,
 } from "$lib/app-data/preferences.svelte";
+=======
+	preferencesLoaded,
+	preferencesSnapshot,
+} from "$lib/app-data/preferences.svelte";
+import { remeasureScreenChrome } from "$lib/util/screen-chrome.svelte";
+>>>>>>> origin/forgejo-sync
 import {
 	backdropBlurTrialArm,
 	syncBackdropBlurTrial,
@@ -21,7 +28,11 @@ export function backdropBlurRenderable(): boolean {
 }
 
 function chosenBackdropBlurQuality(): BackdropBlurQuality | null {
+<<<<<<< HEAD
 	const preferences = getPreferencesSnapshot();
+=======
+	const preferences = preferencesSnapshot();
+>>>>>>> origin/forgejo-sync
 	return (
 		preferences.backdropBlurQuality ??
 		preferences.backdropBlurCalibration?.quality ??
@@ -62,6 +73,10 @@ export function applyBackdropBlurQuality(): void {
 	const root = document.documentElement;
 	if (root.getAttribute(BACKDROP_BLUR_ROOT_ATTRIBUTE) !== quality) {
 		root.setAttribute(BACKDROP_BLUR_ROOT_ATTRIBUTE, quality);
+<<<<<<< HEAD
+=======
+		remeasureScreenChrome();
+>>>>>>> origin/forgejo-sync
 	}
 	rememberForNextLaunch(settledBackdropBlurQuality());
 }

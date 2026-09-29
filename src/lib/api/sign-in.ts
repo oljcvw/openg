@@ -18,6 +18,20 @@ import { clearProfileCaches } from "$lib/api/users/profiles";
 
 type AppErrorView = NonNullable<ReturnType<typeof asAppError>>;
 
+<<<<<<< HEAD
+=======
+export const companionUnavailable = "companion-unavailable";
+export const companionUntrusted = "companion-untrusted";
+export const companionRefused = "companion-refused";
+export const companionDisabled = "companion-disabled";
+export const untrustedCompanionMessage =
+	"The installed Open Grind Google OAuth app isn't signed by Open Grind, so its token was refused. Uninstall it, or paste the OAuth token manually.";
+export const refusedCompanionMessage =
+	"The Open Grind Google OAuth app only accepts official copies of Open Grind. Update it, or paste the OAuth token manually.";
+export const disabledCompanionMessage =
+	"The Open Grind Google OAuth app is turned off. Turn it on in Android settings, then try again.";
+
+>>>>>>> origin/forgejo-sync
 export function finishSignIn(result: {
 	restriction?: Restriction | null;
 }): void {

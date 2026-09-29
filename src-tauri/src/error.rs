@@ -2,6 +2,9 @@ use std::fmt;
 
 use serde::Serialize;
 
+use crate::api::push::PushError;
+use crate::api::recaptcha::RecaptchaError;
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BanInfo {
@@ -40,7 +43,11 @@ pub enum AppError {
 	Connect(String),
 	Auth(String),
 	Media(String),
+<<<<<<< HEAD
 	NotLoggedIn,
+=======
+	NotSignedIn,
+>>>>>>> origin/forgejo-sync
 	SessionStale,
 	Api { code: i32, message: String },
 	Unauthorized { code: i32, message: String },
@@ -50,6 +57,33 @@ pub enum AppError {
 	NetworkBlocked,
 	NotInitialized,
 	SessionCleared,
+	ContentTooLarge,
+	Recaptcha(RecaptchaError),
+	Push(PushError),
+}
+
+impl AppError {
+	pub fn kind(&self) -> &'static str {
+		match self {
+			AppError::Http(_) => "Http",
+			AppError::Connect(_) => "Connect",
+			AppError::Auth(_) => "Auth",
+			AppError::Media(_) => "Media",
+			AppError::NotSignedIn => "NotSignedIn",
+			AppError::SessionStale => "SessionStale",
+			AppError::Api { .. } => "Api",
+			AppError::Unauthorized { .. } => "Unauthorized",
+			AppError::Banned(_) => "Banned",
+			AppError::RateLimited => "RateLimited",
+			AppError::RequestBlocked => "RequestBlocked",
+			AppError::NetworkBlocked => "NetworkBlocked",
+			AppError::NotInitialized => "NotInitialized",
+			AppError::SessionCleared => "SessionCleared",
+			AppError::ContentTooLarge => "ContentTooLarge",
+			AppError::Recaptcha(_) => "Recaptcha",
+			AppError::Push(_) => "Push",
+		}
+	}
 }
 
 impl fmt::Display for AppError {
@@ -59,7 +93,11 @@ impl fmt::Display for AppError {
 			AppError::Connect(msg) => write!(f, "Could not connect: {msg}"),
 			AppError::Auth(msg) => write!(f, "Auth error: {msg}"),
 			AppError::Media(msg) => write!(f, "Media error: {msg}"),
+<<<<<<< HEAD
 			AppError::NotLoggedIn => write!(f, "Not logged in"),
+=======
+			AppError::NotSignedIn => write!(f, "Not signed in"),
+>>>>>>> origin/forgejo-sync
 			AppError::SessionStale => {
 				write!(f, "Could not refresh the session")
 			}
@@ -85,6 +123,11 @@ impl fmt::Display for AppError {
 			AppError::NotInitialized => {
 				write!(f, "GrindrClient not initialized")
 			}
+			AppError::ContentTooLarge => {
+				write!(f, "Larger than the upload limit")
+			}
+			AppError::Recaptcha(error) => write!(f, "reCAPTCHA error: {error}"),
+			AppError::Push(error) => write!(f, "push error: {error}"),
 		}
 	}
 }
@@ -138,7 +181,11 @@ impl AppError {
 	) -> Self {
 		match (AppError::from(error), session_state(client)) {
 			(AppError::Auth(_), SessionState::SignedOut) => {
+<<<<<<< HEAD
 				AppError::NotLoggedIn
+=======
+				AppError::NotSignedIn
+>>>>>>> origin/forgejo-sync
 			}
 			(AppError::Auth(_), SessionState::AwaitingFirstToken) => {
 				AppError::SessionStale
@@ -151,6 +198,48 @@ impl AppError {
 #[cfg(test)]
 mod tests {
 	use super::*;
+
+	#[test]
+	fn every_kind_matches_its_serde_tag() {
+		let ban = BanInfo {
+			kind: "profile".to_owned(),
+			code: 27,
+			message: String::new(),
+			reason: None,
+			sub_reason: None,
+			automated: None,
+		};
+		let errors = [
+			AppError::Http(String::new()),
+			AppError::Connect(String::new()),
+			AppError::Auth(String::new()),
+			AppError::Media(String::new()),
+			AppError::NotSignedIn,
+			AppError::SessionStale,
+			AppError::Api {
+				code: 0,
+				message: String::new(),
+			},
+			AppError::Unauthorized {
+				code: 0,
+				message: String::new(),
+			},
+			AppError::Banned(ban),
+			AppError::RateLimited,
+			AppError::RequestBlocked,
+			AppError::NetworkBlocked,
+			AppError::NotInitialized,
+			AppError::SessionCleared,
+			AppError::ContentTooLarge,
+			AppError::Recaptcha(RecaptchaError::Failed),
+		];
+		for error in errors {
+			assert_eq!(
+				serde_json::to_value(&error).unwrap()["kind"],
+				error.kind()
+			);
+		}
+	}
 
 	#[test]
 	fn simulated_ban_response_maps_to_banned_app_error() {
@@ -178,16 +267,35 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn auth_failure_without_a_session_maps_to_not_logged_in() {
+	async fn auth_failure_without_a_session_maps_to_not_signed_in() {
 		let client =
 			grindr::GrindrClient::new(grindr::DeviceInfo::generate(), None)
 				.unwrap();
-		let error = client.refresh_token().await.unwrap_err();
+		let error = client.refresh_session().await.unwrap_err();
 
 		let app = AppError::from_client_error(error, &client);
 
-		assert!(matches!(app, AppError::NotLoggedIn));
-		assert_eq!(serde_json::to_value(&app).unwrap()["kind"], "NotLoggedIn");
+		assert!(matches!(app, AppError::NotSignedIn));
+		assert_eq!(serde_json::to_value(&app).unwrap()["kind"], "NotSignedIn");
+	}
+
+	fn signed_in_client(
+		token: Option<grindr::SessionToken>,
+	) -> grindr::GrindrClient {
+		grindr::GrindrClient::new(
+			grindr::DeviceInfo::generate(),
+			Some(grindr::Session {
+				credentials: grindr::Credentials {
+					email: "user@example.com".to_owned(),
+					profile_id: Some("42".to_owned()),
+					auth_token: "auth-token".to_owned(),
+					kind: grindr::SessionKind::Email,
+					third_party_user_id: None,
+				},
+				token,
+			}),
+		)
+		.unwrap()
 	}
 
 	fn signed_in_client(
@@ -230,7 +338,11 @@ mod tests {
 		let client = signed_in_client(None);
 
 		let app = AppError::from_client_error(
+<<<<<<< HEAD
 			grindr::GrindrError::Auth("not logged in".to_owned()),
+=======
+			grindr::GrindrError::Auth("not signed in".to_owned()),
+>>>>>>> origin/forgejo-sync
 			&client,
 		);
 

@@ -4,15 +4,20 @@
 
 	import "../layout.css";
 	import { beforeNavigate } from "$app/navigation";
+<<<<<<< HEAD
 	import { page } from "$app/state";
+=======
+>>>>>>> origin/forgejo-sync
 	import { IconContext } from "phosphor-svelte";
-	import { onMount } from "svelte";
+	import { onMount, untrack } from "svelte";
 	import { Toaster } from "svelte-sonner";
 
+	import { appLifecycle } from "$lib/api/app-lifecycle.svelte";
+	import { startGoogleHandoffWatch } from "$lib/api/google-handoff";
 	import {
-		getPreferencesSnapshot,
 		hydratePreferences,
 		preferencesLoaded,
+		preferencesSnapshot,
 	} from "$lib/app-data/preferences.svelte";
 	import { abortBackdropBlurTrialGesture } from "$lib/blur/calibration/trial.svelte";
 	import { hydrateBackdropCompositing } from "$lib/blur/compositing.svelte";
@@ -22,11 +27,22 @@
 		applyBackGestureHandler,
 		registerAndroidBackButtonListener,
 	} from "$lib/platform/android-native-bridge";
+	import { blockNativeMenu } from "$lib/platform/block-native-menu";
 	import { blockZoom } from "$lib/platform/block-zoom";
+	import { trackHoverPointer } from "$lib/platform/hover-pointer";
 	import { isAndroidPlatform } from "$lib/platform/os";
 	import { installScrollGestureBridge } from "$lib/platform/scroll-gesture";
+	import { reconcileNotifications } from "$lib/push/notifications.svelte";
+	import { startPushWatch } from "$lib/push/watch";
+	import { startAddonUpdateWatch } from "$lib/updates/addon.svelte";
 	import { updatesSelfManaged } from "$lib/updates/capability.svelte";
 	import { startUpdateWatch } from "$lib/updates/updates-manager";
+	import {
+		bottomBlurBarClearance,
+		bottomChromeClearance,
+		topBlurBarClearance,
+		topChromeClearance,
+	} from "$lib/util/screen-chrome.svelte";
 
 	onMount(() => {
 		installScrollGestureBridge();
@@ -49,6 +65,8 @@
 		applyAndroidInsets();
 		applyBackGestureHandler();
 		const releaseZoomBlock = blockZoom();
+		const releaseNativeMenuBlock = blockNativeMenu();
+		const releaseHoverPointer = trackHoverPointer();
 		if (isAndroidPlatform()) {
 			void registerAndroidBackButtonListener().catch((error) => {
 				console.error("Failed to register back button listener", error);
@@ -60,7 +78,15 @@
 		void hydrateBackdropCompositing().catch((error: unknown) => {
 			console.error("Failed to read backdrop compositing", error);
 		});
+<<<<<<< HEAD
 		return releaseZoomBlock;
+=======
+		return () => {
+			releaseZoomBlock();
+			releaseNativeMenuBlock();
+			releaseHoverPointer();
+		};
+>>>>>>> origin/forgejo-sync
 	});
 
 	import { env } from "$env/dynamic/public";
@@ -68,14 +94,17 @@
 	import faviconPng from "$lib/assets/favicon.png";
 	import AccountStatusAlert from "$lib/components/feedback/AccountStatusAlert.svelte";
 	import CopyErrorConfirmAlert from "$lib/components/feedback/CopyErrorConfirmAlert.svelte";
+	import EntitlementBypassAlert from "$lib/components/feedback/EntitlementBypassAlert.svelte";
+	import GoogleHandoffConfirmAlert from "$lib/components/feedback/GoogleHandoffConfirmAlert.svelte";
 	import RequestBlockedAlert from "$lib/components/feedback/RequestBlockedAlert.svelte";
 	import SessionErrorAlert from "$lib/components/feedback/SessionErrorAlert.svelte";
+	import FrostFilters from "$lib/components/shared/FrostFilters.svelte";
 	import faviconSvg from "../../contrib/logo/open-grind.svg";
 
 	let { children }: { children?: import("svelte").Snippet } = $props();
 
 	const onboarded = $derived(
-		preferencesLoaded() && getPreferencesSnapshot().onboardingComplete,
+		preferencesLoaded() && preferencesSnapshot().onboardingComplete,
 	);
 
 	beforeNavigate(() => abortBackdropBlurTrialGesture());
@@ -86,18 +115,37 @@
 
 	$effect(() => {
 		if (!onboarded) return;
-		if (!updatesSelfManaged()) return;
-		void startUpdateWatch();
+		const appUpdates = updatesSelfManaged()
+			? startUpdateWatch()
+			: Promise.resolve();
+		void appUpdates.finally(() => startAddonUpdateWatch());
 	});
 
-	const hasBottomNavBar = $derived(
-		page.route.id?.startsWith("/(protected)/(navbar)") ?? false,
-	);
+	$effect(() => {
+		if (!onboarded) return;
+		untrack(() => {
+			void startPushWatch().catch((error: unknown) => {
+				console.error("Failed to watch push notifications", error);
+			});
+		});
+	});
+
+	$effect(() => {
+		if (!onboarded || !appLifecycle.active) return;
+		untrack(() => void reconcileNotifications());
+	});
+
+	$effect(() => {
+		if (!onboarded) return;
+		const watch = startGoogleHandoffWatch();
+		return () => {
+			void watch.then((stop) => stop());
+		};
+	});
+
 	const toastOffset = $derived({
-		top: "calc(var(--safe-area-top) + 0.5rem)",
-		bottom: hasBottomNavBar
-			? "calc(var(--content-pb) + 0.5rem)"
-			: "calc(var(--safe-area-bottom) + 0.5rem)",
+		top: `calc(max(var(--safe-area-top), ${topChromeClearance()}px, ${topBlurBarClearance()}px + var(--bar-content-gap)) + 0.5rem)`,
+		bottom: `calc(max(var(--safe-area-bottom), ${bottomChromeClearance()}px, ${bottomBlurBarClearance()}px + var(--bar-content-gap)) + 0.5rem)`,
 	});
 </script>
 
@@ -125,6 +173,7 @@
 	]}
 	style:height="var(--safe-area-bottom)"
 ></div>
+<FrostFilters />
 <IconContext values={{ "aria-hidden": true }}>
 	<Toaster
 		position="bottom-center"
@@ -138,4 +187,6 @@
 	<SessionErrorAlert />
 	<AccountStatusAlert />
 	<CopyErrorConfirmAlert />
+	<GoogleHandoffConfirmAlert />
+	<EntitlementBypassAlert />
 </IconContext>

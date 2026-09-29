@@ -34,11 +34,23 @@ const lockedVersions = (source: string, pattern: RegExp) => {
 	return locked;
 };
 
+<<<<<<< HEAD
 const checkAgainstLockfile = (
 	ecosystem: string,
 	lockfile: string,
 	pattern: RegExp,
 ) => {
+=======
+const checkAgainstLockfile = ({
+	ecosystem,
+	lockfile,
+	pattern,
+}: {
+	ecosystem: string;
+	lockfile: string;
+	pattern: RegExp;
+}) => {
+>>>>>>> origin/forgejo-sync
 	const locked = lockedVersions(read(lockfile), pattern);
 	for (const entry of credits.entries.filter(
 		(it) => it.ecosystem === ecosystem,
@@ -53,6 +65,7 @@ const checkAgainstLockfile = (
 	}
 };
 
+<<<<<<< HEAD
 checkAgainstLockfile(
 	"rust",
 	"src-tauri/Cargo.lock",
@@ -64,6 +77,19 @@ checkAgainstLockfile(
 	"bun.lock",
 	/\["((?:@[^"@/]+\/)?[^"@/][^"@]*)@([^"]+)"/g,
 );
+=======
+checkAgainstLockfile({
+	ecosystem: "rust",
+	lockfile: "src-tauri/Cargo.lock",
+	pattern: /^\[\[package\]\]\nname = "([^"]+)"\nversion = "([^"]+)"/gm,
+});
+
+checkAgainstLockfile({
+	ecosystem: "npm",
+	lockfile: "bun.lock",
+	pattern: /\["((?:@[^"@/]+\/)?[^"@/][^"@]*)@([^"]+)"/g,
+});
+>>>>>>> origin/forgejo-sync
 
 const credited = new Set(
 	credits.entries.map((entry) => `${entry.ecosystem}:${entry.id}`),
@@ -92,12 +118,21 @@ if (auditedTargets.join() !== deniedTargets.join()) {
 	);
 }
 
+<<<<<<< HEAD
 const pinnedInWorkflow = /CARGO_ABOUT_VERSION:\s*"([^"]+)"/.exec(
 	read(".forgejo/workflows/credits.yml"),
 )?.[1];
 if (pinnedInWorkflow !== requiredCargoAbout) {
 	report(
 		`the collector needs cargo-about ${requiredCargoAbout} but .forgejo/workflows/credits.yml installs ${pinnedInWorkflow ?? "nothing"}`,
+=======
+const pinnedInImage = /^CARGO_ABOUT_VERSION=(\S+)$/m.exec(
+	read("ci/check-image.sh"),
+)?.[1];
+if (pinnedInImage !== requiredCargoAbout) {
+	report(
+		`the collector needs cargo-about ${requiredCargoAbout} but ci/check-image.sh installs ${pinnedInImage ?? "nothing"}`,
+>>>>>>> origin/forgejo-sync
 	);
 }
 

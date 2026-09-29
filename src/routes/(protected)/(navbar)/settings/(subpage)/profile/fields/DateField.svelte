@@ -26,12 +26,15 @@
 </script>
 
 <Field {label}>
-	<Input
-		type="date"
-		max={today}
-		bind:value={
-			() => toInput(value),
-			(newValue: string) => (value = fromInput(newValue))
-		}
-	/>
+	{#snippet control({ id })}
+		<Input
+			{id}
+			type="date"
+			max={today}
+			bind:value={
+				() => toInput(value),
+				(newValue: string) => (value = fromInput(newValue))
+			}
+		/>
+	{/snippet}
 </Field>

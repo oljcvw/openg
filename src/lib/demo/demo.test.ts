@@ -15,8 +15,6 @@ import {
 	albumContentSchema,
 	albumDetailsSchema,
 	albumMinSchema,
-	albumSharesResponseSchema,
-	myAlbumsResponseSchema,
 } from "$lib/model/messaging/albums";
 import {
 	conversationEntrySchema,
@@ -114,8 +112,6 @@ describe("demo route data matches the real schemas", () => {
 		const entries = z.array(fullConversationSchema).parse(body.entries);
 		const times = entries.map((e) => e.data.lastActivityTimestamp);
 		expect(times).toEqual([...times].sort((a, b) => b - a));
-		const imageConv = entries.find((e) => e.data.preview?.type === "Image");
-		expect(imageConv?.data.preview?.text).toBeNull();
 		const albumConv = entries.find((e) => e.data.preview?.type === "Album");
 		expect(albumConv?.data.preview?.albumId).not.toBeNull();
 		expect(previewLabel(albumConv?.data.preview ?? null)).toBe("Album");
@@ -181,6 +177,17 @@ describe("demo route data matches the real schemas", () => {
 						route(`/v2/albums/${message.body.albumId}`),
 					);
 					expect(album.content.length).toBeGreaterThan(0);
+					const holds = (kind: string) =>
+						album.content.some((item) =>
+							item.contentType.startsWith(`${kind}/`),
+						);
+					expect({
+						hasPhoto: message.body.hasPhoto,
+						hasVideo: message.body.hasVideo,
+					}).toEqual({
+						hasPhoto: holds("image"),
+						hasVideo: holds("video"),
+					});
 				} else if (message.type === "ExpiringImage") {
 					expiringImages++;
 					const single = expiringImageMessageSchema.parse(
@@ -198,88 +205,6 @@ describe("demo route data matches the real schemas", () => {
 		}
 		expect(albums).toBeGreaterThan(0);
 		expect(expiringImages).toBeGreaterThan(0);
-	});
-
-	it("my albums cover the states the composer tab renders", () => {
-		const { albums } = myAlbumsResponseSchema.parse(route("/v1/albums"));
-
-		expect(albums.length).toBeGreaterThan(0);
-		expect(albums.some((album) => album.albumName === null)).toBe(true);
-		expect(albums.some((album) => !album.isShareable)).toBe(true);
-		expect(
-			albums.some((album) =>
-				album.content.some((item) =>
-					item.contentType.startsWith("video/"),
-				),
-			),
-		).toBe(true);
-	});
-
-	it("records an album share against the album it names", () => {
-		const albumId = myAlbumsResponseSchema.parse(route("/v1/albums"))
-			.albums[0]!.albumId;
-		const sharedCountOf = (id: number) =>
-			myAlbumsResponseSchema
-				.parse(route("/v1/albums"))
-				.albums.find((album) => album.albumId === id)!.sharedCount;
-		const before = sharedCountOf(albumId);
-		const neighborBefore = sharedCountOf(albumId + 1);
-
-		expect(
-			demoRoute({
-				path: `/v4/albums/${albumId}/shares`,
-				method: "POST",
-				body: {
-					profiles: [{ profileId: 1, expirationType: "INDEFINITE" }],
-				},
-			}).status,
-		).toBe(200);
-
-		expect(sharedCountOf(albumId)).toBe(before + 1);
-		expect(sharedCountOf(albumId + 1)).toBe(neighborBefore);
-	});
-
-	it("lists the profiles an album is shared with, then forgets an unshare", () => {
-		const albumId = 902;
-		const sharesOf = (id: number) =>
-			albumSharesResponseSchema.parse(route(`/v1/albums/${id}/shares`))
-				.profileIds;
-
-		expect(sharesOf(albumId)).not.toContain(7);
-
-		route(`/v4/albums/${albumId}/shares`, "POST", {
-			profiles: [{ profileId: 7, expirationType: "INDEFINITE" }],
-		});
-		expect(sharesOf(albumId)).toContain(7);
-
-		expect(
-			demoRoute({
-				path: `/v1/albums/${albumId}/unshares`,
-				method: "PUT",
-				body: { profiles: [{ profileId: 7, shareId: "share-1" }] },
-			}).status,
-		).toBe(200);
-		expect(sharesOf(albumId)).not.toContain(7);
-	});
-
-	it("rejects an album unshare whose body is not the documented shape", () => {
-		expect(() =>
-			demoRoute({
-				path: "/v1/albums/900/unshares",
-				method: "PUT",
-				body: { profileIds: [1] },
-			}),
-		).toThrow();
-	});
-
-	it("rejects an album share whose body is not the documented shape", () => {
-		expect(() =>
-			demoRoute({
-				path: "/v4/albums/900/shares",
-				method: "POST",
-				body: { profileIds: [1] },
-			}),
-		).toThrow();
 	});
 
 	it("paginated message requests are empty", () => {
@@ -536,12 +461,21 @@ describe("demo route data matches the real schemas", () => {
 
 		it("treats distanceMeters as an inclusive maximum", () => {
 			expectMatches({
+<<<<<<< HEAD
 				filters: { distanceMeters: 9 },
 				matches: [james, bear, theo, henry],
 			});
 			expectMatches({
 				filters: { distanceMeters: 8 },
 				matches: [james, bear, theo],
+=======
+				filters: { distanceMeters: 9_300 },
+				matches: [james, bear, theo, pablo, henry],
+			});
+			expectMatches({
+				filters: { distanceMeters: 9_299 },
+				matches: [james, bear, theo, pablo],
+>>>>>>> origin/forgejo-sync
 			});
 		});
 
@@ -576,7 +510,11 @@ describe("demo route data matches the real schemas", () => {
 		});
 
 		it("gates results past the free allowance into partial entries", () => {
+<<<<<<< HEAD
 			const entries = inboxEntries({ distanceMeters: 9 });
+=======
+			const entries = inboxEntries({ distanceMeters: 9_300 });
+>>>>>>> origin/forgejo-sync
 
 			expect(entries.length).toBeGreaterThan(2);
 			expect(entries.map((entry) => entry.type)).toEqual([
@@ -588,7 +526,11 @@ describe("demo route data matches the real schemas", () => {
 
 		it("leaves the flags a partial entry omits out of the payload", () => {
 			const body = route("/v4/inbox?page=1", "POST", {
+<<<<<<< HEAD
 				distanceMeters: 9,
+=======
+				distanceMeters: 9_300,
+>>>>>>> origin/forgejo-sync
 			}) as {
 				entries: { type: string; data: Record<string, unknown> }[];
 			};

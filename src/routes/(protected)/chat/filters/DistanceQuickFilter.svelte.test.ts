@@ -4,7 +4,11 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$lib/app-data/preferences.svelte", () => ({
+<<<<<<< HEAD
 	getPreferencesSnapshot: () => ({ units: "metric" }),
+=======
+	preferencesSnapshot: () => ({ units: "metric" }),
+>>>>>>> origin/forgejo-sync
 }));
 
 import DistanceQuickFilter from "./DistanceQuickFilter.svelte";

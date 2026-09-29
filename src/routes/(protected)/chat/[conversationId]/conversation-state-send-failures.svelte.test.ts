@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+<<<<<<< HEAD
 const { getConversationMock, sendMessageMock, toastMock } = vi.hoisted(() => ({
 	getConversationMock: vi.fn(),
 	sendMessageMock: vi.fn(),
@@ -8,6 +9,20 @@ const { getConversationMock, sendMessageMock, toastMock } = vi.hoisted(() => ({
 
 vi.mock("svelte-sonner", () => ({ toast: toastMock }));
 vi.mock("$lib/api/error-toast", () => ({ showErrorToast: vi.fn() }));
+=======
+const { getConversationMock, sendMessageMock, offerBypassMock } = vi.hoisted(
+	() => ({
+		getConversationMock: vi.fn(),
+		sendMessageMock: vi.fn(),
+		offerBypassMock: vi.fn(),
+	}),
+);
+
+vi.mock("$lib/api/error-toast", () => ({ showErrorToast: vi.fn() }));
+vi.mock("$lib/entitlements/bypass.svelte", () => ({
+	offerEntitlementBypass: offerBypassMock,
+}));
+>>>>>>> origin/forgejo-sync
 vi.mock("$lib/app-data/preferences.svelte", () => ({
 	getPreferences: () => Promise.resolve({ revealMessageRead: true }),
 }));
@@ -51,6 +66,22 @@ const profile = {
 };
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
+<<<<<<< HEAD
+=======
+const updatePreviewMock = vi.fn();
+
+const delivered = (messageId: string, timestamp: number) => ({
+	messageId,
+	conversationId: CONVERSATION_ID,
+	senderId: PEER_ID,
+	timestamp,
+	type: "Text" as const,
+	body: { text: messageId },
+	unsent: false,
+	reactions: [],
+	replyToMessage: null,
+});
+>>>>>>> origin/forgejo-sync
 
 function outbound(type: string, body: unknown): MessageDraft {
 	const message = { type, body } as unknown as Message;
@@ -69,7 +100,11 @@ function create() {
 			clearActive: vi.fn(),
 			getCachedConversation: vi.fn(() => undefined),
 			setCachedConversation: vi.fn(),
+<<<<<<< HEAD
 			updatePreview: vi.fn(),
+=======
+			updatePreview: updatePreviewMock,
+>>>>>>> origin/forgejo-sync
 			markRead: vi.fn(),
 			ensureLoaded: vi.fn(),
 			remove: vi.fn(() => ({ revert: vi.fn() })),
@@ -141,7 +176,11 @@ describe("ConversationState send failures", () => {
 		);
 	});
 
+<<<<<<< HEAD
 	it("warns when the day's expiring photos are used up", async () => {
+=======
+	it("offers the bypass once per photo when the day's allowance is used up", async () => {
+>>>>>>> origin/forgejo-sync
 		sendMessageMock.mockRejectedValue(entitlementLimit());
 
 		const state = create();
@@ -149,6 +188,7 @@ describe("ConversationState send failures", () => {
 		state.send([expiringPhoto(), expiringPhoto()]);
 		await flush();
 
+<<<<<<< HEAD
 		expect(toastMock.error).toHaveBeenCalledWith(
 			"Daily expiring photo limit reached. Unlimited with Grindr subscription",
 			{ id: "expiring-photo-limit" },
@@ -156,6 +196,206 @@ describe("ConversationState send failures", () => {
 		expect(state.messages.every((m) => m.status === "error")).toBe(true);
 	});
 
+=======
+		expect(offerBypassMock).toHaveBeenCalledTimes(2);
+		expect(offerBypassMock).toHaveBeenCalledWith({
+			reason: "Daily expiring photo limit reached. Sending more requires a Grindr subscription.",
+			retry: expect.any(Function),
+		});
+		expect(state.messages.every((m) => m.status === "error")).toBe(true);
+	});
+
+	it("resends the same message when the bypass retries it", async () => {
+		sendMessageMock.mockRejectedValueOnce(entitlementLimit());
+
+		const state = create();
+		await flush();
+		state.send([expiringPhoto()]);
+		await flush();
+
+		sendMessageMock.mockResolvedValue({
+			messageId: "server-1",
+			timestamp: 1234,
+		});
+		const { retry } = offerBypassMock.mock.calls[0]?.[0] as {
+			retry: () => Promise<void>;
+		};
+		await retry();
+
+		expect(sendMessageMock).toHaveBeenCalledTimes(2);
+		expect(sendMessageMock.mock.calls[1]).toEqual(
+			sendMessageMock.mock.calls[0],
+		);
+		expect(state.messages[0]?.messageId).toBe("server-1");
+		expect(state.messages[0]?.status).toBe("sent");
+	});
+
+	it("sends nothing when the bypass retries a message that was deleted", async () => {
+		sendMessageMock.mockRejectedValueOnce(entitlementLimit());
+
+		const state = create();
+		await flush();
+		state.send([expiringPhoto()]);
+		await flush();
+		state.remove(state.messages[0]!.messageId);
+
+		const { retry } = offerBypassMock.mock.calls[0]?.[0] as {
+			retry: () => Promise<void>;
+		};
+		await retry();
+
+		expect(sendMessageMock).toHaveBeenCalledOnce();
+	});
+
+	it("keeps the last delivered message as the preview when the newest failed one is deleted", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [delivered("server-1", 500)],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		sendMessageMock.mockRejectedValue(new Error("offline"));
+
+		const state = create();
+		await flush();
+		state.send([outbound("Text", { text: "older" })]);
+		state.send([outbound("Text", { text: "newer" })]);
+		await flush();
+		expect(updatePreviewMock).toHaveBeenLastCalledWith({
+			conversationId: CONVERSATION_ID,
+			preview: expect.objectContaining({
+				type: "Text",
+				text: "server-1",
+			}),
+			timestamp: 500,
+		});
+
+		updatePreviewMock.mockClear();
+		state.remove(state.messages[0]!.messageId);
+
+		expect(updatePreviewMock).not.toHaveBeenCalled();
+	});
+
+	it("moves the preview on when the delivered message under a failed one is deleted", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [delivered("server-2", 600), delivered("server-1", 500)],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		sendMessageMock.mockRejectedValue(new Error("offline"));
+
+		const state = create();
+		await flush();
+		state.send([outbound("Text", { text: "failed" })]);
+		await flush();
+		state.remove("server-2");
+
+		expect(updatePreviewMock).toHaveBeenLastCalledWith({
+			conversationId: CONVERSATION_ID,
+			preview: expect.objectContaining({ text: "server-1" }),
+			timestamp: 500,
+		});
+	});
+
+	it("keeps a newer pending message as the preview when an older send fails", async () => {
+		let rejectOlder!: (error: Error) => void;
+		sendMessageMock
+			.mockReturnValueOnce(
+				new Promise((_, reject) => {
+					rejectOlder = reject;
+				}),
+			)
+			.mockReturnValueOnce(new Promise(() => {}));
+
+		const state = create();
+		await flush();
+		state.send([outbound("Text", { text: "older" })]);
+		state.send([outbound("Text", { text: "newer" })]);
+		rejectOlder(new Error("offline"));
+		await flush();
+
+		expect(updatePreviewMock).toHaveBeenLastCalledWith({
+			conversationId: CONVERSATION_ID,
+			preview: expect.objectContaining({ text: "newer" }),
+			timestamp: expect.any(Number),
+		});
+	});
+
+	it("keeps a failed message out of the preview when a refresh brings new messages", async () => {
+		getConversationMock.mockResolvedValue({
+			messages: [delivered("server-1", 500)],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		sendMessageMock.mockRejectedValue(new Error("offline"));
+
+		const state = create();
+		await flush();
+		state.send([outbound("Text", { text: "failed" })]);
+		await flush();
+
+		getConversationMock.mockResolvedValue({
+			messages: [delivered("server-2", 600), delivered("server-1", 500)],
+			profile,
+			pageKey: null,
+			lastReadTimestamp: null,
+		});
+		await state.refresh();
+
+		expect(state.messages[0]?.status).toBe("error");
+		expect(updatePreviewMock).toHaveBeenLastCalledWith({
+			conversationId: CONVERSATION_ID,
+			preview: expect.objectContaining({ text: "server-2" }),
+			timestamp: 600,
+		});
+	});
+
+	it("keeps a failed message out of the preview when an older-stamped send lands under it", async () => {
+		const clock = vi.spyOn(Date, "now");
+		sendMessageMock
+			.mockRejectedValueOnce(new Error("offline"))
+			.mockResolvedValueOnce({ messageId: "server-1", timestamp: 900 });
+
+		const state = create();
+		await flush();
+		clock.mockReturnValue(1000);
+		state.send([outbound("Text", { text: "failed" })]);
+		await flush();
+		clock.mockReturnValue(2000);
+		state.send([outbound("Text", { text: "landed" })]);
+		await flush();
+
+		expect(state.messages.map((m) => m.status)).toEqual(["error", "sent"]);
+		expect(updatePreviewMock).toHaveBeenLastCalledWith({
+			conversationId: CONVERSATION_ID,
+			preview: expect.objectContaining({ text: "landed" }),
+			timestamp: 900,
+		});
+	});
+
+	it("puts the failed bubble back to pending while the retry is in flight", async () => {
+		sendMessageMock.mockRejectedValueOnce(entitlementLimit());
+
+		const state = create();
+		await flush();
+		state.send([expiringPhoto()]);
+		await flush();
+		expect(state.messages[0]?.status).toBe("error");
+
+		sendMessageMock.mockReturnValue(new Promise(() => {}));
+		const { retry } = offerBypassMock.mock.calls[0]?.[0] as {
+			retry: () => Promise<void>;
+		};
+		void retry();
+		await flush();
+
+		expect(state.messages[0]?.status).toBe("pending");
+		expect(state.messages[0]?.sendError).toBeUndefined();
+	});
+
+>>>>>>> origin/forgejo-sync
 	it("keeps quiet when another message type hits the same limit", async () => {
 		sendMessageMock.mockRejectedValue(entitlementLimit());
 
@@ -164,7 +404,11 @@ describe("ConversationState send failures", () => {
 		state.send([outbound("Text", { text: "a" })]);
 		await flush();
 
+<<<<<<< HEAD
 		expect(toastMock.error).not.toHaveBeenCalled();
+=======
+		expect(offerBypassMock).not.toHaveBeenCalled();
+>>>>>>> origin/forgejo-sync
 	});
 
 	it("keeps quiet when an expiring photo fails for another reason", async () => {
@@ -175,6 +419,10 @@ describe("ConversationState send failures", () => {
 		state.send([expiringPhoto()]);
 		await flush();
 
+<<<<<<< HEAD
 		expect(toastMock.error).not.toHaveBeenCalled();
+=======
+		expect(offerBypassMock).not.toHaveBeenCalled();
+>>>>>>> origin/forgejo-sync
 	});
 });

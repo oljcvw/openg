@@ -181,7 +181,11 @@ test("the distance drawer applies its slider value and lights the pill", async (
 
 	await expect
 		.poll(() => listedConversations(page))
+<<<<<<< HEAD
 		.toEqual([HENRY, THEO, JAMES, BEAR]);
+=======
+		.toEqual([THEO, JAMES, BEAR]);
+>>>>>>> origin/forgejo-sync
 	await expect(page.locator(`a[href="${JAMES}"]`).first()).toContainText(
 		"James",
 	);

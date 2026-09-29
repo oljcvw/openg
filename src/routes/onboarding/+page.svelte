@@ -11,8 +11,13 @@
 		desktopEntryInstalled,
 		setDesktopEntryInstalled,
 	} from "$lib/platform/desktop-entry.svelte";
+<<<<<<< HEAD
 	import { setAutomaticUpdateChecks } from "$lib/updates";
+=======
+>>>>>>> origin/forgejo-sync
 	import { updatesSelfManaged } from "$lib/updates/capability.svelte";
+	import { saveAutomaticChecks } from "$lib/updates/update-settings.svelte";
+	import { bottomChrome } from "$lib/util/screen-chrome.svelte";
 	import icon from "../../../contrib/logo/open-grind.svg";
 
 	let checkAutomatically = $state(true);
@@ -26,7 +31,15 @@
 		starting = true;
 		try {
 			if (updatesSelfManaged()) {
-				await setAutomaticUpdateChecks(checkAutomatically);
+				await saveAutomaticChecks(checkAutomatically);
+			}
+			if (addToAppsMenu && offerAppsMenu()) {
+				await setDesktopEntryInstalled(true).catch((error: unknown) =>
+					showErrorToast({
+						label: "Couldn't add Open Grind to your apps",
+						error,
+					}),
+				);
 			}
 			if (addToAppsMenu && offerAppsMenu()) {
 				await setDesktopEntryInstalled(true).catch((error: unknown) =>
@@ -70,12 +83,23 @@
 
 	<div
 		class="sticky bottom-0 flex shrink-0 flex-col items-center gap-2 bg-background pt-2 pb-[calc(2rem+var(--safe-area-bottom))]"
+		{@attach bottomChrome}
 	>
-		{#if updatesSelfManaged()}
-			<Label class="flex items-center rounded-xl p-2 pb-3">
-				<Checkbox bind:checked={checkAutomatically} />
-				Check updates automatically
-			</Label>
+		{#if updatesSelfManaged() || offerAppsMenu()}
+			<div class="flex flex-col items-start pb-1">
+				{#if updatesSelfManaged()}
+					<Label class="flex items-center rounded-xl p-2">
+						<Checkbox bind:checked={checkAutomatically} />
+						Check updates automatically
+					</Label>
+				{/if}
+				{#if offerAppsMenu()}
+					<Label class="flex items-center rounded-xl p-2">
+						<Checkbox bind:checked={addToAppsMenu} />
+						Add Open Grind to your apps menu
+					</Label>
+				{/if}
+			</div>
 		{/if}
 		{#if offerAppsMenu()}
 			<Label class="flex items-center rounded-xl p-2 pb-3">

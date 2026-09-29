@@ -1,8 +1,13 @@
 <script lang="ts">
 	import { showErrorToast } from "$lib/api/error-toast";
 	import {
+<<<<<<< HEAD
 		getPreferencesSnapshot,
 		preferencesLoaded,
+=======
+		preferencesLoaded,
+		preferencesSnapshot,
+>>>>>>> origin/forgejo-sync
 		setPreferences,
 	} from "$lib/app-data/preferences.svelte";
 	import {
@@ -23,7 +28,11 @@
 	const supported = $derived(backdropBlurRenderable());
 	let pending = $state<BackdropBlurQuality | null>(null);
 	const chosen = $derived(
+<<<<<<< HEAD
 		pending ?? getPreferencesSnapshot().backdropBlurQuality,
+=======
+		pending ?? preferencesSnapshot().backdropBlurQuality,
+>>>>>>> origin/forgejo-sync
 	);
 	const effective = $derived(settledBackdropBlurQuality());
 	const trialPending = $derived(backdropBlurTrialPending());

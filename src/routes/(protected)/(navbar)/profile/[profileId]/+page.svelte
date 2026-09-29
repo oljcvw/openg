@@ -1,4 +1,5 @@
 <script lang="ts">
+<<<<<<< HEAD
 	import { page } from "$app/state";
 	import { untrack } from "svelte";
 
@@ -15,42 +16,16 @@
 	import HiddenProfile from "./HiddenProfile.svelte";
 	import { ProfileState } from "./profile-state.svelte";
 	import ProfileBody from "./ProfileBody.svelte";
+=======
+	import BackButton from "./BackButton.svelte";
+	import ProfilePager from "./pager/ProfilePager.svelte";
+>>>>>>> origin/forgejo-sync
 
 	let { data }: import("./$types").PageProps = $props();
-
-	const ourProfileId = $derived(data.ourProfileId);
-	const profileId = $derived(Number(page.params.profileId));
-
-	let profileContainer = $state<HTMLElement | null>(null);
-
-	let profileState = $state(
-		untrack(() => new ProfileState({ profileId, ourProfileId })),
-	);
-
-	$effect(() => {
-		const id = profileId;
-		const ourId = ourProfileId;
-
-		const state = untrack(() => {
-			if (
-				id !== profileState.profileId ||
-				ourId !== profileState.ourProfileId
-			) {
-				profileState = new ProfileState({
-					profileId: id,
-					ourProfileId: ourId,
-				});
-			}
-			return profileState;
-		});
-
-		return () => state.destroy();
-	});
-
-	const error = $derived(profileState.error);
 </script>
 
 <BackButton />
+<<<<<<< HEAD
 {#if error}
 	<div class="flex flex-1">
 		{#if error instanceof BlockedProfileError}
@@ -95,3 +70,6 @@
 		/>
 	</div>
 {/if}
+=======
+<ProfilePager ourProfileId={data.ourProfileId} />
+>>>>>>> origin/forgejo-sync

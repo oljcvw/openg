@@ -47,6 +47,7 @@ export type DemoSeed = {
 	favorite: boolean;
 	unread: number;
 	instagram: string | null;
+	blockable: boolean;
 };
 
 const FIRST_NAMES = [
@@ -230,7 +231,7 @@ const featuredOverrides = new Map<number, Partial<DemoSeed>>([
 			name: "James",
 			photos: 3,
 			bio: LOREM,
-			distanceM: 1,
+			distanceM: 100,
 			favorite: true,
 			unread: 2,
 		},
@@ -274,7 +275,7 @@ const featuredOverrides = new Map<number, Partial<DemoSeed>>([
 			name: "theo 🌊",
 			photos: 1,
 			bio: "👀 just here to chat",
-			distanceM: 6,
+			distanceM: 650,
 			unread: 5,
 		},
 	],
@@ -297,11 +298,21 @@ const featuredOverrides = new Map<number, Partial<DemoSeed>>([
 			age: 52,
 			photos: 3,
 			bio: LOREM_LONG,
-			distanceM: 9,
+			distanceM: 9_300,
 			unread: 1,
 		},
 	],
-	[100010, { name: null, age: 40, photos: 0, bio: null, distanceM: 10 }],
+	[
+		100010,
+		{
+			name: null,
+			age: 40,
+			photos: 0,
+			bio: null,
+			distanceM: 10,
+			blockable: false,
+		},
+	],
 	[100011, { name: "Lucas90", photos: 2, bio: LONG_WORD_2, distanceM: 11 }],
 	[100012, { name: "😎🔥💯", age: 29, photos: 1, bio: "", distanceM: 12 }],
 	[
@@ -310,7 +321,7 @@ const featuredOverrides = new Map<number, Partial<DemoSeed>>([
 			name: "Alexander",
 			photos: 5,
 			bio: LOREM,
-			distanceM: 13,
+			distanceM: 130,
 			favorite: true,
 		},
 	],
@@ -326,8 +337,8 @@ const featuredOverrides = new Map<number, Partial<DemoSeed>>([
 	],
 	[100015, { name: "Leo", age: 21, photos: 0, bio: "🍆🍑💦", distanceM: 15 }],
 	[100016, { name: "liam", photos: 3, bio: LOREM, distanceM: 16 }],
-	[100250, { favorite: false }],
-	[100777, { favorite: false }],
+	[100250, { distanceM: 24_100, favorite: false }],
+	[100777, { distanceM: 5_600, favorite: false }],
 ]);
 
 export function distanceForId(id: number): number {
@@ -362,6 +373,7 @@ export const meSeed: DemoSeed = {
 	favorite: false,
 	unread: 0,
 	instagram: "demo.user",
+	blockable: true,
 };
 
 const seedCache = new Map<number, DemoSeed>();
@@ -412,6 +424,7 @@ function buildSeed(id: number): DemoSeed {
 		instagram: chance({ rng, probability: 0.25 })
 			? `${pick({ rng, items: FIRST_NAMES }).toLowerCase()}_${id % 1000}`
 			: null,
+		blockable: true,
 	};
 	base.unread =
 		base.favorite && chance({ rng, probability: 0.5 })

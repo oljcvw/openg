@@ -1,8 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+<<<<<<< HEAD
 	isAndroidPlatform,
 	isLinuxPlatform,
+=======
+	currentPlatform,
+	isAndroidPlatform,
+	isLinuxPlatform,
+	isMacosPlatform,
+>>>>>>> origin/forgejo-sync
 	isMobilePlatform,
 } from "$lib/platform/os";
 
@@ -67,3 +74,33 @@ describe("isLinuxPlatform", () => {
 		expect(isLinuxPlatform()).toBe(false);
 	});
 });
+<<<<<<< HEAD
+=======
+
+describe("isMacosPlatform", () => {
+	it("is false outside Tauri instead of reading the missing os plugin", () => {
+		expect(isMacosPlatform()).toBe(false);
+	});
+
+	it("is true only on macos", () => {
+		runningOn("macos");
+		expect(isMacosPlatform()).toBe(true);
+
+		runningOn("ios");
+		expect(isMacosPlatform()).toBe(false);
+	});
+});
+
+describe("currentPlatform", () => {
+	it("reports web outside Tauri instead of reading the missing os plugin", () => {
+		expect(currentPlatform()).toBe("web");
+	});
+
+	it("reports the host platform inside Tauri", () => {
+		runningOn("android");
+		expect(currentPlatform()).toBe("android");
+		runningOn("macos");
+		expect(currentPlatform()).toBe("macos");
+	});
+});
+>>>>>>> origin/forgejo-sync

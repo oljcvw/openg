@@ -1042,6 +1042,7 @@
 			]
 		},
 		{
+<<<<<<< HEAD
 			"id": "@tauri-apps/plugin-fs",
 			"name": "@tauri-apps/plugin-fs",
 			"ecosystem": "npm",
@@ -1056,6 +1057,8 @@
 			]
 		},
 		{
+=======
+>>>>>>> origin/forgejo-sync
 			"id": "@tauri-apps/plugin-geolocation",
 			"name": "@tauri-apps/plugin-geolocation",
 			"ecosystem": "npm",
@@ -1102,7 +1105,11 @@
 			"name": "bits-ui",
 			"ecosystem": "npm",
 			"versions": [
+<<<<<<< HEAD
 				"2.18.1"
+=======
+				"2.19.2"
+>>>>>>> origin/forgejo-sync
 			],
 			"spdx": "MIT",
 			"url": "https://github.com/huntabyte/bits-ui",
@@ -4030,7 +4037,11 @@
 			"name": "grindr",
 			"ecosystem": "rust",
 			"versions": [
+<<<<<<< HEAD
 				"0.19.0+26.15.1.174557"
+=======
+				"0.25.0+26.17.0.181424"
+>>>>>>> origin/forgejo-sync
 			],
 			"spdx": "MIT",
 			"shipped": "MIT",

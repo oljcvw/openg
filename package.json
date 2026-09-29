@@ -8,7 +8,7 @@
 		"postinstall": "bun run patch-deps",
 		"build": "bun run patch-deps && vite build",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:tools": "bun x tsc --noEmit -p tsconfig.tools.json",
+		"check:tools": "bun x tsc --noEmit -p tsconfig.tools.json && bun x tsc --noEmit -p scripts/store-screenshots",
 		"check:config": "opengrind-config check",
 		"check:deps": "cargo deny --manifest-path src-tauri/Cargo.toml check && bun audit && bun audit --cwd docs",
 		"bump": "bun scripts/bump-version.ts",
@@ -21,10 +21,20 @@
 		"docs": "bun run --cwd docs start",
 		"format": "prettier --write .",
 		"gen:icons": "bash scripts/gen-icons.sh",
+<<<<<<< HEAD
+=======
+		"gen:screenshots": "bun scripts/store-screenshots/capture.ts",
+		"gen:screenshot-grids": "bun scripts/store-screenshots/grids.ts",
+		"gen:hero": "bun scripts/store-screenshots/hero.ts",
+>>>>>>> origin/forgejo-sync
 		"gen:credits": "bun scripts/gen-credits.ts",
 		"check:credits": "bun scripts/gen-credits.ts --check",
 		"check:credits-sync": "bun scripts/check-credits-sync.ts",
 		"check:credits-android": "bun scripts/check-android-credits.ts",
+<<<<<<< HEAD
+=======
+		"package:linux": "podman build -t open-grind-linux ci/linux && podman run --rm -v \"$PWD:/work\" open-grind-linux sh ci/linux/build.sh",
+>>>>>>> origin/forgejo-sync
 		"package:macos": "nix run .#build-macos --",
 		"lint": "svelte-kit sync && eslint --concurrency=2 .",
 		"preview": "vite preview",
@@ -36,6 +46,10 @@
 		"test:coverage": "svelte-kit sync && vitest run --coverage",
 		"test:unit": "svelte-kit sync && vitest run",
 		"test:e2e": "playwright test",
+		"test:e2e:guard": "playwright test -c playwright.guard.config.ts",
+		"test:live": "playwright test -c e2e-live/playwright.live.config.ts --project flows",
+		"test:live:sweep": "playwright test -c e2e-live/playwright.live.config.ts --project sweep",
+		"test:live:device": "playwright test -c e2e-live/playwright.live.config.ts --project device",
 		"dev:updater-server": "bun scripts/updater-release-server.ts",
 		"test:android": "cd src-tauri/gen/android && ./gradlew :app:testUniversalReleaseUnitTest",
 		"test:android-logic": "src-tauri/gen/android/gradlew -p src-tauri/android-logic test"
@@ -43,6 +57,7 @@
 	"overrides": {
 		"brace-expansion": "^5.0.9",
 		"cookie": "^0.7.0",
+		"devalue": "^5.9.1",
 		"nanoid": "^3.3.18",
 		"postcss": "^8.5.24",
 		"postcss-selector-parser": "^7.1.3",
@@ -56,7 +71,6 @@
 		"@tauri-apps/api": "^2.11.0",
 		"@tauri-apps/plugin-clipboard-manager": "^2.3.2",
 		"@tauri-apps/plugin-dialog": "~2",
-		"@tauri-apps/plugin-fs": "~2.5.1",
 		"@tauri-apps/plugin-geolocation": "~2.3.2",
 		"@tauri-apps/plugin-opener": "~2.5",
 		"@tauri-apps/plugin-os": "~2.3.2",
@@ -73,6 +87,7 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
+		"@axe-core/playwright": "^4.13.0",
 		"@fontsource-variable/ibm-plex-sans": "^5.2.8",
 		"@icons-pack/svelte-simple-icons": "^7.2.0",
 		"@internationalized/date": "^3.12.1",
@@ -87,7 +102,11 @@
 		"@types/bun": "^1.3.14",
 		"@types/leaflet": "^1.9.21",
 		"@vitest/coverage-v8": "^4.1.11",
+<<<<<<< HEAD
 		"bits-ui": "^2.18.1",
+=======
+		"bits-ui": "^2.19.2",
+>>>>>>> origin/forgejo-sync
 		"clsx": "^2.1.1",
 		"embla-carousel-svelte": "^8.6.0",
 		"eslint": "^10.3.0",
@@ -96,6 +115,10 @@
 		"phosphor-svelte": "^3.1.0",
 		"prettier": "^3.8.3",
 		"shadcn-svelte": "^1.2.7",
+<<<<<<< HEAD
+=======
+		"sharp": "^0.35.4",
+>>>>>>> origin/forgejo-sync
 		"svelte": "^5.57.0",
 		"svelte-check": "^4.6.0",
 		"tailwind-merge": "^3.5.0",
@@ -109,6 +132,7 @@
 	"patchedDependencies": {
 		"vaul-svelte@1.0.0-next.7": "patches/vaul-svelte@1.0.0-next.7.patch",
 		"@sveltejs/kit@2.70.2": "patches/@sveltejs%2Fkit@2.70.2.patch",
-		"svelte-sonner@1.1.1": "patches/svelte-sonner@1.1.1.patch"
+		"svelte-sonner@1.1.1": "patches/svelte-sonner@1.1.1.patch",
+		"bits-ui@2.19.2": "patches/bits-ui@2.19.2.patch"
 	}
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { tick } from "svelte";
+	import { onDestroy, tick } from "svelte";
 
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
@@ -13,28 +13,38 @@
 	import { restoreScrollOnce } from "$lib/util/scroll-restore.svelte";
 	import { SelectionSet } from "$lib/util/selection.svelte";
 	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
+<<<<<<< HEAD
 	import Conversation from "./Conversation.svelte";
+=======
+>>>>>>> origin/forgejo-sync
 	import ConversationsPagingTail from "./ConversationsPagingTail.svelte";
 	import ConversationsSelectionBar from "./ConversationsSelectionBar.svelte";
 	import DeleteConversationsDialog from "./DeleteConversationsDialog.svelte";
 	import ConversationsFilters from "./filters/ConversationsFilters.svelte";
 	import LazyConversation from "./LazyConversation.svelte";
+	import { MountQueue } from "./mount-queue";
+
+	let {
+		covered = false,
+		class: className,
+	}: { covered?: boolean; class?: import("svelte/elements").ClassValue } =
+		$props();
 
 	const EAGER_COUNT = 10;
 
 	const conversations: ConversationsState = getConversations();
 	const mobile = below("split");
+	const mountQueue = new MountQueue();
+
+	onDestroy(() => mountQueue.destroy());
 
 	$effect(() => {
-		conversations.noteListViewed();
+		if (!covered) conversations.noteListViewed();
 	});
 
 	let container: HTMLDivElement | null = $state(null);
 
-	restoreScrollOnce(() => container, conversations);
-
-	let { class: className }: { class?: import("svelte/elements").ClassValue } =
-		$props();
+	restoreScrollOnce({ container: () => container, state: conversations });
 
 	const selection = new SelectionSet<string>();
 	let selecting = $state(false);
@@ -87,7 +97,7 @@
 	}
 
 	$effect(() => {
-		if (selecting && (!mobile.current || selection.size === 0)) {
+		if (selecting && (!mobile.current || covered || selection.size === 0)) {
 			exitSelection();
 		}
 	});
@@ -195,27 +205,17 @@
 					{#each conversations.entries as conversation, i (conversation.data.conversationId)}
 						{@const conversationId =
 							conversation.data.conversationId}
-						{#if i < EAGER_COUNT}
-							<Conversation
-								{conversation}
-								selection={selecting ? selection : null}
-								onEnterSelection={mobile.current
-									? () => enterSelection(conversationId)
-									: undefined}
-								onRequestDelete={() =>
-									requestDelete([conversationId])}
-							/>
-						{:else}
-							<LazyConversation
-								{conversation}
-								selection={selecting ? selection : null}
-								onEnterSelection={mobile.current
-									? () => enterSelection(conversationId)
-									: undefined}
-								onRequestDelete={() =>
-									requestDelete([conversationId])}
-							/>
-						{/if}
+						<LazyConversation
+							{conversation}
+							eager={i < EAGER_COUNT}
+							queue={mountQueue}
+							selection={selecting ? selection : null}
+							onEnterSelection={mobile.current
+								? () => enterSelection(conversationId)
+								: undefined}
+							onRequestDelete={() =>
+								requestDelete([conversationId])}
+						/>
 					{/each}
 					<ConversationsPagingTail
 						paging={conversations.paging}

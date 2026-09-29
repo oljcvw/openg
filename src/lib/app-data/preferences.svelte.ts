@@ -25,8 +25,10 @@ const preferencesSchema = z.object({
 		.default(null)
 		.catch(null),
 	geohash: geohashSchema.nullable().default(null),
+	hapticFeedback: z.boolean().default(true),
 	onboardingComplete: z.boolean().default(false),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
+	notificationsEnabled: z.boolean().default(false),
 	revealMessageRead: z.boolean().default(false),
 	revealProfileViews: z.boolean().default(false),
 	stayOnline: z.boolean().default(true),
@@ -34,6 +36,12 @@ const preferencesSchema = z.object({
 });
 
 type Preferences = z.infer<typeof preferencesSchema>;
+
+export type BooleanPreference = {
+	[Key in keyof Preferences]-?: Preferences[Key] extends boolean
+		? Key
+		: never;
+}[keyof Preferences];
 
 let writeQueue: Promise<unknown> = Promise.resolve();
 let snapshot = $state<Preferences>(preferencesSchema.parse({}));
@@ -90,7 +98,7 @@ export async function getPreferences(): Promise<Preferences> {
 	return structuredClone(await hydrating);
 }
 
-export function getPreferencesSnapshot(): Preferences {
+export function preferencesSnapshot(): Preferences {
 	return snapshot;
 }
 
@@ -135,6 +143,7 @@ const accountPreferenceKeys = [
 	"autoUpdateLocation",
 	"geohash",
 	"gridSearchFilters",
+	"notificationsEnabled",
 ] as const;
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {

@@ -12,16 +12,19 @@
 	import { Button } from "$lib/components/ui/button";
 	import { now } from "$lib/util/clock";
 	import { formatMediaDuration } from "$lib/util/format-time";
+	import { firstFrameSrc } from "$lib/util/media";
 	import VideoScrubber from "./VideoScrubber.svelte";
 
 	let {
 		src,
 		poster,
+		loop = false,
 		onready,
 		onfail,
 	}: {
 		src: string;
 		poster: string | null;
+		loop?: boolean;
 		onready?: () => void;
 		onfail?: (failure: { undecodable: boolean; detail: string }) => void;
 	} = $props();
@@ -72,6 +75,7 @@
 	let paused = $state(true);
 	let muted = $state(true);
 	let currentTime = $state(0);
+	let queuedSeek = $state<number | null>(null);
 	let duration = $state(0);
 	let buffered = $state<SvelteMediaTimeRange[]>([]);
 
@@ -93,6 +97,17 @@
 
 	function toggle(event: PointerEvent) {
 		if (event.pointerType !== "mouse") revealed = !revealed;
+	}
+
+	function seek(time: number) {
+		if (element?.seeking) queuedSeek = time;
+		else currentTime = time;
+	}
+
+	function seeked() {
+		if (queuedSeek === null) return;
+		currentTime = queuedSeek;
+		queuedSeek = null;
 	}
 
 	function focusEntered(event: FocusEvent) {
@@ -126,12 +141,17 @@
 		bind:currentTime
 		bind:duration
 		bind:buffered
-		{src}
+		src={poster === null ? firstFrameSrc(src) : src}
 		poster={poster ?? undefined}
+		{loop}
 		playsinline
 		preload="metadata"
 		class="size-full object-contain"
 		onloadeddata={loaded}
+<<<<<<< HEAD
+=======
+		onseeked={seeked}
+>>>>>>> origin/forgejo-sync
 		onerror={failed}
 	></video>
 	{#if controlsVisible}
@@ -157,13 +177,13 @@
 					{/if}
 				</Button>
 				<span class="shrink-0 text-[13px] tracking-tight tabular-nums">
-					{formatMediaDuration(currentTime)}
+					{formatMediaDuration(queuedSeek ?? currentTime)}
 				</span>
 				<VideoScrubber
-					{currentTime}
+					currentTime={queuedSeek ?? currentTime}
 					{duration}
 					{buffered}
-					onseek={(time) => (currentTime = time)}
+					onseek={seek}
 				/>
 				<span class="shrink-0 text-[13px] tracking-tight tabular-nums">
 					{formatMediaDuration(duration)}

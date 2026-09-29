@@ -7,14 +7,26 @@
 		label,
 		error,
 		hint,
-		children,
-	}: { label: string; error?: string; hint?: string; children: Snippet } =
-		$props();
+		control,
+		picker,
+	}: { label: string; error?: string; hint?: string } & (
+		| { control: Snippet<[{ id: string }]>; picker?: never }
+		| { picker: Snippet<[{ labelId: string }]>; control?: never }
+	) = $props();
+
+	const id = $props.id();
 </script>
 
 <div class="flex flex-col gap-1.5">
-	<Label class="px-1">{label}</Label>
-	{@render children()}
+	<Label
+		class="px-1"
+		for={control ? id : undefined}
+		id={picker ? id : undefined}
+	>
+		{label}
+	</Label>
+	{@render control?.({ id })}
+	{@render picker?.({ labelId: id })}
 	{#if error}
 		<p class="px-1 text-xs text-destructive">{error}</p>
 	{:else if hint}

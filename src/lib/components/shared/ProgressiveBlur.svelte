@@ -5,6 +5,7 @@
 		class: className,
 		bgClass,
 		contentClass,
+		contentScrollIntent,
 		children,
 		direction,
 		tag = "div",
@@ -13,6 +14,7 @@
 		class?: import("svelte/elements").ClassValue;
 		bgClass?: import("svelte/elements").ClassValue;
 		contentClass?: import("svelte/elements").ClassValue;
+		contentScrollIntent?: "x";
 		children?: import("svelte").Snippet;
 		direction: "topToBottom" | "bottomToTop";
 		tag?: keyof HTMLElementTagNameMap;
@@ -35,7 +37,14 @@
 		<div class="pblur-layer" data-pblur-layer={layer}></div>
 	{/each}
 	<div class="pblur-scrim"></div>
+<<<<<<< HEAD
 	<div class={["relative z-12", contentClass]}>
+=======
+	<div
+		class={["relative z-12", contentClass]}
+		data-scroll-intent={contentScrollIntent}
+	>
+>>>>>>> origin/forgejo-sync
 		{@render children?.()}
 	</div>
 </svelte:element>

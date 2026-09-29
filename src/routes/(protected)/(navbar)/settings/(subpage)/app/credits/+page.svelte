@@ -1,4 +1,5 @@
 <script lang="ts">
+<<<<<<< HEAD
 	import { ArrowSquareOutIcon } from "phosphor-svelte";
 
 	import Link from "$lib/components/ui/link/Link.svelte";
@@ -6,6 +7,11 @@
 	import { loadCredits } from "$lib/credits";
 	import CreditCard from "./CreditCard.svelte";
 	import CreditRow from "./CreditRow.svelte";
+=======
+	import { Skeleton } from "$lib/components/ui/skeleton";
+	import { loadCredits } from "$lib/credits";
+	import CreditsList from "./CreditsList.svelte";
+>>>>>>> origin/forgejo-sync
 
 	const credits = loadCredits();
 </script>
@@ -17,6 +23,7 @@
 		{/each}
 	</div>
 {:then { cards, groups }}
+<<<<<<< HEAD
 	<h2>Special thanks</h2>
 	{#each cards as card (card.ref.ecosystem + card.ref.id)}
 		<CreditCard {card} />
@@ -38,11 +45,15 @@
 		Suggest an edit
 		<ArrowSquareOutIcon class="size-3.5" />
 	</Link>
+=======
+	<CreditsList {cards} {groups} />
+>>>>>>> origin/forgejo-sync
 {:catch}
 	<p class="px-1 py-8 text-center text-destructive">
 		Failed to load the credits. Please try again.
 	</p>
 {/await}
+<<<<<<< HEAD
 
 <style lang="postcss">
 	@reference "$layout";
@@ -51,3 +62,5 @@
 		@apply mt-2 truncate ps-1 text-xl font-semibold tracking-tight;
 	}
 </style>
+=======
+>>>>>>> origin/forgejo-sync

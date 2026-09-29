@@ -24,7 +24,11 @@ if (!downloads || !out || FLEETS.every(({ boxes }) => boxes.length === 0)) {
 
 const byName = new Map<string, { paths: string[]; expected: number }>();
 for await (const entry of new Bun.Glob(
+<<<<<<< HEAD
 	"open-grind-unsigned-*/*.{apk,deb,exe,AppImage}",
+=======
+	"open-grind-unsigned-*/*.{aab,apk,deb,exe,AppImage}",
+>>>>>>> origin/forgejo-sync
 ).scan({ cwd: downloads })) {
 	const [dir = "", name = ""] = entry.split("/");
 	const fleet = FLEETS.find(({ prefix }) => dir.startsWith(prefix));

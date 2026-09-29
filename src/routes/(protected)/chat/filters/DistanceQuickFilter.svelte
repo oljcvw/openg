@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { untrack } from "svelte";
 
+<<<<<<< HEAD
 	import { getPreferencesSnapshot } from "$lib/app-data/preferences.svelte";
+=======
+	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
+>>>>>>> origin/forgejo-sync
 	import {
 		closestMaxDistanceStep,
 		DEFAULT_MAX_DISTANCE_STEP,
@@ -21,7 +25,11 @@
 		onapply: (distanceMetres: number | null) => void;
 	} = $props();
 
+<<<<<<< HEAD
 	const units = $derived(getPreferencesSnapshot().units);
+=======
+	const units = $derived(preferencesSnapshot().units);
+>>>>>>> origin/forgejo-sync
 
 	let enabled = $state(false);
 	let step = $state(DEFAULT_MAX_DISTANCE_STEP);

@@ -3,7 +3,8 @@
 @import "shadcn-svelte/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
-@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
+@custom-variant hover (&:hover:where([data-hover-pointer] *));
+@custom-variant can-hover (&:where([data-hover-pointer] *));
 
 :root {
 	--radius: 1rem;
@@ -40,6 +41,8 @@
 	--sidebar-ring: oklch(0.556 0 0);
 	--message-bubble-in: oklch(0.7882 0.1455 228.36);
 	--message-bubble-out: oklch(0.8618 0.1973 89.76);
+	--stack-scrim: 0.8;
+	--stack-edge: -1px 0 0 oklch(1 0 0 / 10%);
 	--list-rail: 117px;
 	--safe-area-top: 0px;
 	--safe-area-bottom: 0px;
@@ -107,6 +110,10 @@
 	--breakpoint-selection-bar-compact: 350px;
 	--breakpoint-selection-bar-collapse: 300px;
 	--breakpoint-cramped: 250px;
+}
+
+@theme {
+	--container-media-panel: 50rem;
 }
 
 @theme {
@@ -350,6 +357,11 @@ a {
 	@apply size-full overflow-auto overscroll-contain;
 }
 
+[data-offscreen-skip] {
+	content-visibility: auto;
+	contain-intrinsic-block-size: auto var(--offscreen-block-size);
+}
+
 [data-sonner-toaster] {
 	font-family: var(--font-sans) !important;
 	/* bits-ui modal dialogs set body { pointer-events: none }; toasts must stay tappable */
@@ -401,6 +413,63 @@ a {
 	}
 }
 
+@media (prefers-reduced-motion: reduce) {
+	.incoming-message-toast[data-sonner-toast] {
+		--fly-out: translateY(0);
+		transition: opacity 180ms ease-out !important;
+	}
+
+	.incoming-message-toast[data-sonner-toast][data-mounted="false"],
+	.incoming-message-toast[data-sonner-toast][data-removed="true"] {
+		opacity: 0 !important;
+		transition: opacity 180ms ease-in !important;
+	}
+
+	.incoming-message-toast[data-sonner-toast][data-swipe-out="true"][data-swipe-direction="up"] {
+		animation: none !important;
+	}
+
+	[class*="animate-in"],
+	[class*="animate-out"] {
+		--tw-enter-translate-x: 0;
+		--tw-enter-translate-y: 0;
+		--tw-enter-scale: 1;
+		--tw-enter-rotate: 0;
+		--tw-exit-translate-x: 0;
+		--tw-exit-translate-y: 0;
+		--tw-exit-scale: 1;
+		--tw-exit-rotate: 0;
+	}
+
+	[data-vaul-drawer] {
+		transition-duration: 0s !important;
+	}
+
+	[data-vaul-drawer][data-vaul-snap-points="false"]:not(
+			[data-vaul-animate="false"]
+		) {
+		animation-name: reduced-motion-fade-in !important;
+	}
+
+	[data-vaul-drawer][data-vaul-snap-points="false"][data-state="closed"]:not(
+			[data-vaul-animate="false"]
+		) {
+		animation-name: reduced-motion-fade-out !important;
+	}
+}
+
+@keyframes reduced-motion-fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes reduced-motion-fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
 @theme {
 	--apple-system-glass-material-clear: -apple-system-glass-material-clear;
 	--apple-system-glass-material-media-controls: -apple-system-glass-material-media-controls;
@@ -415,6 +484,17 @@ a {
 	background-image: var(--scrim);
 }
 
+<<<<<<< HEAD
+=======
+@utility media-chip {
+	@apply rounded-full border border-white/10 bg-popover/40 scrim;
+}
+
+@utility media-pill {
+	@apply bg-popover/20 scrim;
+}
+
+>>>>>>> origin/forgejo-sync
 /* Backdrop blur: one token map per mode, keyed by data-backdrop-blur on <html>. */
 :root {
 	--bar-content-gap: 0px;
@@ -423,6 +503,12 @@ a {
 	--bd-rail: blur(16px);
 	--bd-panel: blur(24px);
 	--bd-chip: blur(40px);
+<<<<<<< HEAD
+=======
+	--pill-frost: url(#frost-pill-40);
+	--chip-frost: url(#frost-tile) url(#frost-round-40);
+	--veil-frost: url(#frost-tile) url(#frost-round-8);
+>>>>>>> origin/forgejo-sync
 	--glass-controls-bg: rgba(0, 0, 0, 0.4);
 	--glass-controls-subdued-bg: rgba(0, 0, 0, 0.2);
 	--scrim: none;
@@ -432,6 +518,11 @@ a {
 	--bd-rail: blur(12px);
 	--bd-panel: blur(16px);
 	--bd-chip: blur(24px);
+<<<<<<< HEAD
+=======
+	--pill-frost: url(#frost-pill-24);
+	--chip-frost: url(#frost-tile) url(#frost-round-24);
+>>>>>>> origin/forgejo-sync
 	--bar-content-gap: 0.75rem;
 }
 
@@ -474,6 +565,10 @@ a {
 .pblur-layer {
 	display: block;
 	backdrop-filter: var(--pblur-blur);
+<<<<<<< HEAD
+=======
+	-webkit-mask-image: linear-gradient(var(--pblur-dir), var(--pblur-stops));
+>>>>>>> origin/forgejo-sync
 	mask-image: linear-gradient(var(--pblur-dir), var(--pblur-stops));
 }
 
@@ -575,6 +670,14 @@ a {
 	.pblur-layer[data-pblur-layer="0"] {
 	top: calc(-1 * var(--pblur-overhang));
 	height: calc(100% + var(--pblur-overhang));
+<<<<<<< HEAD
+=======
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		transparent var(--pblur-overhang),
+		black var(--pblur-overhang)
+	);
+>>>>>>> origin/forgejo-sync
 	mask-image: linear-gradient(
 		to bottom,
 		transparent var(--pblur-overhang),
@@ -585,6 +688,14 @@ a {
 	.pblur[data-pblur-direction="topToBottom"]
 	.pblur-layer[data-pblur-layer="0"] {
 	height: calc(100% + var(--pblur-overhang));
+<<<<<<< HEAD
+=======
+	-webkit-mask-image: linear-gradient(
+		to top,
+		transparent var(--pblur-overhang),
+		black var(--pblur-overhang)
+	);
+>>>>>>> origin/forgejo-sync
 	mask-image: linear-gradient(
 		to top,
 		transparent var(--pblur-overhang),
@@ -613,6 +724,21 @@ a {
 	display: none;
 }
 :root[data-backdrop-blur="off"] .pblur-bg {
+<<<<<<< HEAD
+=======
+	-webkit-mask-image: linear-gradient(
+		var(--pblur-dir),
+		rgba(0, 0, 0, 0) 0%,
+		rgba(0, 0, 0, 0.061) 7%,
+		rgba(0, 0, 0, 0.216) 14%,
+		rgba(0, 0, 0, 0.425) 20%,
+		rgba(0, 0, 0, 0.648) 27%,
+		rgba(0, 0, 0, 0.844) 34%,
+		rgba(0, 0, 0, 0.972) 40%,
+		rgba(0, 0, 0, 1) 45%,
+		rgba(0, 0, 0, 1) 100%
+	);
+>>>>>>> origin/forgejo-sync
 	mask-image: linear-gradient(
 		var(--pblur-dir),
 		rgba(0, 0, 0, 0) 0%,
@@ -626,6 +752,12 @@ a {
 		rgba(0, 0, 0, 1) 100%
 	);
 }
+<<<<<<< HEAD
+=======
+:root[data-backdrop-blur="off"] .frost {
+	display: none;
+}
+>>>>>>> origin/forgejo-sync
 :root[data-backdrop-blur="off"] .pblur-scrim {
 	display: block;
 	background-image: linear-gradient(
@@ -689,10 +821,30 @@ a {
 		--glass-controls-subdued-bg: rgba(0, 0, 0, 0.42);
 		--scrim: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
 	}
+<<<<<<< HEAD
 	:root:root .pblur-layer {
 		display: none;
 	}
 	:root:root .pblur-bg {
+=======
+	:root:root .pblur-layer,
+	:root:root .frost {
+		display: none;
+	}
+	:root:root .pblur-bg {
+		-webkit-mask-image: linear-gradient(
+			var(--pblur-dir),
+			rgba(0, 0, 0, 0) 0%,
+			rgba(0, 0, 0, 0.061) 7%,
+			rgba(0, 0, 0, 0.216) 14%,
+			rgba(0, 0, 0, 0.425) 20%,
+			rgba(0, 0, 0, 0.648) 27%,
+			rgba(0, 0, 0, 0.844) 34%,
+			rgba(0, 0, 0, 0.972) 40%,
+			rgba(0, 0, 0, 1) 45%,
+			rgba(0, 0, 0, 1) 100%
+		);
+>>>>>>> origin/forgejo-sync
 		mask-image: linear-gradient(
 			var(--pblur-dir),
 			rgba(0, 0, 0, 0) 0%,

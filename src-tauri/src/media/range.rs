@@ -1,6 +1,10 @@
 use tauri::http::{header, Response, StatusCode};
 
 use super::cache::CachedMedia;
+<<<<<<< HEAD
+=======
+use super::requested::Requested;
+>>>>>>> origin/forgejo-sync
 use super::response::{deliver, refused, Freshness};
 
 enum Slice {
@@ -10,43 +14,21 @@ enum Slice {
 }
 
 fn parse_range(range: Option<&str>, len: usize) -> Slice {
-	let Some(spec) = range.and_then(|value| value.strip_prefix("bytes="))
-	else {
-		return Slice::Whole;
-	};
-	if spec.contains(',') {
-		return Slice::Whole;
-	}
-	let Some((start, end)) = spec.split_once('-') else {
-		return Slice::Whole;
-	};
-	if start.is_empty() {
-		let Ok(suffix) = end.parse::<u64>() else {
-			return Slice::Whole;
-		};
-		if suffix == 0 || len == 0 {
-			return Slice::Unsatisfiable;
+	let total = len as u64;
+	let (first, last) = match Requested::parse(range) {
+		Requested::Whole => return Slice::Whole,
+		Requested::Suffix(suffix) if suffix == 0 || len == 0 => {
+			return Slice::Unsatisfiable
 		}
-		let take = suffix.min(len as u64) as usize;
-		return Slice::Part {
-			start: len - take,
-			end: len,
-		};
-	}
-	let Ok(first) = start.parse::<u64>() else {
-		return Slice::Whole;
+		Requested::Suffix(suffix) => (total - suffix.min(total), total - 1),
+		Requested::From(first) => (first, total.saturating_sub(1)),
+		Requested::Closed { first, last } => {
+			(first, last.min(total.saturating_sub(1)))
+		}
 	};
-	if first >= len as u64 {
+	if first >= total {
 		return Slice::Unsatisfiable;
 	}
-	let last = if end.is_empty() {
-		len as u64 - 1
-	} else {
-		match end.parse::<u64>() {
-			Ok(last) if last >= first => last.min(len as u64 - 1),
-			_ => return Slice::Whole,
-		}
-	};
 	Slice::Part {
 		start: first as usize,
 		end: last as usize + 1,
@@ -94,6 +76,7 @@ pub fn deliver_ranged(
 
 #[cfg(test)]
 mod tests {
+	use super::super::tests::header_str;
 	use super::*;
 
 	fn media(body: &'static [u8]) -> CachedMedia {
@@ -110,6 +93,7 @@ mod tests {
 			false,
 			Freshness::Uncacheable,
 		)
+<<<<<<< HEAD
 	}
 
 	fn header_str(
@@ -117,6 +101,8 @@ mod tests {
 		name: header::HeaderName,
 	) -> Option<&str> {
 		response.headers().get(name).and_then(|v| v.to_str().ok())
+=======
+>>>>>>> origin/forgejo-sync
 	}
 
 	#[test]

@@ -1,6 +1,8 @@
+import { basename } from "node:path";
+
 import { $ } from "bun";
 
-import { hostAssetSuffix } from "./lib/asset-suffix";
+import { assetSuffix } from "./lib/asset-suffix";
 import { MACOS_TARGET, macosBundle } from "./lib/macos-bundle";
 import { only } from "./lib/only";
 
@@ -39,7 +41,11 @@ const stamp = new Date(Number(epoch) * 1000)
 const { version } = await Bun.file(`${root}/src-tauri/tauri.conf.json`).json();
 const zip = appStore
 	? `${out}/open-grind-v${version}-macos-appstore.zip`
+<<<<<<< HEAD
 	: `${out}/open-grind-v${version}${hostAssetSuffix()}`;
+=======
+	: `${out}/open-grind-v${version}${assetSuffix("zip")}`;
+>>>>>>> origin/forgejo-sync
 
 const SYSTEM_DYLIBS = ["libiconv.2.dylib"];
 
@@ -59,6 +65,28 @@ async function useSystemDylibs(binary: string): Promise<void> {
 	}
 }
 
+<<<<<<< HEAD
+=======
+const MACH_O_MAGIC = ["cffaedfe", "cafebabe"];
+
+async function verifyShipped(zip: string): Promise<void> {
+	const unpacked = (await $`mktemp -d`.text()).trim();
+	await $`ditto -x -k ${zip} ${unpacked}`;
+	const shipped = await only("*.app", unpacked);
+	await $`codesign --verify --strict --deep ${shipped}`;
+	for await (const path of new Bun.Glob("**").scan({ cwd: shipped })) {
+		const file = `${shipped}/${path}`;
+		const head = await Bun.file(file).slice(0, 4).bytes();
+		if (!MACH_O_MAGIC.includes(Buffer.from(head).toString("hex"))) continue;
+		const { stderr } = await $`codesign -dv ${file}`.quiet();
+		if (!/flags=0x[0-9a-f]+\([^)]*runtime/.test(stderr.toString())) {
+			throw new Error(`${path} is signed without the hardened runtime`);
+		}
+	}
+	await $`rm -rf ${unpacked}`;
+}
+
+>>>>>>> origin/forgejo-sync
 await $`bun run tauri build ${profile === "debug" ? ["--debug"] : []} ${variant} --features ${features} --target ${MACOS_TARGET} --bundles app`.cwd(
 	root,
 );
@@ -67,19 +95,34 @@ await $`rm -rf ${out}`;
 await $`mkdir -p ${out}`;
 
 const app = await only("*.app", bundles);
+<<<<<<< HEAD
 await useSystemDylibs(`${app}/Contents/MacOS/open-grind`);
 
 const timestamped = adHoc ? [] : ["--timestamp"];
 const entitled = (await Bun.file(entitlements).exists())
 	? ["--entitlements", entitlements]
 	: [];
+=======
+const binary = `${app}/Contents/MacOS/open-grind`;
+await useSystemDylibs(binary);
+>>>>>>> origin/forgejo-sync
 
-await $`codesign --force --deep --sign ${identity} --options runtime ${timestamped} ${entitled} ${app}`;
-await $`codesign --verify --strict ${app}`;
+const entitled = await Bun.file(entitlements).exists();
+
+if (adHoc) {
+	await $`codesign_allocate -i ${binary} -r -o ${binary}.unsigned`;
+	await $`mv ${binary}.unsigned ${binary}`;
+	await $`rcodesign sign -C /dev/null --code-signature-flags runtime ${entitled ? ["--entitlements-xml-file", entitlements] : []} ${app}`;
+} else {
+	await $`codesign --force --deep --sign ${identity} --options runtime --timestamp ${entitled ? ["--entitlements", entitlements] : []} ${app}`;
+}
 
 const archive = async () => {
+	await $`chmod -R u=rwX,go=rX ${app}`;
 	await $`find ${app} -depth -exec touch -h -d ${stamp} '{}' +`;
-	await $`ditto -c -k --keepParent ${app} ${zip}`;
+	await $`find ${basename(app)} | sort | zip -q -X -y -9 -@ ${zip}`.cwd(
+		bundles,
+	);
 };
 
 if (notaryProfile) {
@@ -89,6 +132,7 @@ if (notaryProfile) {
 	await $`rm -f ${zip}`;
 }
 await archive();
+await verifyShipped(zip);
 
 const digest = new Bun.CryptoHasher("sha256")
 	.update(await Bun.file(zip).bytes())

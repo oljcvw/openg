@@ -46,7 +46,11 @@ const SURFACES: Surface[] = [
 	{
 		name: "the blocked list",
 		path: "/settings/account/blocked",
+<<<<<<< HEAD
 		scroller: '[data-slot="settings-scroller"]',
+=======
+		scroller: '[data-slot="subpage-scroller"]',
+>>>>>>> origin/forgejo-sync
 		content: '[role="switch"]',
 	},
 ];
@@ -96,6 +100,40 @@ function geometry(page: Page, scroller: string) {
 }
 
 for (const surface of SURFACES) {
+<<<<<<< HEAD
+=======
+	test(`${surface.name} runs its content under the navbar`, async ({
+		page,
+	}) => {
+		await open(page, surface);
+
+		const { visibleBottom, navbarBottom } = await page
+			.locator(NAVBAR_PILL)
+			.evaluate((pill, scroller) => {
+				let visibleBottom = Infinity;
+				for (
+					let el = document.querySelector(scroller);
+					el !== null;
+					el = el.parentElement
+				) {
+					const clips = getComputedStyle(el).overflowY !== "visible";
+					if (clips || el === document.querySelector(scroller)) {
+						visibleBottom = Math.min(
+							visibleBottom,
+							el.getBoundingClientRect().bottom,
+						);
+					}
+				}
+				return {
+					visibleBottom,
+					navbarBottom: pill.getBoundingClientRect().bottom,
+				};
+			}, surface.scroller);
+
+		expect(visibleBottom).toBeGreaterThanOrEqual(navbarBottom);
+	});
+
+>>>>>>> origin/forgejo-sync
 	test(`${surface.name} offers a scroll-to-top button that clears the navbar`, async ({
 		page,
 	}) => {
@@ -156,7 +194,11 @@ test("a list that fits on screen never offers the button", async ({ page }) => {
 	});
 
 	const overflow = await page
+<<<<<<< HEAD
 		.locator('[data-slot="settings-scroller"]')
+=======
+		.locator('[data-slot="subpage-scroller"]')
+>>>>>>> origin/forgejo-sync
 		.evaluate((el) => el.scrollHeight - el.clientHeight);
 	expect(overflow).toBeLessThanOrEqual(TOP_SLOP_PX);
 	await expect(page.locator(BUTTON)).toHaveCount(0);

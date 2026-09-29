@@ -19,9 +19,12 @@ impl OauthProvider for Google {
 
 pub type GoogleOauthBridge = OauthBridge<Google>;
 
+<<<<<<< HEAD
 /// Registers the Google OAuth plugin and its per-platform state. On Android it binds
 /// the native `GoogleOauthPlugin` (companion-app intent hand-off); on desktop it
 /// manages the [`GoogleOauthBridge`] used by the WebView flow in [`web`].
+=======
+>>>>>>> origin/forgejo-sync
 pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 	tauri::plugin::Builder::new("google-oauth")
 		.setup(|_app, _api| {
@@ -32,6 +35,7 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<tauri::Wry> {
 					"GoogleOauthPlugin",
 				)?;
 				_app.manage(android::AndroidGoogleOauth { handle });
+				watch_handoff(_app);
 			}
 			#[cfg(not(target_os = "android"))]
 			{
@@ -49,7 +53,7 @@ pub async fn fetch_google_access_token(
 ) -> Result<String, AppError> {
 	#[cfg(target_os = "android")]
 	{
-		return android::fetch_token(app).await;
+		return android::fetch_companion_token(app).await;
 	}
 	#[cfg(not(target_os = "android"))]
 	{
@@ -57,3 +61,60 @@ pub async fn fetch_google_access_token(
 		web::fetch_access_token(app, bridge).await
 	}
 }
+<<<<<<< HEAD
+=======
+
+pub const HANDOFF_EVENT: &str = "google-oauth:handoff";
+
+#[cfg(target_os = "android")]
+fn watch_handoff(app: &AppHandle) {
+	use tauri::Emitter;
+
+	let sink = app.clone();
+	let channel = tauri::ipc::Channel::new(move |body| {
+		let signal: android::HandoffSignal = body.deserialize()?;
+		if signal.pending {
+			let _ = sink.emit(HANDOFF_EVENT, ());
+		}
+		Ok(())
+	});
+	if let Err(error) = android::watch_handoff(app, channel) {
+		tracing::warn!("[google-oauth] handoff events unavailable: {error}");
+	}
+}
+
+pub fn handoff_pending(app: &AppHandle) -> bool {
+	#[cfg(target_os = "android")]
+	{
+		android::handoff_pending(app)
+	}
+	#[cfg(not(target_os = "android"))]
+	{
+		let _ = app;
+		false
+	}
+}
+
+pub fn take_handoff(app: &AppHandle) -> Option<String> {
+	#[cfg(target_os = "android")]
+	{
+		android::take_handoff(app)
+	}
+	#[cfg(not(target_os = "android"))]
+	{
+		let _ = app;
+		None
+	}
+}
+
+pub fn discard_handoff(app: &AppHandle) {
+	#[cfg(target_os = "android")]
+	{
+		android::discard_handoff(app);
+	}
+	#[cfg(not(target_os = "android"))]
+	{
+		let _ = app;
+	}
+}
+>>>>>>> origin/forgejo-sync

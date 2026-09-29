@@ -1,14 +1,15 @@
 <script lang="ts">
 	import "photoswipe/style.css";
 	import { format } from "date-fns";
-	import { UserIcon } from "phosphor-svelte";
 	import z from "zod";
 	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
+	import UserSilhouette from "$lib/components/profile/UserSilhouette.svelte";
 	import { profileMediaUrl } from "$lib/util/media";
 	import {
 		applyPhotoSwipeBackGesture,
 		applyPhotoSwipeErrorUi,
+		applyPhotoSwipeOpenTracking,
 		applyPhotoSwipeThumbDimensions,
 		applyPhotoSwipeViewportSync,
 	} from "$lib/util/photoswipe";
@@ -24,14 +25,24 @@
 		}[];
 	} = $props();
 
+	const PHOTOS_LOADED_AHEAD = 2;
+	const SUBPIXEL_SNAP_PX = 1;
+
 	let gallery: HTMLDivElement | null = $state(null);
+	let reach = $state(PHOTOS_LOADED_AHEAD);
+
+	function raiseReach(index: number) {
+		if (index > reach) reach = index;
+	}
 
 	$effect(() => {
 		if (!gallery) return;
+		let disposed = false;
 		let lightbox: PhotoSwipeLightbox | undefined;
+		let stopOpenTracking: (() => void) | undefined;
 		import("photoswipe/lightbox")
 			.then(({ default: PhotoSwipeLightbox }) => {
-				if (!gallery) return;
+				if (disposed || !gallery) return;
 				lightbox = new PhotoSwipeLightbox({
 					gallery,
 					children: ".item[href]",
@@ -42,6 +53,10 @@
 				applyPhotoSwipeThumbDimensions(lightbox);
 				applyPhotoSwipeViewportSync(lightbox);
 				applyPhotoSwipeBackGesture(lightbox);
+				stopOpenTracking = applyPhotoSwipeOpenTracking(lightbox);
+				lightbox.on("beforeOpen", () => {
+					raiseReach(medias.length - 1);
+				});
 				lightbox.on("openingAnimationStart", () => {
 					gallery?.querySelectorAll(".item").forEach((item) => {
 						if (item instanceof HTMLElement) {
@@ -92,16 +107,21 @@
 				lightbox.init();
 			})
 			.catch((error) => console.error(error));
-		return () => lightbox?.destroy();
+		return () => {
+			disposed = true;
+			lightbox?.destroy();
+			stopOpenTracking?.();
+		};
 	});
 
-	const GAP = 4; //px
-	const PADDING_VERTICAL = 8; //px
-	const PADDING_HORIZONTAL = PADDING_VERTICAL;
-	const BULLET_SIZE = 8; //px
+	const GAP_PX = 4;
+	const PADDING_VERTICAL_PX = 8;
+	const PADDING_HORIZONTAL_PX = PADDING_VERTICAL_PX;
+	const BULLET_SIZE_PX = 8;
+	const BULLET_PITCH_PX = BULLET_SIZE_PX + GAP_PX;
 
-	let indicatorY = $state(PADDING_VERTICAL);
-	let indicatorHeight = $state(BULLET_SIZE);
+	let indicatorY = $state(PADDING_VERTICAL_PX);
+	let indicatorHeight = $state(BULLET_SIZE_PX);
 </script>
 
 <div class="relative aspect-3/4 h-auto max-h-photo w-full">
@@ -111,7 +131,8 @@
 			bind:this={gallery}
 			onscroll={() => {
 				if (!gallery) return;
-				const item = gallery.scrollTop / gallery.clientHeight;
+				const photoHeight = gallery.getBoundingClientRect().height;
+				const item = gallery.scrollTop / photoHeight;
 				const frac = item % 1;
 				const stretch = Math.min(frac, 1 - frac);
 				const index = Math.floor(item);
@@ -120,20 +141,24 @@
 					(item < medias.length - 1
 						? Math.max(0, (frac - 0.5) * 2)
 						: frac);
-				indicatorY = PADDING_VERTICAL + tipYp * (BULLET_SIZE + GAP);
-				const indicatorStretch = stretch * (BULLET_SIZE * 2 + GAP + 4);
+				indicatorY = PADDING_VERTICAL_PX + tipYp * BULLET_PITCH_PX;
+				const indicatorStretch = stretch * 2 * BULLET_PITCH_PX;
 				indicatorHeight =
-					BULLET_SIZE +
+					BULLET_SIZE_PX +
 					(item > 0 && item < medias.length - 1
 						? indicatorStretch
 						: 0);
+				const lastVisible = Math.ceil(
+					(gallery.scrollTop - SUBPIXEL_SNAP_PX) / photoHeight,
+				);
+				raiseReach(lastVisible + PHOTOS_LOADED_AHEAD);
 			}}
 		>
 			{#each medias as { mediaHash, createdAt }, index (mediaHash + index)}
 				{@const src = profileMediaUrl({ mediaHash, size: "full" })}
 				<ImageCarouselItem
 					{src}
-					thumb={src}
+					eager={index <= reach}
 					{createdAt}
 					label="Profile photo {index + 1} of {medias.length}"
 				/>
@@ -141,8 +166,13 @@
 		</div>
 		<div
 			class="absolute top-1/2 right-2 flex -translate-y-1/2 flex-col rounded-full bg-background/30 scrim p-2 backdrop-filter-(--bd-veil)"
+<<<<<<< HEAD
 			style:gap="{GAP}px"
 			style:padding="{PADDING_VERTICAL}px {PADDING_HORIZONTAL}px"
+=======
+			style:gap="{GAP_PX}px"
+			style:padding="{PADDING_VERTICAL_PX}px {PADDING_HORIZONTAL_PX}px"
+>>>>>>> origin/forgejo-sync
 		>
 			{#each medias, i (i)}
 				<span class="block size-2 rounded-full bg-neutral-200/40"
@@ -156,9 +186,7 @@
 		</div>
 	{:else}
 		<div class="absolute size-full bg-neutral-700">
-			<UserIcon
-				weight="fill"
-				color="var(--color-stone-400)"
+			<UserSilhouette
 				class="absolute top-1/2 left-1/2 size-3/4 -translate-1/2"
 			/>
 		</div>
@@ -175,7 +203,14 @@
 			display: none;
 		}
 		.pswp--profile-carousel .pswp__button--close {
+<<<<<<< HEAD
 			@apply mr-3 size-11 self-center rounded-full bg-black/55 opacity-100 backdrop-filter-(--bd-veil) focus:bg-black/55 active:bg-black/55 can-hover:hover:bg-black/75;
+=======
+			@apply mr-3 size-11 self-center rounded-full bg-black/55 opacity-100 backdrop-filter-(--bd-veil) focus:bg-black/55 active:bg-black/55;
+			@variant hover {
+				@apply bg-black/75;
+			}
+>>>>>>> origin/forgejo-sync
 		}
 		.pswp--profile-carousel .pswp__button--close .pswp__icn {
 			@apply inset-0 m-auto;

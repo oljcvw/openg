@@ -220,6 +220,13 @@ export const hivStatuses = {
 	[HivStatus.PositiveUndetectable]: "Positive, undetectable",
 } as const;
 
+export const UnsettableHivStatus = { PreferToDiscuss: 5 } as const;
+
+export const hivStatusLabels = {
+	...hivStatuses,
+	[UnsettableHivStatus.PreferToDiscuss]: "Prefer to discuss",
+} as const;
+
 export const hivStatusSchema = z.enum(HivStatus);
 
 export type HivStatusId = z.infer<typeof hivStatusSchema>;
@@ -319,6 +326,8 @@ export const profileMinSchema = z.object({
 	displayName: z.string().nullable().default(null),
 	onlineUntil: z.number().nullable().optional(),
 });
+
+export const PROFILE_PHOTO_AWAITING_REVIEW = 0;
 
 export const profileShortSchema = profileMaskedSchema
 	.extend(profileMinSchema.shape)

@@ -5,10 +5,11 @@
 	import { Tween } from "svelte/motion";
 
 	import clippy from "$lib/assets/clippy.avif";
-	import { Button } from "$lib/components/ui/button";
+	import { Button, buttonVariants } from "$lib/components/ui/button";
 	import * as Empty from "$lib/components/ui/empty";
 	import Link from "$lib/components/ui/link/Link.svelte";
 	import * as Tooltip from "$lib/components/ui/tooltip";
+	import { cn } from "$lib/util/utils";
 
 	let flip = $state(false);
 	const flipProgress = new Tween(0, { duration: 500 });
@@ -18,7 +19,7 @@
 <Empty.Root>
 	<Empty.Header>
 		<div
-			class="no-touch-callout size-10 cursor-help rounded-full transition-transform select-none perspective-near hover:scale-105"
+			class="no-touch-callout size-10 cursor-help rounded-full transition-transform select-none perspective-near hover:scale-105 motion-reduce:transition-none"
 			onpointerdown={() => {
 				flip = true;
 				flipProgress.target = 1;
@@ -37,7 +38,7 @@
 		>
 			<div
 				class={[
-					"relative size-full rounded-full transition-transform duration-500 transform-3d *:absolute *:top-0 *:left-0 *:size-full *:backface-hidden",
+					"relative size-full rounded-full transition-transform duration-500 transform-3d *:absolute *:top-0 *:left-0 *:size-full *:backface-hidden motion-reduce:transition-none",
 					{ "-rotate-y-180": flip },
 				]}
 			>
@@ -91,11 +92,15 @@
 			</Button>
 		</div>
 	</Empty.Content>
-	<Button variant="link" class="text-muted-foreground" size="sm">
-		<Link href="https://git.opengrind.org/open-grind/open-grind/issues">
-			Report an issue <ArrowUpRightIcon class="inline" />
-		</Link>
-	</Button>
+	<Link
+		href="https://git.opengrind.org/open-grind/open-grind/issues"
+		class={cn(
+			buttonVariants({ variant: "link", size: "sm" }),
+			"text-muted-foreground",
+		)}
+	>
+		Report an issue <ArrowUpRightIcon class="inline" />
+	</Link>
 </Empty.Root>
 
 <style>

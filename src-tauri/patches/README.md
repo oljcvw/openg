@@ -41,6 +41,23 @@ On Android the custom-protocol handler runs while the process-global `REQUEST_HA
 
 Backport of [wry 0.56.0](https://github.com/tauri-apps/wry/releases/tag/wry-v0.56.0). **Delete when a `tauri-runtime-wry` requiring `wry >= 0.56` is published**.
 
+<<<<<<< HEAD
+=======
+Android WebView paints `WebChromeClient.getDefaultVideoPoster()`, a gray play icon when it returns null, on every `<video>` without a `poster` until it plays or seeks. `android/kotlin/RustWebChromeClient.kt` returns a transparent bitmap instead. Backport of [wry#1804](https://github.com/tauri-apps/wry/pull/1804) from 0.56.1: **delete once the lock resolves `wry >= 0.56.1`**.
+
+On Android and Apple wry hands the WebView the fully buffered body. A handler can instead register a `ResponseStream` and name its id in the `x-wry-stream` header, and the WebView gets the body as it arrives. Like the Android WebView, the reader skips to the request's `Range` start first.
+
+| File                                    | Change                                                                                                                           |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `stream.rs`, `lib.rs`                   | `ResponseStream` and the id registry, exported on Android and Apple.                                                             |
+| `android/stream.rs`                     | The four `stream*` natives.                                                                                                      |
+| `android/binding.rs`                    | Register the natives in `android_binding!`.                                                                                      |
+| `android/kotlin/`                       | `RustInputStream` reads through the natives. `RustWebViewClient` swaps it in for the `x-wry-stream` header, and R8 keeps it.     |
+| `wkwebview/class/url_scheme_handler.rs` | A thread sends the stream in 64 KiB `didReceiveData` pieces with no default `Content-Length`, and `stopURLSchemeTask` closes it. |
+
+Not a backport: **keep it when the 0.56 hunks are deleted.**
+
+>>>>>>> origin/forgejo-sync
 ## tauri-codegen
 
 Embedded assets and CSP hashes are emitted in hash-map and `readdir` order. The patch sorts both.

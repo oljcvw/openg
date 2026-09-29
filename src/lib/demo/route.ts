@@ -1,15 +1,31 @@
 import {
+	albumContentOrderRequestSchema,
+	albumNameRequestSchema,
 	albumShareRequestSchema,
 	albumUnshareRequestSchema,
 } from "$lib/model/messaging/albums";
+import {
+	profileReportRequestSchema,
+	profileReportRequestV2Schema,
+	rightNowPostReportRequestSchema,
+} from "$lib/model/safety/reports";
 import { accountPreferencesUpdateSchema } from "$lib/model/settings/account";
 import type { InboxFilterRequest } from "$lib/api/messaging/conversations";
 import type { FavoriteNote } from "$lib/model/users/favorites";
 import { demoMeProfileId } from "./config";
 import {
+	demoAddToAlbum,
 	demoAlbumContent,
+	demoAlbumContentProcessing,
+	demoAlbumExists,
 	demoAlbumShares,
+	demoAlbumStorageLimits,
+	demoCreateAlbum,
+	demoDeleteAlbum,
+	demoDeleteAlbumContent,
 	demoMyAlbums,
+	demoRenameAlbum,
+	demoReorderAlbumContent,
 	demoShareAlbum,
 	demoUnshareAlbum,
 } from "./mock/albums";
@@ -18,6 +34,7 @@ import {
 	demoConversationMessages,
 	demoConversations,
 	demoDeleteConversation,
+	demoDeleteDrawerMedia,
 	demoDrawerMedia,
 	demoSentMessage,
 	demoSetConversationMuted,
@@ -49,6 +66,12 @@ import { demoReceivedTaps, demoViews } from "./mock/interest";
 import { profileSeed } from "./mock/profiles";
 import { demoGenders, demoPronouns, demoTags } from "./mock/reference";
 import {
+	demoProfileReport,
+	demoReportProfile,
+	demoReportRightNowPost,
+	demoRightNowPostReport,
+} from "./mock/reports";
+import {
 	demoAccountPreferences,
 	demoSetAccountPreferences,
 } from "./mock/settings";
@@ -61,6 +84,7 @@ function ok(body: unknown): DemoResponse {
 
 export function demoCallMethod(method: string): unknown {
 	switch (method) {
+<<<<<<< HEAD
 		case "auth_state":
 			return demoMeProfileId;
 		case "login":
@@ -68,13 +92,26 @@ export function demoCallMethod(method: string): unknown {
 		case "google_sign_in":
 		case "login_with_facebook":
 		case "refresh_token":
+=======
+		case "sign_in_with_email":
+		case "sign_in_with_google":
+		case "sign_in_with_google_token":
+		case "sign_in_with_facebook":
+		case "refresh_session":
+>>>>>>> origin/forgejo-sync
 			return { profileId: demoMeProfileId, restriction: null };
 		case "rotate_api_params":
 			return { "user-agent": "demo", "l-device-info": "demo" };
 		case "recaptcha_first_party_enabled":
 			return false;
-		case "session_health":
-			return { signedIn: true, expiresAt: null, stale: false };
+		case "mint_recaptcha_token":
+			return "demo-recaptcha-token";
+		case "current_session":
+			return {
+				profileId: demoMeProfileId,
+				expiresAt: null,
+				stale: false,
+			};
 		case "storage_backend":
 			return "keyring";
 		default:
@@ -235,6 +272,27 @@ export function demoRoute({
 	if (method === "GET" && rawPath === "/v1/albums") {
 		return ok(demoMyAlbums());
 	}
+	if (method === "GET" && rawPath === "/v1/albums/storage") {
+		return ok(demoAlbumStorageLimits);
+	}
+	if (method === "POST" && rawPath === "/v2/albums") {
+		const created = demoCreateAlbum(albumNameRequestSchema.parse(body));
+		return created === null ? { status: 402, body: null } : ok(created);
+	}
+	if (
+		method === "GET" &&
+		segments[0] === "v1" &&
+		segments[1] === "albums" &&
+		segments[3] === "content" &&
+		segments[5] === "processing" &&
+		segments.length === 6
+	) {
+		const status = demoAlbumContentProcessing({
+			albumId: Number(segments[2]),
+			contentId: Number(segments[4]),
+		});
+		return status === null ? { status: 404, body: null } : ok(status);
+	}
 	if (
 		method === "POST" &&
 		segments[0] === "v4" &&
@@ -272,8 +330,74 @@ export function demoRoute({
 		});
 		return ok({});
 	}
+	if (
+		method === "PUT" &&
+		segments[0] === "v2" &&
+		segments[1] === "albums" &&
+		segments.length === 3
+	) {
+		const { albumName } = albumNameRequestSchema.parse(body);
+		return ok(demoRenameAlbum({ albumId: Number(segments[2]), albumName }));
+	}
+	if (
+		method === "POST" &&
+		segments[0] === "v1" &&
+		segments[1] === "albums" &&
+		segments[3] === "content" &&
+		segments[4] === "chat" &&
+		segments[5] === "list-by-id"
+	) {
+		const ids = (body as { ids?: number[] } | null)?.ids ?? [];
+		const drawer = new Map(
+			demoDrawerMedia().map((item) => [item.id, item]),
+		);
+		const added = demoAddToAlbum({
+			albumId: Number(segments[2]),
+			kinds: ids.map((id) =>
+				drawer.get(id)?.contentType.startsWith("video/")
+					? "video"
+					: "photo",
+			),
+		});
+		return added ? ok(null) : { status: 402, body: null };
+	}
+	if (
+		method === "POST" &&
+		segments[0] === "v1" &&
+		segments[1] === "albums" &&
+		segments[3] === "content" &&
+		segments[4] === "order" &&
+		segments.length === 5
+	) {
+		const { contentIds } = albumContentOrderRequestSchema.parse(body);
+		demoReorderAlbumContent({ albumId: Number(segments[2]), contentIds });
+		return ok({});
+	}
+	if (
+		method === "DELETE" &&
+		segments[0] === "v1" &&
+		segments[1] === "albums" &&
+		segments[3] === "content" &&
+		segments.length === 5
+	) {
+		demoDeleteAlbumContent(Number(segments[4]));
+		return ok({});
+	}
+	if (
+		method === "DELETE" &&
+		segments[0] === "v1" &&
+		segments[1] === "albums" &&
+		segments.length === 3
+	) {
+		const albumId = Number(segments[2]);
+		if (!demoAlbumExists(albumId)) return { status: 403, body: null };
+		demoDeleteAlbum(albumId);
+		return ok({});
+	}
 	if (method === "GET" && segments[0] === "v2" && segments[1] === "albums") {
-		return ok(demoAlbumContent(Number(segments[2])));
+		const albumId = Number(segments[2]);
+		if (!demoAlbumExists(albumId)) return { status: 403, body: null };
+		return ok(demoAlbumContent(albumId));
 	}
 	if (method === "POST" && rawPath === "/v4/chat/message/send") {
 		return ok(demoSentMessage(body));
@@ -316,8 +440,12 @@ export function demoRoute({
 		demoDeleteConversation(conversationId);
 		return ok({});
 	}
-	if (method === "GET" && rawPath.startsWith("/v4/chat/media/drawer/")) {
+	if (method === "GET" && rawPath.startsWith("/v4/chat/media/drawer")) {
 		return ok(demoDrawerMedia());
+	}
+	if (method === "DELETE" && rawPath.startsWith("/v4/chat/media/drawer/")) {
+		demoDeleteDrawerMedia(Number(segments.at(-1)));
+		return ok({});
 	}
 	if (method === "GET" && rawPath === "/v3/places/search") {
 		return ok({ places: [] });
@@ -330,6 +458,56 @@ export function demoRoute({
 			return ok({});
 		}
 		return ok(demoAccountPreferences());
+	}
+	if (
+		segments.length === 3 &&
+		segments[1] === "flags" &&
+		(segments[0] === "v3.1" || segments[0] === "v4" || segments[0] === "v5")
+	) {
+		const profileId = Number(segments[2]);
+		if (method === "GET" && segments[0] !== "v5") {
+			const report = demoProfileReport(profileId);
+			return report === null ? { status: 404, body: null } : ok(report);
+		}
+		if (method === "POST") {
+			(segments[0] === "v5"
+				? profileReportRequestV2Schema
+				: profileReportRequestSchema
+			).parse(body);
+			demoReportProfile(profileId);
+			return ok({});
+		}
+	}
+	if (
+		segments.length === 4 &&
+		segments[0] === "v1" &&
+		segments[1] === "flags" &&
+		segments[2] === "right-now"
+	) {
+		const postId = Number(segments[3]);
+		if (method === "GET") {
+			const flagReport = demoRightNowPostReport(postId);
+			return flagReport === null
+				? { status: 404, body: null }
+				: ok({ flagReport });
+		}
+		if (method === "POST") {
+			rightNowPostReportRequestSchema.parse(body);
+			demoReportRightNowPost(postId);
+			return ok({});
+		}
+	}
+	if (method === "GET" && rawPath === "/v3/assignment") {
+		return ok({
+			assignments: [
+				{
+					key: "right-now-moderation",
+					value: "on",
+					payload: {},
+					type: "FEATURE_FLAG",
+				},
+			],
+		});
 	}
 
 	return ok({});

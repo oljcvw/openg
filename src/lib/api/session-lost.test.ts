@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { signOutIfSessionLost } from "$lib/api/session-lost";
 
-const { page, callMethodMock, signOutMock } = vi.hoisted(() => ({
+const { page, handoff, callMethodMock, signOutMock } = vi.hoisted(() => ({
 	page: { route: { id: "/(protected)/chat" } },
+	handoff: { phase: "idle" },
 	callMethodMock: vi.fn(),
 	signOutMock: vi.fn(),
 }));
@@ -11,18 +12,37 @@ const { page, callMethodMock, signOutMock } = vi.hoisted(() => ({
 vi.mock("$app/state", () => ({ page }));
 vi.mock("$lib/api/methods", () => ({ callMethod: callMethodMock }));
 vi.mock("$lib/api/sign-out", () => ({ signOut: signOutMock }));
+vi.mock("$lib/api/google-handoff-state.svelte", () => ({
+	googleHandoffState: handoff,
+}));
 
 describe("signOutIfSessionLost", () => {
 	beforeEach(() => {
 		page.route.id = "/(protected)/chat";
-		callMethodMock.mockReset().mockResolvedValue(null);
+		handoff.phase = "idle";
+		callMethodMock
+			.mockReset()
+			.mockResolvedValue({
+				profileId: null,
+				expiresAt: null,
+				stale: false,
+			});
 		signOutMock.mockReset().mockResolvedValue(undefined);
 	});
 
 	it("signs out when the app is open and the backend has no session", async () => {
 		await signOutIfSessionLost();
 
+		expect(callMethodMock).toHaveBeenCalledWith("current_session");
 		expect(signOutMock).toHaveBeenCalledOnce();
+	});
+
+	it("leaves an account switch to finish its own sign-out", async () => {
+		handoff.phase = "switchingAccount";
+
+		await signOutIfSessionLost();
+
+		expect(signOutMock).not.toHaveBeenCalled();
 	});
 
 	it("leaves the signed-out screens alone", async () => {
@@ -35,7 +55,11 @@ describe("signOutIfSessionLost", () => {
 	});
 
 	it("keeps the session when the backend still has one", async () => {
-		callMethodMock.mockResolvedValue(123);
+		callMethodMock.mockResolvedValue({
+			profileId: 123,
+			expiresAt: null,
+			stale: false,
+		});
 
 		await signOutIfSessionLost();
 

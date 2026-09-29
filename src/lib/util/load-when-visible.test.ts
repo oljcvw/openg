@@ -48,7 +48,14 @@ const VIEWPORT = 800;
 
 let clock = 0;
 
+<<<<<<< HEAD
 function scrollBy(scroller: HTMLElement, distance: number, overMs: number) {
+=======
+function scrollBy(
+	scroller: HTMLElement,
+	{ distance, overMs }: { distance: number; overMs: number },
+) {
+>>>>>>> origin/forgejo-sync
 	Object.defineProperty(scroller, "scrollTop", {
 		value: scroller.scrollTop + distance,
 		configurable: true,
@@ -111,7 +118,11 @@ describe("loadWhenVisible", () => {
 		const commit = vi.fn();
 		loadWhenVisible(node, commit);
 
+<<<<<<< HEAD
 		scrollBy(scroller, 1000, 100);
+=======
+		scrollBy(scroller, { distance: 1000, overMs: 100 });
+>>>>>>> origin/forgejo-sync
 		FakeIntersectionObserver.latest?.deliver("prefetch");
 		expect(commit).not.toHaveBeenCalled();
 
@@ -125,7 +136,11 @@ describe("loadWhenVisible", () => {
 		const commit = vi.fn();
 		loadWhenVisible(node, commit);
 
+<<<<<<< HEAD
 		scrollBy(scroller, 1000, 100);
+=======
+		scrollBy(scroller, { distance: 1000, overMs: 100 });
+>>>>>>> origin/forgejo-sync
 		FakeIntersectionObserver.latest?.deliver("on-screen");
 
 		expect(commit).toHaveBeenCalledOnce();
@@ -136,7 +151,11 @@ describe("loadWhenVisible", () => {
 		const commit = vi.fn();
 		loadWhenVisible(node, commit);
 
+<<<<<<< HEAD
 		scrollBy(scroller, 50, 100);
+=======
+		scrollBy(scroller, { distance: 50, overMs: 100 });
+>>>>>>> origin/forgejo-sync
 		FakeIntersectionObserver.latest?.deliver("on-screen");
 
 		expect(commit).toHaveBeenCalledOnce();
@@ -158,7 +177,11 @@ describe("loadWhenVisible", () => {
 		const commit = vi.fn();
 
 		const { destroy } = loadWhenVisible(node, commit);
+<<<<<<< HEAD
 		scrollBy(scroller, 1000, 100);
+=======
+		scrollBy(scroller, { distance: 1000, overMs: 100 });
+>>>>>>> origin/forgejo-sync
 		FakeIntersectionObserver.latest?.deliver("prefetch");
 		destroy();
 		vi.advanceTimersByTime(SETTLE_MS);

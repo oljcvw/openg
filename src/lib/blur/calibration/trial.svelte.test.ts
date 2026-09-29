@@ -16,8 +16,13 @@ vi.mock("$lib/app-data", () => ({
 }));
 
 import {
+<<<<<<< HEAD
 	getPreferencesSnapshot,
 	hydratePreferences,
+=======
+	hydratePreferences,
+	preferencesSnapshot,
+>>>>>>> origin/forgejo-sync
 	setPreferences,
 } from "$lib/app-data/preferences.svelte";
 import {
@@ -153,7 +158,11 @@ describe("backdrop blur scroll trial", () => {
 		scrollOneGesture(20);
 		expect(backdropBlurTrialArm()).toBe("medium");
 		await vi.waitFor(() => {
+<<<<<<< HEAD
 			const stored = getPreferencesSnapshot().backdropBlurCalibration;
+=======
+			const stored = preferencesSnapshot().backdropBlurCalibration;
+>>>>>>> origin/forgejo-sync
 			expect(stored?.samples).toHaveLength(1);
 			expect(stored?.quality).toBeNull();
 		});

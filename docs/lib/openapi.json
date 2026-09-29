@@ -2,7 +2,11 @@
 	"openapi": "3.0.3",
 	"info": {
 		"title": "Grindr API",
+<<<<<<< HEAD
 		"version": "26.15.1 (2026-08-30)"
+=======
+		"version": "26.17.0.181424 (2026-09-22)"
+>>>>>>> origin/forgejo-sync
 	},
 	"servers": [
 		{
@@ -113,11 +117,17 @@
 		},
 		{
 			"name": "safety/appeals",
+<<<<<<< HEAD
 			"x-wip": true
 		},
 		{
 			"name": "safety/reports",
+=======
+>>>>>>> origin/forgejo-sync
 			"x-wip": true
+		},
+		{
+			"name": "safety/reports"
 		},
 		{
 			"name": "commerce/rewarded-ads"
@@ -225,7 +235,7 @@
 		},
 		{
 			"name": "messaging/albums",
-			"description": "WIP. No idea what SpankBank, pressie albums and paywalled albums are."
+			"description": "Pressie albums are albums other profiles shared with you. `POST /v3/pressie-albums/feed` lists them in `sharedAlbums`; `albumViewable: false` marks a locked one, and `POST /v3/pressie-albums/feed/paywall/` returns blurred previews of locked albums. `profileFeeds` holds new content from those albums, one entry per profile, with `paywallStatus: PAYWALL` on locked entries."
 		},
 		{
 			"name": "messaging/conversations"
@@ -480,7 +490,7 @@
 					}
 				},
 				"summary": "Add media to drawer",
-				"description": "MediaId must be obtained through [uploading](/grindr-api/messaging/drawer#upload-media)."
+				"description": "Takes a `mediaId` from [uploading](/grindr-api/messaging/drawer#upload-media). Videos are accepted and listed as `video/mp4`."
 			},
 			"delete": {
 				"tags": [
@@ -506,6 +516,7 @@
 					}
 				},
 				"summary": "Delete media from drawer",
+				"description": "Removes the item from the drawer. Album copies made with [Add drawer media to an album](/grindr-api/messaging/albums#add-drawer-media-to-an-album) are separate files and stay. The CDN may keep serving the deleted file's signed url from cache.",
 				"x-idempotent": true
 			}
 		},
@@ -1816,6 +1827,74 @@
 				"x-wip": true
 			}
 		},
+		"/v1/popup-logic": {
+			"post": {
+				"tags": [
+					"system/modal"
+				],
+				"operationId": "fetchPopUpLogicPlan",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PopUpLogicPlanInput"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PopUpLogicPlan"
+								}
+							}
+						},
+						"description": "OK"
+					}
+				},
+				"summary": "Fetch pop-up logic plan",
+				"description": "Returns an ordered plan of modal steps.",
+				"x-wip": true
+			}
+		},
+		"/v1/popup-logic/ack": {
+			"post": {
+				"tags": [
+					"system/modal"
+				],
+				"operationId": "acknowledgePopUpLogicStep",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PopUpLogicAcknowledge"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK"
+					}
+				},
+				"summary": "Acknowledge pop-up logic step",
+				"x-wip": true
+			}
+		},
 		"/v2/offers": {
 			"get": {
 				"tags": [
@@ -1889,40 +1968,56 @@
 				"x-wip": true
 			}
 		},
-		"/v4/flags/{id}": {
+		"/v4/flags/{profileId}": {
 			"get": {
 				"tags": [
 					"safety/reports"
 				],
 				"operationId": "getReportV4",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Get submitted profile report (v4)",
+				"description": "Like [Get submitted profile report](/grindr-api/safety/reports#get-submitted-profile-report), chosen when the `right-now-moderation` [assignment](/grindr-api/analytics/assignments) is `on`.",
 				"parameters": [
 					{
-						"$ref": "#/components/parameters/GenericIdPath"
+						"$ref": "#/components/parameters/ProfileIdIntegerPath"
 					}
 				],
 				"responses": {
 					"200": {
+						"description": "OK",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ReportProfileResponse"
+									"$ref": "#/components/schemas/SubmittedReport"
 								}
 							}
-						},
-						"description": "OK"
+						}
+					},
+					"404": {
+						"description": "Not reported."
 					}
-				},
-				"x-wip": true
+				}
 			},
 			"post": {
 				"tags": [
 					"safety/reports"
 				],
 				"operationId": "submitReportV4",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Report profile (v4)",
+				"deprecated": true,
+				"description": "Removed in the official Android client between v25.20.0 and v26.8.2. Superseded by [Report profile (reCAPTCHA)](/grindr-api/safety/reports#report-profile-recaptcha).",
 				"parameters": [
 					{
-						"$ref": "#/components/parameters/GenericIdPath"
+						"$ref": "#/components/parameters/ProfileIdIntegerPath"
 					}
 				],
 				"requestBody": {
@@ -1930,12 +2025,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"allOf": [
-									{
-										"$ref": "#/components/schemas/UndocumentedObject"
-									}
-								],
-								"x-original-type": "ReportProfileRequest"
+								"$ref": "#/components/schemas/ProfileReportRequest"
 							}
 						}
 					}
@@ -1944,44 +2034,62 @@
 					"200": {
 						"description": "OK"
 					}
-				},
-				"x-wip": true
+				}
 			}
 		},
-		"/v3.1/flags/{id}": {
+		"/v3.1/flags/{profileId}": {
 			"get": {
 				"tags": [
 					"safety/reports"
 				],
 				"operationId": "getReportV31",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Get submitted profile report",
+				"description": "Returns your report on the profile. Used unless the `right-now-moderation` [assignment](/grindr-api/analytics/assignments) is `on`; with it on, use [Get submitted profile report (v4)](/grindr-api/safety/reports#get-submitted-profile-report-v4).",
 				"parameters": [
 					{
-						"$ref": "#/components/parameters/GenericIdPath"
+						"$ref": "#/components/parameters/ProfileIdIntegerPath"
 					}
 				],
 				"responses": {
 					"200": {
+						"description": "OK",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ReportProfileResponse"
+									"$ref": "#/components/schemas/SubmittedReport"
 								}
 							}
-						},
-						"description": "OK"
+						}
+					},
+					"404": {
+						"description": "Not reported."
 					}
-				},
-				"x-wip": true
+				}
 			},
 			"post": {
 				"tags": [
 					"safety/reports"
 				],
 				"operationId": "submitReportV31",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Report profile",
+				"description": "Reports a profile. `profileId` is the reported profile, also for album and Right Now reports. Used unless the `right-now-moderation` [assignment](/grindr-api/analytics/assignments) is `on`; with it on, use [Report profile (reCAPTCHA)](/grindr-api/safety/reports#report-profile-recaptcha).",
+				"x-notes": [
+					"For `SPAM`, send `comment: \"\"` and `locations: [\"CHAT_MESSAGE\"]`.",
+					"Album reports add `albumInfo`. Reports about a Right Now post add `rightNowInfo`."
+				],
 				"parameters": [
 					{
-						"$ref": "#/components/parameters/GenericIdPath"
+						"$ref": "#/components/parameters/ProfileIdIntegerPath"
 					}
 				],
 				"requestBody": {
@@ -1989,12 +2097,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"allOf": [
-									{
-										"$ref": "#/components/schemas/UndocumentedObject"
-									}
-								],
-								"x-original-type": "ReportProfileRequest"
+								"$ref": "#/components/schemas/ProfileReportRequest"
 							}
 						}
 					}
@@ -2003,8 +2106,7 @@
 					"200": {
 						"description": "OK"
 					}
-				},
-				"x-wip": true
+				}
 			}
 		},
 		"/v1/rewarded-ads/consumption": {
@@ -2081,7 +2183,8 @@
 					}
 				],
 				"summary": "Restrict a rewarded ad reward",
-				"description": "Updates the restriction for the given rewarded ad reward `type`, sent by the client when a reward should no longer be offered.",
+				"deprecated": true,
+				"description": "Removed in the official Android client v26.17.0.",
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -3575,6 +3678,132 @@
 				"x-wip": true
 			}
 		},
+<<<<<<< HEAD
+=======
+		"/v1/store-age-verification/requirement": {
+			"get": {
+				"tags": [
+					"browse/age-verification"
+				],
+				"operationId": "getStoreAgeVerificationRequirement",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Get store age verification requirement",
+				"description": "Whether the account has to confirm its age with an app store age signal (Google Play Age Signals). Report the signal with [Submit store age verification result](/grindr-api/browse/age-verification#submit-store-age-verification-result-wip).",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"isVerificationRequired": {
+											"type": "boolean"
+										},
+										"requirementStrength": {
+											"type": "string",
+											"nullable": true,
+											"description": "`\"SOFT\"`, `\"HARD\"` or `null`"
+										}
+									}
+								}
+							}
+						},
+						"description": "OK"
+					}
+				},
+				"x-wip": true
+			}
+		},
+		"/v1/store-age-verification/result": {
+			"post": {
+				"tags": [
+					"browse/age-verification"
+				],
+				"operationId": "submitStoreAgeVerificationResult",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Submit store age verification result",
+				"description": "Reports the app store age signal for the account.",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": [
+									"signal"
+								],
+								"properties": {
+									"signal": {
+										"type": "string",
+										"enum": [
+											"SHARED",
+											"DECLINED",
+											"UNAVAILABLE",
+											"NOT_APPLICABLE"
+										],
+										"description": "`\"SHARED\"`, `\"DECLINED\"`, `\"UNAVAILABLE\"` or `\"NOT_APPLICABLE\"`"
+									},
+									"ageLowerBound": {
+										"type": "integer",
+										"nullable": true,
+										"description": "integer, lower bound of the age range the store reported, or `null`"
+									},
+									"ageUpperBound": {
+										"type": "integer",
+										"nullable": true,
+										"description": "integer, upper bound of the age range the store reported, or `null`"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string",
+											"description": "`\"PENDING\"`, `\"APPROVED\"`, `\"REJECTED\"` or `\"NOT_APPLICABLE\"`"
+										},
+										"banDetails": {
+											"type": "object",
+											"nullable": true,
+											"description": "object, may be absent",
+											"properties": {
+												"banReason": {
+													"type": "string"
+												},
+												"banSubReason": {
+													"type": "string"
+												},
+												"isAutomated": {
+													"type": "boolean"
+												}
+											}
+										}
+									}
+								}
+							}
+						},
+						"description": "OK"
+					}
+				},
+				"x-wip": true
+			}
+		},
+>>>>>>> origin/forgejo-sync
 		"/v3.1/me/blocks": {
 			"get": {
 				"tags": [
@@ -3596,6 +3825,7 @@
 									"properties": {
 										"blocking": {
 											"type": "array",
+											"description": "newest first",
 											"items": {
 												"type": "object",
 												"properties": {
@@ -3812,7 +4042,11 @@
 				],
 				"operationId": "getRightNowPostEntitlements",
 				"summary": "Get Right Now post entitlements",
+<<<<<<< HEAD
 				"description": "Post-specific Right Now entitlement. The client calls this instead of [Get entitlements](/grindr-api/browse/entitlements#get-entitlements) when the `right-now-entitlement-endpoint-enabled` flag is on.",
+=======
+				"description": "Post-specific Right Now entitlement.",
+>>>>>>> origin/forgejo-sync
 				"responses": {
 					"200": {
 						"content": {
@@ -3822,11 +4056,19 @@
 									"properties": {
 										"type": {
 											"type": "string",
+<<<<<<< HEAD
 											"description": "entitlement type"
 										},
 										"count": {
 											"type": "integer",
 											"description": "remaining Right Now posts"
+=======
+											"description": "`\"UNLIMITED\"` or `\"GRANTED\"`"
+										},
+										"count": {
+											"type": "integer",
+											"description": "integer, remaining Right Now posts when `type` is `\"GRANTED\"`"
+>>>>>>> origin/forgejo-sync
 										}
 									}
 								}
@@ -3860,7 +4102,9 @@
 						"description": "OK"
 					}
 				},
-				"summary": "Get entitlements"
+				"summary": "Get entitlements",
+				"deprecated": true,
+				"description": "Removed in the official Android client v26.17.0. Superseded by [Get Right Now post entitlements](/grindr-api/browse/entitlements#get-right-now-post-entitlements)."
 			}
 		},
 		"/v4/cascade": {
@@ -3976,7 +4220,7 @@
 					}
 				},
 				"summary": "Get Cascade",
-				"description": "Fetching the cascade also marks our profile online by always instantly setting `onlineUntil` to current time + exactly 600 s.",
+				"description": "Fetching the cascade also marks our profile online by always instantly setting `onlineUntil` to current time + exactly 600 s. Every cascade except a `favorites` one also moves our profile to `nearbyGeoHash`, whatever its filters or page.",
 				"x-query-groups": [
 					"CascadeQuery"
 				]
@@ -4336,6 +4580,7 @@
 									"properties": {
 										"hides": {
 											"type": "array",
+											"description": "oldest first",
 											"items": {
 												"type": "object",
 												"properties": {
@@ -5937,7 +6182,7 @@
 						"description": "OK"
 					},
 					"402": {
-						"description": "Payment required if you reached [limit](/grindr-api/messaging/albums#get-album-limits) for number of created albums"
+						"description": "The account already has `maxAlbums` albums, see [Get album limits](/grindr-api/messaging/albums#get-album-limits)."
 					}
 				},
 				"summary": "Create an album"
@@ -5990,7 +6235,7 @@
 						"in": "query",
 						"schema": {
 							"type": "integer",
-							"description": "integer, optional, doesn't affect the resulting image"
+							"description": "integer, not validated and doesn't affect the stored media, videos get `400` without it"
 						}
 					},
 					{
@@ -5998,7 +6243,7 @@
 						"in": "query",
 						"schema": {
 							"type": "integer",
-							"description": "integer, optional, doesn't affect the resulting image"
+							"description": "integer, not validated and doesn't affect the stored media, videos get `400` without it"
 						}
 					},
 					{
@@ -6006,7 +6251,7 @@
 						"in": "query",
 						"schema": {
 							"type": "boolean",
-							"description": "boolean, optional, unknown how it affects the resulting image, WIP"
+							"description": "boolean, effect unknown, WIP"
 						}
 					}
 				],
@@ -6034,25 +6279,27 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"contentId": {
-											"type": "integer",
-											"format": "int64"
-										},
-										"contentUrl": {
-											"type": "string",
-											"nullable": true
-										}
-									}
+									"$ref": "#/components/schemas/AlbumContentUploadResponse"
 								}
 							}
 						},
 						"description": "OK"
+					},
+					"400": {
+						"description": "A video was uploaded without `width` or `height`."
+					},
+					"402": {
+						"description": "The album already holds `maxContentItemsPerAlbum` photos, or the upload is a video and the album already holds `maxVideosPerAlbum` videos, see [Get album limits](/grindr-api/messaging/albums#get-album-limits). The check runs before photo de-duplication, so a duplicate photo gets `402` too. A video that is still processing does not count toward `maxVideosPerAlbum`. Empty body."
+					},
+					"413": {
+						"description": "The whole `multipart/form-data` request body is larger than `maxContentSize`, see [Get album limits](/grindr-api/messaging/albums#get-album-limits). Empty body."
 					}
 				},
 				"summary": "Upload media to an album",
-				"description": "Repeated requests with the same file (its contents) are skipped and a cached result from the first upload request is returned."
+				"description": "New media is added at the start of the album's `content`. Uploading a photo byte-identical to one already in the album adds nothing and returns the existing `contentId`.",
+				"x-notes": [
+					"A newly uploaded video is transcoded before it is ready: until then its album item has `statusId` `3` and `processing` `true`, see [Get album media processing status](/grindr-api/messaging/albums#get-album-media-processing-status). Video bytes the server has already transcoded come back ready (`statusId` `1`) immediately. A video the transcoder cannot handle keeps `processing` `true` indefinitely."
+				]
 			}
 		},
 		"/v1/albums/{albumId}/content/order": {
@@ -6094,6 +6341,9 @@
 				"responses": {
 					"200": {
 						"description": "OK"
+					},
+					"400": {
+						"description": "`contentIds` doesn't list every media file in the album."
 					}
 				},
 				"summary": "Reorder media in an album"
@@ -6121,10 +6371,13 @@
 				"responses": {
 					"200": {
 						"description": "Empty"
+					},
+					"400": {
+						"description": "The media is still processing (`processing` is `true`). Empty body."
 					}
 				},
 				"summary": "Delete media from an album",
-				"description": "Technically, this does not delete the media from CDN. All signed URLs will continue to work until expired. Uploading the same file will result in it being assigned the same `contentId`."
+				"description": "Technically, this does not delete the media from CDN. All signed URLs will continue to work until expired. Uploading the same photo again assigns it the same `contentId`, uploading the same video again assigns a new one."
 			}
 		},
 		"/v1/albums/{albumId}/content/{contentId}/processing": {
@@ -6133,6 +6386,11 @@
 					"messaging/albums"
 				],
 				"operationId": "getAlbumContentProcessing",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/AlbumIdPath"
@@ -6146,20 +6404,14 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"processing": {
-											"type": "boolean"
-										}
-									}
+									"$ref": "#/components/schemas/AlbumContentProcessingResponse"
 								}
 							}
 						},
 						"description": "OK"
 					}
 				},
-				"summary": "Albums content processing",
-				"x-wip": true
+				"summary": "Get album media processing status"
 			}
 		},
 		"/v1/pics/limited/status": {
@@ -6450,19 +6702,14 @@
 				},
 				"responses": {
 					"200": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject"
-								}
-							}
-						},
-						"description": "OK"
+						"description": "Empty."
+					},
+					"402": {
+						"description": "The album is full. Unlike [Upload media to an album](/grindr-api/messaging/albums#upload-media-to-an-album), its video counts toward `maxContentItemsPerAlbum`. Empty body."
 					}
 				},
-				"summary": "Albums content chat list-by-id",
-				"description": "Unknown, `{\"ids\":[852120758]}` returns 400",
-				"x-wip": true
+				"summary": "Add drawer media to an album",
+				"description": "Copies media from the [drawer](/grindr-api/messaging/drawer#get-media-in-drawer) into the album. `ids` are drawer media ids. A video id results in `400`, even within `maxVideoLength`."
 			}
 		},
 		"/v1/albums/storage": {
@@ -6598,7 +6845,7 @@
 						"description": "OK"
 					}
 				},
-				"summary": "Pressie albums feed paywall"
+				"summary": "Get previews of locked albums shared with us"
 			}
 		},
 		"/v3/pressie-albums/feed/{profileId}": {
@@ -7749,17 +7996,104 @@
 					"settings/account"
 				],
 				"operationId": "registerFcmPushToken",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
-								"allOf": [
-									{
-										"$ref": "#/components/schemas/UndocumentedObject"
-									}
-								],
-								"x-original-type": "FcmPushRequest"
+								"$ref": "#/components/schemas/PushTokenRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Empty"
+					}
+				},
+				"summary": "Register push token",
+				"description": "Binds an FCM registration token to the signed-in profile so the server can deliver [push notifications](/grindr-api/push-notifications). Re-registering the same token is idempotent.",
+				"x-idempotent": true
+			}
+		},
+		"/v3/push-tokens/{token}": {
+			"delete": {
+				"tags": [
+					"settings/account"
+				],
+				"operationId": "deleteFcmPushToken",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "token",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string"
+						},
+						"description": "The full registration token, exactly as registered."
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Empty"
+					}
+				},
+				"summary": "Unregister push token",
+				"description": "Stops delivery to one registration token. Note the path is `push-tokens`, not the `gcm-push-tokens` used to register.",
+				"x-idempotent": true
+			}
+		},
+		"/v5/push-settings": {
+			"get": {
+				"tags": [
+					"settings/account"
+				],
+				"operationId": "getPushSettings",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PushSettings"
+								}
+							}
+						},
+						"description": "OK"
+					}
+				},
+				"summary": "Get push settings"
+			},
+			"put": {
+				"tags": [
+					"settings/account"
+				],
+				"operationId": "updatePushSettings",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/PushSettings"
 							}
 						}
 					}
@@ -7769,8 +8103,8 @@
 						"description": "OK"
 					}
 				},
-				"summary": "Register FCM push token",
-				"x-wip": true
+				"summary": "Update push settings",
+				"description": "Per-category push toggles. Only the fields present in the request body are updated."
 			}
 		},
 		"/v3/users/update-password": {
@@ -8390,7 +8724,11 @@
 						"schema": {
 							"type": "string"
 						},
+<<<<<<< HEAD
 						"description": "string with the Facebook app id. Grindr's is `1273378622718674`, unchanged from v25.20.0 to v26.15.1"
+=======
+						"description": "string with the Facebook app id. Grindr's is `1273378622718674`, unchanged from v25.20.0 to v26.17.0"
+>>>>>>> origin/forgejo-sync
 					},
 					{
 						"name": "redirect_uri",
@@ -8585,7 +8923,11 @@
 				],
 				"operationId": "exchangeFacebookAuthCode",
 				"summary": "Exchange Facebook auth code",
+<<<<<<< HEAD
 				"description": "PKCE authorization-code exchange, reached whenever a redirect comes back with a `code` and no `access_token` — from [Facebook login dialog](/grindr-api/third-party-integrations/facebook#facebook-login-dialog) on the Custom Tab path, or from a native app-switch handler, which forwards a code challenge of its own without ever loading that URL. The WebView path carries no PKCE and so never reaches here.\n\nBeing a Graph call it also carries `sdk=android`, `format=json` and an app access token `access_token=<app id>|<client token>` — for Grindr `1273378622718674|5524d0b5439620826256ca48978b95a3`, both halves shipped in the APK's string resources and unchanged from v25.20.0 to v26.15.1.\n\nThe `access_token` from the response is what ends up in `thirdPartyToken` on [Login via third party](/grindr-api/authentication#login-via-third-party-wip).",
+=======
+				"description": "PKCE authorization-code exchange, reached whenever a redirect comes back with a `code` and no `access_token` — from [Facebook login dialog](/grindr-api/third-party-integrations/facebook#facebook-login-dialog) on the Custom Tab path, or from a native app-switch handler, which forwards a code challenge of its own without ever loading that URL. The WebView path carries no PKCE and so never reaches here.\n\nBeing a Graph call it also carries `sdk=android`, `format=json` and an app access token `access_token=<app id>|<client token>` — for Grindr `1273378622718674|5524d0b5439620826256ca48978b95a3`, both halves shipped in the APK's string resources and unchanged from v25.20.0 to v26.17.0.\n\nThe `access_token` from the response is what ends up in `thirdPartyToken` on [Login via third party](/grindr-api/authentication#login-via-third-party-wip).",
+>>>>>>> origin/forgejo-sync
 				"parameters": [
 					{
 						"name": "code",
@@ -8767,6 +9109,17 @@
 					}
 				],
 				"operationId": "getKetchConsent",
+				"parameters": [
+					{
+						"name": "includePurposeInfo",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						},
+						"description": "When `true`, the response includes a `purposeInfo` map keyed by purpose code, each value `{ allowed, allowsOptOut, isRecorded, requiresOptIn, legalBasis, source, collectedAt, issuedAt }`."
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -9531,7 +9884,8 @@
 						"schema": {
 							"type": "integer",
 							"format": "int64"
-						}
+						},
+						"description": "Duration in milliseconds."
 					},
 					{
 						"name": "looping",
@@ -9568,7 +9922,7 @@
 					}
 				},
 				"summary": "Upload media",
-				"description": "A correct `Content-Type` request header is required. `length` is sent for audio and video, `looping` only for video."
+				"description": "Requires a correct `Content-Type`. Set `length` for audio and video, and `looping` for video. Videos are uploaded as `video/mp4`."
 			}
 		},
 		"/v4/media/upload": {
@@ -9616,10 +9970,13 @@
 							}
 						},
 						"description": "OK"
+					},
+					"403": {
+						"description": "Daily limit of new profile photos reached (`ERR_EXCEED_PROFILE_IMAGE_DAILY_LIMIT`, code `51`)."
 					}
 				},
 				"summary": "Upload media (legacy)",
-				"description": "You must ensure thumbCoords's width and height dimensions are equal, i.e. y2-y1 must equal x2-x1. Submitting a non-square thumbnail won't trigger any errors and it will be uploaded to the CDN, however attempting to use such illegal thumbnail dimensions image in [Edit profile photos](/grindr-api/users/profiles#edit-profile-photos) will result in it being silently dropped/skipped.\n\nAlso there is a legacy `POST /v3/me/profile/images`.",
+				"description": "`thumbCoords` must be square (`y2 - y1` equals `x2 - x1`). A non-square thumbnail uploads without error, but [Edit profile photos](/grindr-api/users/profiles#edit-profile-photos) silently drops it.\n\nA legacy `POST /v3/me/profile/images` also exists.",
 				"x-legacy": true
 			}
 		},
@@ -9650,7 +10007,7 @@
 					}
 				},
 				"summary": "Edit profile photos",
-				"description": "Setting both `primaryImageHash` and `secondaryImageHashes` to `null` works. But setting `primaryImageHash` to a hash value while setting `secondaryImageHashes` to null causes HTTP status 400 Bad Request error. It's recommended to just use `[]` for `secondaryImageHashes` rather than `null`.\n\nSupplied images must have square thumbnails, otherwise they will be silently skipped. See [Upload media (legacy)](/grindr-api/users/profiles#upload-media-legacy).\n\nRepeating `primaryImageHash` value in `secondaryImageHashes` array will result in secondaryImageHashes's entry being silently dropped from supplied request array. Repeating `secondaryImageHashes` values will result in successfully saving the array as-is to the server, however the official mobile client seems to drop repeating media when processing `secondaryImageHashes` response."
+				"description": "Both fields may be `null`. A `primaryImageHash` with `secondaryImageHashes: null` gets `400`; send `[]` instead.\n\nPhotos without a square thumbnail are silently skipped; see [Upload media (legacy)](/grindr-api/users/profiles#upload-media-legacy).\n\nA `secondaryImageHashes` entry equal to `primaryImageHash` is dropped. Repeated `secondaryImageHashes` entries are saved as sent."
 			},
 			"delete": {
 				"tags": [
@@ -9780,6 +10137,147 @@
 					}
 				},
 				"summary": "Check if profiles are reachable",
+				"x-wip": true
+			}
+		},
+		"/v1/similar-profiles": {
+			"get": {
+				"tags": [
+					"users/profiles"
+				],
+				"operationId": "getSimilarProfiles",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Get similar profiles",
+				"description": "Profiles similar to `targetProfileId`.",
+				"parameters": [
+					{
+						"name": "targetProfileId",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					},
+					{
+						"name": "geohash",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"status": {
+											"type": "string",
+											"description": "`\"Good\"`, `\"SubscriptionRequired\"` or `\"ConsentRequired\"`"
+										},
+										"profiles": {
+											"type": "array",
+											"nullable": true,
+											"items": {
+												"type": "object",
+												"properties": {
+													"profileId": {
+														"type": "integer",
+														"format": "int64"
+													},
+													"displayName": {
+														"type": "string",
+														"nullable": true
+													},
+													"imageUrl": {
+														"type": "string",
+														"format": "uri",
+														"nullable": true
+													},
+													"onlineUntil": {
+														"allOf": [
+															{
+																"$ref": "#/components/schemas/TimestampMs"
+															}
+														],
+														"nullable": true
+													}
+												}
+											}
+										},
+										"recommendationsUuid": {
+											"type": "string",
+											"nullable": true
+										},
+										"entitlement": {
+											"allOf": [
+												{
+													"$ref": "#/components/schemas/SimilarProfilesEntitlement"
+												}
+											],
+											"nullable": true
+										}
+									}
+								}
+							}
+						},
+						"description": "OK"
+					}
+				}
+			}
+		},
+		"/v1/similar-profiles/redeem": {
+			"post": {
+				"tags": [
+					"users/profiles"
+				],
+				"operationId": "redeemSimilarProfile",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Redeem similar profile",
+				"description": "Redeems `targetProfileId` against the similar-profiles allowance and returns the updated allowance.",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"required": [
+									"targetProfileId"
+								],
+								"properties": {
+									"targetProfileId": {
+										"type": "integer",
+										"format": "int64"
+									}
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SimilarProfilesEntitlement"
+								}
+							}
+						},
+						"description": "OK"
+					}
+				},
 				"x-wip": true
 			}
 		},
@@ -10928,7 +11426,7 @@
 				"summary": "Gets fresh albums shared with us"
 			}
 		},
-		"/v5/flags/{id}": {
+		"/v5/flags/{profileId}": {
 			"post": {
 				"tags": [
 					"safety/reports"
@@ -10939,9 +11437,14 @@
 						"Grindr3Auth": []
 					}
 				],
+				"summary": "Report profile (reCAPTCHA)",
+				"description": "Like [Report profile](/grindr-api/safety/reports#report-profile) but with a reCAPTCHA Enterprise `captchaToken`, chosen when the `right-now-moderation` [assignment](/grindr-api/analytics/assignments) is `on`.",
+				"x-notes": [
+					"The body rules of [Report profile](/grindr-api/safety/reports#report-profile) apply."
+				],
 				"parameters": [
 					{
-						"$ref": "#/components/parameters/GenericIdPath"
+						"$ref": "#/components/parameters/ProfileIdIntegerPath"
 					}
 				],
 				"requestBody": {
@@ -10949,12 +11452,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"allOf": [
-									{
-										"$ref": "#/components/schemas/UndocumentedObject"
-									}
-								],
-								"x-original-type": "ReportProfileRequest"
+								"$ref": "#/components/schemas/ProfileReportRequestV2"
 							}
 						}
 					}
@@ -10963,10 +11461,7 @@
 					"200": {
 						"description": "OK"
 					}
-				},
-				"summary": "Submit profile report",
-				"x-wip": true,
-				"description": "Current version of profile report submission (supersedes `POST /v3.1/flags/{id}`)."
+				}
 			}
 		},
 		"/v1/flags/right-now/{postId}": {
@@ -10980,6 +11475,8 @@
 						"Grindr3Auth": []
 					}
 				],
+				"summary": "Get submitted Right Now post report",
+				"description": "Returns your report on the post in `flagReport`, for a post whose author profile id is unknown; otherwise use [Get submitted profile report](/grindr-api/safety/reports#get-submitted-profile-report) or [Get submitted profile report (v4)](/grindr-api/safety/reports#get-submitted-profile-report-v4).",
 				"parameters": [
 					{
 						"name": "postId",
@@ -10993,19 +11490,19 @@
 				],
 				"responses": {
 					"200": {
+						"description": "OK",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/UndocumentedObject",
-									"x-original-type": "ReportRightNowPostResponse"
+									"$ref": "#/components/schemas/RightNowPostSubmittedReportResponse"
 								}
 							}
-						},
-						"description": "OK"
+						}
+					},
+					"404": {
+						"description": "Not reported."
 					}
-				},
-				"summary": "Right Now post report form",
-				"x-wip": true
+				}
 			},
 			"post": {
 				"tags": [
@@ -11016,6 +11513,11 @@
 					{
 						"Grindr3Auth": []
 					}
+				],
+				"summary": "Report Right Now post",
+				"description": "Reports a Right Now post whose author profile id is unknown. Takes no `captchaToken`. When the author is known, use [Report profile](/grindr-api/safety/reports#report-profile) or [Report profile (reCAPTCHA)](/grindr-api/safety/reports#report-profile-recaptcha) with `rightNowInfo` instead.",
+				"x-notes": [
+					"Send `locations: [\"RIGHT_NOW_PHOTO\", \"RIGHT_NOW_TEXT\"]`, or `comment: \"\"` and `locations: [\"CHAT_MESSAGE\"]` for `SPAM`."
 				],
 				"parameters": [
 					{
@@ -11033,12 +11535,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"allOf": [
-									{
-										"$ref": "#/components/schemas/UndocumentedObject"
-									}
-								],
-								"x-original-type": "ReportRightNowPostRequest"
+								"$ref": "#/components/schemas/RightNowPostReportRequest"
 							}
 						}
 					}
@@ -11047,9 +11544,7 @@
 					"200": {
 						"description": "OK"
 					}
-				},
-				"summary": "Submit Right Now post report",
-				"x-wip": true
+				}
 			}
 		},
 		"/v1/rightnow/requests/inbox": {
@@ -11321,6 +11816,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
+<<<<<<< HEAD
 								"type": "object",
 								"properties": {
 									"insights": {
@@ -11349,6 +11845,37 @@
 															"default": {
 																"type": "string",
 																"description": "fallback label when `key` is unknown"
+=======
+									"type": "object",
+									"properties": {
+										"insights": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"insightKey": {
+														"type": "string"
+													},
+													"isOptedOut": {
+														"type": "boolean"
+													},
+													"hasData": {
+														"type": "boolean"
+													},
+													"sectionTitles": {
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"key": {
+																	"type": "string",
+																	"description": "translation key"
+																},
+																"default": {
+																	"type": "string",
+																	"description": "fallback label when `key` is unknown"
+																}
+>>>>>>> origin/forgejo-sync
 															}
 														}
 													}
@@ -11357,7 +11884,10 @@
 										}
 									}
 								}
+<<<<<<< HEAD
 								}
+=======
+>>>>>>> origin/forgejo-sync
 							}
 						},
 						"description": "OK"
@@ -11612,6 +12142,206 @@
 					}
 				}
 			}
+		},
+		"/v1/hookup-intent/post": {
+			"get": {
+				"tags": [
+					"right-now"
+				],
+				"operationId": "getHookupIntentPost",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Get hookup intent post",
+				"description": "Returns your hookup intent post. `post` is `null` when hookup intent is off.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"post": {
+											"allOf": [
+												{
+													"$ref": "#/components/schemas/HookupIntentPost"
+												}
+											],
+											"nullable": true
+										}
+									}
+								}
+							}
+						},
+						"description": "OK"
+					}
+				}
+			},
+			"post": {
+				"tags": [
+					"right-now"
+				],
+				"operationId": "createHookupIntentPost",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Create hookup intent post",
+				"description": "Turns hookup intent on by creating your post.",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/HookupIntentPostRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"post": {
+											"$ref": "#/components/schemas/HookupIntentPost"
+										}
+									}
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"409": {
+						"description": "Conflicts with the current post state."
+					}
+				}
+			}
+		},
+		"/v1/hookup-intent/post/{postId}": {
+			"put": {
+				"tags": [
+					"right-now"
+				],
+				"operationId": "updateHookupIntentPost",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Update hookup intent post",
+				"description": "Only the fields present in the request body are updated.",
+				"parameters": [
+					{
+						"name": "postId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/HookupIntentPostUpdateRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"post": {
+											"$ref": "#/components/schemas/HookupIntentPost"
+										}
+									}
+								}
+							}
+						},
+						"description": "OK"
+					}
+				}
+			},
+			"delete": {
+				"tags": [
+					"right-now"
+				],
+				"operationId": "deleteHookupIntentPost",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Delete hookup intent post",
+				"description": "Turns hookup intent off.",
+				"parameters": [
+					{
+						"name": "postId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK"
+					}
+				}
+			}
+		},
+		"/v1/hookup-intent/post/{postId}/renew": {
+			"post": {
+				"tags": [
+					"right-now"
+				],
+				"operationId": "renewHookupIntentPost",
+				"security": [
+					{
+						"Grindr3Auth": []
+					}
+				],
+				"summary": "Renew hookup intent post",
+				"parameters": [
+					{
+						"name": "postId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UndocumentedObject"
+								}
+							}
+						},
+						"description": "OK"
+					}
+				},
+				"x-wip": true
+			}
 		}
 	},
 	"components": {
@@ -11799,7 +12529,8 @@
 				"in": "query",
 				"schema": {
 					"type": "number",
-					"format": "float"
+					"format": "float",
+					"description": "number in centimeters, a range excludes profiles without a height"
 				}
 			},
 			"CascadeHeightCmMaxQuery": {
@@ -11807,7 +12538,8 @@
 				"in": "query",
 				"schema": {
 					"type": "number",
-					"format": "float"
+					"format": "float",
+					"description": "number in centimeters, a range excludes profiles without a height; the bound is loose, `130` also returns 131"
 				}
 			},
 			"CascadeWeightGramsMinQuery": {
@@ -11815,7 +12547,8 @@
 				"in": "query",
 				"schema": {
 					"type": "number",
-					"format": "float"
+					"format": "float",
+					"description": "number in grams, a range excludes profiles without a weight"
 				}
 			},
 			"CascadeWeightGramsMaxQuery": {
@@ -11823,7 +12556,8 @@
 				"in": "query",
 				"schema": {
 					"type": "number",
-					"format": "float"
+					"format": "float",
+					"description": "number in grams, a range excludes profiles without a weight; the bound is loose, `45000` also returns 45359"
 				}
 			},
 			"CascadeTribesQuery": {
@@ -11901,7 +12635,8 @@
 				"name": "favorites",
 				"in": "query",
 				"schema": {
-					"type": "boolean"
+					"type": "boolean",
+					"description": "`distanceMeters` is measured from our stored position (set by `PUT /v4/location` or any cascade without `favorites`), not from `nearbyGeoHash`"
 				}
 			},
 			"CascadeShowSponsoredProfilesQuery": {
@@ -11990,7 +12725,7 @@
 				"in": "query",
 				"name": "takenOnGrindr",
 				"required": true,
-				"description": "Media captured with the in-app camera. The official client uses a signed upload endpoint only when this is `true` and the `taken-on-grindr-signing-enabled` flag is on.",
+				"description": "Media captured with the in-app camera.",
 				"schema": {
 					"type": "boolean"
 				}
@@ -12006,6 +12741,420 @@
 			}
 		},
 		"schemas": {
+			"PushSettings": {
+				"type": "object",
+				"description": "Per-category push-notification toggles.",
+				"properties": {
+					"favoritePushNotification": {
+						"type": "boolean",
+						"nullable": true,
+						"description": "Notify when a favorite comes online."
+					},
+					"tapPushNotification": {
+						"type": "boolean",
+						"nullable": true,
+						"description": "Notify on received taps."
+					}
+				}
+			},
+			"PopUpLogicPlanInput": {
+				"type": "object",
+				"required": [
+					"supportedStepKeys",
+					"context"
+				],
+				"properties": {
+					"supportedStepKeys": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "array of strings, step keys the caller can render, e.g. `\"profileCompletion\"`"
+					},
+					"context": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"PopUpLogicPlan": {
+				"type": "object",
+				"required": [
+					"schemaVersion",
+					"planVersion",
+					"steps"
+				],
+				"properties": {
+					"schemaVersion": {
+						"type": "integer"
+					},
+					"planVersion": {
+						"type": "string",
+						"description": "Server plan identifier, e.g. `pc-pilot.2026-08-12.1`."
+					},
+					"steps": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/PopUpLogicStep"
+						}
+					}
+				}
+			},
+			"PopUpLogicStep": {
+				"type": "object",
+				"required": [
+					"key",
+					"type"
+				],
+				"properties": {
+					"key": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"MANDATORY",
+							"OPTIONAL"
+						],
+						"description": "`\"MANDATORY\"` or `\"OPTIONAL\"`"
+					},
+					"params": {
+						"type": "object",
+						"additionalProperties": {
+							"type": "string"
+						},
+						"description": "object with string values; for the `profileCompletion` step, `contentUrl` is the URL of the step's web page"
+					},
+					"triggerEvent": {
+						"type": "string",
+						"nullable": true
+					}
+				}
+			},
+			"PopUpLogicAcknowledge": {
+				"type": "object",
+				"required": [
+					"stepKey",
+					"interaction"
+				],
+				"properties": {
+					"stepKey": {
+						"type": "string"
+					},
+					"interaction": {
+						"type": "string",
+						"enum": [
+							"RENDERED",
+							"ACCEPTED",
+							"DISMISSED",
+							"CANCELED"
+						],
+						"description": "`\"RENDERED\"` (the step was shown), `\"ACCEPTED\"`, `\"DISMISSED\"` (closed by the user) or `\"CANCELED\"` (ended without any other outcome)"
+					}
+				}
+			},
+			"HookupIntentPost": {
+				"type": "object",
+				"description": "Your hookup intent post.",
+				"x-render-on-tag": "right-now",
+				"required": [
+					"id",
+					"profileId"
+				],
+				"properties": {
+					"id": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"profileId": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"posted": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/TimestampMs"
+							}
+						],
+						"nullable": true
+					},
+					"expiration": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/TimestampMs"
+							}
+						],
+						"nullable": true
+					},
+					"hosting": {
+						"type": "boolean",
+						"description": "boolean, may be absent"
+					},
+					"activeText": {
+						"type": "string",
+						"nullable": true,
+						"description": "string or `null`, the post's live text; `moderatedText` holds the latest submitted text"
+					},
+					"moderatedText": {
+						"type": "object",
+						"nullable": true,
+						"description": "object, the latest submitted text and its moderation state, or `null`",
+						"required": [
+							"id",
+							"postId",
+							"text",
+							"createdAt",
+							"updatedAt"
+						],
+						"properties": {
+							"id": {
+								"type": "integer",
+								"format": "int64"
+							},
+							"postId": {
+								"type": "integer",
+								"format": "int64"
+							},
+							"text": {
+								"type": "string"
+							},
+							"textStatus": {
+								"type": "string",
+								"nullable": true
+							},
+							"rejectReasons": {
+								"type": "array",
+								"nullable": true,
+								"items": {
+									"type": "string"
+								}
+							},
+							"createdAt": {
+								"type": "integer",
+								"format": "int64"
+							},
+							"updatedAt": {
+								"type": "integer",
+								"format": "int64"
+							}
+						}
+					},
+					"media": {
+						"type": "array",
+						"nullable": true,
+						"items": {
+							"type": "object",
+							"required": [
+								"mediaId",
+								"thumbnailUrl",
+								"fullImageUrl",
+								"contentType"
+							],
+							"properties": {
+								"mediaId": {
+									"type": "integer",
+									"format": "int64"
+								},
+								"thumbnailUrl": {
+									"type": "string",
+									"format": "uri"
+								},
+								"fullImageUrl": {
+									"type": "string",
+									"format": "uri"
+								},
+								"contentType": {
+									"type": "string",
+									"description": "string, e.g. `image/jpeg`"
+								},
+								"state": {
+									"type": "string",
+									"nullable": true,
+									"description": "`\"PENDING\"`, `\"APPROVED\"`, `\"REJECTED\"`, `\"DELETED\"` or `null`"
+								},
+								"reason": {
+									"type": "string",
+									"nullable": true
+								},
+								"isRejectAutomated": {
+									"type": "boolean",
+									"nullable": true
+								},
+								"shouldBlur": {
+									"type": "boolean",
+									"description": "boolean, may be absent"
+								},
+								"isNsfw": {
+									"type": "boolean",
+									"description": "boolean, may be absent"
+								}
+							}
+						}
+					},
+					"lat": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"lon": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"postStatus": {
+						"type": "string",
+						"nullable": true,
+						"description": "`\"ACTIVE\"`, `\"INACTIVE\"` or `null`"
+					},
+					"shareLocation": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/RightNowShareLocation"
+							}
+						],
+						"nullable": true
+					},
+					"locationRadius": {
+						"type": "integer",
+						"nullable": true
+					},
+					"isDiscreet": {
+						"type": "string",
+						"nullable": true,
+						"description": "string, `\"TRUE\"`, `\"FALSE\"` or `null`"
+					},
+					"sharedFields": {
+						"type": "array",
+						"nullable": true,
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"HookupIntentPostRequest": {
+				"type": "object",
+				"required": [
+					"shareLocation",
+					"media",
+					"hosting"
+				],
+				"properties": {
+					"text": {
+						"type": "string",
+						"description": "string, optional"
+					},
+					"shareLocation": {
+						"$ref": "#/components/schemas/RightNowShareLocation"
+					},
+					"locationRadius": {
+						"type": "integer",
+						"description": "integer, optional"
+					},
+					"media": {
+						"type": "array",
+						"description": "array of objects, may be empty",
+						"items": {
+							"type": "object",
+							"required": [
+								"type",
+								"data"
+							],
+							"properties": {
+								"type": {
+									"type": "string"
+								},
+								"data": {
+									"type": "object",
+									"required": [
+										"id"
+									],
+									"properties": {
+										"id": {
+											"type": "integer",
+											"format": "int64",
+											"description": "long integer, media ID"
+										}
+									}
+								}
+							}
+						}
+					},
+					"hosting": {
+						"type": "boolean"
+					}
+				}
+			},
+			"HookupIntentPostUpdateRequest": {
+				"type": "object",
+				"properties": {
+					"text": {
+						"type": "string"
+					},
+					"hosting": {
+						"type": "boolean"
+					},
+					"media": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"required": [
+								"type",
+								"data"
+							],
+							"properties": {
+								"type": {
+									"type": "string"
+								},
+								"data": {
+									"type": "object",
+									"required": [
+										"id"
+									],
+									"properties": {
+										"id": {
+											"type": "integer",
+											"format": "int64",
+											"description": "long integer, media ID"
+										}
+									}
+								}
+							}
+						}
+					},
+					"shareLocation": {
+						"$ref": "#/components/schemas/RightNowShareLocation"
+					},
+					"locationRadius": {
+						"type": "integer"
+					}
+				}
+			},
+			"SimilarProfilesEntitlement": {
+				"type": "object",
+				"description": "Similar-profiles unlock allowance.",
+				"x-render-on-tag": "users/profiles",
+				"required": [
+					"remaining",
+					"usageCount"
+				],
+				"properties": {
+					"remaining": {
+						"type": "integer"
+					},
+					"usageCount": {
+						"type": "integer"
+					},
+					"resetTime": {
+						"type": "integer",
+						"format": "int64",
+						"nullable": true,
+						"description": "long integer, when the allowance resets, or `null`"
+					}
+				}
+			},
 			"UndocumentedObject": {
 				"type": "object",
 				"additionalProperties": true,
@@ -12292,6 +13441,10 @@
 					"BUSINESS_SOLICITATION",
 					"TRANSACTIONAL_SERVICES",
 					"SCAMS_AND_PROMOTIONS",
+					"DRUG_SEEKING",
+					"DRUG_FACILITATION",
+					"NON_CONSENSUAL_INTIMATE_IMAGERY",
+					"SEXTORTION",
 					"BLOCK_DECISION",
 					"Other"
 				],
@@ -14711,7 +15864,8 @@
 						"$ref": "#/components/schemas/AlbumCoverUrl"
 					},
 					"statusId": {
-						"description": "unknown integer, WIP"
+						"type": "integer",
+						"description": "integer, `1` ready, `3` processing, other values unknown"
 					}
 				},
 				"x-render-on-tag": "messaging/albums",
@@ -14752,6 +15906,9 @@
 					"url": {
 						"description": "string, original file, see [Media -> Signed CDN files](/grindr-api/media/signed-cdn-files), may be `\"\"` if `remainingViews` is 0"
 					},
+					"processing": {
+						"description": "boolean, `true` while the server transcodes an uploaded video; `statusId` is then `3`, and `coverUrl`, `thumbUrl` and `url` all equal the placeholder `https://d3w4wp6rol9nvz.cloudfront.net/https://d1weu1y74qn7ma.cloudfront.net/albums-video-loading.mp4`"
+					},
 					"rejectionId": {
 						"description": "unknown or `null`"
 					}
@@ -14789,7 +15946,7 @@
 							"content": {
 								"type": "array",
 								"items": {
-									"$ref": "#/components/schemas/AlbumContent"
+									"$ref": "#/components/schemas/AlbumContentWithHash"
 								}
 							},
 							"isShareable": {
@@ -14813,6 +15970,33 @@
 				},
 				"required": [
 					"albumName"
+				]
+			},
+			"AlbumContentWithHash": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/AlbumContent"
+					},
+					{
+						"type": "object",
+						"properties": {
+							"contentHash": {
+								"type": "string",
+								"description": "string, lowercase hex SHA-256 of the uploaded bytes"
+							}
+						}
+					}
+				],
+				"x-render-on-tag": "messaging/albums",
+				"required": [
+					"contentId",
+					"contentType",
+					"coverUrl",
+					"statusId",
+					"thumbUrl",
+					"url",
+					"processing",
+					"rejectionId"
 				]
 			},
 			"AlbumContentWithRemainingViews": {
@@ -15054,6 +16238,38 @@
 					"shareId"
 				]
 			},
+			"AlbumContentUploadResponse": {
+				"type": "object",
+				"properties": {
+					"contentId": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"contentUrl": {
+						"type": "string",
+						"nullable": true,
+						"description": "string or `null`, `null` for photo and video uploads"
+					}
+				},
+				"x-render-on-tag": "messaging/albums",
+				"required": [
+					"contentId",
+					"contentUrl"
+				]
+			},
+			"AlbumContentProcessingResponse": {
+				"type": "object",
+				"properties": {
+					"processing": {
+						"type": "boolean",
+						"description": "boolean, `true` while a video is being transcoded, always `false` for photos"
+					}
+				},
+				"x-render-on-tag": "messaging/albums",
+				"required": [
+					"processing"
+				]
+			},
 			"AlbumStorageLimits": {
 				"type": "object",
 				"properties": {
@@ -15065,7 +16281,8 @@
 						"type": "integer"
 					},
 					"maxContentItemsPerAlbum": {
-						"type": "integer"
+						"type": "integer",
+						"description": "integer, photos per album, videos don't count"
 					},
 					"maxShares": {
 						"type": "integer"
@@ -15076,10 +16293,10 @@
 					"maxViewableVideos": {
 						"type": "integer"
 					},
-					"maxContentSizeInBytes": {
+					"maxContentSize": {
 						"type": "integer",
 						"format": "int64",
-						"description": "long integer, size in bytes"
+						"description": "long integer, size in bytes of the whole upload request body"
 					},
 					"maxContentSizeHumanReadable": {
 						"type": "string",
@@ -15088,7 +16305,7 @@
 					"maxVideoLength": {
 						"type": "integer",
 						"format": "int64",
-						"description": "long integer, length in milliseconds (1/1000th of a second)"
+						"description": "long integer, length in milliseconds (1/1000th of a second), not enforced by the server"
 					},
 					"minVideoLength": {
 						"type": "integer",
@@ -15099,7 +16316,8 @@
 						"type": "integer"
 					},
 					"maxVideosPerAlbum": {
-						"type": "integer"
+						"type": "integer",
+						"description": "integer, videos per album, counted separately from `maxContentItemsPerAlbum`, so a full album holds `maxContentItemsPerAlbum` photos plus `maxVideosPerAlbum` videos"
 					}
 				},
 				"x-render-on-tag": "messaging/albums",
@@ -15110,7 +16328,7 @@
 					"maxShares",
 					"maxViewableAlbums",
 					"maxViewableVideos",
-					"maxContentSizeInBytes",
+					"maxContentSize",
 					"maxContentSizeHumanReadable",
 					"maxVideoLength",
 					"minVideoLength",
@@ -15160,7 +16378,7 @@
 								},
 								"paywallStatus": {
 									"type": "string",
-									"description": "e.g. `ALLOW`"
+									"description": "`ALLOW` or `PAYWALL` (locked)"
 								},
 								"seen": {
 									"type": "boolean"
@@ -17708,6 +18926,7 @@
 						"items": {
 							"type": "object",
 							"properties": {
+<<<<<<< HEAD
 							"profileId": {
 								"type": "integer",
 								"format": "int64"
@@ -17783,6 +19002,83 @@
 								"nullable": true,
 								"description": "the active post: `id`, `thumbnailUrl`, `fullImageUrl`, `isNsfw`, `text`, `expirationTimestamp`"
 							}
+=======
+								"profileId": {
+									"type": "integer",
+									"format": "int64"
+								},
+								"onlineUntil": {
+									"type": "integer",
+									"format": "int64",
+									"nullable": true
+								},
+								"displayName": {
+									"type": "string",
+									"nullable": true
+								},
+								"primaryImageUrl": {
+									"type": "string",
+									"nullable": true
+								},
+								"favorite": {
+									"type": "boolean",
+									"nullable": true
+								},
+								"chatted": {
+									"type": "boolean",
+									"nullable": true
+								},
+								"rightNow": {
+									"type": "string",
+									"nullable": true
+								},
+								"unreadCount": {
+									"type": "integer",
+									"nullable": true
+								},
+								"viewed": {
+									"type": "boolean",
+									"nullable": true
+								},
+								"roaming": {
+									"type": "boolean",
+									"nullable": true
+								},
+								"isVisiting": {
+									"type": "boolean",
+									"nullable": true
+								},
+								"isPopular": {
+									"type": "boolean",
+									"nullable": true
+								},
+								"distanceMeters": {
+									"type": "number",
+									"nullable": true
+								},
+								"isRewarded": {
+									"type": "boolean",
+									"nullable": true
+								},
+								"fuzzedLat": {
+									"type": "number",
+									"nullable": true
+								},
+								"fuzzedLon": {
+									"type": "number",
+									"nullable": true
+								},
+								"rightNowPin": {
+									"type": "object",
+									"nullable": true,
+									"description": "the pin thumbnail: `thumbnailUrl`, `fullImageUrl`, `isNsfw`, `text`"
+								},
+								"rightNowPost": {
+									"type": "object",
+									"nullable": true,
+									"description": "the active post: `id`, `thumbnailUrl`, `fullImageUrl`, `isNsfw`, `text`, `expirationTimestamp`"
+								}
+>>>>>>> origin/forgejo-sync
 							},
 							"required": [
 								"profileId"
@@ -18399,7 +19695,8 @@
 					"1": "Negative",
 					"2": "Negative, on PrEP",
 					"3": "Positive",
-					"4": "Positive, undetectable"
+					"4": "Positive, undetectable",
+					"5": "Prefer to discuss"
 				},
 				"x-render-on-tag": "users/profiles",
 				"x-display-name": "HIV status"
@@ -19148,6 +20445,178 @@
 				},
 				"x-render-on-tag": "safety/appeals"
 			},
+<<<<<<< HEAD
+=======
+			"ReportReason": {
+				"type": "string",
+				"enum": [
+					"SPAM",
+					"HARASSMENT_BULLYING",
+					"HATE_DISCRIMINATION",
+					"NUDITY_PORNOGRAPHY",
+					"UNDERAGE",
+					"IMPERSONATION",
+					"ILLEGAL_ACTIVITY",
+					"SEXUAL_SOLICITATION",
+					"SERIOUS_IN_PERSON_INCIDENT"
+				],
+				"description": "Report reason.",
+				"x-enum-labels": {
+					"SPAM": "Spam",
+					"HARASSMENT_BULLYING": "Harassment or Bullying",
+					"HATE_DISCRIMINATION": "Hate Speech/Discrimination",
+					"NUDITY_PORNOGRAPHY": "Nudity or Pornography",
+					"UNDERAGE": "Underage",
+					"IMPERSONATION": "Impersonation",
+					"ILLEGAL_ACTIVITY": "Illegal Activity",
+					"SEXUAL_SOLICITATION": "Sexual Solicitation",
+					"SERIOUS_IN_PERSON_INCIDENT": "Serious In Person Incident"
+				},
+				"x-render-on-tag": "safety/reports"
+			},
+			"ReportLocation": {
+				"type": "string",
+				"enum": [
+					"PROFILE_PHOTO",
+					"PROFILE_INFORMATION",
+					"CHAT_MESSAGE",
+					"ALBUM",
+					"RIGHT_NOW_PHOTO",
+					"RIGHT_NOW_TEXT"
+				],
+				"description": "Where the reported content was seen.",
+				"x-enum-labels": {
+					"PROFILE_PHOTO": "Profile Photo",
+					"PROFILE_INFORMATION": "Profile Information",
+					"CHAT_MESSAGE": "Chat Message",
+					"ALBUM": "Album",
+					"RIGHT_NOW_PHOTO": "Right Now Image",
+					"RIGHT_NOW_TEXT": "Right Now Text"
+				},
+				"x-render-on-tag": "safety/reports"
+			},
+			"ProfileReportRequest": {
+				"type": "object",
+				"required": [
+					"reason",
+					"comment",
+					"locations"
+				],
+				"properties": {
+					"reason": {
+						"$ref": "#/components/schemas/ReportReason"
+					},
+					"comment": {
+						"type": "string",
+						"description": "free-text details"
+					},
+					"locations": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ReportLocation"
+						},
+						"description": "where it happened"
+					},
+					"albumInfo": {
+						"type": "object",
+						"description": "the reported album, for `ALBUM` reports",
+						"properties": {
+							"albumId": {
+								"type": "integer",
+								"format": "int64"
+							},
+							"contentId": {
+								"type": "integer",
+								"format": "int64",
+								"description": "the reported photo or video in the album"
+							},
+							"hasVideo": {
+								"type": "boolean",
+								"description": "whether `contentId` is a video"
+							}
+						}
+					},
+					"rightNowInfo": {
+						"type": "object",
+						"description": "the reported Right Now post",
+						"properties": {
+							"postId": {
+								"type": "integer",
+								"format": "int64"
+							}
+						}
+					}
+				},
+				"x-render-on-tag": "safety/reports"
+			},
+			"ProfileReportRequestV2": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/ProfileReportRequest"
+					},
+					{
+						"type": "object",
+						"properties": {
+							"captchaToken": {
+								"type": "string",
+								"description": "reCAPTCHA Enterprise token, action `report`"
+							}
+						}
+					}
+				],
+				"x-render-on-tag": "safety/reports"
+			},
+			"RightNowPostReportRequest": {
+				"type": "object",
+				"required": [
+					"reason",
+					"comment",
+					"locations"
+				],
+				"properties": {
+					"reason": {
+						"$ref": "#/components/schemas/ReportReason"
+					},
+					"comment": {
+						"type": "string",
+						"description": "free-text details"
+					},
+					"locations": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ReportLocation"
+						},
+						"description": "where it happened"
+					}
+				}
+			},
+			"SubmittedReport": {
+				"type": "object",
+				"properties": {
+					"status": {
+						"type": "string",
+						"description": "string, moderation status; values unknown"
+					},
+					"createTime": {
+						"$ref": "#/components/schemas/TimestampMs"
+					}
+				},
+				"x-render-on-tag": "safety/reports"
+			},
+			"RightNowPostSubmittedReportResponse": {
+				"type": "object",
+				"properties": {
+					"flagReport": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SubmittedReport"
+							}
+						],
+						"description": "your report on the post"
+					}
+				}
+			},
+>>>>>>> origin/forgejo-sync
 			"MediaUploadProblemResponse": {
 				"type": "object",
 				"description": "RFC-7807 problem body returned on a `422` when uploaded media is blocked by moderation.",
@@ -19661,6 +21130,24 @@
 					}
 				},
 				"x-render-on-tag": "right-now"
+			},
+			"PushTokenRequest": {
+				"type": "object",
+				"required": [
+					"vendorProvidedIdentifier",
+					"token"
+				],
+				"properties": {
+					"vendorProvidedIdentifier": {
+						"type": "string",
+						"description": "The Firebase installation ID, which is the part of `token` before the first `:`."
+					},
+					"token": {
+						"type": "string",
+						"description": "FCM registration token, shaped `<installationId>:APA91b…`."
+					}
+				},
+				"x-render-on-tag": "settings/account"
 			}
 		}
 	},

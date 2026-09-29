@@ -3,40 +3,58 @@
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import SwitchField from "$lib/components/ui/switch-field/SwitchField.svelte";
-	import { getUpdateSettings, setAutomaticUpdateChecks } from "$lib/updates";
-	import { checkForUpdateNow } from "$lib/updates/updates-manager";
+	import { addonInstallerAvailable } from "$lib/updates/addon.svelte";
+	import {
+		updatesSelfManaged,
+		updatesUnsupportedReason,
+	} from "$lib/updates/capability.svelte";
+	import {
+		automaticChecksSetting,
+		checkAfterOptIn,
+		manualCheckOffered,
+	} from "$lib/updates/update-checks";
+	import {
+		automaticChecksEnabled,
+		hydrateUpdateSettings,
+		saveAutomaticChecks,
+	} from "$lib/updates/update-settings.svelte";
+	import CheckForUpdatesButton from "./CheckForUpdatesButton.svelte";
 
-	let stored = $state<boolean | null>(null);
 	let pending = $state<boolean | null>(null);
+	const stored = $derived(automaticChecksEnabled());
 	const value = $derived(pending ?? stored ?? false);
+	const addonAvailable = addonInstallerAvailable();
+	const selfManaged = $derived(updatesSelfManaged());
+	const setting = $derived(
+		automaticChecksSetting({
+			selfManaged,
+			unsupportedReason: updatesUnsupportedReason(),
+			addonAvailable,
+		}),
+	);
 
 	onMount(() => {
-		getUpdateSettings()
-			.then((settings) => {
-				stored = settings.autoCheck;
-			})
-			.catch((error: unknown) => {
-				showErrorToast({
-					label: "Couldn't read update settings",
-					error,
-				});
-			});
+		if (setting.blocked) return;
+		hydrateUpdateSettings().catch((error: unknown) => {
+			showErrorToast({ label: "Couldn't read update settings", error });
+		});
 	});
 </script>
 
 <SwitchField
-	title="Check updates automatically"
-	description="Periodically request updates from git.opengrind.org. No personally identifiable information is sent, no requests are stored or analyzed."
-	disabled={stored === null}
+	title={setting.title}
+	description={setting.description}
+	disabled={setting.blocked || stored === null}
 	bind:checked={
 		() => value,
 		(newValue: boolean) => {
 			pending = newValue;
-			setAutomaticUpdateChecks(newValue)
-				.then((settings) => {
-					stored = settings.autoCheck;
+			saveAutomaticChecks(newValue)
+				.then((autoCheck) => {
 					pending = null;
-					if (settings.autoCheck) void checkForUpdateNow();
+					if (autoCheck) {
+						void checkAfterOptIn({ selfManaged, addonAvailable });
+					}
 				})
 				.catch((error: unknown) => {
 					pending = null;
@@ -48,3 +66,6 @@
 		}
 	}
 />
+{#if manualCheckOffered({ selfManaged, addonAvailable })}
+	<CheckForUpdatesButton {selfManaged} {addonAvailable} />
+{/if}

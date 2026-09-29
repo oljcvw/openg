@@ -57,6 +57,11 @@ export function previewFromMessage(
 	}
 }
 
+<<<<<<< HEAD
+=======
+const EXPIRING_VIDEO_TYPES = new Set(["Video", "PrivateVideo"]);
+
+>>>>>>> origin/forgejo-sync
 export function previewLabel(
 	preview: MessagePreview | null | undefined,
 ): string | null {
@@ -64,7 +69,12 @@ export function previewLabel(
 	const text = preview.text ?? null;
 	if (text !== null) return text;
 	if ((preview.albumId ?? null) !== null) return "Album";
+<<<<<<< HEAD
 	if (preview.type === "ExpiringImage") return "Expiring photo";
+=======
+	if (preview.type === "ExpiringImage") return "Expiring image";
+	if (EXPIRING_VIDEO_TYPES.has(preview.type)) return "Expiring video";
+>>>>>>> origin/forgejo-sync
 	if ((preview.imageHash ?? null) !== null || preview.type === "Image") {
 		return "Photo";
 	}
@@ -74,8 +84,6 @@ export function previewLabel(
 const QUOTE_LABELS: Record<string, string> = {
 	Unsent: "Unsent message",
 	Audio: "Voice message",
-	Video: "Video",
-	PrivateVideo: "Video",
 	NonExpiringVideo: "Video",
 	VideoCall: "Video call",
 	Gaymoji: "Gaymoji",

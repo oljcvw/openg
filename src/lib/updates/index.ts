@@ -1,7 +1,9 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import z from "zod";
 
 import { demoEnabled } from "$lib/demo";
+import { APP_COMPONENT, type ComponentKey } from "./components";
 import {
 	type Capability,
 	capabilitySchema,
@@ -62,71 +64,102 @@ function subscribed<T>(
 	});
 }
 
+export { COMPONENT_PACKAGE, GOOGLE_OAUTH_COMPONENT } from "./components";
+export { APP_COMPONENT, type ComponentKey };
+
 export function updatesAvailableHere(): boolean {
 	return isTauri() && !demoEnabled;
 }
 
 export async function getUpdateCapability(): Promise<Capability> {
 	if (!updatesAvailableHere()) return unavailableCapability;
-	return parsed("update_capability", capabilitySchema);
+	return parsed("updater_capability", capabilitySchema);
 }
 
 export async function getUpdateSettings(): Promise<Settings> {
-	return parsed("update_settings", settingsSchema);
+	return parsed("updater_settings", settingsSchema);
 }
 
 export async function setAutomaticUpdateChecks(
 	enabled: boolean,
 ): Promise<Settings> {
-	return parsed("update_set_auto_check", settingsSchema, { enabled });
+	return parsed("updater_set_auto_check", settingsSchema, { enabled });
 }
 
-export async function checkForUpdate(
-	trigger: "manual" | "launch" | "automatic",
-): Promise<CheckResult> {
-	return parsed("update_check", checkResultSchema, { trigger });
+export async function checkForUpdate({
+	trigger,
+	component = APP_COMPONENT,
+}: {
+	trigger: "manual" | "launch" | "automatic";
+	component?: ComponentKey;
+}): Promise<CheckResult> {
+	return parsed("updater_check", checkResultSchema, { component, trigger });
 }
 
-export async function startUpdateDownload(): Promise<Progress> {
-	return parsed("update_download", progressSchema);
+export async function startUpdateDownload(
+	component: ComponentKey = APP_COMPONENT,
+): Promise<Progress> {
+	return parsed("updater_download", progressSchema, { component });
 }
 
-export async function cancelUpdateDownload(): Promise<void> {
-	await invoke("update_cancel_download");
+export async function cancelUpdateDownload(
+	component: ComponentKey = APP_COMPONENT,
+): Promise<void> {
+	await invoke("updater_cancel_download", { component });
 }
 
 export async function getUpdateProgress(): Promise<Progress | null> {
-	return parsed("update_progress", progressSchema.nullable());
+	return parsed("updater_progress", progressSchema.nullable());
 }
 
-export async function getUpdateReadiness(): Promise<Readiness> {
+export async function getUpdateReadiness(
+	component: ComponentKey = APP_COMPONENT,
+): Promise<Readiness> {
 	if (!updatesAvailableHere()) return unavailableReadiness;
-	return parsed("update_readiness", readinessSchema);
+	return parsed("updater_readiness", readinessSchema, { component });
 }
 
-export async function installUpdate(): Promise<void> {
-	await invoke("update_install");
+export async function installUpdate(
+	component: ComponentKey = APP_COMPONENT,
+): Promise<void> {
+	await invoke("updater_install", { component });
+}
+
+export async function installPending(): Promise<boolean> {
+	if (!updatesAvailableHere()) return false;
+	return parsed("updater_install_pending", z.boolean());
+}
+
+export async function getInstalledVersion(
+	component: ComponentKey,
+): Promise<string | null> {
+	if (!updatesAvailableHere()) return null;
+	return parsed("updater_installed_version", z.string().nullable(), {
+		component,
+	});
 }
 
 export async function takeInstallOutcome(): Promise<InstallOutcome | null> {
 	return parsed(
-		"update_take_install_outcome",
+		"updater_take_install_outcome",
 		installOutcomeSchema.nullable(),
 	);
 }
 
 export async function openInstallPermissionSettings(): Promise<void> {
-	await invoke("update_open_install_permission_settings");
+	await invoke("updater_open_install_permission_settings");
 }
 
-export async function discardStagedUpdate(): Promise<void> {
-	await invoke("update_discard");
+export async function discardStagedUpdate(
+	component: ComponentKey = APP_COMPONENT,
+): Promise<void> {
+	await invoke("updater_discard", { component });
 }
 
 export function onInstallFinished(handler: (outcome: InstallOutcome) => void) {
-	return subscribed("update:install", installOutcomeSchema, handler);
+	return subscribed("updater:install", installOutcomeSchema, handler);
 }
 
 export function onUpdateProgress(handler: (progress: Progress) => void) {
-	return subscribed("update:progress", progressSchema, handler);
+	return subscribed("updater:progress", progressSchema, handler);
 }

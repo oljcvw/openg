@@ -1,7 +1,11 @@
 ---
 prev: false
 next: false
+<<<<<<< HEAD
 title: 'FAQ'
+=======
+title: "FAQ"
+>>>>>>> origin/forgejo-sync
 ---
 
 # Open Grind FAQ
@@ -43,14 +47,19 @@ We genuinely have no idea, and it's a good thing: there are exactly zero tracker
 The only indirect counters are:
 
 1. Download count on Releases page
-   - It **does not track IP address**, it's a simple integer counter that is increased each time someone sends the HTTP request to download the file. Nothing about the request is logged or stored.
+    - It **does not track IP address**, it's a simple integer counter that is increased each time someone sends the HTTP request to download the file. Nothing about the request is logged or stored.
 2. Number of joined accounts in the official discussion venues
-   - Such as number of participants in the official Matrix chat room (no limit on how many accounts a person can have or which homeservers they join from)
-   - Number of registered users on git.opengrind.org (**IP addresses are not stored**)
-   - Keep in mind these platforms do not collect or store any personally identifiable data about users
+    - Such as number of participants in the official Matrix chat room (no limit on how many accounts a person can have or which homeservers they join from)
+    - Number of registered users on git.opengrind.org (**IP addresses are not stored**)
+    - Keep in mind these platforms do not collect or store any personally identifiable data about users
 
-Open Grind has opt-in auto-updater that sends an anonymous request to git.opengrind.org, but these requests are not logged or stored. If you installed the app from F-Droid, Obtainium, Aurora Store or Google Play, the auto-updater is disabled entirely and this does not apply to you. The first-run screen presents this choice with the checkbox pre-checked, nothing is sent until you confirm, and you can change it any time in Settings → App.
+Open Grind has opt-in auto-updater that sends an anonymous request to git.opengrind.org. These requests are not logged or analyzed. Installs through the auto-updater (including add-on installs) are counted towards the download count on Releases pages.
 
+<<<<<<< HEAD
+=======
+Open Grind installed from F-Droid, Google Play or .deb never updates itself, and updates are managed by your package manager or app store.
+
+>>>>>>> origin/forgejo-sync
 **As of September 1st, 2026, the estimated number of users is ~67 000 based on the downloads counter.**
 
 :::
@@ -67,7 +76,11 @@ Open Grind is completely free, open source and transparent: no ads, no purchases
 
 :::
 
+<<<<<<< HEAD
 ::: details What about other apps such as Free Grind and GrindrX?
+=======
+::: details What about other apps such as Free Grind, Regrind and GrindrX?
+>>>>>>> origin/forgejo-sync
 
 These are forks of Open Grind building upon its foundation. Neither are affiliated/verified/endorsed by Open Grind developers. All third-party clients put your personal sensitive information at risk. Avoid using Grindr clients that weren't audited independently, as they might contain spyware.
 
@@ -143,13 +156,23 @@ No, and likely will never be.
 - **Everyone else:** Spread the word. Share the link to Open Grind. Tell your friends about it.
 
 :::
+<<<<<<< HEAD
+
+::: details What are the community rules for discussion chat rooms?
+=======
+>>>>>>> origin/forgejo-sync
 
 ::: details What are the community rules for discussion chat rooms?
 
-See [CODE\_OF\_CONDUCT.md](https://git.opengrind.org/open-grind/open-grind/src/branch/main/CODE_OF_CONDUCT.md)
+<<<<<<< HEAD
+:::
+
+=======
+See [CODE_OF_CONDUCT.md](https://git.opengrind.org/open-grind/open-grind/src/branch/main/CODE_OF_CONDUCT.md)
 
 :::
 
+>>>>>>> origin/forgejo-sync
 ::: details Is it possible to customize colors of the UI?
 
 Currently not possible. Follow [#230](https://git.opengrind.org/open-grind/open-grind/issues/230) for updates.
@@ -176,6 +199,10 @@ Yes, it's been confirmed that it's been deleted. In its last weeks, the server w
 
 Releases are signed with [minisign](https://jedisct1.github.io/minisign/) and ship a detached `.minisig`. The release signing key, and the governance PGP key that certifies it, can be found in [KEYS.md](https://git.opengrind.org/open-grind/open-grind/src/branch/main/KEYS.md).
 
+<<<<<<< HEAD
 You can also [reproduce the build](https://git.opengrind.org/open-grind/open-grind/src/branch/main/BUILDING.md#verify-android-release) to verify it came from this source.
+=======
+You can also [reproduce the build](https://git.opengrind.org/open-grind/open-grind/src/branch/main/REPRODUCIBILITY.md) to verify it came from this source.
+>>>>>>> origin/forgejo-sync
 
 :::

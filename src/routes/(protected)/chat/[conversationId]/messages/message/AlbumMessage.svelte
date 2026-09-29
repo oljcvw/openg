@@ -1,14 +1,6 @@
 <script lang="ts">
-	import "photoswipe/style.css";
-	import { ImagesIcon, VideoIcon } from "phosphor-svelte";
-	import type PhotoSwipeLightbox from "photoswipe/lightbox";
-
-	import { showErrorToast } from "$lib/api/error-toast";
-	import {
-		type AlbumContentResponse,
-		getAlbumContent,
-	} from "$lib/api/messaging/albums";
 	import { albumShares } from "$lib/chat/album-shares.svelte";
+<<<<<<< HEAD
 	import MediaImage from "$lib/components/shared/MediaImage.svelte";
 	import { now } from "$lib/util/clock";
 	import { proxyMediaUrl } from "$lib/util/media";
@@ -23,6 +15,9 @@
 		applyPhotoSwipeVideo,
 		applyPhotoSwipeViewportSync,
 	} from "$lib/util/photoswipe";
+=======
+	import AlbumPreview from "$lib/components/album/AlbumPreview.svelte";
+>>>>>>> origin/forgejo-sync
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
 	import { getConversationState } from "../../conversation-state.svelte";
 	import LockedMedia from "./LockedMedia.svelte";
@@ -48,7 +43,7 @@
 	});
 
 	const className: import("svelte/elements").ClassValue = $derived([
-		"aspect-3/4 h-auto relative",
+		"aspect-3/4 h-auto",
 		{
 			"ring ring-accent": message.hasUnseenContent,
 			"w-2/5 min-w-35 max-w-60 ms-3": !media.clone,
@@ -60,6 +55,7 @@
 		"rounded-xl",
 		media.cornerClass,
 	]);
+<<<<<<< HEAD
 
 	type LoadedAlbum = AlbumContentResponse & {
 		content: (AlbumContentResponse["content"][number] & MediaDimensions)[];
@@ -168,23 +164,21 @@
 			lightbox = undefined;
 		};
 	});
+=======
+>>>>>>> origin/forgejo-sync
 </script>
 
 {#if isViewable}
-	<button
-		class={[
-			className,
-			contentClass,
-			{
-				"cursor-pointer": albumState.status === "idle",
-				"opacity-50": albumState.status === "loading",
-			},
-		]}
-		aria-label="Open album"
-		onclick={openAlbum}
-		disabled={albumState.status !== "idle"}
-		{@attach media.attach}
+	<AlbumPreview
+		albumId={message.albumId}
+		coverUrl={message.coverUrl}
+		hasPhoto={message.hasPhoto}
+		hasVideo={message.hasVideo}
+		class={className}
+		{contentClass}
+		attach={media.attach}
 	>
+<<<<<<< HEAD
 		<MediaImage
             loading="lazy"
 			src={proxyMediaUrl(message.coverUrl)}
@@ -219,21 +213,17 @@
 				{/if}
 			</div>
 		</div>
+=======
+>>>>>>> origin/forgejo-sync
 		{@render media.adornments?.()}
-	</button>
+	</AlbumPreview>
 {:else}
 	<div
 		data-slot="locked-album"
-		class={[className, contentClass]}
+		class={[className, contentClass, "relative"]}
 		{@attach media.attach}
 	>
 		<LockedMedia class={media.cornerClass} />
 		{@render media.adornments?.()}
 	</div>
 {/if}
-
-<style>
-	:global(.pswp__img) {
-		object-fit: contain;
-	}
-</style>

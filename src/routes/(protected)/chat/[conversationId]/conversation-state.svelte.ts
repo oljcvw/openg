@@ -10,6 +10,7 @@ import {
 	sendMessage,
 } from "$lib/api/messaging/messages";
 import { getPreferences } from "$lib/app-data/preferences.svelte";
+import { offerEntitlementBypass } from "$lib/entitlements/bypass.svelte";
 import { previewFromMessage } from "$lib/model/messaging/message-preview";
 import { reconciler } from "$lib/util/reconcile";
 import {
@@ -28,6 +29,7 @@ import {
 	matchPendingEcho,
 	mergeServerMessages,
 	type OptimisticMessage,
+	previewedMessage,
 	removeDuplicateMessages,
 } from "./merge-messages";
 import { getConversation } from "./messages";
@@ -38,6 +40,16 @@ export type { OptimisticMessage };
 export type ConversationProfile = Awaited<
 	ReturnType<typeof getConversation>
 >["profile"];
+
+function asSent(message: ApiResponseMessage): OptimisticMessage {
+	return { ...message, status: "sent" };
+}
+
+type MessageDelivery = {
+	tempId: string;
+	message: OutboundMessage;
+	replyToMessageId?: string;
+};
 
 export class ConversationState {
 	messages: OptimisticMessage[] = $state([]);
@@ -227,7 +239,7 @@ export class ConversationState {
 			}
 
 			this.messages = messages;
-			this.#updatePreview(this.messages.at(0));
+			this.#updatePreview();
 			this.#syncCache();
 
 			for (const m of fresh) {
@@ -276,10 +288,7 @@ export class ConversationState {
 			this.conversationId,
 		);
 		if (cached) {
-			this.messages = cached.messages.map((m) => ({
-				...m,
-				status: "sent" as const,
-			}));
+			this.messages = cached.messages.map(asSent);
 			this.profile = cached.profile;
 			this.pageKey = cached.pageKey;
 			this.lastReadTimestamp = cached.lastReadTimestamp;
@@ -296,7 +305,7 @@ export class ConversationState {
 			void this.#conversations.markRead(this.conversationId);
 			if (this.#destroyed) return;
 			this.messages = removeDuplicateMessages(
-				result.messages.map((m) => ({ ...m, status: "sent" as const })),
+				result.messages.map(asSent),
 			);
 			this.profile = result.profile;
 			this.pageKey = result.pageKey;
@@ -312,7 +321,9 @@ export class ConversationState {
 		}
 	}
 
-	async loadMore(): Promise<void> {
+	async loadMore({
+		commit = (apply) => apply(),
+	}: { commit?: (apply: () => void) => void } = {}): Promise<void> {
 		if (this.loadingMore || this.pageKey === null) return;
 		this.loadingMore = true;
 		try {
@@ -321,16 +332,16 @@ export class ConversationState {
 				pageKey: this.pageKey,
 			});
 			if (this.#destroyed) return;
-			this.messages = removeDuplicateMessages([
-				...this.messages,
-				...result.messages.map((m) => ({
-					...m,
-					status: "sent" as const,
-				})),
-			]);
-			this.pageKey = result.pageKey;
-			this.#advanceLastRead(result.lastReadTimestamp);
-			this.#syncCache();
+			commit(() => {
+				this.messages = removeDuplicateMessages([
+					...this.messages,
+					...result.messages.map(asSent),
+				]);
+				this.pageKey = result.pageKey;
+				this.loadingMore = false;
+				this.#advanceLastRead(result.lastReadTimestamp);
+				this.#syncCache();
+			});
 		} catch (error) {
 			if (this.#destroyed) return;
 			console.error(error);
@@ -388,22 +399,47 @@ export class ConversationState {
 		};
 		this.messages = removeDuplicateMessages([optimistic, ...this.messages]);
 		this.#updatePreview(optimistic);
-		void this.#resolveMessage({
+		void this.#deliverMessage({
 			tempId,
 			message: draft.outbound,
 			replyToMessageId: replyToMessage?.messageId,
 		});
 	}
 
-	async #resolveMessage({
+	async #deliverMessage(delivery: MessageDelivery): Promise<void> {
+		try {
+			await this.#attemptSend(delivery);
+		} catch (error) {
+			const urn = errorUrn(error);
+			console.error(
+				`Failed to send message${urn === null ? "" : ` (${urn})`}`,
+				error,
+			);
+			if (
+				!this.#destroyed &&
+				delivery.message.type === "ExpiringImage" &&
+				urn === "urn:gr:err:entitlement_limit"
+			) {
+				offerEntitlementBypass({
+					reason: "Daily expiring photo limit reached. Sending more requires a Grindr subscription.",
+					retry: () => this.#attemptSend(delivery),
+				});
+			}
+		}
+	}
+
+	async #attemptSend({
 		tempId,
 		message,
 		replyToMessageId,
-	}: {
-		tempId: string;
-		message: OutboundMessage;
-		replyToMessageId?: string;
-	}): Promise<void> {
+	}: MessageDelivery): Promise<void> {
+		if (this.#destroyed) return;
+		const findOptimistic = () =>
+			this.messages.find((m) => m.messageId === tempId);
+		const sending = findOptimistic();
+		if (!sending) return;
+		sending.status = "pending";
+		sending.sendError = undefined;
 		try {
 			const sent = await sendMessage({
 				toUserId: this.profile!.profileId,
@@ -411,7 +447,7 @@ export class ConversationState {
 				replyToMessageId,
 			});
 			if (this.#destroyed) return;
-			const msg = this.messages.find((m) => m.messageId === tempId);
+			const msg = findOptimistic();
 			if (msg) {
 				this.#adoptServerVersion({
 					message: msg,
@@ -423,6 +459,7 @@ export class ConversationState {
 			}
 			void this.#conversations.ensureLoaded(this.conversationId);
 		} catch (error) {
+<<<<<<< HEAD
 			const urn = errorUrn(error);
 			console.error(
 				`Failed to send message${urn === null ? "" : ` (${urn})`}`,
@@ -438,12 +475,15 @@ export class ConversationState {
 				);
 			}
 			const msg = this.messages.find((m) => m.messageId === tempId);
+=======
+			const msg = findOptimistic();
+>>>>>>> origin/forgejo-sync
 			if (msg) {
 				msg.status = "error";
 				msg.sendError = error;
 			}
-			const latestSent = this.messages.find((m) => m.status === "sent");
-			this.#updatePreview(latestSent);
+			if (!this.#destroyed) this.#updatePreview();
+			throw error;
 		}
 	}
 
@@ -456,17 +496,15 @@ export class ConversationState {
 		serverMessageId: string;
 		serverTimestamp: number;
 	}): void {
-		const wasNewestBeforeAdopting =
-			this.messages.at(0)?.messageId === message.messageId;
+		const wasPreviewed =
+			previewedMessage(this.messages)?.messageId === message.messageId;
 		message.status = "sent";
 		message.messageId = serverMessageId;
 		message.timestamp = serverTimestamp;
 		this.#resortNewestFirst();
-		const newest = this.messages.at(0);
-		const isNewestAfterAdopting = newest?.messageId === serverMessageId;
-		if (wasNewestBeforeAdopting || isNewestAfterAdopting) {
-			this.#updatePreview(newest);
-		}
+		const isPreviewed =
+			previewedMessage(this.messages)?.messageId === serverMessageId;
+		if (wasPreviewed || isPreviewed) this.#updatePreview();
 		this.#syncCache();
 	}
 
@@ -504,7 +542,7 @@ export class ConversationState {
 		});
 	}
 
-	#updatePreview(message: OptimisticMessage | undefined) {
+	#updatePreview(message = previewedMessage(this.messages)) {
 		this.#conversations.updatePreview({
 			conversationId: this.conversationId,
 			preview: previewFromMessage(message),
@@ -513,18 +551,19 @@ export class ConversationState {
 	}
 
 	remove(messageId: string) {
-		const isLatest = this.messages.at(0)?.messageId === messageId;
+		const previewed =
+			previewedMessage(this.messages)?.messageId === messageId;
 
 		let revert = () => {};
 		const index = this.messages.findIndex((m) => m.messageId === messageId);
 		const removed = this.messages[index];
 		if (removed) {
 			this.messages.splice(index, 1);
-			if (isLatest) this.#updatePreview(this.messages.at(0));
+			if (previewed) this.#updatePreview();
 			this.#syncCache();
 			const revertDeleteMessage = () => {
 				this.messages.splice(index, 0, removed);
-				if (isLatest) this.#updatePreview(removed);
+				if (previewed) this.#updatePreview(removed);
 				this.#syncCache();
 			};
 
@@ -603,7 +642,12 @@ export class ConversationState {
 	}
 
 	markMessageAsUnsent(messageId: string) {
+<<<<<<< HEAD
 		const isLatest = this.messages.at(0)?.messageId === messageId;
+=======
+		const previewed =
+			previewedMessage(this.messages)?.messageId === messageId;
+>>>>>>> origin/forgejo-sync
 
 		const msg = this.messages.find((m) => m.messageId === messageId);
 		let revert: () => void = () => {};
@@ -617,13 +661,21 @@ export class ConversationState {
 			msg.type = "Unsent";
 			msg.body = null;
 			this.#syncCache();
+<<<<<<< HEAD
 			if (isLatest) this.#updatePreview(msg);
+=======
+			if (previewed) this.#updatePreview(msg);
+>>>>>>> origin/forgejo-sync
 			revert = () => {
 				msg.unsent = original.unsent;
 				msg.type = original.type;
 				msg.body = original.body;
 				this.#syncCache();
+<<<<<<< HEAD
 				if (isLatest) this.#updatePreview(msg);
+=======
+				if (previewed) this.#updatePreview(msg);
+>>>>>>> origin/forgejo-sync
 			};
 		}
 		return { revert };

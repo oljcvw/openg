@@ -1,14 +1,30 @@
 import { type ComponentProps, mount, unmount } from "svelte";
+<<<<<<< HEAD
+=======
+import type {
+	PhotoSwipeEventsMap,
+	PhotoSwipeModule,
+	PhotoSwipeModuleOption,
+} from "photoswipe";
+>>>>>>> origin/forgejo-sync
 import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
 import VideoPlayer from "$lib/components/shared/VideoPlayer.svelte";
 import { backGestureEventHandlers } from "$lib/platform/back-gesture-event.svelte";
+<<<<<<< HEAD
 import { isLinuxPlatform } from "$lib/platform/os";
 import {
 	UNDECODABLE_VIDEO,
 	UNDECODABLE_VIDEO_ON_LINUX,
 	warnAboutMissingVideoCodecs,
 } from "$lib/platform/video-codecs";
+=======
+import { openExternalLink } from "$lib/platform/link-opener";
+import { isLinuxPlatform } from "$lib/platform/os";
+import { canDecodeH264 } from "$lib/platform/video-codecs";
+import { TRANSPARENT_PIXEL } from "$lib/util/load-when-visible";
+import type { MediaDimensions } from "$lib/util/media-dimensions";
+>>>>>>> origin/forgejo-sync
 import "./photoswipe.css";
 
 const BROKEN_MEDIA_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="64" height="64" fill="var(--color-neutral-500)" style="display:block" aria-hidden="true"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16h64a8,8,0,0,0,7.59-5.47l14.83-44.48L163,151.43a8.07,8.07,0,0,0,4.46-4.46l14.62-36.55,44.48-14.83A8,8,0,0,0,232,88V56A16,16,0,0,0,216,40ZM117,152.57a8,8,0,0,0-4.62,4.9L98.23,200H40V160.69l46.34-46.35a8,8,0,0,1,11.32,0l32.84,32.84Zm115-30.84V200a16,16,0,0,1-16,16H137.73a8,8,0,0,1-7.59-10.53l7.94-23.8a8,8,0,0,1,4.61-4.9l35.77-14.31,14.31-35.77a8,8,0,0,1,4.9-4.61l23.8-7.94A8,8,0,0,1,232,121.73Z"/></svg>`;
@@ -17,6 +33,7 @@ type Failure = Parameters<
 	NonNullable<ComponentProps<typeof VideoPlayer>["onfail"]>
 >[0];
 
+<<<<<<< HEAD
 const failures = new WeakMap<object, Failure>();
 
 function undecodableNotice(): HTMLParagraphElement {
@@ -25,6 +42,32 @@ function undecodableNotice(): HTMLParagraphElement {
 	notice.textContent = isLinuxPlatform()
 		? UNDECODABLE_VIDEO_ON_LINUX
 		: UNDECODABLE_VIDEO;
+=======
+type Content = PhotoSwipeEventsMap["contentLoad"]["content"];
+
+const failures = new WeakMap<object, Failure>();
+
+const CODECS_GUIDE = "https://opengrind.org/guides/codecs";
+
+function undecodableNotice(): HTMLParagraphElement {
+	const notice = document.createElement("p");
+	notice.className = "mt-4 max-w-80 text-center text-sm text-neutral-400";
+	if (!isLinuxPlatform() || canDecodeH264()) {
+		notice.textContent = "This video cannot be played on this system.";
+		return notice;
+	}
+	notice.textContent =
+		"Playing this video needs an H.264 decoder, which is not installed on this system. ";
+	const guide = document.createElement("a");
+	guide.href = CODECS_GUIDE;
+	guide.className = "underline";
+	guide.textContent = "How to install video codecs";
+	guide.onclick = (event) => {
+		event.preventDefault();
+		openExternalLink(CODECS_GUIDE);
+	};
+	notice.append(guide);
+>>>>>>> origin/forgejo-sync
 	return notice;
 }
 
@@ -65,7 +108,7 @@ export function applyPhotoSwipeBackGesture(lightbox: PhotoSwipeLightbox): void {
 	});
 }
 
-type VideoSlide = { src: string; poster: string | null };
+type VideoSlide = { src: string; poster: string | null; loop?: boolean };
 
 function yieldToInteractiveContent(lightbox: PhotoSwipeLightbox): void {
 	lightbox.on("pointerDown", (event) => {
@@ -81,33 +124,61 @@ function yieldToInteractiveContent(lightbox: PhotoSwipeLightbox): void {
 	});
 }
 
-export function applyPhotoSwipeVideo(
+export function applyPhotoSwipeComponent<Slide>(
 	lightbox: PhotoSwipeLightbox,
-	videoAt: (index: number) => VideoSlide | null,
+	{
+		slideAt,
+		render,
+	}: {
+		slideAt: (index: number) => Slide | null;
+		render: (mount: {
+			target: HTMLElement;
+			slide: Slide;
+			content: Content;
+		}) => Record<string, unknown>;
+	},
 ): void {
-	const players = new Map<HTMLElement, Record<string, unknown>>();
-
-	yieldToInteractiveContent(lightbox);
+	const mounted = new Map<HTMLElement, Record<string, unknown>>();
 
 	lightbox.addFilter("useContentPlaceholder", (usePlaceholder, content) =>
-		videoAt(content.index) === null ? usePlaceholder : false,
+		slideAt(content.index) === null ? usePlaceholder : false,
 	);
 
 	lightbox.on("contentLoad", (event) => {
 		const { content } = event;
-		const video = videoAt(content.index);
-		if (video === null) return;
+		const slide = slideAt(content.index);
+		if (slide === null) return;
 		event.preventDefault();
 		const element = document.createElement("div");
 		element.className = "size-full";
 		content.element = element;
 		content.state = "loading";
-		players.set(
-			element,
+		mounted.set(element, render({ target: element, slide, content }));
+	});
+
+	lightbox.on("contentDestroy", ({ content }) => {
+		const { element } = content;
+		if (!element) return;
+		const component = mounted.get(element);
+		if (component === undefined) return;
+		mounted.delete(element);
+		void unmount(component);
+	});
+}
+
+export function applyPhotoSwipeVideo(
+	lightbox: PhotoSwipeLightbox,
+	videoAt: (index: number) => VideoSlide | null,
+): void {
+	yieldToInteractiveContent(lightbox);
+
+	applyPhotoSwipeComponent(lightbox, {
+		slideAt: videoAt,
+		render: ({ target, slide, content }) =>
 			mount(VideoPlayer, {
-				target: element,
+				target,
 				props: {
-					...video,
+					...slide,
 					onready: () => content.onLoaded(),
 					onfail: (failure: Failure) => {
 						failures.set(content, failure);
@@ -118,7 +189,6 @@ export function applyPhotoSwipeVideo(
 					},
 				},
 			}),
-		);
 	});
 
 	lightbox.on("contentActivate", ({ content }) => {
@@ -132,15 +202,45 @@ export function applyPhotoSwipeVideo(
 	lightbox.on("contentDeactivate", ({ content }) => {
 		content.element?.querySelector("video")?.pause();
 	});
+}
 
-	lightbox.on("contentDestroy", ({ content }) => {
-		const { element } = content;
-		if (!element) return;
-		const player = players.get(element);
-		if (player === undefined) return;
-		players.delete(element);
-		void unmount(player);
+export type LightboxItem = { src: string } & MediaDimensions;
+
+export async function openLightbox({
+	items,
+	videoAt,
+	configure,
+	signal,
+	onClosed,
+}: {
+	items: LightboxItem[];
+	videoAt?: (index: number) => VideoSlide | null;
+	configure?: (lightbox: PhotoSwipeLightbox) => void;
+	signal: AbortSignal;
+	onClosed: () => void;
+}): Promise<void> {
+	const { default: Lightbox } = await import("photoswipe/lightbox");
+	if (signal.aborted) return;
+	const lightbox = new Lightbox({
+		showHideAnimationType: "fade",
+		pswpModule: () => import("photoswipe"),
+		mainClass: "pswp--buttons-visible",
 	});
+	applyPhotoSwipeErrorUi(lightbox);
+	applyPhotoSwipeViewportSync(lightbox);
+	lightbox.addFilter("numItems", () => items.length);
+	lightbox.addFilter("itemData", (itemData, index) => {
+		const item = items[index];
+		if (item === undefined) return itemData;
+		return { src: item.src, width: item.width, height: item.height };
+	});
+	applyPhotoSwipeBackGesture(lightbox);
+	if (videoAt !== undefined) applyPhotoSwipeVideo(lightbox, videoAt);
+	configure?.(lightbox);
+	lightbox.on("closingAnimationEnd", onClosed);
+	signal.addEventListener("abort", () => lightbox.destroy(), { once: true });
+	lightbox.init();
+	lightbox.loadAndOpen(0);
 }
 
 export function applyPhotoSwipeThumbDimensions(
@@ -148,10 +248,113 @@ export function applyPhotoSwipeThumbDimensions(
 ): void {
 	lightbox.addFilter("itemData", (itemData) => {
 		const img = itemData.element?.querySelector("img");
-		if (img?.naturalWidth) {
+		if (img?.naturalWidth && img.src !== TRANSPARENT_PIXEL) {
 			itemData.width = img.naturalWidth;
 			itemData.height = img.naturalHeight;
 		}
 		return itemData;
 	});
+	lightbox.on("loadComplete", ({ slide, content }) => {
+		const image = content.element;
+		if (
+			content.width > 0 ||
+			!(image instanceof HTMLImageElement) ||
+			image.naturalWidth === 0
+		)
+			return;
+		content.width = slide.width = image.naturalWidth;
+		content.height = slide.height = image.naturalHeight;
+		slide.currentResolution = 0;
+		slide.calculateSize();
+		slide.zoomAndPanToInitial();
+		slide.applyCurrentZoomPan();
+		slide.updateContentSize(true);
+	});
+}
+
+type Listener = () => void;
+
+const busyLightboxes = new Set<PhotoSwipeLightbox>();
+const openingListeners = new Set<Listener>();
+const idleListeners = new Set<Listener>();
+
+export function isPhotoSwipeBusy(): boolean {
+	return busyLightboxes.size > 0;
+}
+
+export function onPhotoSwipeOpening(listener: Listener): () => void {
+	openingListeners.add(listener);
+	return () => {
+		openingListeners.delete(listener);
+	};
+}
+
+export function onPhotoSwipeIdle(listener: Listener): () => void {
+	idleListeners.add(listener);
+	return () => {
+		idleListeners.delete(listener);
+	};
+}
+
+function notify(listeners: Set<Listener>): void {
+	for (const listener of [...listeners]) listener();
+}
+
+function release(lightbox: PhotoSwipeLightbox): void {
+	if (busyLightboxes.delete(lightbox) && busyLightboxes.size === 0)
+		notify(idleListeners);
+}
+
+function specialKeyUsed(event: MouseEvent): boolean {
+	return (
+		event.button === 1 ||
+		event.ctrlKey ||
+		event.metaKey ||
+		event.altKey ||
+		event.shiftKey
+	);
+}
+
+function isCoreLoader(
+	option: PhotoSwipeModuleOption | undefined,
+): option is () => Promise<PhotoSwipeModule> {
+	return typeof option === "function" && !option.prototype?.goTo;
+}
+
+export function applyPhotoSwipeOpenTracking(
+	lightbox: PhotoSwipeLightbox,
+): () => void {
+	const { gallery, pswpModule } = lightbox.options;
+	if (!(gallery instanceof HTMLElement))
+		throw new TypeError("PhotoSwipe open tracking needs a gallery element");
+
+	const trackOpening = (event: MouseEvent) => {
+		if (specialKeyUsed(event) || window.pswp !== undefined) return;
+		const index = lightbox.applyFilters(
+			"clickedIndex",
+			lightbox.getClickedIndex(event),
+			event,
+			lightbox,
+		);
+		if (index < 0) return;
+		busyLightboxes.add(lightbox);
+		notify(openingListeners);
+	};
+	gallery.addEventListener("click", trackOpening, true);
+
+	if (isCoreLoader(pswpModule))
+		lightbox.options.pswpModule = () =>
+			pswpModule().catch((error: unknown) => {
+				release(lightbox);
+				throw error;
+			});
+
+	lightbox.on("destroy", () => {
+		release(lightbox);
+	});
+
+	return () => {
+		gallery.removeEventListener("click", trackOpening, true);
+		release(lightbox);
+	};
 }

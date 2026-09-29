@@ -14,6 +14,7 @@
 	import { capText } from "$lib/api/redact/text";
 	import {
 		clearSessionError,
+		sessionErrorKinds,
 		sessionErrorState,
 	} from "$lib/api/session-error-state.svelte";
 	import { sessionRecovery } from "$lib/api/session-recovery.svelte";
@@ -26,6 +27,7 @@
 	const payloadSchema = z.object({
 		message: z.string(),
 		unauthorized: z.boolean(),
+<<<<<<< HEAD
 		kind: z
 			.enum([
 				"Http",
@@ -40,6 +42,9 @@
 				"NotLoggedIn",
 			])
 			.catch("Http"),
+=======
+		kind: z.enum(sessionErrorKinds).catch("Http"),
+>>>>>>> origin/forgejo-sync
 		attempts: z.number().catch(0),
 		transient: z.boolean().catch(true),
 	});
@@ -146,7 +151,7 @@
 	async function tryAgain() {
 		busy = true;
 		try {
-			await callMethod("refresh_token");
+			await callMethod("refresh_session");
 			clearSessionError();
 		} catch (error) {
 			const appError = asAppError(error);
@@ -154,7 +159,7 @@
 			if (blockedKind && markRequestBlocked({ kind: blockedKind })) {
 				return;
 			}
-			if (appError?.kind === "NotLoggedIn") {
+			if (appError?.kind === "NotSignedIn") {
 				toast.error("Your session expired — please sign in again");
 				await onSignOut();
 				return;

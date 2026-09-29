@@ -5,6 +5,11 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
+<<<<<<< HEAD
+=======
+use crate::appimage;
+
+>>>>>>> origin/forgejo-sync
 const ENTRY_FILE: &str = "open-grind.desktop";
 const WM_CLASS: &str = "open-grind";
 
@@ -17,10 +22,13 @@ impl From<std::io::Error> for DesktopEntryError {
 	}
 }
 
+<<<<<<< HEAD
 fn appimage() -> Option<PathBuf> {
 	std::env::var_os("APPIMAGE").map(PathBuf::from)
 }
 
+=======
+>>>>>>> origin/forgejo-sync
 fn appdir() -> Option<PathBuf> {
 	std::env::var_os("APPDIR").map(PathBuf::from)
 }
@@ -136,14 +144,22 @@ pub struct DesktopEntryState {
 #[tauri::command]
 pub fn desktop_entry_state() -> DesktopEntryState {
 	DesktopEntryState {
+<<<<<<< HEAD
 		available: appimage().is_some() && !integration_suppressed(),
+=======
+		available: appimage::path().is_some() && !integration_suppressed(),
+>>>>>>> origin/forgejo-sync
 		installed: entry_path().is_some_and(|entry| entry.exists()),
 	}
 }
 
 #[tauri::command]
 pub fn desktop_entry_install() -> Result<(), DesktopEntryError> {
+<<<<<<< HEAD
 	let appimage = appimage()
+=======
+	let appimage = appimage::path()
+>>>>>>> origin/forgejo-sync
 		.ok_or_else(|| DesktopEntryError("not an AppImage".into()))?;
 	let appdir =
 		appdir().ok_or_else(|| DesktopEntryError("no APPDIR".into()))?;

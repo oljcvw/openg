@@ -26,19 +26,17 @@
 </script>
 
 <Field {label}>
-	<DropdownMenu.Root>
-		<DropdownMenu.Trigger>
-			{#snippet child({ props })}
-				<Button
-					{...props}
-					variant="outline"
-					class="h-auto min-h-9 w-full justify-between gap-2 py-1.5 text-left font-normal"
-				>
-					<span
-						class={{
-							"text-muted-foreground": !selectedLabels.length,
-						}}
+	{#snippet picker({ labelId })}
+		<DropdownMenu.Root>
+			<DropdownMenu.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						aria-labelledby="{labelId} {props.id}"
+						variant="outline"
+						class="h-auto min-h-9 w-full justify-between gap-2 py-1.5 text-left font-normal"
 					>
+<<<<<<< HEAD
 						{selectedLabels.length
 							? selectedLabels.join(", ")
 							: placeholder}
@@ -61,16 +59,46 @@
 						});
 					}
 				}
+=======
+						<span
+							class={{
+								"text-muted-foreground": !selectedLabels.length,
+							}}
+						>
+							{selectedLabels.length
+								? selectedLabels.join(", ")
+								: placeholder}
+						</span>
+						<CaretUpDownIcon class="size-4 shrink-0 opacity-60" />
+					</Button>
+				{/snippet}
+			</DropdownMenu.Trigger>
+			<DropdownMenu.Content
+				class="max-h-72 w-(--bits-dropdown-menu-anchor-width)"
+>>>>>>> origin/forgejo-sync
 			>
-				{#each options as option (option.value)}
-					<DropdownMenu.CheckboxItem
-						value={String(option.value)}
-						closeOnSelect={false}
-					>
-						{option.label}
-					</DropdownMenu.CheckboxItem>
-				{/each}
-			</DropdownMenu.CheckboxGroup>
-		</DropdownMenu.Content>
-	</DropdownMenu.Root>
+				<DropdownMenu.CheckboxGroup
+					bind:value={
+						() => values.map(String),
+						(newValue: string[]) => {
+							values = selectionKeepingUnlisted({
+								values,
+								selectedKeys: newValue,
+								options,
+							});
+						}
+					}
+				>
+					{#each options as option (option.value)}
+						<DropdownMenu.CheckboxItem
+							value={String(option.value)}
+							closeOnSelect={false}
+						>
+							{option.label}
+						</DropdownMenu.CheckboxItem>
+					{/each}
+				</DropdownMenu.CheckboxGroup>
+			</DropdownMenu.Content>
+		</DropdownMenu.Root>
+	{/snippet}
 </Field>

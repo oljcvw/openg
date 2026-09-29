@@ -11,16 +11,10 @@ import { $ } from "bun";
 // If you get errors from cmake about generator or `boring-sys2`, clear `src-tauri/target/*/*/build/boring-sys2-*/out/build`
 
 import { android, androidFixtures } from "./commands/android";
+import { androidAddon } from "./commands/android-addon";
 import { demo } from "./commands/demo";
 import { clearLaunchEnv, quit, resetAppData, runningPids } from "./lib/app";
-import {
-	failMode,
-	port,
-	rate,
-	requestLog,
-	serverHome,
-	state,
-} from "./lib/config";
+import { state } from "./lib/config";
 import {
 	clearAppData,
 	clearOverride,
@@ -28,6 +22,7 @@ import {
 	stopApp,
 	unbridge,
 } from "./lib/device";
+import { requireMinisign } from "./lib/server";
 
 const force = Bun.argv.includes("--rebuild");
 const keepData = Bun.argv.includes("--keep-data");
@@ -35,18 +30,8 @@ const command = Bun.argv[2]?.startsWith("--")
 	? "demo"
 	: (Bun.argv[2] ?? "demo");
 
-export const harnessOptions = {
-	home: serverHome,
-	port,
-	rate,
-	failMode,
-	journal: requestLog,
-};
-
 async function preflight(): Promise<void> {
-	if (!Bun.which("minisign")) {
-		throw new Error("minisign not found — run this inside 'nix develop'");
-	}
+	requireMinisign();
 	if ((await runningPids()).length) {
 		throw new Error("the demo app is already running — quit it first");
 	}
@@ -86,6 +71,9 @@ switch (command) {
 	case "android":
 		await android({ force, keepData });
 		break;
+	case "android-addon":
+		await androidAddon({ force });
+		break;
 	case "android-build":
 		await androidFixtures({ force });
 		break;
@@ -94,6 +82,6 @@ switch (command) {
 		break;
 	default:
 		throw new Error(
-			`unknown command ${command}; expected demo, android, android-build or clean`,
+			`unknown command ${command}; expected demo, android, android-addon, android-build or clean`,
 		);
 }

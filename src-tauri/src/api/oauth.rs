@@ -10,6 +10,16 @@ use crate::error::AppError;
 /// Matched verbatim by the frontend, which stays silent for it.
 pub const CANCELED: &str = "Sign-in canceled";
 
+<<<<<<< HEAD
+=======
+pub const COMPANION_UNAVAILABLE: &str = "companion-unavailable";
+pub const COMPANION_UNTRUSTED: &str = "companion-untrusted";
+pub const COMPANION_REFUSED: &str = "companion-refused";
+pub const COMPANION_DISABLED: &str = "companion-disabled";
+const COMPANION_CANCELLED: &str = "cancelled";
+const COMPANION_FAILED: &str = "Google sign-in failed";
+
+>>>>>>> origin/forgejo-sync
 pub trait OauthProvider: Send + Sync + 'static {
 	const NAME: &'static str;
 }
@@ -60,6 +70,25 @@ impl<P: OauthProvider> OauthBridge<P> {
 	}
 }
 
+<<<<<<< HEAD
+=======
+pub fn companion_failure(rejection: Option<&str>) -> AppError {
+	AppError::Auth(
+		match rejection {
+			Some(
+				marker @ (COMPANION_UNAVAILABLE
+				| COMPANION_UNTRUSTED
+				| COMPANION_REFUSED
+				| COMPANION_DISABLED),
+			) => marker,
+			Some(COMPANION_CANCELLED) => CANCELED,
+			_ => COMPANION_FAILED,
+		}
+		.into(),
+	)
+}
+
+>>>>>>> origin/forgejo-sync
 pub fn new_nonce() -> String {
 	let mut bytes = [0u8; 32];
 	getrandom::fill(&mut bytes).expect("system randomness unavailable");
@@ -128,6 +157,150 @@ mod tests {
 		OauthBridge::new()
 	}
 
+<<<<<<< HEAD
+=======
+	fn auth_message(error: AppError) -> String {
+		let AppError::Auth(message) = error else {
+			panic!("a companion failure must be an auth error");
+		};
+		message
+	}
+
+	fn rust_function<'a>(source: &'a str, file: &str, name: &str) -> &'a str {
+		let start = source
+			.find(&format!("fn {name}("))
+			.unwrap_or_else(|| panic!("{file} no longer defines {name}"));
+		let length = source[start..]
+			.find("\n}\n")
+			.unwrap_or_else(|| panic!("{file} {name} has no closing brace"));
+		&source[start..start + length]
+	}
+
+	#[test]
+	fn companion_markers_match_the_android_plugin_and_the_frontend() {
+		let plugin = include_str!(
+			"../../gen/android/app/src/main/java/org/opengrind/googleoauth/GoogleOauthPlugin.kt"
+		);
+		let frontend = include_str!("../../../src/lib/api/sign-in.ts");
+		for (verdict, kotlin, typescript, marker) in [
+			(
+				"Unavailable",
+				"ERROR_UNAVAILABLE",
+				"companionUnavailable",
+				COMPANION_UNAVAILABLE,
+			),
+			(
+				"Untrusted",
+				"ERROR_UNTRUSTED",
+				"companionUntrusted",
+				COMPANION_UNTRUSTED,
+			),
+			(
+				"Disabled",
+				"ERROR_DISABLED",
+				"companionDisabled",
+				COMPANION_DISABLED,
+			),
+		] {
+			assert!(
+				plugin.contains(&format!("{kotlin} = \"{marker}\"")),
+				"GoogleOauthPlugin.kt {kotlin} is not {marker}"
+			);
+			assert!(
+				plugin.contains(&format!(
+					"AddonGate.Verdict.{verdict} -> invoke.reject({kotlin})"
+				)),
+				"GoogleOauthPlugin.getToken no longer rejects {verdict} with {kotlin}"
+			);
+			assert!(
+				frontend.contains(&format!("{typescript} = \"{marker}\"")),
+				"sign-in.ts {typescript} is not {marker}"
+			);
+		}
+		assert!(
+			plugin
+				.contains(&format!("ERROR_REFUSED = \"{COMPANION_REFUSED}\"")),
+			"GoogleOauthPlugin.kt ERROR_REFUSED is not {COMPANION_REFUSED}"
+		);
+		assert!(
+			frontend.contains(&format!(
+				"companionRefused = \"{COMPANION_REFUSED}\""
+			)),
+			"sign-in.ts companionRefused is not {COMPANION_REFUSED}"
+		);
+		let squashed =
+			|source: &str| source.split_whitespace().collect::<String>();
+		assert!(
+			squashed(plugin).contains(&squashed(
+				"catch (e: SecurityException) { invoke.reject(ERROR_REFUSED) }"
+			)),
+			"GoogleOauthPlugin.kt no longer reports a companion that refuses this build as {COMPANION_REFUSED}"
+		);
+		assert!(
+			plugin.contains("const val RESULT_REFUSED = Activity.RESULT_FIRST_USER"),
+			"GoogleOauthPlugin.kt RESULT_REFUSED is no longer the result code the companion refuses a caller with"
+		);
+		assert!(
+			squashed(plugin).contains(&squashed(
+				"else if (result.resultCode == RESULT_REFUSED) { invoke.reject(ERROR_REFUSED) }"
+			)),
+			"GoogleOauthPlugin.tokenResult no longer reports the companion's refusal result as {COMPANION_REFUSED}"
+		);
+		assert!(
+			plugin.contains(&format!(
+				"ERROR_CANCELLED = \"{COMPANION_CANCELLED}\""
+			)),
+			"GoogleOauthPlugin.kt ERROR_CANCELLED is not {COMPANION_CANCELLED}"
+		);
+	}
+
+	#[test]
+	fn the_android_token_request_reports_failures_through_the_shared_mapping() {
+		let file = "google_oauth/android.rs";
+		let bridge = include_str!("google_oauth/android.rs");
+		assert!(
+			rust_function(bridge, file, "fetch_companion_token")
+				.contains(".map_err(map_plugin_error)"),
+			"{file} fetch_companion_token no longer maps plugin errors"
+		);
+		assert!(
+			rust_function(bridge, file, "map_plugin_error")
+				.contains("companion_failure("),
+			"{file} map_plugin_error no longer goes through companion_failure"
+		);
+	}
+
+	#[test]
+	fn each_companion_refusal_reaches_the_frontend_as_its_marker() {
+		for marker in [
+			COMPANION_UNAVAILABLE,
+			COMPANION_UNTRUSTED,
+			COMPANION_REFUSED,
+			COMPANION_DISABLED,
+		] {
+			assert_eq!(auth_message(companion_failure(Some(marker))), marker);
+		}
+	}
+
+	#[test]
+	fn a_cancelled_companion_request_stays_silent() {
+		assert_eq!(
+			auth_message(companion_failure(Some(COMPANION_CANCELLED))),
+			CANCELED
+		);
+	}
+
+	#[test]
+	fn any_other_companion_failure_is_generic() {
+		for rejection in [Some("no-token"), Some("companion-revoked"), None] {
+			assert_eq!(
+				auth_message(companion_failure(rejection)),
+				COMPANION_FAILED
+			);
+		}
+	}
+
+>>>>>>> origin/forgejo-sync
 	#[test]
 	fn refuses_a_second_flow_while_one_is_pending() {
 		let bridge = bridge();

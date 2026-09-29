@@ -1,5 +1,9 @@
 import {
+<<<<<<< HEAD
 	getPreferencesSnapshot,
+=======
+	preferencesSnapshot,
+>>>>>>> origin/forgejo-sync
 	setPreferences,
 } from "$lib/app-data/preferences.svelte";
 import {
@@ -330,7 +334,11 @@ function listen(): void {
 
 function start(): void {
 	running = true;
+<<<<<<< HEAD
 	samples = getPreferencesSnapshot().backdropBlurCalibration?.samples ?? [];
+=======
+	samples = preferencesSnapshot().backdropBlurCalibration?.samples ?? [];
+>>>>>>> origin/forgejo-sync
 	const quality = decideTrial(samples);
 	if (quality !== null) {
 		commitVerdict(quality);

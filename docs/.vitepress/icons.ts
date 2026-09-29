@@ -27,6 +27,10 @@ const ACTIONS: Record<string, IconSpec> = {
 			url: "https://codeberg.org/forgejo/meta/src/branch/readme/branding/README.md#logo",
 		},
 	},
+<<<<<<< HEAD
+=======
+	"i-telegram": { icon: "simple-icons:telegram" },
+>>>>>>> origin/forgejo-sync
 };
 
 const PLATFORMS: Record<string, IconSpec> = {
