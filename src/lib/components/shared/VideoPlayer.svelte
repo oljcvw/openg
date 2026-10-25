@@ -1,10 +1,8 @@
 <script lang="ts">
-	import {
-		PauseIcon,
-		PlayIcon,
-		SpeakerSimpleHighIcon,
-		SpeakerSimpleSlashIcon,
-	} from "phosphor-svelte";
+	import PauseIcon from "phosphor-svelte/lib/PauseIcon";
+	import PlayIcon from "phosphor-svelte/lib/PlayIcon";
+	import SpeakerSimpleHighIcon from "phosphor-svelte/lib/SpeakerSimpleHighIcon";
+	import SpeakerSimpleSlashIcon from "phosphor-svelte/lib/SpeakerSimpleSlashIcon";
 	import { sineOut } from "svelte/easing";
 	import { fade } from "svelte/transition";
 	import type { SvelteMediaTimeRange } from "svelte/elements";
@@ -12,7 +10,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import { now } from "$lib/util/clock";
 	import { formatMediaDuration } from "$lib/util/format-time";
-	import { firstFrameSrc } from "$lib/util/media";
+	import { firstFrameSrc, releaseVideoOnDestroy } from "$lib/util/media";
 	import VideoScrubber from "./VideoScrubber.svelte";
 
 	let {
@@ -135,6 +133,7 @@
 	<!-- svelte-ignore a11y_media_has_caption -->
 	<video
 		bind:this={element}
+		{@attach releaseVideoOnDestroy}
 		onpointerdown={toggle}
 		bind:paused
 		bind:muted
@@ -146,19 +145,18 @@
 		{loop}
 		playsinline
 		preload="metadata"
+		data-slot="video-player-media"
 		class="size-full object-contain"
 		onloadeddata={loaded}
 		onseeked={seeked}
 		onerror={failed}
 	></video>
 	{#if controlsVisible}
-		<div
-			class="absolute right-[calc(1rem+var(--safe-area-right))] bottom-[calc(1rem+var(--safe-area-bottom))] left-[calc(1rem+var(--safe-area-left))] flex justify-center"
-		>
+		<div class="absolute inset-x-4 bottom-4 flex justify-center">
 			<div
 				data-pswp-interactive
 				transition:fade={{ duration: 150, easing: sineOut }}
-				class="flex grow items-center gap-3 rounded-full p-3 text-white glass-media-controls-subdued"
+				class="flex max-w-xl grow items-center gap-3 rounded-full p-3 text-white glass-media-controls-subdued"
 			>
 				<Button
 					variant="outline"

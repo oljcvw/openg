@@ -36,7 +36,7 @@ This method does not require installing Nix to your machine, but requires more d
 > [!IMPORTANT]
 > **The image is pinned to `linux/amd64`.** The Android NDK ships only an x86_64 host cross-compiler — also the canonical reproducible target — so the build always runs in an `x86_64-linux` environment.
 >
-> **Apple Silicon:** On Apple Silicon (arm64) macOS it runs under Docker Desktop's amd64 emulation. The universal (4-ABI) release build OOMs at Docker Desktop's default ~8 GB, so raise the memory limit to **at least 12 GB** (Settings &rarr; Resources &rarr; Memory) before building. Keep in mind, the Docker build on macOS will take about 3-4 hours on M1 Pro. Start with building a single ABI with `-e OPEN_GRIND_ANDROID_ABI=aarch64` to test if your Mac has enough resources. Apple Silicon Docker build reproduces the canonical release, a native `nix run .#build-android` on `aarch64-darwin` does not (different host toolchain).
+> **Apple Silicon:** the build runs under Docker Desktop's amd64 emulation and takes about 3-4 hours on an M1 Pro. The 4-ABI build OOMs at Docker Desktop's default ~8 GB, so raise the memory limit to **at least 12 GB** (Settings &rarr; Resources &rarr; Memory). To check your Mac first, build one ABI with `-e OPEN_GRIND_ANDROID_ABI=aarch64`.
 
 Prerequisites:
 
@@ -47,7 +47,7 @@ Prerequisites:
 1. Install Docker on your host system
 2. Build the thin image: `docker compose build`
 3. Build the apk: `docker compose run --rm build`
-4. Retrieve the apk from `src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<version>-android-unsigned.apk` on your host system
+4. Retrieve `open-grind-v<version>-android[-<abi>]-unsigned.apk` from `src-tauri/gen/android/app/build/outputs/apk/*/release/` on your host system
 5. Follow [Sign Android build](#sign-android-build) steps to make the build installable on your Android device
 
 To clean-up Docker after that:
@@ -66,7 +66,7 @@ Open Grind ships a [Nix flake](./flake.nix) that pins the entire Android toolcha
 
 1. Install and configure Nix on your host system
 2. Run `nix run .#build-android`
-3. Retrieve the apk: `src-tauri/gen/android/app/build/outputs/apk/universal/release/open-grind-v<version>-android-unsigned.apk` on your host system
+3. Retrieve `open-grind-v<version>-android[-<abi>]-unsigned.apk` from `src-tauri/gen/android/app/build/outputs/apk/*/release/` on your host system
 
 > [!NOTE]
 > First time you run `nix develop` or `nix run` in Open Grind's repository, Nix will download and setup about 3 GB environment, which might take some time, depending on your internet connection speed.
@@ -138,16 +138,31 @@ OPEN_GRIND_KEYSTORE_PROPERTIES=~/.config/open-grind/keystore.properties \
 - [Verify minisign signature](#verify-minisign-signature) to prove the APK was built by Open Grind developers
 - [Reproduce the release](./REPRODUCIBILITY.md#android) to prove the APK was built from the open source code
 
+### Verify Google Play install
+
+Google signs the APKs it delivers with its own key, so their signature says nothing about who built the code. The code transparency file inside them does: it lists the hash of every DEX file and native library, signed with a key only Open Grind developers hold.
+
+1. Connect the device with the app installed from Google Play and check it with [bundletool](https://github.com/google/bundletool/releases):
+
+```bash
+bundletool check-transparency --mode=connected_device --package-name=org.opengrind
+```
+
+2. Compare the printed fingerprint of the code transparency key certificate with the one in [KEYS.md](./KEYS.md#platforms-signing).
+
+Code transparency covers code only. Resources, assets and the manifest are not part of it.
+
 ### Publish to Google Play
 
 The Play bundle removes the in-app updater, so it is built separately from the APK. Every release runs `play.yml`, which builds the bundle on several providers and publishes the verified `open-grind-unsigned-play` artifact.
 
 1. Download the artifact from the `play` workflow run.
 
-2. Sign it with the Play upload key. The properties file has the same fields as [contrib/keystore.properties.example](./contrib/keystore.properties.example) and points at an RSA keystore:
+2. Add [code transparency](https://developer.android.com/guide/app-bundle/code-transparency) and sign it with the Play upload key. Each properties file has the same fields as [contrib/keystore.properties.example](./contrib/keystore.properties.example) and points at its own RSA keystore; the code transparency key needs at least 3072 bits. Signing fails unless the code transparency key is the one [KEYS.md](./KEYS.md) publishes:
 
 ```bash
 OPEN_GRIND_PLAY_KEYSTORE_PROPERTIES=~/.config/open-grind/play-upload.properties \
+OPEN_GRIND_PLAY_TRANSPARENCY_KEYSTORE_PROPERTIES=~/.config/open-grind/play-transparency.properties \
   nix develop .#play --command bun ci/sign.ts /path/to/open-grind-v<version>-android-unsigned.aab
 ```
 
@@ -247,21 +262,18 @@ The default build uses two private macOS APIs: WebKit's `_setUseSystemAppearance
 
 ### Sign and notarize macOS build
 
-| Variable               | Default | Description                                                    |
-| ---------------------- | ------- | -------------------------------------------------------------- |
-| `MACOS_SIGN_IDENTITY`  | `-`     | `-` is ad-hoc                                                  |
-| `MACOS_NOTARY_PROFILE` | unset   | `notarytool` keychain profile; when set, notarizes and staples |
+| Variable              | Default | Description                                                                     |
+| --------------------- | ------- | ------------------------------------------------------------------------------- |
+| `MACOS_SIGN_IDENTITY` | `-`     | `-` is ad-hoc                                                                   |
+| `MACOS_NOTARY_KEY_ID` | unset   | App Store Connect API key ID; with `MACOS_NOTARY_ISSUER`, notarizes and staples |
+| `MACOS_NOTARY_ISSUER` | unset   | App Store Connect API key issuer ID                                             |
 
-`src-tauri/entitlements.plist` is passed to the signer when it exists. Ad-hoc builds are signed by the pinned `rcodesign`, Developer ID builds by macOS `codesign`.
-
-For distribution, store the notary credentials once, then build:
+Ad-hoc builds are signed by the pinned `rcodesign`. Developer ID builds are signed by macOS `codesign` and notarized by the Command Line Tools' `notarytool` with the key at `~/.appstoreconnect/private_keys/AuthKey_<key ID>.p8`. A Developer ID build also writes the ad-hoc zip to `src-tauri/target/release/ad-hoc/` and fails unless the shipped app, re-signed ad-hoc, matches it byte for byte.
 
 ```bash
-xcrun notarytool store-credentials open-grind \
-  --apple-id you@example.com --team-id TEAMID --password app-specific-password
-
 MACOS_SIGN_IDENTITY="Developer ID Application: Name (TEAMID)" \
-MACOS_NOTARY_PROFILE=open-grind \
+MACOS_NOTARY_KEY_ID=KEYID \
+MACOS_NOTARY_ISSUER=issuer-uuid \
   nix run .#build-macos
 ```
 
@@ -269,6 +281,7 @@ MACOS_NOTARY_PROFILE=open-grind \
 
 - [Verify minisign signature](#verify-minisign-signature) to prove the .zip was built by Open Grind developers
 - [Reproduce the release](./REPRODUCIBILITY.md#macos) to prove the .app was built from the open source code
+- Run `spctl -a -vv "/Applications/Open Grind.app"` to see that Apple notarized it: `source=Notarized Developer ID`
 
 ## Credential storage
 

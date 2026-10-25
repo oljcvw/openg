@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { INCOMING_ROW, installTauriShim, MESSAGE_ROW } from "./support/app";
+import {
+	captureOpenedUrls,
+	INCOMING_ROW,
+	installTauriShim,
+	MESSAGE_ROW,
+} from "./support/app";
 import { DRAWER } from "./support/drawer";
 
 const DEMO_PROFILE = "/profile/100001";
@@ -20,6 +25,10 @@ async function openReportSheet(page: import("@playwright/test").Page) {
 test("reporting a profile submits it and offers to block", async ({ page }) => {
 	test.setTimeout(240_000);
 	const drawer = await openReportSheet(page);
+
+	await expect(
+		drawer.getByRole("heading", { name: "Report profile" }),
+	).toBeVisible();
 
 	const submit = drawer.getByRole("button", { name: "Submit report" });
 	await expect(
@@ -80,7 +89,38 @@ test("a spam report asks for nothing else", async ({ page }) => {
 	);
 });
 
-test("reporting a chat message prefills the chat location", async ({
+test("a serious in-person incident opens Grindr's help form instead of a report", async ({
+	page,
+}) => {
+	test.setTimeout(240_000);
+	const drawer = await openReportSheet(page);
+	const openedUrls = await captureOpenedUrls(page);
+
+	await drawer
+		.getByRole("radio", { name: "Serious In Person Incident" })
+		.click();
+
+	expect(
+		await drawer.getByRole("textbox", { name: "Details" }).count(),
+		"the help form asks for details itself",
+	).toBe(0);
+	expect(
+		await drawer.getByRole("button", { name: "Submit report" }).count(),
+	).toBe(0);
+
+	await drawer.getByRole("link", { name: "Open help form" }).click();
+
+	await expect
+		.poll(openedUrls)
+		.toEqual([
+			expect.stringMatching(
+				/^https:\/\/help\.grindr\.com\/hc\/[a-z]{2,3}\/requests\/new\?ticket_form_id=16925729533971$/,
+			),
+		]);
+	await expect(drawer).toBeVisible();
+});
+
+test("reporting a chat message titles the sheet for the message and prefills the chat location", async ({
 	page,
 }) => {
 	test.setTimeout(240_000);
@@ -96,18 +136,28 @@ test("reporting a chat message prefills the chat location", async ({
 	await page.waitForTimeout(700);
 
 	await expect(
-		drawer.getByRole("button", { name: "Profile Photo" }),
-		"a chat report already knows where it happened",
-	).toHaveCount(0);
+		drawer.getByRole("heading", { name: "Report message" }),
+	).toBeVisible();
+	await expect(drawer).toHaveAccessibleDescription(
+		"Send a report about this person's messages to Grindr.",
+	);
 
 	await drawer.getByRole("radio", { name: "Harassment or Bullying" }).click();
 	await drawer
 		.getByRole("textbox", { name: "Details" })
 		.fill("abusive message");
+	expect(
+		await drawer.getByRole("button", { name: "Profile Photo" }).count(),
+		"a chat report already knows where it happened",
+	).toBe(0);
 	await drawer.getByRole("button", { name: "Submit report" }).click();
 
 	await expect(
-		drawer.getByText("Grindr will review this profile."),
+		drawer.getByText("Grindr will review your report."),
+	).toBeVisible();
+	await expect(
+		drawer.getByRole("button", { name: "Block profile" }),
+		"blocking still targets the sender's profile",
 	).toBeVisible();
 });
 
@@ -127,6 +177,9 @@ test("the report opens as a dialog on a desktop-width viewport", async ({
 		page.locator(DRAWER),
 		"a desktop viewport gets the dialog, not the bottom sheet",
 	).toHaveCount(0);
+	await expect(
+		dialog.getByRole("heading", { name: "Report profile" }),
+	).toBeVisible();
 
 	await dialog.getByRole("radio", { name: "Spam" }).click();
 	await dialog.getByRole("button", { name: "Submit report" }).click();

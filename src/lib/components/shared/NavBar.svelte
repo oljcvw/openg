@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import ChatCircleIcon from "phosphor-svelte/lib/ChatCircleIcon";
 	import DotsNineIcon from "phosphor-svelte/lib/DotsNineIcon";
@@ -7,7 +6,7 @@
 	import FireIcon from "phosphor-svelte/lib/FireIcon";
 	import { untrack } from "svelte";
 
-	import { getProfile } from "$lib/api/users/profiles";
+	import { getProfile, onProfileEdit } from "$lib/api/users/profiles";
 	import { getOrCreateConversationsState } from "$lib/chat/conversations-context.svelte";
 	import BrokenUserAvatar from "$lib/components/profile/BrokenUserAvatar.svelte";
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
@@ -15,15 +14,25 @@
 	import { Badge } from "$lib/components/ui/badge";
 	import { tabsListVariants } from "$lib/components/ui/tabs";
 	import { getTapsState } from "$lib/interest/taps-state.svelte";
-	import { traverseBackTo } from "$lib/util/history";
+	import { returnTo } from "$lib/util/history";
 	import { isWithin } from "$lib/util/pathname";
 	import { isPlainClick } from "$lib/util/plain-click";
 	import { bottomChrome } from "$lib/util/screen-chrome.svelte";
 
 	let { ourProfileId }: { ourProfileId: number } = $props();
 
-	const myProfilePhotos = untrack(() =>
-		getProfile(ourProfileId).then((profile) => profile.medias),
+	let myProfilePhotos = $state(
+		untrack(() =>
+			getProfile(ourProfileId).then((profile) => profile.medias),
+		),
+	);
+
+	$effect(() =>
+		onProfileEdit(({ profileId, patch }) => {
+			if (profileId !== ourProfileId || patch.medias === undefined)
+				return;
+			myProfilePhotos = Promise.resolve(patch.medias);
+		}),
 	);
 
 	const conversations = untrack(() =>
@@ -52,11 +61,14 @@
 			if (!isWithin({ pathname: current, root: href })) return;
 
 			event.preventDefault();
-			if (!traverseBackTo(landsOn))
-				void goto(landsOn, { replaceState: true });
+			returnTo(landsOn);
 		};
 	}
 </script>
+
+{#snippet label(text: string)}
+	<span class="label" data-label={text}>{text}</span>
+{/snippet}
 
 <ProgressiveBlur
 	direction="bottomToTop"
@@ -80,7 +92,7 @@
 			onclick={tabNavigation({ href: "/" })}
 		>
 			<DotsNineIcon weight="fill" />
-			Browse
+			{@render label("Browse")}
 		</a>
 		<a
 			href="/right-now"
@@ -88,7 +100,7 @@
 			onclick={tabNavigation({ href: "/right-now" })}
 		>
 			<DropIcon weight="fill" />
-			Right Now
+			{@render label("Right Now")}
 		</a>
 		<a
 			href="/interest"
@@ -101,7 +113,7 @@
 			})}
 		>
 			<FireIcon weight="fill" />
-			Interest
+			{@render label("Interest")}
 			{#if hasUnseenTaps}
 				<Badge
 					class="absolute inset-e-2 top-1 size-2.5 rounded-full p-0"
@@ -114,7 +126,7 @@
 			onclick={tabNavigation({ href: "/chat" })}
 		>
 			<ChatCircleIcon weight="fill" />
-			Inbox
+			{@render label("Inbox")}
 			{#if hasUnread}
 				<Badge
 					class="absolute inset-e-2 top-1 size-2.5 rounded-full p-0"
@@ -127,7 +139,7 @@
 		aria-label="Me"
 		onclick={tabNavigation({ href: "/settings" })}
 		class={[
-			"flex size-14 shrink-0 rounded-full border bg-muted p-1",
+			"flex size-14 shrink-0 rounded-full border bg-muted p-1 transition-colors motion-reduce:transition-none",
 			{
 				"border-2 border-accent":
 					page.route.id === "/(protected)/(navbar)/settings/(me)",
@@ -153,6 +165,15 @@
 	@reference "$layout";
 
 	.links a {
-		@apply relative inline-flex h-[calc(100%-1px)] flex-1 flex-col items-center justify-center gap-0.5 rounded-full border border-transparent! px-3 py-1 text-xs whitespace-nowrap text-foreground/60 group-data-vertical/tabs:rounded-2xl group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 dark:text-muted-foreground dark:hover:bg-input/20 data-active:font-medium data-active:text-foreground dark:data-active:border-input dark:data-active:text-accent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+		@apply relative inline-flex h-[calc(100%-1px)] flex-1 flex-col items-center justify-center gap-0.5 rounded-full border border-transparent! px-3 py-1 text-xs whitespace-nowrap text-foreground/60 transition-colors group-data-vertical/tabs:rounded-2xl group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 motion-reduce:transition-none dark:text-muted-foreground dark:hover:bg-input/20 data-active:font-medium data-active:text-foreground dark:data-active:border-input dark:data-active:text-accent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+	}
+
+	.label {
+		@apply flex flex-col items-center;
+	}
+
+	.label::after {
+		@apply invisible h-0 overflow-hidden font-medium select-none;
+		content: attr(data-label);
 	}
 </style>

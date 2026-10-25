@@ -1,22 +1,18 @@
 <script lang="ts">
 	import "photoswipe/style.css";
-	import { VideoCameraIcon } from "phosphor-svelte";
+	import VideoCameraIcon from "phosphor-svelte/lib/VideoCameraIcon";
 	import { untrack } from "svelte";
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { getSingleMessage } from "$lib/api/messaging/messages";
 	import { proxyMediaUrl } from "$lib/util/media";
-	import {
-		measureVideo,
-		type MediaDimensions,
-	} from "$lib/util/media-dimensions";
 	import { openLightbox } from "$lib/util/photoswipe";
 	import type { VideoMessage } from "$lib/model/messaging/messages";
 	import { MessageMediaState } from "./message-media.svelte";
 
 	type VideoBody = VideoMessage["body"];
 
-	type LightboxVideo = { src: string; loop: boolean } & MediaDimensions;
+	type LightboxVideo = { src: string; loop: boolean };
 
 	let {
 		conversationId,
@@ -29,8 +25,6 @@
 		message: VideoBody;
 		delivered: boolean;
 	} = $props();
-
-	const UNMEASURED: MediaDimensions = { width: 1080, height: 1920 };
 
 	const media = new MessageMediaState();
 
@@ -66,14 +60,8 @@
 		}
 		const src = proxyMediaUrl(refetched.body.url, { as: "video" });
 		if (src === null) return null;
-		const size = await measureVideo(src).catch(() => UNMEASURED);
 		return {
-			video: {
-				src,
-				loop: refetched.body.looping === true,
-				width: size.width,
-				height: size.height,
-			},
+			video: { src, loop: refetched.body.looping === true },
 			viewsLeft: refetched.body.viewsRemaining ?? 0,
 		};
 	}
@@ -121,9 +109,9 @@
 	});
 
 	const bubbleClass: import("svelte/elements").ClassValue = $derived([
-		"relative flex w-50 items-center gap-2 rounded-xl border border-border bg-input px-4 py-3 text-start font-medium",
+		"relative flex w-fit items-center gap-2 rounded-xl border border-border bg-input px-4 py-3 text-start font-medium",
 		media.cornerClass,
-		{ "ms-3": !media.clone, "size-full": media.clone },
+		{ "size-full": media.clone },
 	]);
 </script>
 

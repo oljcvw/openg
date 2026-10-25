@@ -1,4 +1,5 @@
-use serde::Serialize;
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
 use crate::media::MediaProxy;
@@ -23,42 +24,47 @@ impl From<grindr::SignInResult> for SignInResult {
 	}
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Restriction {
 	pub kind: String,
 	pub region: Option<String>,
 	pub reason: Option<String>,
+	pub sub_reason: Option<String>,
+	pub ends_at: Option<i64>,
+}
+
+impl Restriction {
+	fn of_kind(kind: &str) -> Self {
+		Self {
+			kind: kind.to_owned(),
+			..Self::default()
+		}
+	}
 }
 
 impl From<grindr::Restriction> for Restriction {
 	fn from(r: grindr::Restriction) -> Self {
 		match r {
 			grindr::Restriction::AgeVerification { region, reason } => Self {
-				kind: "ageVerification".to_owned(),
 				region: Some(region_str(region).to_owned()),
 				reason: Some(reason),
+				..Self::of_kind("ageVerification")
 			},
 			grindr::Restriction::TimedBan(details) => Self {
-				kind: "timedBan".to_owned(),
-				region: None,
 				reason: details.reason,
+				sub_reason: details.sub_reason,
+				ends_at: details.expiry_time,
+				..Self::of_kind("timedBan")
 			},
-			grindr::Restriction::TrustVendorRejected => Self {
-				kind: "trustVendorRejected".to_owned(),
-				region: None,
-				reason: None,
-			},
+			grindr::Restriction::TrustVendorRejected => {
+				Self::of_kind("trustVendorRejected")
+			}
 			grindr::Restriction::Other(raw) => Self {
-				kind: "other".to_owned(),
-				region: None,
 				reason: Some(raw),
+				..Self::of_kind("other")
 			},
-			_ => Self {
-				kind: "other".to_owned(),
-				region: None,
-				reason: None,
-			},
+			_ => Self::of_kind("other"),
 		}
 	}
 }
@@ -191,6 +197,7 @@ pub(crate) async fn end_session(
 	let _one_at_a_time = SIGN_OUT.lock().await;
 	forget_account(state.client()?, media).await?;
 	super::facebook_oauth::forget_sign_in_profile(app).await;
+	crate::upload::staged::discard_all(app);
 	Ok(())
 }
 
@@ -250,6 +257,41 @@ pub async fn account_restriction(
 		.as_ref()
 		.and_then(|s| s.token.as_ref()?.restriction.clone())
 		.map(Restriction::from))
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct FeatureFlagClaims {
+	#[serde(default)]
+	feature_flags: Vec<String>,
+}
+
+fn feature_flags_of(session_id: &str) -> Vec<String> {
+	session_id
+		.split('.')
+		.nth(1)
+		.and_then(|payload| URL_SAFE_NO_PAD.decode(payload).ok())
+		.and_then(|json| {
+			serde_json::from_slice::<FeatureFlagClaims>(&json).ok()
+		})
+		.map(|claims| claims.feature_flags)
+		.unwrap_or_default()
+}
+
+#[tauri::command]
+pub async fn session_feature_flags(
+	state: tauri::State<'_, AppState>,
+) -> Result<Vec<String>, AppError> {
+	let Ok(client) = state.client() else {
+		return Ok(Vec::new());
+	};
+	Ok(client
+		.session_receiver()
+		.borrow()
+		.as_ref()
+		.and_then(|s| s.token.as_ref())
+		.map(|token| feature_flags_of(&token.session_id))
+		.unwrap_or_default())
 }
 
 #[cfg(test)]
@@ -319,5 +361,52 @@ mod tests {
 		assert_eq!(json["kind"], "ageVerification");
 		assert_eq!(json["region"], "uk");
 		assert_eq!(json["reason"], "UK_VERIFICATION_REQUIRED");
+	}
+
+	#[test]
+	fn a_timed_ban_passes_its_end_time_and_sub_reason_to_the_frontend() {
+		let restriction: grindr::Restriction =
+			serde_json::from_value(serde_json::json!({ "TimedBan": {
+				"expiryTime": 1_792_000_000_000_i64,
+				"reason": "Scam / Spam",
+				"subReason": "PROFILE_SPAM",
+				"isAutomated": true,
+			}}))
+			.unwrap();
+
+		let json =
+			serde_json::to_value(Restriction::from(restriction)).unwrap();
+
+		assert_eq!(json["kind"], "timedBan");
+		assert_eq!(json["reason"], "Scam / Spam");
+		assert_eq!(json["subReason"], "PROFILE_SPAM");
+		assert_eq!(json["endsAt"], 1_792_000_000_000_i64);
+	}
+
+	fn jwt_with_payload(payload: serde_json::Value) -> String {
+		format!(
+			"{}.{}.signature",
+			URL_SAFE_NO_PAD.encode(r#"{"alg":"HS256"}"#),
+			URL_SAFE_NO_PAD.encode(payload.to_string()),
+		)
+	}
+
+	#[test]
+	fn feature_flags_come_from_the_session_jwt() {
+		let token = jwt_with_payload(serde_json::json!({
+			"exp": 1,
+			"featureFlags": ["edge-boost", "gender-filter"],
+		}));
+		assert_eq!(feature_flags_of(&token), ["edge-boost", "gender-filter"]);
+	}
+
+	#[test]
+	fn an_unreadable_session_jwt_has_no_feature_flags() {
+		assert!(feature_flags_of("sid").is_empty());
+		assert!(feature_flags_of("a.%%%.c").is_empty());
+		assert!(feature_flags_of(&jwt_with_payload(
+			serde_json::json!({ "exp": 1 })
+		))
+		.is_empty());
 	}
 }

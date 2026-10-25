@@ -1,10 +1,14 @@
+pub(super) const DEVICE_INFO: &str = "device-info";
+pub(super) const SESSION: &str = "session";
+pub(super) const SIGNING_KEY: &str = "device-signing-key";
+
 use crate::error::AppError;
 
 pub struct DeviceStorage;
 
 impl DeviceStorage {
-	fn entry() -> Result<keyring_core::Entry, AppError> {
-		super::entry("device-info")
+	fn entry() -> Result<super::Entry, AppError> {
+		super::entry(DEVICE_INFO)
 	}
 
 	pub fn load() -> Result<Option<grindr::DeviceInfo>, AppError> {
@@ -61,8 +65,8 @@ impl DeviceStorage {
 pub struct AuthStorage;
 
 impl AuthStorage {
-	fn entry() -> Result<keyring_core::Entry, AppError> {
-		super::entry("session")
+	fn entry() -> Result<super::Entry, AppError> {
+		super::entry(SESSION)
 	}
 
 	pub fn get_credentials() -> Result<Option<grindr::Credentials>, AppError> {
@@ -111,8 +115,8 @@ impl AuthStorage {
 pub struct SigningKeyStorage;
 
 impl SigningKeyStorage {
-	fn entry() -> Result<keyring_core::Entry, AppError> {
-		super::entry("device-signing-key")
+	fn entry() -> Result<super::Entry, AppError> {
+		super::entry(SIGNING_KEY)
 	}
 
 	pub fn load() -> Result<Option<grindr::DeviceSigningKey>, AppError> {

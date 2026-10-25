@@ -1,13 +1,12 @@
 <script lang="ts">
-	import {
-		CameraIcon,
-		EyesIcon,
-		GlobeStandIcon,
-		HeartbeatIcon,
-		HouseIcon,
-		UsersIcon,
-		UsersThreeIcon,
-	} from "phosphor-svelte";
+	import CameraIcon from "phosphor-svelte/lib/CameraIcon";
+	import EyesIcon from "phosphor-svelte/lib/EyesIcon";
+	import GlobeStandIcon from "phosphor-svelte/lib/GlobeStandIcon";
+	import HeartbeatIcon from "phosphor-svelte/lib/HeartbeatIcon";
+	import HouseIcon from "phosphor-svelte/lib/HouseIcon";
+	import SyringeIcon from "phosphor-svelte/lib/SyringeIcon";
+	import UsersIcon from "phosphor-svelte/lib/UsersIcon";
+	import UsersThreeIcon from "phosphor-svelte/lib/UsersThreeIcon";
 
 	import {
 		acceptNSFWPics,
@@ -18,10 +17,10 @@
 		meetAt as meetAtLabels,
 		relationshipStatuses,
 		tribes,
+		vaccines as vaccineLabels,
 	} from "$lib/model/users/profiles";
 	import AboutMe from "./AboutMe.svelte";
 	import Distance from "./Distance.svelte";
-	import FavoriteNoteButton from "./favorite-note/FavoriteNoteButton.svelte";
 	import Genders from "./fields/GendersPronouns.svelte";
 	import HivStatusIcon from "./fields/HivStatusIcon.svelte";
 	import LastTested from "./fields/LastTested.svelte";
@@ -35,7 +34,6 @@
 	import ProfileSection from "./ProfileSection.svelte";
 	import ProfileTags from "./ProfileTags.svelte";
 	import SexualPosition from "./SexualPosition.svelte";
-	import ProfileTopNavBar from "./top-nav/ProfileTopNavBar.svelte";
 
 	let { profileState }: { profileState: ProfileState } = $props();
 
@@ -62,28 +60,16 @@
 		ethnicity,
 		relationshipStatus,
 		grindrTribes,
+		tribesImInto,
 		lookingFor,
 		meetAt,
 		nsfw,
 		hivStatus,
 		lastTestedDate: lastTestedDateValue,
+		vaccines,
 		sexualHealth: sexualHealthValue,
 		socialNetworks,
 	} = profile}
-	{#if !ourProfile && profile.isFavorite && profileState.note}
-		<FavoriteNoteButton
-			profileId={profile.profileId}
-			note={profileState.note}
-			onSave={(note) => profileState.setNote(note)}
-		/>
-	{/if}
-	<ProfileTopNavBar
-		ourProfileId={profileState.ourProfileId}
-		{profile}
-		onBlocked={() => profileState.markBlocked()}
-		onHidden={() => profileState.markHidden()}
-		onFavorite={(isFavorite) => profileState.setFavorite(isFavorite)}
-	/>
 	<div
 		class={[
 			"flex flex-col p-4",
@@ -135,6 +121,12 @@
 		</ProfileSection>
 		<ProfileSection title="Expectations">
 			<LookupField
+				icon={UsersThreeIcon}
+				label="I'm Into"
+				value={tribesImInto}
+				options={tribes}
+			/>
+			<LookupField
 				icon={EyesIcon}
 				weight="fill"
 				label="Looking For"
@@ -162,6 +154,12 @@
 				options={hivStatusLabels}
 			/>
 			<LastTested lastTestedDate={lastTestedDateValue} />
+			<LookupField
+				icon={SyringeIcon}
+				label="Vaccinated for"
+				value={vaccines}
+				options={vaccineLabels}
+			/>
 			<LookupField
 				icon={HeartbeatIcon}
 				label="Health Practices"

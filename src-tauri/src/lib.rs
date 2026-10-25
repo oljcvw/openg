@@ -1,5 +1,6 @@
 pub mod api;
 mod app_data;
+mod app_origin;
 mod app_settings;
 mod appearance;
 mod appimage;
@@ -8,12 +9,18 @@ mod desktop_entry;
 mod error;
 mod haptics;
 mod hex;
+#[cfg(target_os = "android")]
+mod keyboard_media;
 pub mod media;
+#[cfg(target_os = "android")]
+mod media_drag;
 mod media_picker;
 mod photo;
 #[cfg(test)]
 mod pin_support;
 mod plugin_rejection;
+#[cfg(target_os = "macos")]
+mod predecessor;
 #[cfg(any(target_os = "android", test))]
 mod push_poll;
 mod scroll_phase;
@@ -34,8 +41,7 @@ const MIN_CHROMIUM_MAJOR: u32 = 111;
 #[cfg(target_os = "linux")]
 const MIN_WEBKITGTK: (u32, u32) = (2, 42);
 
-#[cfg(desktop)]
-const MAIN_WINDOW_LABEL: &str = "main";
+pub(crate) const MAIN_WINDOW_LABEL: &str = "main";
 
 const OPEN_GRIND_PLATFORM: &str = if cfg!(target_os = "android") {
 	"android"
@@ -58,19 +64,6 @@ fn open_grind_platform_plugin<R: tauri::Runtime>(
 			r#"window.__OPEN_GRIND_PLATFORM = "{OPEN_GRIND_PLATFORM}";"#
 		))
 		.build()
-}
-
-fn is_app_url(url: &tauri::Url) -> bool {
-	let host = url.host_str();
-	match url.scheme() {
-		"tauri" => host == Some("localhost"),
-		"http" | "https" => {
-			host == Some("tauri.localhost")
-				|| (cfg!(debug_assertions)
-					&& matches!(host, Some("localhost") | Some("127.0.0.1")))
-		}
-		_ => false,
-	}
 }
 
 // macOS reports a WebKit build number that doesn't track Safari versions
@@ -111,6 +104,15 @@ fn outdated_webview_notice() -> Option<String> {
 	None
 }
 
+#[cfg(desktop)]
+pub(crate) fn focus_main_window(app: &tauri::AppHandle) {
+	if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
+		let _ = window.unminimize();
+		let _ = window.show();
+		let _ = window.set_focus();
+	}
+}
+
 // Tauri exits only once every window is gone, and sign-in opens a second one.
 #[cfg(desktop)]
 fn quit_when_closed(window: &tauri::WebviewWindow) {
@@ -131,9 +133,14 @@ pub fn run() {
 	appearance::apply_environment_defaults();
 
 	api::update::enforce_home();
+	#[cfg(target_os = "macos")]
+	predecessor::adopt_data();
 
 	#[cfg(feature = "devtools")]
 	let devtools = tauri_plugin_devtools::init();
+
+	let mut context = tauri::generate_context!();
+	context.config_mut().app.android_hostname = app_origin::android_hostname();
 
 	let builder = tauri::Builder::default();
 
@@ -141,13 +148,7 @@ pub fn run() {
 	// https://github.com/tauri-apps/plugins-workspace/tree/v2/plugins/single-instance
 	#[cfg(desktop)]
 	let builder = builder.plugin(tauri_plugin_single_instance::init(
-		|app, _args, _cwd| {
-			if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
-				let _ = window.unminimize();
-				let _ = window.show();
-				let _ = window.set_focus();
-			}
-		},
+		|app, _args, _cwd| focus_main_window(app),
 	));
 
 	#[cfg(feature = "devtools")]
@@ -157,8 +158,12 @@ pub fn run() {
 	let builder = builder
 		.plugin(tauri_plugin_android_fs::init())
 		.plugin(photo::plugin())
+		.plugin(keyboard_media::plugin())
+		.plugin(media_drag::plugin())
 		.plugin(api::recaptcha::plugin())
-		.plugin(api::push::plugin());
+		.plugin(app_origin::android::plugin());
+
+	let builder = builder.plugin(api::push::plugin());
 
 	builder
         .plugin(open_grind_platform_plugin())
@@ -192,6 +197,7 @@ pub fn run() {
             api::auth::refresh_session,
             api::auth::sign_out,
             api::auth::account_restriction,
+            api::auth::session_feature_flags,
             api::auth::recaptcha_first_party_enabled,
             api::recaptcha::mint_recaptcha_token,
             api::push::push_addon_ready,
@@ -200,6 +206,7 @@ pub fn run() {
             api::push::push_notifications_enabled,
             api::push::push_set_notifications_enabled,
             api::push::push_dismiss_conversation,
+            api::push::push_shown_conversations,
             api::push::push_open_notification_settings,
             api::push::push_mode,
             api::push::push_set_mode,
@@ -208,13 +215,22 @@ pub fn run() {
             api::push::push_open_category_settings,
             api::push::push_notification_permission,
             api::push::push_request_notification_permission,
+            api::push::push_notify,
             api::push::push_take_deeplink,
+            api::push::push_deeplink_pending,
             api::push::push_watch,
             storage::storage_backend,
             api::rest::request,
+            api::rest::fetch_external,
+            media::media_failure,
             upload::bytes::upload_media,
             upload::inspect::inspect_media_file,
+            upload::preview::preview_media,
             upload::file::upload_media_file,
+            upload::staged::stage_media,
+            upload::staged::append_staged_media,
+            upload::staged::discard_staged_media,
+            upload::linked::stage_linked_media,
             api::ws::ws_connect,
             api::ws::ws_reconnect,
             api::ws::ws_send,
@@ -243,12 +259,16 @@ pub fn run() {
             app_settings::open_app_settings,
             media_picker::pick_android_media,
             appearance::backdrop_filter_renders,
+            appearance::webview_engine,
             app_data::read_app_data,
             app_data::write_app_data,
             app_data::remove_app_data,
         ])
         .setup(|app| {
             scroll_phase::install_scroll_gesture_bridge(app.handle());
+            #[cfg(target_os = "android")]
+            app_origin::android::prepare_served_origin(app.handle());
+            upload::staged::discard_all(app.handle());
             let user_agent = format!(
                 "open-grind/{} (+https://opengrind.org/; contact: admin@opengrind.org)",
                 app.package_info().version
@@ -265,7 +285,11 @@ pub fn run() {
                 let builder =
                     tauri::WebviewWindowBuilder::from_config(app.handle(), &window)?
                         .user_agent(&user_agent)
-                        .on_navigation(is_app_url);
+                        .on_navigation(|url| {
+                            app_origin::is_app_url(url, app_origin::SERVED_HOSTNAME)
+                        });
+                #[cfg(any(target_os = "macos", target_os = "windows"))]
+                let builder = builder.disable_drag_drop_handler();
                 #[cfg(target_os = "linux")]
                 let builder = builder.extensions_path(
                     app.path().resource_dir()?.join(media::WEBKIT_EXTENSIONS),
@@ -273,6 +297,8 @@ pub fn run() {
                 let window = builder.build()?;
                 #[cfg(target_os = "linux")]
                 media::serve_element_opens(&window);
+                #[cfg(target_os = "linux")]
+                scroll_phase::follow_touchpad(&window);
                 appearance::unlock_visual_effects(&window);
                 context_menu::trim_native_menu(&window);
                 #[cfg(desktop)]
@@ -295,7 +321,12 @@ pub fn run() {
             ))]
             storage::init_file_store(app.path().app_local_data_dir()?);
 
-            app.manage(storage::init_keyring());
+            let backend = storage::init_keyring();
+            #[cfg(all(target_os = "macos", feature = "keychain"))]
+            if backend == storage::StorageBackend::Keyring {
+                storage::adopt_legacy_items();
+            }
+            app.manage(backend);
 
             let device = DeviceStorage::load_or_create();
 
@@ -370,7 +401,8 @@ pub fn run() {
                 tauri::async_runtime::spawn(async move {
                     SigningKeyStorage::restore(&client).await;
                     while key_rx.changed().await.is_ok() {
-                        match key_rx.borrow().clone() {
+                        let key = key_rx.borrow().clone();
+                        match key {
                             Some(k) => {
                                 if let Err(e) = SigningKeyStorage::save(&k) {
                                     tracing::error!("[signing] persist failed: {e}");
@@ -392,14 +424,12 @@ pub fn run() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("error while running tauri application");
 }
 
 #[cfg(test)]
 mod tests {
-	use super::*;
-
 	#[test]
 	fn release_builds_discard_every_tracing_event() {
 		let expected = if cfg!(debug_assertions) {
@@ -408,34 +438,6 @@ mod tests {
 			tracing::level_filters::LevelFilter::OFF
 		};
 		assert_eq!(tracing::level_filters::STATIC_MAX_LEVEL, expected);
-	}
-
-	fn allows(url: &str) -> bool {
-		is_app_url(&tauri::Url::parse(url).unwrap())
-	}
-
-	#[test]
-	fn admits_the_bundled_asset_origins() {
-		assert!(allows("tauri://localhost/"));
-		assert!(allows("tauri://localhost/chat/1"));
-		assert!(allows("http://tauri.localhost/"));
-		assert!(allows("https://tauri.localhost/"));
-	}
-
-	#[test]
-	fn refuses_navigation_away_from_the_app() {
-		for url in [
-			"https://example.org/",
-			"tauri://example.org/",
-			"http://tauri.localhost.example.org/",
-			"file:///etc/passwd",
-			"javascript:alert(1)",
-			"data:text/html,<script>1</script>",
-			"ogmedia://localhost/aHR0cHM6Ly9leGFtcGxlLm9yZw",
-			"http://ogmedia.localhost/aHR0cHM6Ly9leGFtcGxlLm9yZw",
-		] {
-			assert!(!allows(url), "{url} must not load in the main webview");
-		}
 	}
 }
 
@@ -489,6 +491,7 @@ mod webview_floor_pins {
 mod frontend_method_pins {
 	const THIS: &str = include_str!("lib.rs");
 	const METHODS: &str = include_str!("../../src/lib/api/methods.ts");
+	const TRANSPORT: &str = include_str!("../../src/lib/api/transport.ts");
 
 	fn between<'a>(haystack: &'a str, open: &str, close: &str) -> &'a str {
 		let start = haystack.find(open).expect(open) + open.len();
@@ -496,13 +499,34 @@ mod frontend_method_pins {
 		&haystack[start..start + len]
 	}
 
+	fn registered_commands() -> Vec<&'static str> {
+		between(THIS, "tauri::generate_handler![", "])")
+			.split(',')
+			.filter_map(|entry| entry.trim().rsplit("::").next())
+			.collect()
+	}
+
+	#[test]
+	fn every_command_the_transport_invokes_is_registered() {
+		let registered = registered_commands();
+		let invoked: Vec<&str> = ["invoke(\"", "invokeRest(\""]
+			.into_iter()
+			.flat_map(|opener| TRANSPORT.split(opener).skip(1))
+			.filter_map(|rest| rest.split_once('"'))
+			.map(|(command, _)| command)
+			.collect();
+		assert!(invoked.contains(&"fetch_external"), "{invoked:?}");
+		for command in invoked {
+			assert!(
+				registered.contains(&command),
+				"{command} is invoked by transport.ts but not registered"
+			);
+		}
+	}
+
 	#[test]
 	fn every_frontend_method_is_a_registered_command() {
-		let registered: Vec<&str> =
-			between(THIS, "tauri::generate_handler![", "])")
-				.split(',')
-				.filter_map(|entry| entry.trim().rsplit("::").next())
-				.collect();
+		let registered = registered_commands();
 		let methods: Vec<&str> =
 			between(METHODS, "export const methods = {", "\n}")
 				.lines()
@@ -515,6 +539,43 @@ mod frontend_method_pins {
 			assert!(
 				registered.contains(&method),
 				"{method} is called by the frontend but not registered"
+			);
+		}
+	}
+}
+
+#[cfg(test)]
+mod opener_scope_pins {
+	const CAPABILITY: &str = include_str!("../capabilities/default.json");
+
+	#[test]
+	fn the_system_browser_is_never_handed_an_app_origin() {
+		let capability: serde_json::Value =
+			serde_json::from_str(CAPABILITY).unwrap();
+		let denied: Vec<&str> = capability["permissions"]
+			.as_array()
+			.unwrap()
+			.iter()
+			.filter(|permission| {
+				permission["identifier"] == "opener:allow-open-url"
+			})
+			.flat_map(|permission| permission["deny"].as_array().unwrap())
+			.map(|scope| scope["url"].as_str().unwrap())
+			.collect();
+		let android_origin =
+			format!("https://{}", crate::app_origin::ANDROID_HOSTNAME);
+		for origin in [
+			"http://tauri.localhost",
+			"https://tauri.localhost",
+			&android_origin,
+			"http://ogmedia.localhost",
+			"https://ogmedia.localhost",
+			"http://localhost",
+			"http://127.0.0.1",
+		] {
+			assert!(
+				denied.contains(&format!("{origin}*").as_str()),
+				"{origin} can still be opened in the system browser"
 			);
 		}
 	}

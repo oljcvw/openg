@@ -1,4 +1,5 @@
-import { SvelteMap } from "svelte/reactivity";
+import { untrack } from "svelte";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import type { Attachment } from "svelte/attachments";
 
 type Edge = "top" | "bottom";
@@ -23,7 +24,7 @@ function edgeChrome(edge: Edge) {
 	const measure = (element: HTMLElement) => {
 		const offScreen =
 			element.inert ||
-			element.closest("[data-leaving]") !== null ||
+			element.closest("[data-leaving], [data-covered]") !== null ||
 			element.getClientRects().length === 0 ||
 			getComputedStyle(element).visibility === "hidden";
 		clearances.set(
@@ -88,4 +89,20 @@ export const bottomBlurBarClearance = bottom.blurBarClearance;
 export function remeasureScreenChrome(): void {
 	top.remeasure();
 	bottom.remeasure();
+}
+
+const covers = new SvelteSet<symbol>();
+
+export function coverScreenChrome(): void {
+	$effect(() => {
+		const cover = Symbol("screen chrome cover");
+		untrack(() => covers.add(cover));
+		return () => {
+			covers.delete(cover);
+		};
+	});
+}
+
+export function screenChromeCovered(): boolean {
+	return covers.size > 0;
 }

@@ -27,6 +27,7 @@ import type { Capability } from "$lib/updates/types";
 const COMPANION_RELEASES =
 	"https://git.opengrind.org/open-grind/google-oauth-app/releases#install";
 const SCREEN_URL = "http://localhost/auth/sign-in/google";
+const ADDON_TAP = ["google-oauth", { trigger: "manual" }] as const;
 
 const fake = updateApiFake();
 const toasts = toastsFake();
@@ -145,12 +146,12 @@ describe("GoogleSignInForm", () => {
 		expect(screen.queryByLabelText("Token")).toBeNull();
 	});
 
-	it("says the app bypasses F-Droid's checks on an F-Droid install", async () => {
+	it("says the add-on bypasses F-Droid's checks on an F-Droid install", async () => {
 		getUpdateCapability.mockResolvedValue(installedBy("org.fdroid.fdroid"));
 		const { screen } = await opened();
 
 		expect(textOf(screen.getByText(/bypasses F-Droid's checks/))).toBe(
-			"It comes from git.opengrind.org, not F-Droid, so installing it bypasses F-Droid's checks.",
+			"This add-on bypasses F-Droid's checks",
 		);
 	});
 
@@ -160,7 +161,7 @@ describe("GoogleSignInForm", () => {
 		await fireEvent.click(button("Install"));
 		await settled();
 
-		expect(api.startUpdateDownload).toHaveBeenCalledWith("google-oauth");
+		expect(api.startUpdateDownload).toHaveBeenCalledWith(...ADDON_TAP);
 		expect(toasts.showStage).toHaveBeenLastCalledWith(
 			expect.objectContaining({
 				view: expect.objectContaining({ stage: "downloading" }),
@@ -646,7 +647,7 @@ describe("GoogleSignInForm", () => {
 		await settled();
 
 		expect(api.getUpdateReadiness).toHaveBeenCalledWith("google-oauth");
-		expect(api.startUpdateDownload).toHaveBeenCalledWith("google-oauth");
+		expect(api.startUpdateDownload).toHaveBeenCalledWith(...ADDON_TAP);
 		expectBusy("Downloading…");
 	});
 

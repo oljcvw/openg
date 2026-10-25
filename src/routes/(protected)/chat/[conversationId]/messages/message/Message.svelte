@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { ArrowBendUpLeftIcon, DotsThreeIcon } from "phosphor-svelte";
+	import ArrowBendUpLeftIcon from "phosphor-svelte/lib/ArrowBendUpLeftIcon";
+	import DotsThreeIcon from "phosphor-svelte/lib/DotsThreeIcon";
 	import { untrack } from "svelte";
 	import { expoOut } from "svelte/easing";
 	import type { VirtualElement } from "@floating-ui/dom";
@@ -19,6 +20,8 @@
 	import AlbumMessage from "./AlbumMessage.svelte";
 	import { type MessageRefs, setMessageContext } from "./context";
 	import ExpiringImageMessage from "./ExpiringImageMessage.svelte";
+	import GaymojiMessage from "./GaymojiMessage.svelte";
+	import GiphyMessage from "./GiphyMessage.svelte";
 	import ImageMessage from "./ImageMessage.svelte";
 	import MessageContextMenu from "./MessageContextMenu.svelte";
 	import MessageDateGroup from "./MessageDateGroup.svelte";
@@ -218,7 +221,9 @@
 	// tell a double tap (react) from a double click (reply).
 	let lastPointerType = "";
 
-	const railWheel = wheelInputMode() === "rail";
+	const wheelMode = wheelInputMode();
+	const railWheel = wheelMode === "rail";
+	const touchOnly = wheelMode === "none";
 </script>
 
 {#snippet adornments()}
@@ -276,6 +281,10 @@
 				messageId={message.messageId}
 				delivered={status !== "pending" && status !== "error"}
 			/>
+		{:else if message.type === "Gaymoji"}
+			<GaymojiMessage message={message.body} />
+		{:else if message.type === "Giphy"}
+			<GiphyMessage message={message.body} />
 		{:else if message.type === "Unsent"}
 			<UnsentMessage />
 		{:else if message.type === "Location"}
@@ -322,6 +331,7 @@
 				{
 					"overflow-x-auto overscroll-x-none [scrollbar-width:none]":
 						railWheel,
+					"overflow-x-clip": touchOnly,
 				},
 			]}
 		>

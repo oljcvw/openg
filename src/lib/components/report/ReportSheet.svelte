@@ -1,10 +1,12 @@
 <script lang="ts">
+	import ArrowUpRightIcon from "phosphor-svelte/lib/ArrowUpRightIcon";
 	import { untrack } from "svelte";
 
 	import { blockUser } from "$lib/api/browse/blocks";
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { reportProfile } from "$lib/api/safety/reports";
-	import { Button } from "$lib/components/ui/button";
+	import { Button, buttonVariants } from "$lib/components/ui/button";
+	import Link from "$lib/components/ui/link/Link.svelte";
 	import * as ResponsiveDialog from "$lib/components/ui/responsive-dialog";
 	import { Spinner } from "$lib/components/ui/spinner";
 	import { Textarea } from "$lib/components/ui/textarea";
@@ -15,21 +17,25 @@
 		type ReportReason,
 		reportReasonSchema,
 	} from "$lib/model/safety/reports";
+	import { grindrHelpUrl } from "$lib/util/grindr-help";
 	import type { Profile } from "$lib/model/users/profiles";
+	import { showBlockFailure } from "./block-failure";
 	import { buildProfileReport } from "./report-request";
+
+	type ReportSubject = "profile" | "message";
 
 	let {
 		open = $bindable(),
 		profileId,
+		subject = "profile",
 		locations: presetLocations,
-		blockable = true,
-		onBlocked,
+		onBlock,
 	}: {
 		open: boolean;
 		profileId: Profile["profileId"];
+		subject?: ReportSubject;
 		locations?: ReportLocation[];
-		blockable?: boolean;
-		onBlocked?: () => void;
+		onBlock?: () => void;
 	} = $props();
 
 	const reasonLabels: Record<ReportReason, string> = {
@@ -53,21 +59,41 @@
 		RIGHT_NOW_TEXT: "Right Now Text",
 	};
 
+	const subjectCopy: Record<
+		ReportSubject,
+		{ title: string; description: string; reviewed: string }
+	> = {
+		profile: {
+			title: "Report profile",
+			description: "Send a report about this profile to Grindr.",
+			reviewed: "Grindr will review this profile.",
+		},
+		message: {
+			title: "Report message",
+			description:
+				"Send a report about this person's messages to Grindr.",
+			reviewed: "Grindr will review your report.",
+		},
+	};
+
 	const detailsLabel = "Details (optional)";
 
 	let reason = $state<ReportReason | null>(null);
 	let locations = $state<ReportLocation[]>([]);
 	let comment = $state("");
 	let submitting = $state(false);
-	let blocking = $state(false);
 	let submitted = $state(false);
 
-	const isSpam = $derived(reason === "SPAM");
-	const reasonChosen = $derived(reason !== null);
-	const wherePickerShown = $derived(
-		reasonChosen && !isSpam && presetLocations === undefined,
+	const copy = $derived(subjectCopy[subject]);
+	const isInPersonIncident = $derived(
+		reason === "SERIOUS_IN_PERSON_INCIDENT",
 	);
-	const detailsShown = $derived(reasonChosen && !isSpam);
+	const detailsShown = $derived(
+		reason !== null && reason !== "SPAM" && !isInPersonIncident,
+	);
+	const wherePickerShown = $derived(
+		detailsShown && presetLocations === undefined,
+	);
 
 	$effect(() => {
 		if (!open) return;
@@ -96,18 +122,18 @@
 		}
 	}
 
-	async function block() {
-		if (blocking) return;
-		blocking = true;
+	function block() {
+		open = false;
+		if (onBlock) onBlock();
+		else void blockInBackground();
+	}
+
+	async function blockInBackground() {
 		try {
 			await blockUser({ profileId });
-			open = false;
-			onBlocked?.();
 		} catch (error) {
 			console.error(error);
-			showErrorToast({ label: "Failed to block user", error });
-		} finally {
-			blocking = false;
+			showBlockFailure(error);
 		}
 	}
 </script>
@@ -120,10 +146,10 @@
 	>
 		<ResponsiveDialog.Header>
 			<ResponsiveDialog.Title>
-				{submitted ? "Report submitted" : "Report profile"}
+				{submitted ? "Report submitted" : copy.title}
 			</ResponsiveDialog.Title>
 			<ResponsiveDialog.Description class="sr-only">
-				Send a report about this profile to Grindr.
+				{copy.description}
 			</ResponsiveDialog.Description>
 		</ResponsiveDialog.Header>
 		{#if submitted}
@@ -132,27 +158,16 @@
 					data-slot="report-submitted"
 					class="flex flex-col items-center gap-2 py-4 text-center"
 				>
-					<p>Grindr will review this profile.</p>
-					{#if blockable}
-						<p class="text-sm text-muted-foreground">
-							You can block this profile so you stop seeing it.
-						</p>
-					{/if}
+					<p>{copy.reviewed}</p>
+					<p class="text-sm text-muted-foreground">
+						You can block this profile so you stop seeing it.
+					</p>
 				</div>
 			</ResponsiveDialog.Body>
 			<ResponsiveDialog.Footer>
-				{#if blockable}
-					<Button
-						variant="destructive"
-						disabled={blocking}
-						onclick={() => void block()}
-					>
-						{#if blocking}
-							<Spinner />
-						{/if}
-						Block profile
-					</Button>
-				{/if}
+				<Button variant="destructive" onclick={block}>
+					Block profile
+				</Button>
 				<Button variant="secondary" onclick={() => (open = false)}>
 					Done
 				</Button>
@@ -226,17 +241,37 @@
 							class="min-h-24"
 						/>
 					{/if}
+					{#if isInPersonIncident}
+						<p
+							data-slot="report-incident-note"
+							class="px-1 text-sm text-muted-foreground"
+						>
+							Grindr's trust and safety team handles serious
+							in-person incidents through its help center. The
+							form opens in your browser.
+						</p>
+					{/if}
 				</ResponsiveDialog.Body>
 				<ResponsiveDialog.Footer>
-					<Button
-						disabled={submitting || reason === null}
-						onclick={() => void submit()}
-					>
-						{#if submitting}
-							<Spinner />
-						{/if}
-						Submit report
-					</Button>
+					{#if isInPersonIncident}
+						<Link
+							href={grindrHelpUrl("inPersonIncidentForm")}
+							class={buttonVariants()}
+						>
+							Open help form <ArrowUpRightIcon />
+						</Link>
+					{:else}
+						<Button
+							disabled={submitting || reason === null}
+							aria-busy={submitting}
+							onclick={() => void submit()}
+						>
+							{#if submitting}
+								<Spinner aria-hidden="true" />
+							{/if}
+							Submit report
+						</Button>
+					{/if}
 				</ResponsiveDialog.Footer>
 			</fieldset>
 		{/if}

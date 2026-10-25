@@ -30,6 +30,12 @@
 			});
 		},
 	});
+
+	$effect(() =>
+		gridState.onStartOver(() => {
+			if (gridContainer) gridContainer.scrollTop = 0;
+		}),
+	);
 </script>
 
 <svelte:head>
@@ -43,19 +49,6 @@
 	{:else}
 		<main class="screen-nav-host">
 			<TopBar />
-			<div
-				class="pull-scroller"
-				bind:this={gridContainer}
-				onscroll={() =>
-					(gridState.scrollY = gridContainer?.scrollTop ?? 0)}
-			>
-				<div
-					data-slot="grid-content"
-					class="@container/photo-grid flex min-h-overscrollable flex-col gap-4 px-4 pt-header-clear-17 pb-nav-clear"
-				>
-					<Grid {geohash} />
-				</div>
-			</div>
 			{#if !gridState.loading && !gridState.error}
 				<DataRefreshControl
 					container={gridContainer}
@@ -65,6 +58,20 @@
 						void gridState.refresh({ keepLoadedPages: false })}
 				/>
 			{/if}
+			<div
+				class="pull-scroller"
+				bind:this={gridContainer}
+				onscroll={() =>
+					(gridState.scrollY = gridContainer?.scrollTop ?? 0)}
+			>
+				<div
+					data-slot="grid-content"
+					data-refresh-content
+					class="@container/photo-grid min-h-overscrollable flex flex-col gap-4 px-4 pt-header-clear-17 pb-nav-clear"
+				>
+					<Grid {geohash} />
+				</div>
+			</div>
 			<ScrollToTopButton
 				container={gridContainer}
 				class="bottom-nav-clear"

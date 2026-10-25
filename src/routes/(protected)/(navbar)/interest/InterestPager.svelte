@@ -9,11 +9,21 @@
 	import TapsReceivedList from "./taps/TapsReceivedList.svelte";
 	import ViewsGrid from "./views/ViewsGrid.svelte";
 
-	let { ourProfileId }: { ourProfileId: number } = $props();
+	let {
+		ourProfileId,
+		onUnsettle,
+		onSettle,
+	}: {
+		ourProfileId: number;
+		onUnsettle: () => void;
+		onSettle: (tab: number) => void;
+	} = $props();
 
 	const TABS = INTEREST_TABS.map((tab) => tab.href);
 
 	let mounted = $state([false, false]);
+	let paging = false;
+	let heading: number | null = null;
 	let restedPane: number | null = null;
 
 	const routed = $derived(interestTabIndex(page.url.pathname));
@@ -23,8 +33,14 @@
 		onVisible: ({ first, last }) => {
 			for (let pane = first; pane <= last; pane += 1)
 				mounted[pane] = true;
+			paging = first !== last;
+			if (paging) onUnsettle();
+		},
+		onHeading: (pane) => {
+			heading = pane;
 		},
 		onRest: (pane) => {
+			onSettle(pane);
 			const landed = TABS[pane];
 			const pending = navigating.to?.url.pathname;
 			const ownReplacePending =
@@ -61,11 +77,24 @@
 		restedPane = null;
 		snap.place(routed, { animated: true });
 	});
+
+	function swallowClickOutsideHeadingPane(
+		event: MouseEvent & { currentTarget: HTMLElement },
+	) {
+		if (!paging || heading === null) return;
+		const headingPane = event.currentTarget.children[heading];
+		if (event.target instanceof Node && headingPane?.contains(event.target))
+			return;
+		event.preventDefault();
+		event.stopPropagation();
+	}
 </script>
 
 <main
 	data-slot="interest-pager"
 	data-scroll-intent="x"
+	ontouchstart={onUnsettle}
+	onclickcapture={swallowClickOutsideHeadingPane}
 	class="screen-nav-host no-scrollbar flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden"
 	{@attach snap.attach}
 >

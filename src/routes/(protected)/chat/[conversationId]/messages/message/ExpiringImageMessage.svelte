@@ -1,6 +1,6 @@
 <script lang="ts">
 	import "photoswipe/style.css";
-	import { ImagesIcon } from "phosphor-svelte";
+	import ImagesIcon from "phosphor-svelte/lib/ImagesIcon";
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { getSingleMessage } from "$lib/api/messaging/messages";
@@ -33,7 +33,7 @@
 
 	const className: import("svelte/elements").ClassValue = $derived([
 		"relative",
-		{ "ms-3": !media.clone, "size-full": media.clone },
+		{ "size-full": media.clone },
 	]);
 
 	const contentClass: import("svelte/elements").ClassValue = $derived([
@@ -42,7 +42,7 @@
 	]);
 
 	const bubbleClass: import("svelte/elements").ClassValue = $derived([
-		"flex w-50 items-center gap-2 px-4 py-3 text-start font-medium",
+		"flex w-fit items-center gap-2 px-4 py-3 text-start font-medium",
 		className,
 		contentClass,
 		"border border-border bg-input",
@@ -125,11 +125,6 @@
 					height: image.size?.height ?? 0,
 				},
 			],
-			configure: (lightbox) =>
-				lightbox.addFilter(
-					"useContentPlaceholder",
-					(usePlaceholder) => usePlaceholder && image.size !== null,
-				),
 			signal: controller.signal,
 			onClosed: () => {
 				imageState = { status: "idle" };
@@ -145,13 +140,14 @@
 </script>
 
 {#snippet bubbleContent()}
-	<ImagesIcon size={24} weight="fill" />
+	<ImagesIcon size={24} weight="fill" class="shrink-0" />
 	<span>Expiring image</span>
 	{@render media.adornments?.()}
 {/snippet}
 
 {#if viewable}
 	<button
+		data-slot="expiring-image-message"
 		class={[
 			bubbleClass,
 			{
@@ -166,13 +162,24 @@
 		{@render bubbleContent()}
 	</button>
 {:else if isOut}
-	<div class={[bubbleClass, "text-muted-foreground"]} {@attach media.attach}>
+	<div
+		data-slot="expiring-image-message-spent"
+		class={[bubbleClass, "text-muted-foreground"]}
+		{@attach media.attach}
+	>
 		{@render bubbleContent()}
 	</div>
 {:else}
-	<div class={["h-12 w-50", className, contentClass]} {@attach media.attach}>
+	<div
+		data-slot="expiring-image-message-expired"
+		class={["w-fit", className, contentClass]}
+		{@attach media.attach}
+	>
 		<LockedMedia
-			class={[media.cornerClass, "gap-2 font-medium text-neutral-600"]}
+			class={[
+				media.cornerClass,
+				"gap-2 px-4 py-3 font-medium text-neutral-600",
+			]}
 			size="sm"
 		>
 			Expired image

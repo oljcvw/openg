@@ -1,14 +1,21 @@
 import { expect, test } from "@playwright/test";
 
-import { historyDepth, pathname } from "./support/app";
+import {
+	backLink,
+	historyDepth,
+	historyEntries,
+	pathname,
+} from "./support/app";
 import {
 	APP_SETTINGS,
 	clickMeTab,
 	clickNavBarBack,
+	CREDITS,
 	openAppSettings,
 	openDeepLink,
 	openSettings,
 	SETTINGS,
+	stackSettled,
 	systemBack,
 } from "./support/page-stack";
 
@@ -19,7 +26,7 @@ test.describe.configure({ timeout: 180_000 });
 test("the navbar Back returns to the previous entry instead of pushing one", async ({
 	page,
 }) => {
-	await openSettings(page);
+	await openSettings(page, { platform: "android" });
 	const atSettings = await historyDepth(page);
 
 	await openAppSettings(page);
@@ -45,7 +52,7 @@ test("the navbar Back returns to the previous entry instead of pushing one", asy
 test("a system back after the navbar Back does not re-enter App Settings", async ({
 	page,
 }) => {
-	await openSettings(page);
+	await openSettings(page, { platform: "android" });
 	await openAppSettings(page);
 	await clickNavBarBack(page);
 
@@ -60,7 +67,7 @@ test("a system back after the navbar Back does not re-enter App Settings", async
 test("consecutive system backs keep walking out, never back in", async ({
 	page,
 }) => {
-	await openSettings(page);
+	await openSettings(page, { platform: "android" });
 	await openAppSettings(page);
 
 	const visited: string[] = [];
@@ -78,7 +85,7 @@ test("consecutive system backs keep walking out, never back in", async ({
 test("navbar Back and system back do not oscillate with App Settings", async ({
 	page,
 }) => {
-	await openSettings(page);
+	await openSettings(page, { platform: "android" });
 	const start = await historyDepth(page);
 	const visited: string[] = [];
 	const depths: number[] = [];
@@ -112,7 +119,7 @@ test("navbar Back and system back do not oscillate with App Settings", async ({
 test("the Me tab returns to the Me screen instead of pushing one", async ({
 	page,
 }) => {
-	await openSettings(page);
+	await openSettings(page, { platform: "android" });
 	const atSettings = await historyDepth(page);
 
 	await openAppSettings(page);
@@ -137,7 +144,7 @@ test("the Me tab returns to the Me screen instead of pushing one", async ({
 test("a round trip through the Me tab does not make back oscillate", async ({
 	page,
 }) => {
-	await openSettings(page);
+	await openSettings(page, { platform: "android" });
 	const start = await historyDepth(page);
 
 	await openAppSettings(page);
@@ -164,7 +171,7 @@ test("a round trip through the Me tab does not make back oscillate", async ({
 test("the Me tab collapses every entry between here and the Me screen", async ({
 	page,
 }) => {
-	await openSettings(page);
+	await openSettings(page, { platform: "android" });
 	const atSettings = await historyDepth(page);
 
 	await page.getByRole("link", { name: "Account Settings" }).click();
@@ -175,13 +182,7 @@ test("the Me tab collapses every entry between here and the Me screen", async ({
 
 	await clickMeTab(page);
 
-	const after = await page.evaluate(() => ({
-		index: navigation.currentEntry!.index,
-		paths: navigation
-			.entries()
-			.map((entry) => (entry.url ? new URL(entry.url).pathname : "")),
-		canGoForward: navigation.canGoForward,
-	}));
+	const after = await historyEntries(page);
 
 	expect(atBlocked, "two pushes down the settings tree").toBe(atSettings + 2);
 	expect(
@@ -195,15 +196,68 @@ test("the Me tab collapses every entry between here and the Me screen", async ({
 		after.paths.slice(after.index + 1),
 		`both deeper entries stayed ahead: ${after.paths.join(" ")} @${after.index}`,
 	).toEqual(["/settings/account", "/settings/account/blocked"]);
-	expect(after.canGoForward, "it traversed rather than pushed").toBe(true);
+	expect(
+		await page.evaluate(() => navigation.canGoForward),
+		"it traversed rather than pushed",
+	).toBe(true);
 });
 
 test("the Me tab still navigates from a deep-linked subpage", async ({
 	page,
 }) => {
-	await openDeepLink(page, APP_SETTINGS);
+	await openDeepLink(page, APP_SETTINGS, { platform: "android" });
 
 	await clickMeTab(page);
 
 	await expect(page).toHaveURL(new RegExp(`${SETTINGS}$`));
+});
+
+test("the navbar Back pops two levels opened in the app", async ({ page }) => {
+	await openSettings(page, { platform: "android" });
+	await openAppSettings(page);
+	await page.getByRole("link", { name: "Credits & Licenses" }).click();
+	await expect(page).toHaveURL(new RegExp(`${CREDITS}$`));
+	await stackSettled(page);
+	const atCredits = await historyEntries(page);
+
+	await clickNavBarBack(page);
+	await expect(page).toHaveURL(new RegExp(`${APP_SETTINGS}$`));
+	const atAppSettings = await historyEntries(page);
+
+	await clickNavBarBack(page);
+	await expect(page).toHaveURL(new RegExp(`${SETTINGS}$`));
+	const atSettings = await historyEntries(page);
+
+	expect(
+		[atAppSettings.index, atSettings.index],
+		`entries ${atCredits.paths.join(" ")} @${atCredits.index}`,
+	).toEqual([atCredits.index - 1, atCredits.index - 2]);
+	expect(
+		atSettings.paths,
+		"both subpages stayed forward entries instead of being stacked again",
+	).toEqual(atCredits.paths);
+});
+
+test("the navbar Back walks up from a deep-linked subpage instead of looping", async ({
+	page,
+}) => {
+	await openDeepLink(page, CREDITS, { platform: "android" });
+
+	await clickNavBarBack(page);
+	await expect(page).toHaveURL(new RegExp(`${APP_SETTINGS}$`));
+	expect(
+		await historyEntries(page),
+		"App Settings took the place of Credits",
+	).toEqual({ index: 0, paths: [APP_SETTINGS] });
+
+	await clickNavBarBack(page);
+	await expect(page).toHaveURL(new RegExp(`${SETTINGS}$`));
+	expect(
+		await historyEntries(page),
+		"Me took the place of App Settings",
+	).toEqual({ index: 0, paths: [SETTINGS] });
+	expect(
+		await backLink(page).count(),
+		"Me offers no Back that could return to Credits",
+	).toBe(0);
 });

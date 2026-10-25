@@ -23,6 +23,8 @@ To change alert level, sound, whether text of the notification appears on the lo
 
 Slow mode is the default notifications mode on Android. Open Grind checks for new events in the background **about every 15 minutes**. Android may force the interval to be longer, for example in battery saver or when you haven't opened the app for a while.
 
+Slow mode doesn't notify about received taps, because Grindr marks you online every time an app checks for them. Use [Fast mode](#android-fast-mode) to get tap notifications.
+
 ### Fast mode {#android-fast-mode}
 
 Fast mode on Android **shows notifications instantly**, but uses closed-source Google's Firebase services, which requires installing Open Grind's [FCM service add-on](https://git.opengrind.org/open-grind/fcm-service) and having Google Play services or microG.
@@ -39,12 +41,20 @@ To enable the fast mode:
 
 ## Windows
 
-Not supported yet. See [#384](https://git.opengrind.org/open-grind/open-grind/issues/384).
+Notifications only arrive when Open Grind is running.
+
+To change the banners, sound or lock screen previews, go to Settings → System → Notifications → Open Grind.
 
 ## macOS
 
-Not supported yet. See [#385](https://git.opengrind.org/open-grind/open-grind/issues/385).
+Notifications only arrive when Open Grind is running.
+
+To change the alert style, sound or previews, go to System Settings → Notifications → Open Grind.
 
 ## Linux
 
-Not supported yet. See [#386](https://git.opengrind.org/open-grind/open-grind/issues/386).
+Open Grind shows notifications through your desktop's notification service. GNOME, KDE Plasma and most other desktops work out of the box. On a standalone window manager, install a notification service, such as [dunst](https://dunst-project.org/) or [mako](https://github.com/emersion/mako) manually.
+
+Notifications only arrive when Open Grind is running.
+
+To change how notifications look or sound, use your desktop's notification settings.

@@ -14,12 +14,16 @@ const {
 	getGridMock: vi.fn(),
 	getTagsMock: vi.fn(),
 	patchCachedProfileMock: vi.fn(),
-	reconcileHandlers: [] as (() => unknown)[],
+	reconcileHandlers: [] as ((cause?: string) => unknown)[],
 	resolveGeohashMock: vi.fn(),
 	resolveLazyProfileMock: vi.fn(),
 	setPreferencesMock: vi.fn(),
 	showErrorToastMock: vi.fn(),
-	storedPreferences: { geohash: null as string | null },
+	storedPreferences: {
+		geohash: null as string | null,
+		loaded: true,
+		stayOnline: true,
+	},
 }));
 
 vi.mock("./grid", () => ({
@@ -32,7 +36,7 @@ vi.mock("./grid", () => ({
 vi.mock("$lib/api/users/tags", () => ({ getTags: getTagsMock }));
 vi.mock("$lib/util/reconcile", () => ({
 	reconciler: {
-		subscribe: (handler: () => unknown) => {
+		subscribe: (handler: (cause?: string) => unknown) => {
 			reconcileHandlers.push(handler);
 			return () => {};
 		},
@@ -40,6 +44,7 @@ vi.mock("$lib/util/reconcile", () => ({
 }));
 vi.mock("$lib/app-data/preferences.svelte", () => ({
 	getPreferences: () => Promise.resolve({}),
+	preferencesLoaded: () => storedPreferences.loaded,
 	preferencesSnapshot: () => storedPreferences,
 	setPreferences: setPreferencesMock,
 }));
@@ -520,7 +525,7 @@ describe("fetch races", () => {
 
 		const slowPage = deferred<{ items: unknown[]; nextPage: null }>();
 		getGridMock.mockReturnValueOnce(slowPage.promise);
-		const paged = gridState.loadMore();
+		const paged = gridState.paging.run();
 
 		getGridMock.mockResolvedValueOnce(page([2]));
 		slowFix.resolve(NEXT);
@@ -550,9 +555,9 @@ describe("loaded pages", () => {
 		gridState.retry();
 		await settle();
 		getGridMock.mockResolvedValueOnce(page([4, 5, 6], { nextPage: 2 }));
-		await gridState.loadMore();
+		await gridState.paging.run();
 		getGridMock.mockResolvedValueOnce(page([7, 8, 9], { nextPage: 3 }));
-		await gridState.loadMore();
+		await gridState.paging.run();
 		getGridMock.mockReset();
 	});
 
@@ -626,7 +631,7 @@ describe("loaded pages", () => {
 	it("keeps the shared order in step with an appended page", async () => {
 		getGridMock.mockResolvedValue(page([10, 11], { nextPage: 4 }));
 
-		await gridState.loadMore();
+		await gridState.paging.run();
 
 		expect(gridState.profiles).toHaveLength(11);
 		expect(gridState.indexInProfiles(11)).toBe(10);
@@ -670,7 +675,7 @@ describe("loaded pages", () => {
 		await gridState.refresh({ background: true });
 
 		getGridMock.mockResolvedValue(page([]));
-		await gridState.loadMore();
+		await gridState.paging.run();
 
 		expect(getGridMock).toHaveBeenLastCalledWith(
 			expect.objectContaining({ pageNumber: 3 }),
@@ -686,7 +691,7 @@ describe("loaded pages", () => {
 		await gridState.refresh({ background: true });
 
 		getGridMock.mockResolvedValue(page([8, 10, 2, 11], { nextPage: 4 }));
-		await gridState.loadMore();
+		await gridState.paging.run();
 
 		expect(gridState.items.map((item) => item.id)).toEqual([
 			1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,

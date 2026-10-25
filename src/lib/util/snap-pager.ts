@@ -1,8 +1,9 @@
 import { prefersReducedMotion } from "svelte/motion";
 import type { Attachment } from "svelte/attachments";
 
-import { isMacosPlatform } from "$lib/platform/os";
+import { isLinuxPlatform, isMacosPlatform } from "$lib/platform/os";
 import {
+	type ReleaseVelocity,
 	scrollGesture,
 	type ScrollGestureState,
 } from "$lib/platform/scroll-gesture";
@@ -10,15 +11,22 @@ import {
 const ALIGNED_PX = 1;
 const CLIENT_WIDTH_ROUNDING_PX = 1;
 const VISIBLE_EDGE_PX = 1;
+const LAYOUT_UNIT_PX = 1 / 64;
 const TOUCH_LIFTS = ["touchend", "touchcancel"] as const;
 const STILL_FRAMES_BEFORE_GLIDE = 3;
+const SIDEWAYS_SLOP_PX = 8;
+const UNSEEN_PAN_GRACE_MS = 500;
+const FLING_PX_PER_MS = 1;
 
 export type VisiblePositions = { first: number; last: number };
+
+type TouchOrigin = { id: number; x: number; y: number };
 
 export class SnapPager {
 	readonly #count: () => number;
 	readonly #onVisible: (positions: VisiblePositions) => void;
 	readonly #onRest: (position: number) => void;
+	readonly #onHeading: (position: number) => void;
 	readonly #fingerPhase: ScrollGestureState | null;
 	readonly #reducedMotion: () => boolean;
 
@@ -28,8 +36,14 @@ export class SnapPager {
 	#releaseWatch: number | null = null;
 	#width = 0;
 	#nearest: number | null = null;
+	#heading: number | null = null;
+	#lastLeft = 0;
+	#travel = 0;
 	#visible: VisiblePositions | null = null;
 	#touchLifts: AbortController | null = null;
+	#touchOrigin: TouchOrigin | null = null;
+	#scrolledSinceTouch = false;
+	#unseenPan: ReturnType<typeof setTimeout> | null = null;
 	#stepTarget: number | null = null;
 	#pendingPlace: number | null = null;
 
@@ -37,18 +51,23 @@ export class SnapPager {
 		count,
 		onVisible,
 		onRest,
-		fingerPhase = isMacosPlatform() ? scrollGesture : null,
+		onHeading = () => {},
+		fingerPhase = isMacosPlatform() || isLinuxPlatform()
+			? scrollGesture
+			: null,
 		reducedMotion = () => prefersReducedMotion.current,
 	}: {
 		count: () => number;
 		onVisible: (positions: VisiblePositions) => void;
 		onRest: (position: number) => void;
+		onHeading?: (position: number) => void;
 		fingerPhase?: ScrollGestureState | null;
 		reducedMotion?: () => boolean;
 	}) {
 		this.#count = count;
 		this.#onVisible = onVisible;
 		this.#onRest = onRest;
+		this.#onHeading = onHeading;
 		this.#fingerPhase = fingerPhase;
 		this.#reducedMotion = reducedMotion;
 	}
@@ -59,6 +78,7 @@ export class SnapPager {
 		const options = { passive: true, signal: listening.signal };
 		const dropStepTarget = () => {
 			this.#stepTarget = null;
+			this.#reportHeading();
 		};
 		const onWindow = { ...options, capture: true };
 		node.addEventListener("scroll", () => this.#onScroll(), options);
@@ -85,17 +105,24 @@ export class SnapPager {
 		);
 		const resize = new ResizeObserver((entries) => this.#onResize(entries));
 		resize.observe(node);
-		const stopPhase = this.#fingerPhase?.onPhaseChange(() =>
-			this.settleNow(),
+		const stopPhase = this.#fingerPhase?.onPhaseChange((phase) => {
+			this.settleNow();
+			if (phase === "idle") this.#watchRelease();
+		});
+		const stopRelease = this.#fingerPhase?.onRelease((velocity) =>
+			this.#fling(velocity),
 		);
 
 		return () => {
 			listening.abort();
 			resize.disconnect();
 			stopPhase?.();
+			stopRelease?.();
 			this.#touchLifts?.abort();
 			this.#touchLifts = null;
 			this.#fingers = 0;
+			this.#touchOrigin = null;
+			this.#forgetUnseenPan();
 			if (this.#releaseWatch !== null)
 				cancelAnimationFrame(this.#releaseWatch);
 			this.#releaseWatch = null;
@@ -116,18 +143,20 @@ export class SnapPager {
 			this.#report(position);
 			return;
 		}
-		if (animated) this.#stepTarget = position;
-		else this.#report(position);
+		if (animated) {
+			this.#stepTarget = position;
+			this.#reportHeading();
+		} else this.#report(position);
 		this.#scrollToPosition(position, { animated });
 	}
 
 	step(offset: number): void {
 		if (this.#width <= 0 || this.#held()) return;
 		const nearest = this.#nearestPosition();
-		if (this.#fingerPhase?.phase === "momentum" && !this.#aligned(nearest))
-			return;
+		if (this.#coasting() && !this.#aligned(nearest)) return;
 		const target = this.#clamp((this.#stepTarget ?? nearest) + offset);
 		this.#stepTarget = target;
+		this.#reportHeading();
 		this.#scrollToPosition(target, { animated: true });
 	}
 
@@ -178,13 +207,42 @@ export class SnapPager {
 		return this.#fingers > 0 || this.#fingerPhase?.fingersDown === true;
 	}
 
+	#coasting(): boolean {
+		return this.#fingerPhase?.phase === "momentum";
+	}
+
 	#canSnap(): boolean {
 		return this.#width > 0 && !this.#held() && this.#widthMatchesLayout();
 	}
 
+	#canGlideToNearest(): boolean {
+		return (
+			this.#canSnap() && this.#stepTarget === null && !this.#coasting()
+		);
+	}
+
 	#report(position: number): void {
 		this.#nearest = position;
+		this.#lastLeft = this.#left;
+		this.#setHeading(position);
 		this.#reportVisible({ first: position, last: position });
+	}
+
+	#reportHeading(): void {
+		this.#setHeading(this.#stepTarget ?? this.#travelTarget());
+	}
+
+	#travelTarget(): number | null {
+		if (this.#held() || this.#travel === 0 || this.#width <= 0)
+			return this.#nearest;
+		const { first, last } = this.#overlapping();
+		return this.#travel < 0 ? first : last;
+	}
+
+	#setHeading(heading: number | null): void {
+		if (heading === null || heading === this.#heading) return;
+		this.#heading = heading;
+		this.#onHeading(heading);
 	}
 
 	#reportVisible({ first, last }: VisiblePositions): void {
@@ -196,13 +254,20 @@ export class SnapPager {
 
 	#onScroll(): void {
 		this.#stillFrames = 0;
+		this.#scrolledSinceTouch = true;
+		this.#forgetUnseenPan();
 		if (!this.#widthMatchesLayout()) return;
+		const left = this.#left;
+		this.#travel = Math.sign(left - this.#lastLeft) || this.#travel;
+		this.#lastLeft = left;
 		this.#nearest = this.#nearestPosition();
+		this.#reportHeading();
 		this.#reportVisible(this.#overlapping());
 		this.settleNow();
 	}
 
 	#onTouchStart(event: TouchEvent): void {
+		if (this.#fingers === 0) this.#beginTouch(event);
 		this.#fingers = event.touches.length;
 		this.#touchLifts ??= new AbortController();
 		for (const type of TOUCH_LIFTS)
@@ -217,15 +282,60 @@ export class SnapPager {
 			);
 	}
 
+	#beginTouch(event: TouchEvent): void {
+		this.#forgetUnseenPan();
+		this.#scrolledSinceTouch = false;
+		const touch = event.changedTouches[0];
+		this.#touchOrigin = touch
+			? { id: touch.identifier, x: touch.clientX, y: touch.clientY }
+			: null;
+	}
+
 	readonly #onTouchLift = (event: TouchEvent): void => {
 		if (this.#fingers === 0) return;
 		this.#fingers = event.touches.length;
 		if (this.#fingers > 0) return;
 		this.#touchLifts?.abort();
 		this.#touchLifts = null;
+		if (this.#panStillComing(event)) {
+			this.#unseenPan = setTimeout(
+				this.#settleAfterLift,
+				UNSEEN_PAN_GRACE_MS,
+			);
+			return;
+		}
+		this.#settleAfterLift();
+	};
+
+	readonly #settleAfterLift = (): void => {
+		this.#unseenPan = null;
 		this.settleNow();
 		this.#watchRelease();
 	};
+
+	#panStillComing(event: TouchEvent): boolean {
+		const origin = this.#touchOrigin;
+		if (origin === null || this.#scrolledSinceTouch || this.#width <= 0)
+			return false;
+		const lift = Array.from(event.changedTouches).find(
+			({ identifier }) => identifier === origin.id,
+		);
+		if (lift === undefined) return false;
+		const dx = lift.clientX - origin.x;
+		if (
+			Math.abs(dx) < SIDEWAYS_SLOP_PX ||
+			Math.abs(dx) < Math.abs(lift.clientY - origin.y)
+		)
+			return false;
+		const end = (this.#count() - 1) * this.#width;
+		return dx > 0 ? this.#left > ALIGNED_PX : this.#left < end - ALIGNED_PX;
+	}
+
+	#forgetUnseenPan(): void {
+		if (this.#unseenPan === null) return;
+		clearTimeout(this.#unseenPan);
+		this.#unseenPan = null;
+	}
 
 	#watchRelease(): void {
 		this.#stillFrames = 0;
@@ -235,7 +345,7 @@ export class SnapPager {
 
 	readonly #checkRelease = (): void => {
 		this.#releaseWatch = null;
-		if (!this.#canSnap() || this.#stepTarget !== null) return;
+		if (!this.#canGlideToNearest()) return;
 		const position = this.#nearestPosition();
 		if (this.#aligned(position)) return;
 		this.#stillFrames += 1;
@@ -246,15 +356,27 @@ export class SnapPager {
 		this.#scrollToPosition(position, { animated: true });
 	};
 
+	#fling({ x, y }: ReleaseVelocity): void {
+		if (Math.abs(x) < FLING_PX_PER_MS || Math.abs(x) <= Math.abs(y)) return;
+		if (!this.#canSnap() || this.#aligned(this.#nearestPosition())) return;
+		const page = this.#left / this.#width;
+		this.#stepTarget = this.#clamp(
+			x > 0 ? Math.ceil(page) : Math.floor(page),
+		);
+		this.#reportHeading();
+		this.#scrollToPosition(this.#stepTarget, { animated: true });
+	}
+
 	#snapStranded(): void {
-		if (!this.#canSnap() || this.#stepTarget !== null) return;
+		if (!this.#canGlideToNearest()) return;
 		const position = this.#nearestPosition();
 		if (!this.#aligned(position))
 			this.#scrollToPosition(position, { animated: true });
 	}
 
 	#onResize(entries: ResizeObserverEntry[]): void {
-		const width = entries.at(-1)?.contentBoxSize[0]?.inlineSize ?? 0;
+		const entry = entries.at(-1);
+		const width = entry ? exactInlineSize(entry) : 0;
 		const previous = this.#width;
 		if (width === previous) return;
 		this.#width = width;
@@ -278,4 +400,20 @@ export class SnapPager {
 			behavior: animated && !this.#reducedMotion() ? "smooth" : "instant",
 		});
 	}
+}
+
+// Blink floors contentBoxSize to a layout unit while panes sit at exact device
+// pixels, so every page would add the dropped fraction to position * width.
+// https://issues.chromium.org/issues/575023846
+function exactInlineSize({
+	contentBoxSize,
+	devicePixelContentBoxSize,
+}: ResizeObserverEntry): number {
+	const layoutSize = contentBoxSize[0]?.inlineSize ?? 0;
+	const devicePixels = devicePixelContentBoxSize?.[0]?.inlineSize;
+	if (devicePixels === undefined) return layoutSize;
+	const exactSize = devicePixels / window.devicePixelRatio;
+	return Math.abs(exactSize - layoutSize) < LAYOUT_UNIT_PX
+		? exactSize
+		: layoutSize;
 }

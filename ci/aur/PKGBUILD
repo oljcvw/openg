@@ -2,7 +2,7 @@
 
 pkgname=open-grind-bin
 _pkgname=open-grind
-_ver=0.1.0-beta.4.1
+_ver=0.1.0-beta.5.1
 # pacman reads '-' as the pkgver/pkgrel separator, so it cannot stay.
 # Dropping it sorts 0.1.0beta.4 below 0.1.0. An underscore sorts it
 # above, which would need an epoch to undo. Checked with pacman's vercmp.
@@ -53,10 +53,10 @@ source_aarch64=(
 )
 
 sha256sums=('18b347191b86bde3646ab8c21910f01fda8d3d2caca5ebc8fe402a62f3425f5e')
-sha256sums_x86_64=('c6e7245f96cb4bde3869438f36629592cc9cd82413017e5097191562e25c0d61'
-                   'f4a6c06299daeafd1baca652335f6ed008f7249528c7a8cbc9297faec0347aa7')
-sha256sums_aarch64=('2747d5c9c48a760b107ef41df2394c8667b4009ccba640b7a2936a765fd9335a'
-                    '8278db4c03e07574829f5cccd1b22bc51dd92640edeb7dde38902fc1d1297daa')
+sha256sums_x86_64=('fa14b94a49ea3594ae8d3158d4dc4131dce65c35c675d558e56c176e1c0e2bd3'
+                   'c5229848b8a4bb836105195072d135abe0863954e92d611900dded60684fc6e9')
+sha256sums_aarch64=('fb6bbe693e183e49da64b7b8a438f1173b524f236c3a6e7a1d366e6d0d9150ba'
+                    'f5260426d58a0f68539fc36d5a25d40a9c2ed534f8072096b8ed7bf459e8d241')
 
 # Published in the project's KEYS.md.
 _minisign_key='RWReleaseOpenGrindurRQcmR+NovOaU5IEU3LM5l6TcXJvOGYw2m4O+'

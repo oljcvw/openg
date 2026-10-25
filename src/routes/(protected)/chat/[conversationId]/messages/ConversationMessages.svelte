@@ -3,6 +3,7 @@
 	import { SvelteSet } from "svelte/reactivity";
 
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
+	import { edgeGap } from "$lib/components/feedback/refresh/scroll-geometry";
 	import { Spinner } from "$lib/components/ui/spinner";
 	import { preferredScrollBehavior } from "$lib/util/reduced-motion";
 	import { getConversationState } from "../conversation-state.svelte";
@@ -53,6 +54,10 @@
 		);
 	}
 
+	function reachedFloor() {
+		return edgeGap(floorDistance()) <= 0;
+	}
+
 	let scrollingToRest = false;
 	let scrollingToRestTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -67,7 +72,7 @@
 			scrollingToRestTimer = setTimeout(endScrollingToRest, 1500);
 		}
 		refreshControl?.scrollToRest(behavior);
-		if (floorDistance() <= 1) endScrollingToRest();
+		if (reachedFloor()) endScrollingToRest();
 	}
 
 	function endScrollingToRest() {
@@ -82,7 +87,7 @@
 		if (!readerScrolled()) return;
 		ownScrollTop = null;
 		if (scrollingToRest) {
-			if (floorDistance() <= 1) endScrollingToRest();
+			if (reachedFloor()) endScrollingToRest();
 			return;
 		}
 		recordRestingPlace();
@@ -179,9 +184,15 @@
 
 	function holdFloor(el: HTMLElement): void {
 		if (scrollingToRest) refreshControl?.scrollToRest("smooth");
+		else if (edgeGap(restingFloorDistance) === 0)
+			el.scrollTop = el.scrollHeight;
 		else
 			el.scrollTop =
 				el.scrollHeight - el.clientHeight - restingFloorDistance;
+	}
+
+	function retargetRestScroll(): void {
+		if (scrollingToRest) refreshControl?.scrollToRest("smooth");
 	}
 
 	let observedScrollerSize: { width: number; height: number } | null = null;
@@ -248,7 +259,7 @@
 		class="flex min-h-0 max-w-full flex-1 flex-col gap-1 overflow-auto overscroll-contain p-2 pt-20 *:first:mt-auto"
 		bind:this={container}
 		style:overflow-anchor="none"
-		style:padding-bottom="calc({composerHeight}px + var(--spacing) * 1.5)"
+		style:padding-bottom="calc({composerHeight}px + var(--spacing) * 3)"
 		onscroll={onContainerScroll}
 		onscrollend={onContainerScrollEnd}
 	>
@@ -260,7 +271,8 @@
 			<ConversationError />
 		{:else}
 			<div
-				class="flex min-h-overscrollable shrink-0 flex-col justify-end gap-1"
+				data-refresh-content
+				class="min-h-overscrollable flex shrink-0 flex-col justify-end gap-1"
 			>
 				<div class="flex h-10 shrink-0 items-center justify-center">
 					{#if conversationState.loadingMore}
@@ -281,6 +293,7 @@
 			hintOffset={8}
 			position="bottom"
 			onrefresh={() => void conversationState.refresh()}
+			oninsetchange={retargetRestScroll}
 		/>
 		<div class="contents" style:--composer-height="{composerHeight}px">
 			{#if !atFloor}

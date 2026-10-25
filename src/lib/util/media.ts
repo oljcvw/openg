@@ -30,6 +30,13 @@ export function proxyMediaUrl(
 	return convertFileSrc(`${FETCHER_TAG[as]}${payload}`, MEDIA_SCHEME);
 }
 
+export function isProxiedMediaUrl(url: URL): boolean {
+	return (
+		url.protocol === `${MEDIA_SCHEME}:` ||
+		url.hostname === `${MEDIA_SCHEME}.localhost`
+	);
+}
+
 export function profileMediaUrl({
 	mediaHash,
 	size,
@@ -43,6 +50,23 @@ export function profileMediaUrl({
 	);
 }
 
+export function retryMediaSrc({
+	src,
+	attempt,
+}: {
+	src: string;
+	attempt: number;
+}): string {
+	return `${src}${src.includes("?") ? "&" : "?"}retry=${attempt}`;
+}
+
 export function firstFrameSrc(src: string): string {
 	return `${src}#t=0.001`;
+}
+
+export function releaseVideoOnDestroy(video: HTMLVideoElement): () => void {
+	return () => {
+		video.removeAttribute("src");
+		video.load();
+	};
 }

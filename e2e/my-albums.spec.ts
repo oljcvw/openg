@@ -8,17 +8,21 @@ import {
 	openAlbums,
 	openSharedAlbum,
 	SHARED_ALBUM,
+	SHARED_ALBUM_ID,
 } from "./support/albums";
-import { installTauriShim } from "./support/app";
+import {
+	afterTwoFrames,
+	historyEntries,
+	installTauriShim,
+	pathname,
+	watchRendered,
+} from "./support/app";
 import { CHAT_MEDIA_HOST, serveImages } from "./support/media";
-
-declare global {
-	interface Window {
-		__rendered?: Record<string, boolean>;
-	}
-}
+import { STACK_DIM, stackSettled } from "./support/page-stack";
 
 const ADD_ALBUM = 'a[href="/settings/albums/new"]';
+const myAlbumsTitle = (page: Page) =>
+	page.getByRole("navigation").getByText("My Albums");
 const LOADING_TILE = '[data-slot="media-image-pending"]';
 
 const TINY_PNG =
@@ -40,34 +44,6 @@ async function createAlbum(page: Page, name: string): Promise<void> {
 	await expect(page.locator(MEDIA_SLOT)).toHaveCount(1, { timeout: 30_000 });
 }
 
-async function watchRendered(
-	page: Page,
-	selector: string,
-): Promise<() => Promise<boolean>> {
-	await page.evaluate((selector) => {
-		const rendered = (window.__rendered ??= {});
-		rendered[selector] = false;
-		new MutationObserver((records) => {
-			const added = records.flatMap((record) => [...record.addedNodes]);
-			if (
-				added.some(
-					(node) =>
-						node instanceof Element &&
-						(node.matches(selector) ||
-							node.querySelector(selector) !== null),
-				)
-			) {
-				rendered[selector] = true;
-			}
-		}).observe(document.body, { subtree: true, childList: true });
-	}, selector);
-	return () =>
-		page.evaluate(
-			(selector) => window.__rendered?.[selector] === true,
-			selector,
-		);
-}
-
 test.describe("my albums", () => {
 	test("settings reaches the grid, which reaches one album and the new one", async ({
 		page,
@@ -80,9 +56,7 @@ test.describe("my albums", () => {
 			.getByRole("link", { name: /My Albums/ })
 			.click({ timeout: 60_000 });
 		await expect(page).toHaveURL(/\/albums$/);
-		await expect(
-			page.getByRole("navigation").getByText("My Albums"),
-		).toBeVisible();
+		await expect(myAlbumsTitle(page)).toBeVisible();
 
 		const addAlbum = page.getByRole("link", { name: "Add album" });
 		await expect(addAlbum, "the add cell leads the grid").toBeVisible();
@@ -112,11 +86,13 @@ test.describe("my albums", () => {
 		).toHaveCount(0);
 	});
 
-	test("Back slides the album off My Albums as it was, not a loading grid", async ({
+	test("Back returns to My Albums as it was, not a loading grid", async ({
 		page,
 	}) => {
 		await openSharedAlbum(page);
-		const loadingShown = await watchRendered(page, LOADING_TILE);
+		const loadingShown = await watchRendered(page, {
+			selector: LOADING_TILE,
+		});
 
 		await back(page);
 		await expect(page).toHaveURL(/\/albums$/);
@@ -205,6 +181,42 @@ test.describe("my albums", () => {
 		await expect(page.locator(ALBUM_TILE)).toHaveCount(before - 1);
 	});
 
+	test("Forward does not reopen a deleted album", async ({ page }) => {
+		await openAlbums(page);
+		const atAlbums = await historyEntries(page);
+		await page.locator(SHARED_ALBUM).click();
+		await page
+			.getByRole("button", { name: "Album menu" })
+			.click({ timeout: 30_000 });
+		await page.getByRole("menuitem", { name: "Delete album" }).click();
+		await page.getByRole("button", { name: "Delete", exact: true }).click();
+		await expect(page).toHaveURL(/\/albums$/, { timeout: 30_000 });
+		await expect(myAlbumsTitle(page)).toBeVisible();
+		await stackSettled(page);
+		const slid = await watchRendered(page, { selector: STACK_DIM });
+
+		await page.goForward();
+
+		await expect
+			.poll(() => historyEntries(page), {
+				message: "Forward stays on the My Albums entry",
+			})
+			.toEqual({
+				index: atAlbums.index,
+				paths: [
+					...atAlbums.paths,
+					`/settings/albums/${SHARED_ALBUM_ID}`,
+				],
+			});
+		await afterTwoFrames(page);
+		expect(await pathname(page)).toBe("/settings/albums");
+		await expect(myAlbumsTitle(page)).toBeVisible();
+		expect(await page.getByText("Edit Album").count()).toBe(0);
+		expect(await slid(), "the stack never slid toward the album").toBe(
+			false,
+		);
+	});
+
 	test("a removal is marked, undoable, and only lands on save", async ({
 		page,
 	}) => {
@@ -276,7 +288,9 @@ test.describe("my albums", () => {
 		).toBeVisible();
 
 		await createAlbum(page, "Rooftop");
-		const addAlbumRendered = await watchRendered(page, ADD_ALBUM);
+		const addAlbumRendered = await watchRendered(page, {
+			selector: ADD_ALBUM,
+		});
 		await back(page);
 
 		await expect(page.locator(albumTileNamed("Rooftop"))).toBeVisible({

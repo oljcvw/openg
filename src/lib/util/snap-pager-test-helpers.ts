@@ -44,7 +44,9 @@ export function fakePagerLayout({
 		{
 			id = 0,
 			target = touchTarget ?? node,
-		}: { id?: number; target?: EventTarget } = {},
+			x = 0,
+			y = 0,
+		}: { id?: number; target?: EventTarget; x?: number; y?: number } = {},
 	) => {
 		if (type === "touchstart") touchesOnScreen.add(id);
 		else touchesOnScreen.delete(id);
@@ -55,7 +57,9 @@ export function fakePagerLayout({
 					identifier,
 				})),
 			},
-			changedTouches: { value: [{ identifier: id }] },
+			changedTouches: {
+				value: [{ identifier: id, clientX: x, clientY: y }],
+			},
 		});
 		target.dispatchEvent(event);
 	};
@@ -69,6 +73,28 @@ export function fakePagerLayout({
 			resizeCallbacks.get(node)?.([
 				{
 					contentBoxSize: [{ inlineSize: width, blockSize: 800 }],
+				} as unknown as ResizeObserverEntry,
+			]);
+		},
+		measureBoxes: ({
+			contentBox,
+			devicePixels,
+		}: {
+			contentBox: number;
+			devicePixels: number;
+		}) => {
+			layoutWidth = devicePixels / window.devicePixelRatio;
+			resizeCallbacks.get(node)?.([
+				{
+					contentBoxSize: [
+						{ inlineSize: contentBox, blockSize: 800 },
+					],
+					devicePixelContentBoxSize: [
+						{
+							inlineSize: devicePixels,
+							blockSize: 800 * window.devicePixelRatio,
+						},
+					],
 				} as unknown as ResizeObserverEntry,
 			]);
 		},
@@ -107,10 +133,12 @@ export function harness({
 	document.body.append(node);
 	const onRest = vi.fn();
 	const onVisible = vi.fn();
+	const onHeading = vi.fn();
 	const pager = new SnapPager({
 		count: () => count,
 		onVisible,
 		onRest,
+		onHeading,
 		fingerPhase,
 		reducedMotion: () => reducedMotion,
 	});
@@ -133,6 +161,7 @@ export function harness({
 		layout.measure(WIDTH);
 		onVisible.mockClear();
 		onRest.mockClear();
+		onHeading.mockClear();
 	}
 
 	return {
@@ -141,6 +170,7 @@ export function harness({
 		child,
 		onRest,
 		onVisible,
+		onHeading,
 		attach,
 		detach: () => {
 			if (!cleanup) return;
@@ -180,5 +210,15 @@ export function macosGesture() {
 		released: () => gesture.ingest({ state: "released" }),
 		momentum: () => gesture.ingest({ state: "momentum" }),
 		idle: () => gesture.ingest({ state: "idle" }),
+	};
+}
+
+export function waylandGesture() {
+	const gesture = new ScrollGestureState();
+	return {
+		gesture,
+		fingers: () => gesture.ingest({ state: "fingers" }),
+		lift: ({ vx = 0, vy = 0 }: { vx?: number; vy?: number } = {}) =>
+			gesture.ingest({ state: "released", vx, vy }),
 	};
 }

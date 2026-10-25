@@ -2,6 +2,7 @@ mod buffered;
 mod cache;
 #[cfg(target_os = "linux")]
 mod element;
+mod failures;
 mod flight;
 mod range;
 mod registry;
@@ -16,15 +17,19 @@ mod windowed;
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Duration;
 
 use grindr::MediaFetcher;
 use tauri::async_runtime::JoinHandle;
-use tauri::http::{header, Method, Request, Response, StatusCode};
-use tauri::{AppHandle, Runtime, UriSchemeContext, UriSchemeResponder};
+use tauri::http::{header, HeaderValue, Method, Request, Response, StatusCode};
+use tauri::{
+	AppHandle, Manager, Runtime, UriSchemeContext, UriSchemeResponder,
+};
 use tokio::sync::{Mutex, Semaphore};
 
 use buffered::serve_buffered;
-use cache::{CachedMedia, MediaCache};
+use cache::{cache_key, CachedMedia, MediaCache};
+use failures::{target_path_of, Failures, MediaFailure};
 use flight::Flights;
 use registry::unregister_stream;
 use requested::Requested;
@@ -42,6 +47,8 @@ pub const SCHEME: &str = "ogmedia";
 const MAX_MEDIA_BYTES: usize = 16 * 1024 * 1024;
 const OFFICIAL_APP_REQUESTS_PER_HOST: usize = 20;
 const STREAMING_PLATFORM: bool = cfg!(target_os = "android");
+const ANDROID_ANSWER_DEADLINE: Duration = Duration::from_secs(25);
+const RETRIED_HEADERS_DEADLINE: Duration = Duration::from_secs(45);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Host {
@@ -84,6 +91,7 @@ impl Delivery {
 pub struct MediaProxy {
 	cache: Mutex<MediaCache>,
 	windowed: Mutex<Windowed>,
+	failures: Mutex<Failures>,
 	flights: Flights,
 	fetches: Arc<Semaphore>,
 	pumps: Mutex<HashMap<u64, JoinHandle<()>>>,
@@ -95,6 +103,7 @@ impl Default for MediaProxy {
 		Self {
 			cache: Mutex::default(),
 			windowed: Mutex::default(),
+			failures: Mutex::default(),
 			flights: Flights::default(),
 			fetches: Arc::new(Semaphore::new(OFFICIAL_APP_REQUESTS_PER_HOST)),
 			pumps: Mutex::default(),
@@ -117,8 +126,22 @@ impl MediaProxy {
 		self.sessions.clear();
 		self.cache.lock().await.clear();
 		self.windowed.lock().await.clear();
+		self.failures.lock().await.clear();
 		self.flights.clear().await;
 	}
+
+	async fn failure_of(&self, src: &str) -> Option<MediaFailure> {
+		let Target { url, .. } = decode_target(target_path_of(src)?)?;
+		self.failures.lock().await.get(cache_key(&url))
+	}
+}
+
+#[tauri::command]
+pub async fn media_failure(
+	app: AppHandle,
+	src: String,
+) -> Option<MediaFailure> {
+	app.state::<MediaProxy>().failure_of(&src).await
 }
 
 pub fn handle<R: Runtime>(
@@ -127,23 +150,36 @@ pub fn handle<R: Runtime>(
 	responder: UriSchemeResponder,
 ) {
 	let app = context.app_handle().clone();
-	let is_head = request.method() == Method::HEAD;
-	let allowed_method = is_head || request.method() == Method::GET;
-	let target = decode_target(request.uri().path());
-	let range = request
-		.headers()
-		.get(header::RANGE)
-		.and_then(|value| value.to_str().ok())
-		.map(str::to_owned);
+	let webview_label = context.webview_label().to_owned();
 
 	tauri::async_runtime::spawn(async move {
-		let response = if allowed_method {
-			serve(&app, target, range, is_head).await
-		} else {
-			refused(StatusCode::METHOD_NOT_ALLOWED)
-		};
-		responder.respond(response);
+		responder.respond(answer(&app, &webview_label, &request).await);
 	});
+}
+
+async fn answer<R: Runtime>(
+	app: &AppHandle<R>,
+	webview_label: &str,
+	request: &Request<Vec<u8>>,
+) -> Response<Vec<u8>> {
+	let is_head = request.method() == Method::HEAD;
+	let mut response = if webview_label != crate::MAIN_WINDOW_LABEL {
+		refused(StatusCode::FORBIDDEN)
+	} else if is_head || request.method() == Method::GET {
+		let range = request
+			.headers()
+			.get(header::RANGE)
+			.and_then(|value| value.to_str().ok())
+			.map(str::to_owned);
+		serve(app, decode_target(request.uri().path()), range, is_head).await
+	} else {
+		refused(StatusCode::METHOD_NOT_ALLOWED)
+	};
+	response.headers_mut().insert(
+		header::CONTENT_SECURITY_POLICY,
+		HeaderValue::from_static("sandbox"),
+	);
+	response
 }
 
 async fn serve<R: Runtime>(
@@ -231,6 +267,90 @@ mod tests {
 		name: impl header::AsHeaderName,
 	) -> Option<&str> {
 		response.headers().get(name).and_then(|v| v.to_str().ok())
+	}
+
+	const VIDEO_URL: &str =
+		"https://d3.cloudfront.net/v.mp4?Expires=1&Signature=S";
+	const TWO_HEADER_WAITS: Duration = Duration::from_secs(40);
+
+	async fn assert_waits_out_a_retried_header_wait(delivery: Delivery) {
+		let app = app_without_a_client();
+		let slots = Arc::clone(&app.state::<MediaProxy>().fetches);
+		let _taken = slots
+			.acquire_many_owned(OFFICIAL_APP_REQUESTS_PER_HOST as u32)
+			.await
+			.unwrap();
+		let started = tokio::time::Instant::now();
+		let opening = serve_by(
+			delivery,
+			app.handle(),
+			VIDEO_URL,
+			grindr::MediaFetcher::MediaPlayer,
+			None,
+			false,
+		);
+		tokio::pin!(opening);
+
+		let early = tokio::time::timeout(TWO_HEADER_WAITS, &mut opening).await;
+
+		assert!(
+			early.is_err(),
+			"{delivery:?} gave up during the crate's retry"
+		);
+		assert_eq!(opening.await.status(), StatusCode::GATEWAY_TIMEOUT);
+		assert!(started.elapsed() >= RETRIED_HEADERS_DEADLINE);
+	}
+
+	#[tokio::test(start_paused = true)]
+	async fn a_desktop_video_stream_waits_out_a_retried_header_wait() {
+		assert_waits_out_a_retried_header_wait(Delivery::Streamed).await;
+	}
+
+	#[tokio::test(start_paused = true)]
+	async fn a_desktop_video_session_waits_out_a_retried_header_wait() {
+		assert_waits_out_a_retried_header_wait(Delivery::Sessioned).await;
+	}
+
+	fn get(url: &str) -> Request<Vec<u8>> {
+		use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+
+		Request::builder()
+			.uri(format!(
+				"ogmedia://localhost/i{}",
+				URL_SAFE_NO_PAD.encode(url)
+			))
+			.body(Vec::new())
+			.unwrap()
+	}
+
+	#[tokio::test]
+	async fn only_the_main_window_may_load_proxied_media() {
+		let app = app_without_a_client();
+		cache(&app, PHOTO, b"webpbytes").await;
+
+		let main =
+			answer(app.handle(), crate::MAIN_WINDOW_LABEL, &get(PHOTO)).await;
+		let sign_in = answer(app.handle(), "google-oauth", &get(PHOTO)).await;
+
+		assert_eq!(main.status(), StatusCode::OK);
+		assert_eq!(main.body().as_slice(), b"webpbytes");
+		assert_eq!(sign_in.status(), StatusCode::FORBIDDEN);
+		assert!(sign_in.body().is_empty());
+	}
+
+	#[tokio::test]
+	async fn proxied_media_opened_as_a_page_runs_no_script() {
+		let app = app_without_a_client();
+		cache(&app, PHOTO, b"<script>").await;
+
+		for label in [crate::MAIN_WINDOW_LABEL, "google-oauth"] {
+			let response = answer(app.handle(), label, &get(PHOTO)).await;
+			assert_eq!(
+				header_str(&response, header::CONTENT_SECURITY_POLICY),
+				Some("sandbox"),
+				"{label}"
+			);
+		}
 	}
 
 	#[tokio::test]
@@ -362,13 +482,83 @@ mod tests {
 		let proxy = app.state::<MediaProxy>();
 		cache(&app, PHOTO, b"webpbytes").await;
 		proxy.windowed.lock().await.always(PHOTO.to_owned());
+		proxy
+			.failures
+			.lock()
+			.await
+			.record(PHOTO, MediaFailure::of_status(502, PHOTO));
 		drop(proxy.flights.acquire(PHOTO).await);
 
 		proxy.forget_everything().await;
 
 		assert!(proxy.cache.lock().await.get(PHOTO).is_none());
 		assert!(proxy.windowed.lock().await.is_empty());
+		assert!(proxy.failures.lock().await.is_empty());
 		assert!(proxy.flights.is_empty().await);
+	}
+
+	fn ogmedia_src(url: &str) -> String {
+		use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+		format!("http://ogmedia.localhost/i{}", URL_SAFE_NO_PAD.encode(url))
+	}
+
+	fn upstream(status: u16) -> grindr::MediaResponse {
+		grindr::MediaResponse {
+			status,
+			content_type: Some("image/jpeg".to_owned()),
+			content_range: None,
+			accept_ranges: None,
+			body: grindr::Bytes::from_static(b"jpegbytes"),
+		}
+	}
+
+	#[tokio::test]
+	async fn a_refused_signature_is_remembered_for_its_renewal_until_a_load_succeeds(
+	) {
+		let old = "https://d3.cloudfront.net/a.jpg?Expires=1&Signature=OLD";
+		let renewed = "https://d3.cloudfront.net/a.jpg?Expires=2&Signature=NEW";
+		let app = app_without_a_client();
+		let proxy = app.state::<MediaProxy>();
+
+		buffered::settle(
+			&proxy,
+			cache_key(old),
+			old,
+			upstream(403),
+			None,
+			false,
+		)
+		.await;
+		let failure = proxy.failure_of(&ogmedia_src(renewed)).await;
+		buffered::settle(
+			&proxy,
+			cache_key(renewed),
+			renewed,
+			upstream(200),
+			None,
+			false,
+		)
+		.await;
+
+		assert_eq!(failure.and_then(|failure| failure.status), Some(403));
+		assert!(proxy.failure_of(&ogmedia_src(renewed)).await.is_none());
+	}
+
+	#[tokio::test]
+	async fn a_refused_image_leaves_its_failure_for_the_page_to_read() {
+		let app = app_without_a_client();
+		let src = format!("{}?retry=1", ogmedia_src(PHOTO));
+
+		serve(app.handle(), image(PHOTO), None, false).await;
+		let failure = app.state::<MediaProxy>().failure_of(&src).await;
+
+		assert_eq!(
+			failure.map(|failure| (failure.kind, failure.host)),
+			Some((
+				failures::FailureKind::NotReady,
+				"cdns.grindr.com".to_owned()
+			))
+		);
 	}
 
 	#[tokio::test]

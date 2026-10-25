@@ -18,6 +18,7 @@ import {
 	getConversationMessages,
 	getSingleMessage,
 	reactToMessage,
+	refreshMessagesById,
 	sendMessage,
 	unsendMessage,
 } from "$lib/api/messaging/messages";
@@ -32,6 +33,7 @@ function apiMessage(overrides = {}) {
 		timestamp: 1_710_000_000_000,
 		unsent: false,
 		reactions: [],
+		dynamic: false,
 		...overrides,
 	};
 }
@@ -171,6 +173,23 @@ describe("message API wrappers", () => {
 		);
 	});
 
+	it("refreshes messages by id in one request", async () => {
+		const data = { messages: [apiMessage({ messageId: "msg-2" })] };
+		fetchRestMock.mockResolvedValue(response({ data }));
+
+		await expect(
+			refreshMessagesById({
+				conversationId: "conversation-1",
+				messageIds: ["msg-2", "msg-3"],
+			}),
+		).resolves.toEqual(data);
+
+		expect(fetchRestMock).toHaveBeenCalledWith(
+			"/v4/chat/conversation/conversation-1/message-by-id",
+			{ method: "POST", body: { messageIds: ["msg-2", "msg-3"] } },
+		);
+	});
+
 	it("sends direct messages through the expected request shape", async () => {
 		const message = apiMessage();
 		fetchRestMock.mockResolvedValue(response({ data: message }));
@@ -245,6 +264,47 @@ describe("message API wrappers", () => {
 				type: "Image",
 				target: { type: "Direct", targetId: 99 },
 				body: { mediaId: 910_001 },
+			},
+		});
+	});
+
+	it("sends a photo still uploading once its upload lands", async () => {
+		const upload = Promise.withResolvers<number>();
+		const responseMessage = apiMessage({
+			type: "Image",
+			body: {
+				mediaId: 910_002,
+				width: null,
+				height: null,
+				url: "https://cdns.grindr.com/images/chat/c".padEnd(100, "d"),
+				imageHash: "c".repeat(64),
+				takenOnGrindr: false,
+				createdAt: 1_710_000_000_000,
+			},
+		});
+		fetchRestMock.mockResolvedValue(response({ data: responseMessage }));
+
+		const sending = sendMessage({
+			toUserId: 99,
+			message: async () => ({
+				type: "Image",
+				body: { mediaId: await upload.promise },
+			}),
+		});
+		await Promise.resolve();
+		expect(
+			fetchRestMock,
+			"nothing goes out mid-upload",
+		).not.toHaveBeenCalled();
+		upload.resolve(910_002);
+
+		await expect(sending).resolves.toEqual(responseMessage);
+		expect(fetchRestMock).toHaveBeenCalledWith("/v4/chat/message/send", {
+			method: "POST",
+			body: {
+				type: "Image",
+				target: { type: "Direct", targetId: 99 },
+				body: { mediaId: 910_002 },
 			},
 		});
 	});

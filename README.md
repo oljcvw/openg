@@ -10,6 +10,7 @@
 
 - **[Download Open Grind](https://opengrind.org/download)** from the official website
 - **[Source releases page](https://git.opengrind.org/open-grind/open-grind/releases)** at git.opengrind.org/open-grind/open-grind
+- **[Google Play](https://play.google.com/store/apps/details?id=org.opengrind)** for Android
 
 Never install Open Grind from sources not listed above.
 
@@ -31,7 +32,9 @@ Check out [issues](https://git.opengrind.org/open-grind/open-grind/issues) and t
 
 ## License
 
-[MIT](./LICENSE)
+Code: [MIT](./LICENSE)
+
+Logo, icons and other artwork: [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (public domain), see [ARTWORK.md](./ARTWORK.md)
 
 ## Donate
 

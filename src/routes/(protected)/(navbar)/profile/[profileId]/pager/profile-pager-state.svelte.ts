@@ -21,8 +21,7 @@ export type ProfilePagerSource = Pick<
 	| "indexInProfiles"
 	| "profileById"
 	| "revealProfileId"
-	| "nextPage"
-	| "loadMore"
+	| "paging"
 >;
 
 export type ProfilePagerEntry = {
@@ -62,8 +61,9 @@ export class ProfilePagerState {
 	readonly #stopFollowingViewability: () => void;
 	#ourProfileId = 0;
 	#browsing = false;
-	#visibleFirst = 0;
-	#visibleLast = 0;
+	#visibleFirst = $state(0);
+	#visibleLast = $state(0);
+	#heading = $state(0);
 
 	readonly mounted: MountedProfile[] = $derived(
 		[...this.#states]
@@ -164,6 +164,19 @@ export class ProfilePagerState {
 		this.#visibleLast = last;
 		this.#extendTrack();
 		this.#syncStates();
+	}
+
+	setHeading(position: number): void {
+		this.#heading = position;
+	}
+
+	leaving({ position }: { position: number }): boolean {
+		return (
+			this.#visibleFirst !== this.#visibleLast &&
+			position !== this.#heading &&
+			position >= this.#visibleFirst &&
+			position <= this.#visibleLast
+		);
 	}
 
 	commit({ position }: { position: number }): number | null {
@@ -267,9 +280,9 @@ export class ProfilePagerState {
 	}
 
 	#loadAhead(): void {
-		if (!this.#browsing || !this.#source.nextPage) return;
+		if (!this.#browsing) return;
 		const remaining =
 			this.#order.length - (this.#trackStart + this.#activePosition) - 1;
-		if (remaining < LOAD_AHEAD_REMAINING) void this.#source.loadMore();
+		if (remaining < LOAD_AHEAD_REMAINING) void this.#source.paging.run();
 	}
 }

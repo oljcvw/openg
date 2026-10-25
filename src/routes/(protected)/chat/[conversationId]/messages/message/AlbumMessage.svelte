@@ -4,11 +4,13 @@
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
 	import { getConversationState } from "../../conversation-state.svelte";
 	import LockedMedia from "./LockedMedia.svelte";
+	import { mediaRenewal } from "./media-renewal";
 	import { MessageMediaState } from "./message-media.svelte";
 
 	let { message }: { message: AlbumMessage["body"] } = $props();
 
 	const media = new MessageMediaState();
+	const renewMedia = mediaRenewal();
 	const conversationState = $derived(getConversationState()());
 	const peerProfileId = $derived(
 		conversationState.profile?.profileId ?? null,
@@ -25,9 +27,9 @@
 
 	const className: import("svelte/elements").ClassValue = $derived([
 		"aspect-3/4 h-auto",
+		media.widthClass,
 		{
 			"ring ring-accent": message.hasUnseenContent,
-			"w-2/5 min-w-35 max-w-60 ms-3": !media.clone,
 			"size-full": media.clone,
 		},
 	]);
@@ -47,6 +49,7 @@
 		class={className}
 		{contentClass}
 		attach={media.attach}
+		onexpired={renewMedia}
 	>
 		{@render media.adornments?.()}
 	</AlbumPreview>

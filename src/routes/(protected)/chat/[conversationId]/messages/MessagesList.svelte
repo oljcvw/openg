@@ -7,13 +7,17 @@
 		unsendMessage,
 	} from "$lib/api/messaging/messages";
 	import ReportSheet from "$lib/components/report/ReportSheet.svelte";
-	import { offerEntitlementBypass } from "$lib/entitlements/bypass.svelte";
+	import {
+		offerEntitlementBypass,
+		reportRefusedDespiteBypass,
+	} from "$lib/entitlements/bypass.svelte";
 	import {
 		type ConversationState,
 		getConversationState,
 		type OptimisticMessage,
 	} from "../conversation-state.svelte";
 	import { processMessages } from "../messages";
+	import { setMediaRenewal } from "./message/media-renewal";
 	import Message from "./message/Message.svelte";
 
 	let { seenMessageIds }: { seenMessageIds: Set<string> } = $props();
@@ -22,12 +26,15 @@
 	let reportProfileId = $state<number | null>(null);
 
 	const conversationState = $derived(getConversationState()());
+	setMediaRenewal(() => conversationState.dynamicRefresh.renewMedia());
 
-	const messages = $derived(
-		processMessages({
-			messages: conversationState.messages,
-			ourProfileId: conversationState.ourProfileId,
-		}),
+	const layoutByMessageId = $derived(
+		new Map(
+			processMessages({
+				messages: conversationState.messages,
+				ourProfileId: conversationState.ourProfileId,
+			}).map((layout) => [layout.messageId, layout] as const),
+		),
 	);
 
 	async function unsend({
@@ -56,10 +63,13 @@
 		} catch (error) {
 			console.error(error);
 			if (tieredFeature(error) === "UnsentMessage") {
-				offerEntitlementBypass({
+				const lease = await offerEntitlementBypass({
 					reason: "Unsending a message requires a Grindr subscription.",
-					retry: () => unsend({ state, messageId }),
 				});
+				if (lease === null) return;
+				await unsend({ state, messageId })
+					.catch(reportRefusedDespiteBypass)
+					.finally(lease.release);
 				return;
 			}
 			showErrorToast({ label: "Failed to unsend message", error });
@@ -83,19 +93,25 @@
 	}
 </script>
 
-{#each messages.toReversed() as message (message.messageId)}
+{#each conversationState.messages.toReversed() as message (message.messageId)}
 	{@const isOut = message.senderId === conversationState.ourProfileId}
 	{@const delivered = message.status === "sent"}
+	{@const layout = layoutByMessageId.get(message.messageId)}
+	{@const indexInStack = layout?.indexInStack ?? 0}
+	{@const stackLength = layout?.stackLength ?? 1}
+	{@const dayStart = layout?.dayStart}
+	{@const isRead =
+		isOut && message.messageId === conversationState.messages[0]?.messageId
+			? conversationState.lastReadTimestamp === message.timestamp
+			: null}
 	<Message
 		{message}
 		{isOut}
-		indexInStack={message.indexInStack}
-		stackLength={message.stackLength}
-		dayStart={message.dayStart}
+		{indexInStack}
+		{stackLength}
+		{dayStart}
 		status={message.status}
-		isRead={isOut && message.messageId === messages[0]?.messageId
-			? conversationState.lastReadTimestamp === message.timestamp
-			: null}
+		{isRead}
 		onVisible={!isOut
 			? () => {
 					seenMessageIds.add(message.messageId);
@@ -139,6 +155,7 @@
 	<ReportSheet
 		bind:open={reportOpen}
 		profileId={reportProfileId}
+		subject="message"
 		locations={["CHAT_MESSAGE"]}
 	/>
 {/if}

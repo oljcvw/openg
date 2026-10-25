@@ -95,6 +95,12 @@ class PushPlugin(private val activity: Activity) : Plugin(activity) {
 	}
 
 	@Command
+	fun shownConversations(invoke: Invoke) {
+		val shown = PushNotifier.shownConversations(activity).map { it.conversationId }
+		invoke.resolve(JSObject().apply { put("conversationIds", JSArray(shown)) })
+	}
+
+	@Command
 	fun openNotificationSettings(invoke: Invoke) =
 		settingsOpened(invoke, PushNotifier.openAppNotificationSettings(activity))
 
@@ -177,6 +183,10 @@ class PushPlugin(private val activity: Activity) : Plugin(activity) {
 	fun takeDeeplink(invoke: Invoke) =
 		invoke.resolve(JSObject().apply { put("deeplink", PushEvents.takeDeeplink()) })
 
+	@Command
+	fun deeplinkPending(invoke: Invoke) =
+		invoke.resolve(JSObject().apply { put("pending", PushEvents.deeplinkPending()) })
+
 	private fun offerDeeplink(intent: Intent?) {
 		val deeplink = intent?.getStringExtra(PushNotifier.EXTRA_DEEPLINK) ?: return
 		intent.removeExtra(PushNotifier.EXTRA_DEEPLINK)
@@ -184,11 +194,21 @@ class PushPlugin(private val activity: Activity) : Plugin(activity) {
 	}
 
 	private fun gated(invoke: Invoke, run: () -> Unit) {
-		when (AddonLaunchCheck.decideService(activity, PushContract.bindIntent(), PushContract.ADDON_PACKAGE)) {
+		when (
+			AddonLaunchCheck.decideService(
+				activity,
+				PushContract.bindIntent(),
+				PushContract.ADDON_PACKAGE,
+				PushContract.MIN_ADDON_VERSION_CODE,
+			)
+		) {
 			AddonGate.Verdict.Launch -> run()
 			AddonGate.Verdict.Unavailable -> invoke.reject(PushContract.ERROR_UNAVAILABLE)
 			AddonGate.Verdict.Disabled -> invoke.reject(PushContract.ERROR_DISABLED)
 			AddonGate.Verdict.Untrusted -> invoke.reject(PushContract.ERROR_UNTRUSTED)
+			AddonGate.Verdict.Hidden -> invoke.reject(PushContract.ERROR_HIDDEN)
+			AddonGate.Verdict.TurnedOff -> invoke.reject(PushContract.ERROR_TURNED_OFF)
+			AddonGate.Verdict.Outdated -> invoke.reject(PushContract.ERROR_OUTDATED)
 		}
 	}
 

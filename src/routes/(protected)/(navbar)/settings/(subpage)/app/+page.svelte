@@ -1,10 +1,8 @@
 <script lang="ts">
-	import {
-		ArrowSquareOutIcon,
-		CaretRightIcon,
-		type IconComponentProps,
-	} from "phosphor-svelte";
+	import ArrowSquareOutIcon from "phosphor-svelte/lib/ArrowSquareOutIcon";
+	import CaretRightIcon from "phosphor-svelte/lib/CaretRightIcon";
 	import { toast } from "svelte-sonner";
+	import type { IconComponentProps } from "phosphor-svelte";
 
 	import ToastUnimplemented from "$lib/components/feedback/ToastUnimplemented.svelte";
 	import * as Item from "$lib/components/ui/item";
@@ -98,6 +96,11 @@
 	preference="revealProfileViews"
 	title="Reveal profile views"
 	description="Let others know when you've viewed their profile. Your profile view history remains unaffected."
+/>
+<PreferenceSwitchSetting
+	preference="giphyConsent"
+	title="GIF search via GIPHY"
+	description="Search and load GIFs from GIPHY in chats. GIPHY sees your IP address, what you search for and that the requests come from a Grindr app."
 />
 <h2>Security</h2>
 {@render item({

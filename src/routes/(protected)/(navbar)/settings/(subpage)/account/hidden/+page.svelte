@@ -3,10 +3,10 @@
 </script>
 
 <script lang="ts">
-	import { EyeSlashIcon } from "phosphor-svelte";
+	import EyeSlashIcon from "phosphor-svelte/lib/EyeSlashIcon";
 
 	import {
-		getHiddenUsers,
+		getHiddenUserIdsNewestFirst,
 		hideUser,
 		unhideUser,
 	} from "$lib/api/browse/hides";
@@ -23,8 +23,7 @@
 
 <ProfileList
 	eager
-	loadIds={async () =>
-		(await getHiddenUsers()).map(({ profileId }) => profileId).toReversed()}
+	loadIds={getHiddenUserIdsNewestFirst}
 	setOn={({ profileId, on }) =>
 		on ? hideUser({ profileId }) : unhideUser({ profileId })}
 	{icon}

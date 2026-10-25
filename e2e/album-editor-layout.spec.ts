@@ -1,9 +1,8 @@
 import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { back, openAlbum, openAlbums, SHARED_ALBUM } from "./support/albums";
-import { stackSettled } from "./support/page-stack";
-
-type Box = { x: number; y: number; width: number; height: number };
+import { type Box, expectSameBox } from "./support/box";
+import { STACK_PANE, stackSettled } from "./support/page-stack";
 
 type HeaderBoxes = { header: Box; preview: Box; name: Box };
 
@@ -35,23 +34,6 @@ async function measureHeader(page: Page): Promise<HeaderBoxes> {
 		preview: await boxOf(page.locator(`${PREVIEW_COLUMN} > *`)),
 		name: await boxOf(page.getByRole("textbox", { name: "Album name" })),
 	};
-}
-
-function expectSameBox({
-	actual,
-	expected,
-	label,
-}: {
-	actual: Box;
-	expected: Box;
-	label: string;
-}): void {
-	for (const key of ["x", "y", "width", "height"] as const) {
-		expect(
-			Math.abs(actual[key] - expected[key]),
-			`${label} ${key}: ${actual[key]} vs ${expected[key]}`,
-		).toBeLessThanOrEqual(1);
-	}
 }
 
 function expectNear({
@@ -167,11 +149,7 @@ async function recordLoadingSkeleton(page: Page): Promise<void> {
 				};
 			}).observe(document, { childList: true, subtree: true });
 		},
-		{
-			header: HEADER,
-			preview: PREVIEW_COLUMN,
-			pane: '[data-slot="page-stack-pane"]',
-		},
+		{ header: HEADER, preview: PREVIEW_COLUMN, pane: STACK_PANE },
 	);
 }
 

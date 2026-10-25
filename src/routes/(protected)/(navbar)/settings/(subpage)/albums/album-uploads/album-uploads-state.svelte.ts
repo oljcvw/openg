@@ -13,15 +13,17 @@ import {
 import { errorKindOf, uploadRefusalMessage } from "$lib/api/methods";
 import { albumMediaCounts } from "$lib/components/album/album";
 import { forgetAlbumSlides } from "$lib/components/album/album-lightbox";
+import {
+	discardStagedMedia,
+	type MediaFileInspection,
+	type MediaFileKind,
+} from "$lib/platform/media-file";
 import { delay } from "$lib/util/delay";
+import { Generation } from "$lib/util/generation";
 import type {
 	AlbumContent,
 	AlbumStorageLimits,
 } from "$lib/model/messaging/albums";
-import type {
-	MediaFileInspection,
-	MediaFileKind,
-} from "$lib/platform/media-file";
 import type { PickedMedia } from "$lib/platform/media-picker";
 
 type UploadKind = Exclude<MediaFileKind, "unsupported">;
@@ -96,7 +98,7 @@ class AlbumUploadsState {
 	#drafts = new Map<number, UploadLanding>();
 	#landed = new Map<number, Set<number>>();
 	#watching = new Set<string>();
-	#epoch = 0;
+	#generation = new Generation();
 	#destroyed = false;
 	#running = false;
 
@@ -164,6 +166,7 @@ class AlbumUploadsState {
 			pending: this.pending(albumId),
 		});
 		const accepted: QueuedUpload[] = [];
+		const leftOut: PickedMedia[] = [];
 		for (const pick of [
 			...inspected.filter(
 				({ inspection }) => inspection.kind === "video",
@@ -175,12 +178,14 @@ class AlbumUploadsState {
 			if (pick.inspection.kind === "video") {
 				if (videos >= limits.maxVideosPerAlbum) {
 					leftOutVideoSlot += 1;
+					leftOut.push(pick.media);
 					continue;
 				}
 				videos += 1;
 			} else {
 				if (photos >= limits.maxContentItemsPerAlbum) {
 					leftOutFull += 1;
+					leftOut.push(pick.media);
 					continue;
 				}
 				photos += 1;
@@ -188,13 +193,16 @@ class AlbumUploadsState {
 			accepted.push({ ...pick, albumId, limits });
 		}
 
+		void discardStagedMedia(leftOut);
 		this.#queue = [...this.#queue, ...accepted];
 		void this.#run();
 		return { leftOutFull, leftOutVideoSlot };
 	}
 
 	#drop(): void {
-		this.#epoch += 1;
+		this.#generation.next();
+		const waiting = this.#queue.slice(this.#running ? 1 : 0);
+		void discardStagedMedia(waiting.map(({ media }) => media));
 		this.#queue = [];
 		this.#landing = [];
 		this.#landings.clear();
@@ -227,7 +235,7 @@ class AlbumUploadsState {
 	}
 
 	async #upload(entry: QueuedUpload): Promise<void> {
-		const epoch = this.#epoch;
+		const generation = this.#generation.current;
 		const before = new Set(this.#landedIds(entry.albumId));
 		let sha256: string | null = null;
 		let contentId: number;
@@ -242,11 +250,12 @@ class AlbumUploadsState {
 			}));
 		} catch (error) {
 			console.error(error);
-			if (epoch === this.#epoch)
+			if (!this.#generation.isStale(generation))
 				await this.#recover({ entry, error, sha256, before });
 			return;
 		}
-		if (epoch === this.#epoch) this.#landInBackground({ entry, contentId });
+		if (!this.#generation.isStale(generation))
+			this.#landInBackground({ entry, contentId });
 	}
 
 	#landInBackground({
@@ -289,26 +298,28 @@ class AlbumUploadsState {
 			this.#drop();
 			return;
 		}
-		const epoch = this.#epoch;
+		const generation = this.#generation.current;
 		if (!isRefusal(error)) {
 			const contentId = await this.#reconcile({
 				albumId: entry.albumId,
 				sha256,
 				before,
 			});
-			if (epoch !== this.#epoch) return;
+			if (this.#generation.isStale(generation)) return;
 			if (contentId !== null) {
 				this.#landInBackground({ entry, contentId });
 				return;
 			}
 		}
 		if (isPlanLimitReached(error)) {
-			this.#queue = this.#queue.filter(
-				(queued) =>
-					queued === entry ||
-					queued.albumId !== entry.albumId ||
-					queued.inspection.kind !== entry.inspection.kind,
+			const outOfRoom = (queued: QueuedUpload) =>
+				queued !== entry &&
+				queued.albumId === entry.albumId &&
+				queued.inspection.kind === entry.inspection.kind;
+			void discardStagedMedia(
+				this.#queue.filter(outOfRoom).map(({ media }) => media),
 			);
+			this.#queue = this.#queue.filter((queued) => !outOfRoom(queued));
 			toast.error(outOfRoomMessage(entry));
 			return;
 		}
@@ -329,14 +340,14 @@ class AlbumUploadsState {
 		sha256: string | null;
 		before: Set<number>;
 	}): Promise<number | null> {
-		const epoch = this.#epoch;
+		const generation = this.#generation.current;
 		for (let attempt = 0; attempt < RECONCILE_ATTEMPTS; attempt += 1) {
 			await delay(RECONCILE_INTERVAL_MS);
-			if (epoch !== this.#epoch) return null;
+			if (this.#generation.isStale(generation)) return null;
 			const albums = await getMyAlbums()
 				.then((response) => response.albums)
 				.catch(() => null);
-			if (epoch !== this.#epoch) return null;
+			if (this.#generation.isStale(generation)) return null;
 			if (albums === null) continue;
 			const landed = albums
 				.find((album) => album.albumId === albumId)
@@ -371,9 +382,9 @@ class AlbumUploadsState {
 		albumId: number;
 		present: ReadonlySet<number>;
 	}): Promise<void> {
-		const epoch = this.#epoch;
+		const generation = this.#generation.current;
 		const content = await this.#readContent(albumId);
-		if (epoch !== this.#epoch) return;
+		if (this.#generation.isStale(generation)) return;
 		if (content === null) {
 			toast.success(LOST_READ_MESSAGE);
 			return;
@@ -399,9 +410,9 @@ class AlbumUploadsState {
 		forgetAlbumSlides(albumId);
 		const draft = this.#drafts.get(albumId);
 		if (draft === undefined) return;
-		const epoch = this.#epoch;
+		const generation = this.#generation.current;
 		const content = await this.#readContent(albumId);
-		if (epoch !== this.#epoch) return;
+		if (this.#generation.isStale(generation)) return;
 		if (content === null) {
 			toast.success(LOST_READ_MESSAGE);
 			return;
@@ -415,17 +426,17 @@ class AlbumUploadsState {
 	async #readContent(
 		albumId: number,
 	): Promise<AlbumContentResponse["content"] | null> {
-		const epoch = this.#epoch;
+		const generation = this.#generation.current;
 		for (let attempt = 0; attempt <= RECONCILE_ATTEMPTS; attempt += 1) {
 			if (attempt > 0) await delay(RECONCILE_INTERVAL_MS);
-			if (epoch !== this.#epoch) return null;
+			if (this.#generation.isStale(generation)) return null;
 			const content = await getAlbumContent(albumId)
 				.then((response) => response.content)
 				.catch((error: unknown) => {
 					console.error(error);
 					return null;
 				});
-			if (epoch !== this.#epoch) return null;
+			if (this.#generation.isStale(generation)) return null;
 			if (content !== null) return content;
 		}
 		return null;
@@ -441,11 +452,11 @@ class AlbumUploadsState {
 		const token = `${albumId}:${contentId}`;
 		if (this.#watching.has(token)) return;
 		this.#watching.add(token);
-		const epoch = this.#epoch;
+		const generation = this.#generation.current;
 		try {
 			for (let attempt = 0; attempt < PROCESSING_ATTEMPTS; attempt += 1) {
 				await delay(PROCESSING_INTERVAL_MS);
-				if (epoch !== this.#epoch) return;
+				if (this.#generation.isStale(generation)) return;
 				let processing: boolean;
 				try {
 					({ processing } = await getAlbumContentProcessing({
@@ -462,7 +473,8 @@ class AlbumUploadsState {
 				return;
 			}
 		} finally {
-			if (epoch === this.#epoch) this.#watching.delete(token);
+			if (!this.#generation.isStale(generation))
+				this.#watching.delete(token);
 		}
 	}
 

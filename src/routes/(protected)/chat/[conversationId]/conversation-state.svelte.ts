@@ -1,3 +1,5 @@
+/* eslint max-lines: ["error", { "max": 602, "skipBlankLines": true, "skipComments": true }] -- Keep the fetch snapshot beside its reconciliation. */
+
 import { createContext } from "svelte";
 
 import { showErrorToast } from "$lib/api/error-toast";
@@ -9,27 +11,32 @@ import {
 	sendMessage,
 } from "$lib/api/messaging/messages";
 import { getPreferences } from "$lib/app-data/preferences.svelte";
-import { offerEntitlementBypass } from "$lib/entitlements/bypass.svelte";
+import {
+	offerEntitlementBypass,
+	reportRefusedDespiteBypass,
+} from "$lib/entitlements/bypass.svelte";
 import { previewFromMessage } from "$lib/model/messaging/message-preview";
 import { reconciler } from "$lib/util/reconcile";
 import {
 	chatV1ConversationDeleteEventSchema,
 	chatV1ConversationReadEventSchema,
 	chatV1MessageSentEventSchema,
+	stopListening,
 	ws,
 } from "$lib/ws.svelte";
 import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
 import type {
 	ApiResponseMessage,
 	MessageDraft,
-	OutboundMessage,
 } from "$lib/model/messaging/messages";
+import { DynamicMessagesRefresh } from "./dynamic-refresh";
 import {
 	matchPendingEcho,
 	mergeServerMessages,
 	type OptimisticMessage,
 	previewedMessage,
 	removeDuplicateMessages,
+	sentMessages,
 } from "./merge-messages";
 import { getConversation } from "./messages";
 import { ReadReceiptQueue } from "./read-receipts";
@@ -46,7 +53,7 @@ function asSent(message: ApiResponseMessage): OptimisticMessage {
 
 type MessageDelivery = {
 	tempId: string;
-	message: OutboundMessage;
+	message: MessageDraft["outbound"];
 	replyToMessageId?: string;
 };
 
@@ -76,10 +83,12 @@ export class ConversationState {
 	readonly ourProfileId: number;
 
 	#conversations: ConversationsState;
+	#releaseActive: () => void;
 	#readReceipts = new ReadReceiptQueue({
 		markRead: (messageId) => this.#markRead(messageId),
 	});
 	#unsubscribeReconcile: () => void;
+	readonly dynamicRefresh: DynamicMessagesRefresh;
 
 	constructor({
 		conversationId,
@@ -93,8 +102,7 @@ export class ConversationState {
 		this.conversationId = conversationId;
 		this.ourProfileId = ourProfileId;
 		this.#conversations = conversations;
-		conversations.setActive(conversationId);
-		this.lastReadTimestamp = null;
+		this.#releaseActive = conversations.setActive(conversationId);
 		void this.#initialLoad();
 
 		this.#unsubscribeReconcile = reconciler.subscribe(() =>
@@ -131,8 +139,7 @@ export class ConversationState {
 						if (pending) {
 							this.#adoptServerVersion({
 								message: pending,
-								serverMessageId: incoming.messageId,
-								serverTimestamp: incoming.timestamp,
+								server: incoming,
 							});
 							return;
 						}
@@ -144,10 +151,7 @@ export class ConversationState {
 					);
 					if (incoming.timestamp < newestTimestamp) return;
 
-					const msg: OptimisticMessage = {
-						...incoming,
-						status: "sent",
-					};
+					const msg = asSent(incoming);
 					this.messages = [msg, ...this.messages];
 					this.#syncCache();
 					if (msg.senderId !== this.ourProfileId) {
@@ -185,6 +189,13 @@ export class ConversationState {
 				},
 			),
 		);
+		this.dynamicRefresh = new DynamicMessagesRefresh({
+			conversationId,
+			messages: () => this.messages,
+			commit: (messages) => this.#commitMessages(messages),
+			reconcile: () => this.#reconcileMessages(),
+			paused: () => this.error !== null,
+		});
 	}
 
 	#wsPromises: Promise<() => void>[] = [];
@@ -197,15 +208,12 @@ export class ConversationState {
 	destroy(): void {
 		if (this.#destroyed) return;
 		this.#destroyed = true;
-		this.#conversations.clearActive(this.conversationId);
-		for (const promise of this.#wsPromises) {
-			promise
-				.then((unlisten) => unlisten())
-				.catch((error) => console.error(error));
-		}
+		this.#releaseActive();
+		stopListening(this.#wsPromises);
 		this.#wsPromises = [];
 		this.#unsubscribeReconcile();
 		this.#readReceipts.destroy();
+		this.dynamicRefresh.destroy();
 	}
 
 	async #reconcileMessages(): Promise<void> {
@@ -216,6 +224,7 @@ export class ConversationState {
 		}
 		this.refreshing = true;
 		this.#refreshRequestedSinceFetchStart = false;
+		const localIdsAtFetchStart = this.messages.map((m) => m.messageId);
 		try {
 			const result = await getConversation({
 				conversationId: this.conversationId,
@@ -228,6 +237,7 @@ export class ConversationState {
 			const { messages, fresh, changed } = mergeServerMessages({
 				local: this.messages,
 				server: result.messages,
+				localIdsAtFetchStart,
 			});
 
 			this.#advanceLastRead(result.lastReadTimestamp);
@@ -237,9 +247,7 @@ export class ConversationState {
 				return;
 			}
 
-			this.messages = messages;
-			this.#updatePreview();
-			this.#syncCache();
+			this.#commitMessages(messages);
 
 			for (const m of fresh) {
 				if (m.senderId === this.ourProfileId) continue;
@@ -264,6 +272,12 @@ export class ConversationState {
 			this.refreshing = false;
 			this.#runRequestedRefresh();
 		}
+	}
+
+	#commitMessages(messages: OptimisticMessage[]): void {
+		this.messages = messages;
+		this.#updatePreview();
+		this.#syncCache();
 	}
 
 	#runRequestedRefresh(): void {
@@ -393,6 +407,7 @@ export class ConversationState {
 			timestamp: Date.now(),
 			unsent: false,
 			reactions: [],
+			dynamic: false,
 			replyToMessage,
 			status: "pending" as const,
 		};
@@ -416,13 +431,17 @@ export class ConversationState {
 			);
 			if (
 				!this.#destroyed &&
+				typeof delivery.message !== "function" &&
 				delivery.message.type === "ExpiringImage" &&
 				urn === "urn:gr:err:entitlement_limit"
 			) {
-				offerEntitlementBypass({
+				const lease = await offerEntitlementBypass({
 					reason: "Daily expiring photo limit reached. Sending more requires a Grindr subscription.",
-					retry: () => this.#attemptSend(delivery),
 				});
+				if (lease === null) return;
+				await this.#attemptSend(delivery)
+					.catch(reportRefusedDespiteBypass)
+					.finally(lease.release);
 			}
 		}
 	}
@@ -448,11 +467,7 @@ export class ConversationState {
 			if (this.#destroyed) return;
 			const msg = findOptimistic();
 			if (msg) {
-				this.#adoptServerVersion({
-					message: msg,
-					serverMessageId: sent.messageId,
-					serverTimestamp: sent.timestamp,
-				});
+				this.#adoptServerVersion({ message: msg, server: sent });
 			} else {
 				this.#syncCache();
 			}
@@ -470,21 +485,17 @@ export class ConversationState {
 
 	#adoptServerVersion({
 		message,
-		serverMessageId,
-		serverTimestamp,
+		server,
 	}: {
 		message: OptimisticMessage;
-		serverMessageId: string;
-		serverTimestamp: number;
+		server: ApiResponseMessage;
 	}): void {
 		const wasPreviewed =
 			previewedMessage(this.messages)?.messageId === message.messageId;
-		message.status = "sent";
-		message.messageId = serverMessageId;
-		message.timestamp = serverTimestamp;
+		Object.assign(message, server, { status: "sent" as const });
 		this.#resortNewestFirst();
 		const isPreviewed =
-			previewedMessage(this.messages)?.messageId === serverMessageId;
+			previewedMessage(this.messages)?.messageId === server.messageId;
 		if (wasPreviewed || isPreviewed) this.#updatePreview();
 		this.#syncCache();
 	}
@@ -506,16 +517,10 @@ export class ConversationState {
 
 	#syncCache(): void {
 		if (!this.profile) return;
-		const cachedMessages: ApiResponseMessage[] = this.messages
-			.filter((m) => m.status === "sent")
-			.map(({ status: _status, ...rest }) => {
-				void _status;
-				return rest;
-			});
 		this.#conversations.setCachedConversation({
 			conversationId: this.conversationId,
 			data: {
-				messages: cachedMessages,
+				messages: sentMessages(this.messages),
 				profile: this.profile,
 				pageKey: this.pageKey,
 				lastReadTimestamp: this.lastReadTimestamp,

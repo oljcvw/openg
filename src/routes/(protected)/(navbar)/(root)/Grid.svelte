@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
+	import PagingSentinel from "$lib/components/shared/PagingSentinel.svelte";
 	import { gridState } from "$lib/grid/grid-state.svelte";
-	import { observeIntersection } from "$lib/util/observe-intersection";
 	import { virtualGrid } from "$lib/util/virtual-grid.svelte";
 	import EmptyGrid from "./EmptyGrid.svelte";
 	import GridCellSkeleton from "./GridCellSkeleton.svelte";
@@ -14,7 +14,7 @@
 	let gridElement: HTMLElement | null = $state(null);
 
 	const pendingSkeletons = $derived(
-		gridState.loadingMore ? PAGE_SKELETONS : 0,
+		gridState.paging.running ? PAGE_SKELETONS : 0,
 	);
 	const view = virtualGrid({
 		grid: () => gridElement,
@@ -35,12 +35,7 @@
 		gridState.load(geohash);
 	});
 
-	$effect(() => {
-		gridState.viewActive = true;
-		return () => {
-			gridState.viewActive = false;
-		};
-	});
+	$effect(() => gridState.attachView());
 </script>
 
 <div class="relative flex flex-1 flex-col">
@@ -100,17 +95,22 @@
 		{/if}
 	</div>
 	<div role="status" class="sr-only">
-		{#if gridState.loadingMore}
-			Loading more profiles
-		{/if}
+		{gridState.paging.running
+			? "Loading more profiles"
+			: gridState.paging.failure
+				? "Failed to load more profiles"
+				: ""}
 	</div>
 	{#if gridState.nextPage !== 0 && gridState.nextPage !== null}
-		<div
+		{#if gridState.paging.failure}
+			<ApiErrorDisplay
+				error={gridState.paging.failure}
+				onRetry={() => gridState.paging.retry()}
+			/>
+		{/if}
+		<PagingSentinel
+			paging={gridState.paging}
 			class="pointer-events-none absolute inset-x-0 bottom-0 h-px"
-			use:observeIntersection={{
-				handle: () => gridState.loadMore(),
-				rootMargin: "400px",
-			}}
-		></div>
+		/>
 	{/if}
 </div>

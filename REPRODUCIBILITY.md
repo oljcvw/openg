@@ -30,12 +30,12 @@ grep -A3 '"nixpkgs"' flake.lock # note the "rev" value
 
 ### Verifying the Gradle wrapper jar
 
-The wrapper jar at `src-tauri/gen/android/gradle/wrapper/gradle-wrapper.jar` is committed and pinned to Gradle 8.14.5.
+The wrapper jar at `src-tauri/gen/android/gradle/wrapper/gradle-wrapper.jar` is committed and pinned to Gradle 8.14.6.
 
 ```bash
 shasum -a 256 src-tauri/gen/android/gradle/wrapper/gradle-wrapper.jar
-# -> 7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172
-# Compare against Gradle's published checksums at https://gradle.org/release-checksums/#8.14.5
+# -> ad16bca46cb71bb5887c546860d93992aeee35c1fdaf4a242b0a612375d937e0
+# Compare against Gradle's published checksums at https://gradle.org/release-checksums/#8.14.6
 ```
 
 ## Pinned inputs
@@ -58,6 +58,7 @@ Every input that affects the output bytes is pinned in exactly one place:
 
 - **Canonical builder:** Linux x86_64; `nix run .#build-android`
 - **Official releases:** multiple providers in `build.yml` CI and F-Droid
+- **F-Droid:** per-ABI builds use [`ci/fdroid/build-android.sh`](./ci/fdroid/build-android.sh) instead of Nix, with Node.js from Debian. Node.js 20 to 26 build the same frontend; Bun's built-in `node` does not, so the script stops when `node` is missing
 - Cross-compilation table **for Android builds**:
 
     |            | On x86_64   | On arm64                 |
@@ -89,10 +90,10 @@ Needs `apksigcopier` and `apksigner`, both on `PATH` in `nix develop .#android`.
 # 1. Reproduce the unsigned APK locally
 git checkout v<tag>
 nix run .#build-android
-LOCAL="$(find src-tauri/gen/android/app/build/outputs/apk/universal/release -name '*-unsigned.apk')"
 
 # 2. Fetch from https://git.opengrind.org/open-grind/open-grind/releases
-PUBLISHED=/path/to/open-grind-v<tag>-android.apk
+PUBLISHED=/path/to/open-grind-v<tag>-android-arm64-v8a.apk
+LOCAL="$(find src-tauri/gen/android/app/build/outputs/apk -name "$(basename "$PUBLISHED" .apk)-unsigned.apk")"
 RELEASE_CERT=2805fdd8f0badb9424d3244c5e5b3473cef5b8798ec1117382e89eda45c3658c # KEYS.md
 
 # 3. Confirm the content reproduces
@@ -243,8 +244,9 @@ fi
     | Ad-hoc signature                                 | `flake.lock` (nixpkgs `rcodesign`)                         |
     | Zip archive                                      | `flake.lock` (nixpkgs `zip`)                               |
     | `lipo`, `install_name_tool`, `codesign_allocate` | `flake.lock` (nixpkgs `cctools`)                           |
+    | App icon (`Assets.car`, `icon.icns`)             | `src-tauri/icons/`, committed (`actool` output varies)     |
 
-Releases are signed ad-hoc by the pinned `rcodesign` and zipped by the pinned `zip`.
+Releases are signed with a Developer ID of the Apple team [KEYS.md](./KEYS.md) publishes and notarized by Apple. `--resign-ad-hoc` checks that a release is notarized, carries no entitlements and requires that team, then removes the notarization ticket and signs the app ad-hoc with the pinned `rcodesign`, which turns it back into the zip a local build produces.
 
 ```bash
 # 1. Reproduce the zip locally
@@ -255,9 +257,13 @@ LOCAL=src-tauri/target/release/artifacts/open-grind-v<tag>-macos.zip
 # 2. Fetch from https://git.opengrind.org/open-grind/open-grind/releases
 PUBLISHED=/path/to/open-grind-v<tag>-macos.zip
 
-# 3. Confirm the zip reproduces
-shasum -a 256 "$LOCAL" "$PUBLISHED"
-if cmp -s "$LOCAL" "$PUBLISHED"; then
+# 3. Re-sign the release ad-hoc
+nix run .#build-macos -- --resign-ad-hoc "$PUBLISHED"
+RESIGNED=src-tauri/target/release/ad-hoc/open-grind-v<tag>-macos.zip
+
+# 4. Confirm the zip reproduces
+shasum -a 256 "$LOCAL" "$RESIGNED"
+if cmp -s "$LOCAL" "$RESIGNED"; then
   echo "✓ zip matches"
 else
   echo "✗ zip mismatch, local build does not match the published zip" >&2

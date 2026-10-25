@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ArrowClockwiseIcon } from "phosphor-svelte";
+	import ArrowClockwiseIcon from "phosphor-svelte/lib/ArrowClockwiseIcon";
 
 	import {
 		BlockedProfileError,
@@ -15,22 +15,26 @@
 	import type { RenderedGridProfile } from "$lib/grid/grid";
 	import BlockedProfile from "../BlockedProfile.svelte";
 	import ProfileBottomNavBar from "../bottom-nav/ProfileBottomNavBar.svelte";
+	import FavoriteNoteButton from "../favorite-note/FavoriteNoteButton.svelte";
 	import HiddenProfile from "../HiddenProfile.svelte";
 	import ImageCarousel from "../ImageCarousel.svelte";
 	import type { ProfileState } from "../profile-state.svelte";
 	import ProfileBody from "../ProfileBody.svelte";
 	import ProfilePreview from "../ProfilePreview.svelte";
+	import ProfileTopNavBar from "../top-nav/ProfileTopNavBar.svelte";
 
 	let {
 		profileState,
 		position,
 		active,
+		leaving,
 		row,
 		heroHash,
 	}: {
 		profileState: ProfileState;
 		position: number;
 		active: boolean;
+		leaving: boolean;
 		row: RenderedGridProfile | null;
 		heroHash: string | null;
 	} = $props();
@@ -63,6 +67,7 @@
 <section
 	data-slot="profile-pane"
 	aria-hidden={active ? undefined : "true"}
+	inert={leaving}
 	class="absolute inset-y-0 w-full bg-background contain-strict"
 	style:left="{position * 100}%"
 >
@@ -75,12 +80,13 @@
 				<BlockedProfile
 					profileId={profileState.profileId}
 					blockedByUs={error.blockedByUs}
-					onRefresh={() => profileState.markViewable()}
+					markViewable={() => profileState.markViewable()}
 				/>
 			{:else if error instanceof HiddenProfileError}
 				<HiddenProfile
 					profileId={profileState.profileId}
-					onRefresh={() => profileState.markViewable()}
+					changingViewability={profileState.changingViewability}
+					markViewable={() => profileState.markViewable()}
 				/>
 			{:else if error instanceof ProfileUnavailableError}
 				<NotFound />
@@ -93,6 +99,14 @@
 			{/if}
 		</main>
 	{:else}
+		{#if active}
+			<DataRefreshControl
+				container={scroller}
+				updating={profileState.refreshing}
+				position="top"
+				onrefresh={() => profileState.refresh()}
+			/>
+		{/if}
 		<div
 			bind:this={scroller}
 			{...scrollerHooks}
@@ -100,6 +114,7 @@
 		>
 			<main
 				inert={!active}
+				data-refresh-content
 				class="relative mx-auto min-h-overscrollable w-full max-w-200"
 			>
 				{#if profile || medias.length > 0}
@@ -109,6 +124,22 @@
 						class="aspect-3/4 h-auto max-h-photo w-full rounded-none"
 					/>
 				{/if}
+				{#if profile?.isFavorite && profileState.note && !ourProfile}
+					<FavoriteNoteButton
+						profileId={profile.profileId}
+						note={profileState.note}
+						onSave={(note) => profileState.setNote(note)}
+					/>
+				{/if}
+				<ProfileTopNavBar
+					{ourProfile}
+					{profile}
+					changingViewability={profileState.changingViewability}
+					markBlocked={() => profileState.markBlocked()}
+					markHidden={() => profileState.markHidden()}
+					onFavorite={(isFavorite) =>
+						profileState.setFavorite(isFavorite)}
+				/>
 				{#if profile}
 					<ProfileBody {profileState} />
 				{:else if row}
@@ -155,14 +186,6 @@
 				tapType={profile.tapType}
 				{active}
 				onTap={(tapType) => profileState.setTap(tapType)}
-			/>
-		{/if}
-		{#if active}
-			<DataRefreshControl
-				container={scroller}
-				updating={profileState.refreshing}
-				position="top"
-				onrefresh={() => profileState.refresh()}
 			/>
 		{/if}
 	{/if}

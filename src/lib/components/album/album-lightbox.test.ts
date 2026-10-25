@@ -1,17 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({ getAlbumContent: vi.fn() }));
-const dimensions = vi.hoisted(() => ({
-	measureImage: vi.fn(),
-	measureVideo: vi.fn(),
-}));
+const dimensions = vi.hoisted(() => ({ measureImage: vi.fn() }));
+
+const failures = vi.hoisted(() => ({ mediaFailure: vi.fn() }));
 
 vi.mock("$lib/api/messaging/albums", () => api);
+vi.mock("$lib/platform/media-failure", async (importOriginal) => ({
+	...(await importOriginal<typeof import("$lib/platform/media-failure")>()),
+	...failures,
+}));
 vi.mock("$lib/util/media-dimensions", () => dimensions);
 vi.mock("$lib/util/photoswipe", () => ({}));
 
 import { albumProcessingPlaceholderUrl } from "$lib/demo/mock/albums";
-import { forgetAlbumSlides, loadAlbumSlides } from "./album-lightbox";
+import {
+	albumPhotoRenewal,
+	forgetAlbumSlides,
+	loadAlbumSlides,
+} from "./album-lightbox";
 
 const ALBUM_ID = 900;
 
@@ -32,6 +39,14 @@ function readyItem({
 		url: media,
 		processing: false,
 		rejectionId: null,
+	};
+}
+
+function playedOutVideo(contentId: number) {
+	return {
+		...readyItem({ contentId, contentType: "video/mp4" }),
+		coverUrl: null,
+		url: "",
 	};
 }
 
@@ -56,12 +71,28 @@ beforeEach(() => {
 	forgetAlbumSlides(ALBUM_ID);
 	api.getAlbumContent.mockReset();
 	dimensions.measureImage.mockReset();
-	dimensions.measureVideo.mockReset();
 	dimensions.measureImage.mockResolvedValue({ width: 300, height: 400 });
-	dimensions.measureVideo.mockResolvedValue({ width: 720, height: 1280 });
+	failures.mediaFailure.mockReset();
 });
 
 describe("loadAlbumSlides", () => {
+	it("opens an album of photos and playable videos without downloading any of them", async () => {
+		serveAlbum([
+			readyItem({ contentId: 1, contentType: "image/jpeg" }),
+			readyItem({ contentId: 2, contentType: "video/mp4" }),
+			readyItem({ contentId: 3, contentType: "image/jpeg" }),
+		]);
+
+		const slides = await loadAlbumSlides(ALBUM_ID);
+
+		expect(dimensions.measureImage).not.toHaveBeenCalled();
+		expect(slides.map(({ width, height }) => [width, height])).toEqual([
+			[undefined, undefined],
+			[undefined, undefined],
+			[undefined, undefined],
+		]);
+	});
+
 	it("leaves out items that are still processing and never measures the placeholder", async () => {
 		serveAlbum([
 			readyItem({ contentId: 1, contentType: "image/jpeg" }),
@@ -72,19 +103,13 @@ describe("loadAlbumSlides", () => {
 		const slides = await loadAlbumSlides(ALBUM_ID);
 
 		expect(slides.map((slide) => slide.contentId)).toEqual([1, 3]);
-		const measured = [
-			...dimensions.measureImage.mock.calls,
-			...dimensions.measureVideo.mock.calls,
-		].map(([url]) => url);
-		expect(measured).not.toContain(albumProcessingPlaceholderUrl);
+		expect(dimensions.measureImage).not.toHaveBeenCalledWith(
+			albumProcessingPlaceholderUrl,
+		);
 	});
 
 	it("opens an album whose video has no plays left by measuring its thumbnail", async () => {
-		const playedOut = {
-			...readyItem({ contentId: 2, contentType: "video/mp4" }),
-			coverUrl: null,
-			url: "",
-		};
+		const playedOut = playedOutVideo(2);
 		serveAlbum([
 			readyItem({ contentId: 1, contentType: "image/jpeg" }),
 			playedOut,
@@ -93,25 +118,21 @@ describe("loadAlbumSlides", () => {
 		const slides = await loadAlbumSlides(ALBUM_ID);
 
 		expect(slides.map((slide) => slide.contentId)).toEqual([1, 2]);
-		expect(dimensions.measureVideo).not.toHaveBeenCalled();
-		expect(dimensions.measureImage).toHaveBeenCalledWith(
+		expect(dimensions.measureImage).toHaveBeenCalledExactlyOnceWith(
 			playedOut.thumbUrl,
 		);
 	});
 
-	it("opens the album even when one item cannot be measured", async () => {
-		serveAlbum([
-			readyItem({ contentId: 1, contentType: "image/jpeg" }),
-			readyItem({ contentId: 2, contentType: "image/jpeg" }),
-		]);
+	it("opens the album even when a played-out video's thumbnail cannot be measured", async () => {
+		serveAlbum([playedOutVideo(1), playedOutVideo(2)]);
 		dimensions.measureImage.mockRejectedValueOnce(new Error("gone"));
 
 		const slides = await loadAlbumSlides(ALBUM_ID);
 
-		expect(slides).toHaveLength(2);
-		expect(
-			slides.every((slide) => slide.width > 0 && slide.height > 0),
-		).toBe(true);
+		expect(slides.map(({ width, height }) => [width, height])).toEqual([
+			[1080, 1080],
+			[300, 400],
+		]);
 	});
 
 	it("refetches an album that had processing items instead of caching the partial slides", async () => {
@@ -136,7 +157,7 @@ describe("loadAlbumSlides", () => {
 	});
 
 	it("does not cache slides whose album was forgotten while they were measured", async () => {
-		serveAlbum([readyItem({ contentId: 1, contentType: "image/jpeg" })]);
+		serveAlbum([playedOutVideo(1)]);
 		let finishMeasuring!: (dimensions: {
 			width: number;
 			height: number;
@@ -155,5 +176,78 @@ describe("loadAlbumSlides", () => {
 		await loadAlbumSlides(ALBUM_ID);
 
 		expect(api.getAlbumContent).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe("albumPhotoRenewal", () => {
+	const refused = {
+		kind: "status",
+		status: 403,
+		phase: null,
+		host: "d3w4wp6rol9nvz.cloudfront.net",
+		signatureExpired: true,
+	};
+
+	async function openedAlbum(content: ReturnType<typeof readyItem>[]) {
+		serveAlbum(content);
+		const slides = await loadAlbumSlides(ALBUM_ID);
+		const items = slides.map(({ url, width, height }) => ({
+			src: url,
+			width,
+			height,
+		}));
+		return { slides, items };
+	}
+
+	it("renews a refused photo once and points it at the new url", async () => {
+		const photo = readyItem({ contentId: 1, contentType: "image/jpeg" });
+		const { slides, items } = await openedAlbum([photo]);
+		failures.mediaFailure.mockResolvedValue(refused);
+		serveAlbum([{ ...photo, url: `${photo.url}?renewed` }]);
+		const renew = albumPhotoRenewal({ albumId: ALBUM_ID, slides, items });
+		const refresh = vi.fn();
+
+		await renew({ index: 0, refresh });
+		await renew({ index: 0, refresh });
+
+		expect(items[0]?.src).toBe(`${photo.url}?renewed`);
+		expect(refresh).toHaveBeenCalledOnce();
+		expect(api.getAlbumContent).toHaveBeenCalledTimes(2);
+	});
+
+	it("leaves a photo alone that failed for another reason", async () => {
+		const { slides, items } = await openedAlbum([
+			readyItem({ contentId: 1, contentType: "image/jpeg" }),
+		]);
+		failures.mediaFailure.mockResolvedValue({
+			...refused,
+			kind: "transport",
+			status: null,
+			signatureExpired: false,
+		});
+		const refresh = vi.fn();
+
+		await albumPhotoRenewal({ albumId: ALBUM_ID, slides, items })({
+			index: 0,
+			refresh,
+		});
+
+		expect(refresh).not.toHaveBeenCalled();
+		expect(api.getAlbumContent).toHaveBeenCalledOnce();
+	});
+
+	it("never renews a video slide", async () => {
+		const { slides, items } = await openedAlbum([
+			readyItem({ contentId: 1, contentType: "video/mp4" }),
+		]);
+		const refresh = vi.fn();
+
+		await albumPhotoRenewal({ albumId: ALBUM_ID, slides, items })({
+			index: 0,
+			refresh,
+		});
+
+		expect(failures.mediaFailure).not.toHaveBeenCalled();
+		expect(refresh).not.toHaveBeenCalled();
 	});
 });

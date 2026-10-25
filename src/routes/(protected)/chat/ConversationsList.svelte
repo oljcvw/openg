@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
 	import { onDestroy, tick } from "svelte";
 
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
@@ -10,6 +8,7 @@
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { below } from "$lib/util/breakpoints.svelte";
+	import { leaveDeletedPages } from "$lib/util/deleted-pages";
 	import { restoreScrollOnce } from "$lib/util/scroll-restore.svelte";
 	import { SelectionSet } from "$lib/util/selection.svelte";
 	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
@@ -22,9 +21,13 @@
 
 	let {
 		covered = false,
+		filtersLocked = false,
 		class: className,
-	}: { covered?: boolean; class?: import("svelte/elements").ClassValue } =
-		$props();
+	}: {
+		covered?: boolean;
+		filtersLocked?: boolean;
+		class?: import("svelte/elements").ClassValue;
+	} = $props();
 
 	const EAGER_COUNT = 10;
 
@@ -108,7 +111,11 @@
 		}
 	});
 
-	dismissOnBackGesture({ active: () => selecting, dismiss: exitSelection });
+	dismissOnBackGesture({
+		active: () => selecting,
+		dismiss: exitSelection,
+		layer: "screen",
+	});
 	dismissOnBackGesture({
 		active: () => deleteDialogOpen,
 		dismiss: () => {
@@ -135,11 +142,12 @@
 		deleteDialogOpen = true;
 	}
 
-	async function confirmDelete() {
+	function confirmDelete() {
 		exitSelection();
-		if (deleteIds.some((id) => id === page.params.conversationId)) {
-			await goto("/chat");
-		}
+		leaveDeletedPages({
+			pathnames: deleteIds.map((id) => `/chat/${id}`),
+			parent: "/chat",
+		});
 		const known = new Set(
 			conversations.entries.map((entry) => entry.data.conversationId),
 		);
@@ -163,11 +171,19 @@
 <DeleteConversationsDialog
 	bind:open={deleteDialogOpen}
 	count={deleteIds.length}
-	onConfirm={() => void confirmDelete()}
+	onConfirm={confirmDelete}
 />
 
 <div class="flex h-full w-full min-w-list-rail flex-col">
 	<div class="relative flex min-h-0 flex-1 flex-col">
+		{#if !conversations.loading && (conversations.entries.length > 0 || !conversations.error)}
+			<DataRefreshControl
+				container={covered ? null : container}
+				updating={conversations.refreshing}
+				position="top"
+				onrefresh={() => void conversations.refresh()}
+			/>
+		{/if}
 		<div
 			bind:this={container}
 			data-slot="conversations-scroller"
@@ -196,7 +212,8 @@
 				</div>
 			{:else}
 				<div
-					class="flex min-h-overscrollable shrink-0 flex-col gap-1 pb-nav-clear"
+					data-refresh-content
+					class="min-h-overscrollable flex shrink-0 flex-col gap-1 pb-nav-clear"
 				>
 					{#each conversations.entries as conversation, i (conversation.data.conversationId)}
 						{@const conversationId =
@@ -222,19 +239,12 @@
 				</div>
 			{/if}
 		</div>
-		{#if !conversations.loading && (conversations.entries.length > 0 || !conversations.error)}
-			<DataRefreshControl
-				{container}
-				updating={conversations.refreshing}
-				position="top"
-				onrefresh={() => void conversations.refresh()}
-			/>
-		{/if}
 		<ScrollToTopButton {container} class="bottom-(--nav-clear)" />
 		<ConversationsFilters
 			filters={conversations.filters}
 			onchange={(values) => conversations.setFilters(values)}
 			inert={selecting}
+			locked={filtersLocked}
 		/>
 	</div>
 </div>
